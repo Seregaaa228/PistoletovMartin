@@ -1,0 +1,3 @@
+Manifest-Version: 1.0
+MixinConfigs: frontier_style.mixins.json,frontier_style_client.mixins.json
+

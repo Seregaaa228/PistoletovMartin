@@ -1,0 +1,292 @@
+{
+  "lav_25": {
+    "lod_distances": [
+      0,
+      64
+    ],
+    "texture_size": [
+      128,
+      128
+    ],
+    "native_pivots": {
+      "root": [
+        0,
+        0,
+        0
+      ],
+      "base": [
+        0,
+        0,
+        0
+      ],
+      "turret": [
+        1.935,
+        40.1749,
+        18.55
+      ],
+      "barrel": [
+        -0.74452,
+        45.9092,
+        2.282
+      ],
+      "barrel2": [
+        1.8522,
+        45.9092,
+        -6.4412
+      ]
+    },
+    "lods": [
+      {
+        "lod": 0,
+        "bones": 15,
+        "cubes": 50,
+        "triangles": 600
+      },
+      {
+        "lod": 1,
+        "bones": 15,
+        "cubes": 16,
+        "triangles": 192
+      }
+    ]
+  },
+  "lav_ad": {
+    "lod_distances": [
+      0,
+      64
+    ],
+    "texture_size": [
+      128,
+      128
+    ],
+    "native_pivots": {
+      "root": [
+        0,
+        0,
+        0
+      ],
+      "base": [
+        0,
+        0,
+        0
+      ],
+      "turret": [
+        1.935,
+        40.1749,
+        18.55
+      ],
+      "barrel": [
+        3.6845,
+        47.29,
+        23.85
+      ],
+      "gun": [
+        2.8395,
+        48.085,
+        20.725
+      ],
+      "rot_barrel": [
+        2.8395,
+        48.085,
+        20.725
+      ]
+    },
+    "lods": [
+      {
+        "lod": 0,
+        "bones": 15,
+        "cubes": 59,
+        "triangles": 708
+      },
+      {
+        "lod": 1,
+        "bones": 15,
+        "cubes": 17,
+        "triangles": 204
+      }
+    ]
+  },
+  "hpj_11": {
+    "lod_distances": [
+      0,
+      64
+    ],
+    "texture_size": [
+      128,
+      128
+    ],
+    "native_pivots": {
+      "root": [
+        0,
+        0,
+        0
+      ],
+      "turret": [
+        0,
+        0,
+        0
+      ],
+      "barrel": [
+        0,
+        22,
+        -4
+      ],
+      "rot_barrel": [
+        0,
+        26,
+        -33.6
+      ],
+      "move_rdr": [
+        17,
+        50.02842,
+        16.95736
+      ],
+      "move_radar2": [
+        -16.99886,
+        48.45694,
+        17.02402
+      ],
+      "move_rdr2": [
+        -17,
+        52,
+        17
+      ]
+    },
+    "lods": [
+      {
+        "lod": 0,
+        "bones": 8,
+        "cubes": 42,
+        "triangles": 504
+      },
+      {
+        "lod": 1,
+        "bones": 8,
+        "cubes": 13,
+        "triangles": 156
+      }
+    ]
+  },
+  "mortar": {
+    "lod_distances": [
+      0,
+      64
+    ],
+    "texture_size": [
+      128,
+      128
+    ],
+    "native_pivots": {
+      "mortar": [
+        0,
+        0,
+        0
+      ],
+      "move_paoguan": [
+        0,
+        3.2,
+        0
+      ],
+      "bone2": [
+        0,
+        3.2,
+        0
+      ],
+      "shell": [
+        0,
+        30.72651,
+        0.28063
+      ],
+      "paotong": [
+        -0.91605,
+        21.62302,
+        -1.85197
+      ],
+      "move_monitor": [
+        0,
+        16.92347,
+        0.00569
+      ],
+      "move_jiaojia": [
+        0,
+        18.9455,
+        -3.01388
+      ],
+      "dizuo": [
+        0,
+        0.94707,
+        -0.00128
+      ]
+    },
+    "lods": [
+      {
+        "lod": 0,
+        "bones": 9,
+        "cubes": 42,
+        "triangles": 504
+      },
+      {
+        "lod": 1,
+        "bones": 9,
+        "cubes": 13,
+        "triangles": 156
+      }
+    ]
+  },
+  "tow": {
+    "lod_distances": [
+      0,
+      64
+    ],
+    "texture_size": [
+      128,
+      128
+    ],
+    "native_pivots": {
+      "tow": [
+        0,
+        0,
+        0
+      ],
+      "base": [
+        0,
+        8.32,
+        0
+      ],
+      "turret": [
+        0,
+        15.5025,
+        0
+      ],
+      "barrel": [
+        0,
+        18.79638,
+        0
+      ],
+      "move_missile": [
+        -0.58134,
+        19.37099,
+        0.98475
+      ],
+      "move_guanmiao": [
+        0,
+        18.79638,
+        0
+      ]
+    },
+    "lods": [
+      {
+        "lod": 0,
+        "bones": 7,
+        "cubes": 42,
+        "triangles": 504
+      },
+      {
+        "lod": 1,
+        "bones": 7,
+        "cubes": 14,
+        "triangles": 168
+      }
+    ]
+  }
+}

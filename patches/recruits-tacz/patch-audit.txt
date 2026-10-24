@@ -1,0 +1,9 @@
+Removed only obsolete async overwrite and its 5 unreachable compiler-generated helpers; retained all sync, shooting, cover, suppressive fire, animation and ammo logic.
+OVERWRITE com/logic/recruitstacz/mixin/MixinAbstractRecruitEntity#getMeleeStartRange()D -> com/talhanation/recruits/entities/AbstractRecruitEntity
+OVERWRITE com/logic/recruitstacz/mixin/MixinAbstractRecruitEntity#searchForTargetsSync(Lnet/minecraft/server/level/ServerLevel;)V -> com/talhanation/recruits/entities/AbstractRecruitEntity
+OVERWRITE com/logic/recruitstacz/mixin/MixinAbstractRecruitEntity#m_6431_(Lnet/minecraft/world/entity/Pose;Lnet/minecraft/world/entity/EntityDimensions;)F -> com/talhanation/recruits/entities/AbstractRecruitEntity
+OVERWRITE com/logic/recruitstacz/mixin/MixinAbstractRecruitEntity#upkeepReequip(Lnet/minecraft/world/Container;)V -> com/talhanation/recruits/entities/AbstractRecruitEntity
+OVERWRITE com/logic/recruitstacz/mixin/MixinSensing#m_148306_(Lnet/minecraft/world/entity/Entity;)Z -> net/minecraft/world/entity/ai/sensing/Sensing
+OVERWRITE com/logic/recruitstacz/mixin/tacz/MixinInnerThirdPersonManager#setRotationAnglesHead(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;F)V -> com/tacz/guns/client/animation/third/InnerThirdPersonManager
+Original SHA-512: a85216fa65242cd0a3ba3d99c83c86d1076f09e32d553046ce294ef49304bbb187b69f3310970b31d3a8c5d1356de5a5e6fedf930d12bf662b7152d410a4f808
+Patched SHA-512: 1cb50e626208d9625284ebd04ba0c4c59cc8d90e813a152f8b7b401922ff93fbf3ebe277730f11007000a154d0a88cc1f3478e2ba98778b25c4df097b7247ad2

@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "frontier_industry:block/detail_sign_factory",
+      "y": 0
+    },
+    "facing=east": {
+      "model": "frontier_industry:block/detail_sign_factory",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "frontier_industry:block/detail_sign_factory",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "frontier_industry:block/detail_sign_factory",
+      "y": 270
+    }
+  }
+}

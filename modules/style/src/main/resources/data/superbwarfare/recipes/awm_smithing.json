@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:smithing_transform",
+  "addition": {
+    "item": "minecraft:spyglass"
+  },
+  "base": {
+    "item": "superbwarfare:epic_material_pack"
+  },
+  "result": {
+    "item": "superbwarfare:awm"
+  },
+  "template": {
+    "item": "superbwarfare:awm_blueprint"
+  },
+  "conditions": [
+    {
+      "type": "forge:false"
+    }
+  ]
+}

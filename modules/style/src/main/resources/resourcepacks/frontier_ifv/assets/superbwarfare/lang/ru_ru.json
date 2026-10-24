@@ -1,0 +1,17 @@
+{
+  "item_group.superbwarfare.vehicle": "Frontier · Техника",
+  "item_group.superbwarfare.guns": "Frontier · Поддержка",
+  "item_group.superbwarfare.ammo": "Frontier · Боеприпасы",
+  "item_group.superbwarfare.item": "Frontier · Снаряжение",
+  "item_group.superbwarfare.block": "Frontier · Объекты",
+  "item_group.superbwarfare.perk": "Frontier · Улучшения",
+  "entity.superbwarfare.bmp_2": "БМП-2",
+  "entity.superbwarfare.bradley": "M2 Bradley",
+  "entity.superbwarfare.lav_25": "LAV-25",
+  "entity.superbwarfare.lav_ad": "LAV-AD · ближнее ПВО",
+  "entity.superbwarfare.hpj_11": "CIWS · стационарное ПВО",
+  "entity.superbwarfare.ah_6": "AH-6 · лёгкий вертолёт",
+  "entity.superbwarfare.mi_28": "Ми-28 · ударный вертолёт",
+  "entity.superbwarfare.speedboat": "Патрульный катер",
+  "entity.superbwarfare.tiny_speedboat": "Малая моторная лодка"
+}

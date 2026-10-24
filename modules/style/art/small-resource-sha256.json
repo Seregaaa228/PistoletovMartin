@@ -1,0 +1,13 @@
+{
+  "geo/drone.geo.json": "a10c5036d2ea313a5c91de99cfbe7041886be91a0018391db2cff39b6b9b0c8c",
+  "textures/entity/drone.png": "2e5f0df0994fd7d0fbdb27878042401e7a61ab2365dd1d16a9fec05026960994",
+  "textures/item/drone.png": "d45a4d7a134506a70ecab241a3d3467ef993e1a42d2f350ad15ad05dc72ddd17",
+  "geo/rpg.geo.json": "8d5e62e7646f1cc0786ecd04d99b66c34f85970c2942d630197684ea611288a1",
+  "textures/item/rpg.png": "2e5f0df0994fd7d0fbdb27878042401e7a61ab2365dd1d16a9fec05026960994",
+  "geo/lod/rpg.geo.json": "bf738742d95a99beff5af844e40542f2d36a119c8ddf6c269b08565b44d53c74",
+  "textures/item/lod/rpg.png": "2e5f0df0994fd7d0fbdb27878042401e7a61ab2365dd1d16a9fec05026960994",
+  "geo/igla_9k38.geo.json": "000af0951e2bb10c2f5df1c700683535d87ac3aabb5b085e7c472e5c84a84771",
+  "textures/item/igla_9k38.png": "2e5f0df0994fd7d0fbdb27878042401e7a61ab2365dd1d16a9fec05026960994",
+  "geo/lod/igla_9k38.geo.json": "2035c963ce73fe583cee64c771f6b1748addb728d1dacb20a22ddc7d35eb7de2",
+  "textures/item/lod/igla_9k38.png": "2e5f0df0994fd7d0fbdb27878042401e7a61ab2365dd1d16a9fec05026960994"
+}

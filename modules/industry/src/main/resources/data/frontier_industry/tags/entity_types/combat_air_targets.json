@@ -1,0 +1,89 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "minecraft:phantom",
+      "required": false
+    },
+    {
+      "id": "superbwarfare:ah_6",
+      "required": false
+    },
+    {
+      "id": "superbwarfare:mi_28",
+      "required": false
+    },
+    {
+      "id": "superbwarfare:kv_16",
+      "required": false
+    },
+    {
+      "id": "superbwarfare:ju_87",
+      "required": false
+    },
+    {
+      "id": "superbwarfare:a_10a",
+      "required": false
+    },
+    {
+      "id": "superbwarfare:ac_130h",
+      "required": false
+    },
+    {
+      "id": "superbwarfare:drone",
+      "required": false
+    },
+    {
+      "id": "superbwarfare:swarm_drone",
+      "required": false
+    },
+    {
+      "id": "superbwarfare:air_sheep",
+      "required": false
+    },
+    {
+      "id": "superbwarfare:kirov",
+      "required": false
+    },
+    {
+      "id": "superbwarfare:happiest_ghast",
+      "required": false
+    },
+    {
+      "id": "uncomplicatedfpv:fpv_drone",
+      "required": false
+    },
+    {
+      "id": "uncomplicatedfpv:mavic_drone_no_drop",
+      "required": false
+    },
+    {
+      "id": "uncomplicatedfpv:mavic_drone_with_drop",
+      "required": false
+    },
+    {
+      "id": "uncomplicatedfpv:shahed136",
+      "required": false
+    },
+    {
+      "id": "uncomplicatedfpv:shahed_136",
+      "required": false
+    },
+    {
+      "id": "simpleplanes:plane",
+      "required": false
+    },
+    {
+      "id": "simpleplanes:large_plane",
+      "required": false
+    },
+    {
+      "id": "simpleplanes:cargo_plane",
+      "required": false
+    },
+    {
+      "id": "simpleplanes:helicopter",
+      "required": false
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=true": {
+      "model": "frontier_industry:block/substation"
+    },
+    "lit=false": {
+      "model": "frontier_industry:block/substation_off"
+    }
+  }
+}

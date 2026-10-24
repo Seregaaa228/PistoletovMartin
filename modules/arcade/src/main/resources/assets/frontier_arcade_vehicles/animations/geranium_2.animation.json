@@ -1,0 +1,22 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.geranium_2.idle": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {}
+    },
+    "animation.geranium_2.flight": {
+      "loop": true,
+      "bones": {
+        "group3": {
+          "rotation": [
+            0,
+            0,
+            "query.life_time * 1800"
+          ]
+        }
+      }
+    }
+  }
+}

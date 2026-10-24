@@ -1,0 +1,8 @@
+# Explicit filename registered by TACZ Recruits 1.022 (not recruitstacz-server).
+["General Behaviour"]
+RecruitsTargetRadius = 48.0
+
+["AI Cover Behaviour"]
+RecruitCoverRadius = 12
+ShouldRecruitsRunToCover = true
+ShouldRecruitsAdvanceOnTargets = true

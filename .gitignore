@@ -1,0 +1,35 @@
+# Build/dependency caches and generated vendor Maven artifacts
+.gradle/
+**/build/
+vendor/
+run/
+run-*/
+**/run/
+__pycache__/
+*.pyc
+.idea/
+*.iml
+.env
+.env.*
+
+# Exact binaries/resources travel in the full team handoff, outside Git history.
+instance/mods/
+instance/tacz/
+installers/
+reference/source-archives/
+patches/recruits-tacz/upstream/*.jar
+
+# Personal/runtime state
+instance/saves/
+instance/logs/
+instance/crash-reports/
+instance/screenshots/
+instance/servers.dat*
+instance/accounts*.json
+instance/launcher_accounts.json
+instance/xaero/
+*.hprof
+
+# Keep required checked-in compatibility bytes and wrapper.
+*.class
+!modules/industry/preserved-combat/**/*.class

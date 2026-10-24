@@ -1,0 +1,7 @@
+version = '1.1.0'
+base { archivesName = 'frontier-arcade-style' }
+// Assets already live inside resourcepacks/frontier_ifv; its TOP priority is
+// selected by the existing mod code. Do not flatten or relocate resources.
+tasks.named('jar', Jar).configure {
+    from('LICENSE') { into 'META-INF'; rename { 'LICENSE.frontier-style' } }
+}

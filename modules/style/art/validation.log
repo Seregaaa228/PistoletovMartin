@@ -1,0 +1,5 @@
+PASS: resource references, hierarchy, native pivots, six wheels/side, shared native flash transforms/scales, hidden idle flashes, UVs, bounds, budgets, SHA256
+bmp_2 near: 61 cubes, 732 triangles, 22 bones
+bmp_2 far: 22 cubes, 264 triangles, 22 bones
+bradley near: 60 cubes, 720 triangles, 22 bones
+bradley far: 22 cubes, 264 triangles, 22 bones

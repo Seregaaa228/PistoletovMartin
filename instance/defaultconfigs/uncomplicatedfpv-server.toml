@@ -1,0 +1,12 @@
+# Native Uncomplicated FPV 1.0.1 signal and explosive tuning.
+[drone_signal]
+# Five recalculations per second; upstream default is 20, each tracing five rays.
+recalc_interval_ticks = 4
+obstructions_enabled = true
+base_ray_count = 5
+max_ray_segments = 13
+
+[shahed136]
+# Reduced from upstream 300 damage / 15 radius to bound a single strike.
+explosion_damage = 300.0
+explosion_radius = 16.0

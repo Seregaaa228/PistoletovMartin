@@ -1,0 +1,29 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.frontier.flamingofix.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "NativeLauncherPolicy",
+    "GraphitePhysicalBlast",
+    "VanillaServerEffects"
+  ],
+  "client": [
+    "VanillaContrails",
+    "VanillaSmokeWarmup",
+    "VanillaBlastBurst",
+    "VanillaExplosionVisuals",
+    "VanillaBoosterFlame",
+    "LightweightMissileLighting",
+    "LightweightDistantMissiles",
+    "NativePatriotFlight",
+    "NativePatriotView",
+    "NativePatriotContact",
+    "LightweightPatriotBodies",
+    "LightweightPatriotBursts",
+    "VanillaGuidedExhaust"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

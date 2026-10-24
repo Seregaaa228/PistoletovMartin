@@ -1,0 +1,446 @@
+{
+  "ah_6": {
+    "native_render_scale": 1,
+    "native_vehicle_icon": "superbwarfare:textures/vehicle_icon/ah_6_icon.png",
+    "native_icon_size": [
+      256,
+      64
+    ],
+    "native_turret_pos": null,
+    "native_barrel_pos": null,
+    "native_rotate_offset_height": 1.088,
+    "native_animation_keys": [
+      "animation.cannon.idle",
+      "animation.cannon.fire",
+      "animation.cannon.idle.1",
+      "animation.cannon.fire.1"
+    ],
+    "pivots_absolute": {
+      "root": [
+        0,
+        0,
+        0
+      ],
+      "move_propeller": [
+        0,
+        1.4625,
+        0
+      ],
+      "move_tailPropeller": [
+        5.57213,
+        25.20143,
+        73.80508
+      ],
+      "flare2": [
+        13.15,
+        9.24,
+        -22.18133
+      ],
+      "flare3": [
+        -13.15,
+        9.24,
+        -22.18133
+      ]
+    },
+    "lod_distances": [
+      0,
+      64
+    ],
+    "lods": [
+      {
+        "lod": 0,
+        "cubes": 67,
+        "triangles": 804,
+        "bones": 5,
+        "visible_triangles": 804,
+        "bounds_model_units": [
+          [
+            -57.0,
+            0.0,
+            -50.31344801571301
+          ],
+          [
+            57.0,
+            44.0,
+            88.80508
+          ]
+        ]
+      },
+      {
+        "lod": 1,
+        "cubes": 20,
+        "triangles": 240,
+        "bones": 5,
+        "visible_triangles": 240,
+        "bounds_model_units": [
+          [
+            -57.0,
+            0.0,
+            -57.0
+          ],
+          [
+            57.0,
+            43.5,
+            88.80508
+          ]
+        ]
+      }
+    ],
+    "texture_size": [
+      128,
+      128
+    ],
+    "dye_tint_retained": false
+  },
+  "mi_28": {
+    "native_render_scale": 1,
+    "native_vehicle_icon": "superbwarfare:textures/vehicle_icon/mi_28_icon.png",
+    "native_icon_size": [
+      256,
+      64
+    ],
+    "native_turret_pos": [
+      0,
+      0.83,
+      3.16
+    ],
+    "native_barrel_pos": [
+      0,
+      -0.413,
+      -0.038
+    ],
+    "native_rotate_offset_height": 1.35,
+    "native_animation_keys": [
+      "animation.cannon.idle",
+      "animation.cannon.fire"
+    ],
+    "pivots_absolute": {
+      "root": [
+        0,
+        0,
+        0
+      ],
+      "base": [
+        0,
+        24.57375,
+        -39.75
+      ],
+      "turret": [
+        0,
+        13.2885,
+        -50.55
+      ],
+      "barrel": [
+        0,
+        6.6915,
+        -49.93672
+      ],
+      "barrel2": [
+        0,
+        6.59625,
+        -43.91775
+      ],
+      "propellerBase": [
+        0,
+        3.91125,
+        0
+      ],
+      "move_propeller": [
+        0,
+        45.91125,
+        -2.85345
+      ],
+      "move_tailPropeller": [
+        0,
+        51.64343,
+        143.35793
+      ],
+      "dummy_1_2_1": [
+        -31.6875,
+        12,
+        0.75
+      ],
+      "dummy_1_2_2": [
+        31.6875,
+        12,
+        0.75
+      ],
+      "flare": [
+        1e-05,
+        7.91482,
+        -87.92799
+      ]
+    },
+    "lod_distances": [
+      0,
+      64
+    ],
+    "lods": [
+      {
+        "lod": 0,
+        "cubes": 76,
+        "triangles": 912,
+        "bones": 11,
+        "visible_triangles": 912,
+        "bounds_model_units": [
+          [
+            -86.0635763887252,
+            0.0,
+            -100.7007441982294
+          ],
+          [
+            105.0,
+            70.64343,
+            162.35793
+          ]
+        ]
+      },
+      {
+        "lod": 1,
+        "cubes": 25,
+        "triangles": 300,
+        "bones": 11,
+        "visible_triangles": 300,
+        "bounds_model_units": [
+          [
+            -105.0,
+            0.0,
+            -105.24120583564077
+          ],
+          [
+            105.0,
+            70.64343,
+            162.35793
+          ]
+        ]
+      }
+    ],
+    "texture_size": [
+      128,
+      128
+    ],
+    "dye_tint_retained": false
+  },
+  "speedboat": {
+    "native_render_scale": 1,
+    "native_vehicle_icon": "superbwarfare:textures/vehicle_icon/speedboat_icon.png",
+    "native_icon_size": [
+      256,
+      64
+    ],
+    "native_turret_pos": [
+      0,
+      3.112,
+      -0.365
+    ],
+    "native_barrel_pos": [
+      0,
+      0.592,
+      0.019
+    ],
+    "native_rotate_offset_height": 1,
+    "native_animation_keys": [
+      "animation.machine_gun.idle",
+      "animation.machine_gun.fire"
+    ],
+    "pivots_absolute": {
+      "root": [
+        0,
+        0,
+        0
+      ],
+      "waterMask": [
+        0,
+        18.25,
+        16
+      ],
+      "turret": [
+        0,
+        49.7995,
+        5.8341
+      ],
+      "barrel": [
+        0,
+        59.2769,
+        5.53526
+      ],
+      "flare": [
+        0,
+        60.09,
+        -28.68133
+      ],
+      "mg2": [
+        -14.11122,
+        60.85582,
+        5.17643
+      ],
+      "action": [
+        -14.11122,
+        60.87289,
+        -18.86158
+      ],
+      "fxp": [
+        -0.01581,
+        24.6022,
+        -15.30523
+      ],
+      "move_control": [
+        -0.01581,
+        24.6022,
+        -15.30523
+      ],
+      "move_rudder": [
+        0,
+        9.6672,
+        51.27234
+      ],
+      "move_propeller": [
+        7.98,
+        3.078,
+        46.056
+      ],
+      "move_propeller2": [
+        -7.98,
+        3.078,
+        46.056
+      ]
+    },
+    "lod_distances": [
+      0,
+      64
+    ],
+    "lods": [
+      {
+        "lod": 0,
+        "cubes": 53,
+        "triangles": 636,
+        "bones": 12,
+        "visible_triangles": 624,
+        "bounds_model_units": [
+          [
+            -20.0,
+            -1.9220000000000002,
+            -94.0
+          ],
+          [
+            20.0,
+            65.0,
+            60.0
+          ]
+        ]
+      },
+      {
+        "lod": 1,
+        "cubes": 20,
+        "triangles": 240,
+        "bones": 12,
+        "visible_triangles": 228,
+        "bounds_model_units": [
+          [
+            -20.0,
+            -1.9220000000000002,
+            -94.0
+          ],
+          [
+            20.0,
+            64.09,
+            57.3
+          ]
+        ]
+      }
+    ],
+    "texture_size": [
+      128,
+      128
+    ],
+    "dye_tint_retained": false
+  },
+  "tiny_speedboat": {
+    "native_render_scale": 1,
+    "native_vehicle_icon": "superbwarfare:textures/vehicle_icon/tiny_speedboat_icon.png",
+    "native_icon_size": [
+      256,
+      64
+    ],
+    "native_turret_pos": null,
+    "native_barrel_pos": null,
+    "native_rotate_offset_height": 0.5,
+    "native_animation_keys": [],
+    "pivots_absolute": {
+      "root": [
+        0,
+        0,
+        0
+      ],
+      "waterMask": [
+        -0.5,
+        0,
+        0
+      ],
+      "move_rudder": [
+        0,
+        2.025,
+        15.2
+      ],
+      "fxp": [
+        0,
+        7.15905,
+        -8.78825
+      ],
+      "move_control": [
+        0,
+        8.44086,
+        -10.17091
+      ]
+    },
+    "lod_distances": [
+      0,
+      64
+    ],
+    "lods": [
+      {
+        "lod": 0,
+        "cubes": 45,
+        "triangles": 540,
+        "bones": 5,
+        "visible_triangles": 528,
+        "bounds_model_units": [
+          [
+            -13.2,
+            -2.0000000000000004,
+            -22.0
+          ],
+          [
+            13.2,
+            19.0,
+            23.9
+          ]
+        ]
+      },
+      {
+        "lod": 1,
+        "cubes": 16,
+        "triangles": 192,
+        "bones": 5,
+        "visible_triangles": 180,
+        "bounds_model_units": [
+          [
+            -13.2,
+            0.0,
+            -22.0
+          ],
+          [
+            13.2,
+            19.0,
+            23.9
+          ]
+        ]
+      }
+    ],
+    "texture_size": [
+      128,
+      128
+    ],
+    "dye_tint_retained": true
+  }
+}

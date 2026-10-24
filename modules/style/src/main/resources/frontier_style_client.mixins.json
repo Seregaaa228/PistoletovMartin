@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.frontier.ifv.mixin.client",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "LightBudgetMixin",
+    "ExplosionBudgetMixin",
+    "DroneLayerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

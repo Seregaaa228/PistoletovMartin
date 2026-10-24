@@ -1,0 +1,209 @@
+{
+  "minecraft": "1.20.1",
+  "forge": "47.4.0",
+  "java": 17,
+  "pack": "Frontier Nations 0.4.0",
+  "mods": [
+    {
+      "file": "architectury-9.2.14-forge.jar",
+      "sha256": "218b471d0b8a1f6cda14cfc1beb9eeb0df54304500acc6c5613d9b88ec65d9af",
+      "bytes": 580602,
+      "title": "Architectury API",
+      "license": "LGPL-3.0-only",
+      "upstream": "https://cdn.modrinth.com/data/lhGA9TYQ/versions/1MKTLiiG/architectury-9.2.14-forge.jar"
+    },
+    {
+      "file": "cloth-config-11.1.136-forge.jar",
+      "sha256": "1e895e85cf5b1e1905ef3178ec155c8badfe22a1577b92c09143a5aa1f4ce0f2",
+      "bytes": 1181413,
+      "title": "Cloth Config API",
+      "license": "LGPL-3.0-only",
+      "upstream": "https://cdn.modrinth.com/data/9s6osm5g/versions/t8TXrZvZ/cloth-config-11.1.136-forge.jar"
+    },
+    {
+      "file": "curios-forge-5.14.1+1.20.1.jar",
+      "sha256": "1e817919a35b37cf30524aaec73f0ca5130452f23f168f844854df282eb8e51f",
+      "bytes": 398066,
+      "title": "Curios API",
+      "license": "LGPL-3.0-or-later",
+      "upstream": "https://cdn.modrinth.com/data/vvuO3ImH/versions/IPQlZkz1/curios-forge-5.14.1%2B1.20.1.jar"
+    },
+    {
+      "file": "dsm-0.9.0.jar",
+      "sha256": "e4a9ce6f27b53228e10e20ac2f18400f82d3d2ffcd36486fcaddf588a411ccc9",
+      "bytes": 29361882,
+      "title": "DeepStrike",
+      "license": "All Rights Reserved",
+      "upstream": "https://edge.forgecdn.net/files/9277/746/dsm-0.9.0.jar"
+    },
+    {
+      "file": "embeddium-0.3.31+mc1.20.1.jar",
+      "sha256": "eed3d1325f2acc2fd4e69bb495e5ccb91d962126ac5330f0582ebc2a3daf47fb",
+      "bytes": 1320675,
+      "title": "Embeddium",
+      "license": "LGPL-3.0-only",
+      "upstream": "https://cdn.modrinth.com/data/sk9rgfiA/versions/UTbfe5d1/embeddium-0.3.31%2Bmc1.20.1.jar"
+    },
+    {
+      "file": "ferritecore-6.0.1-forge.jar",
+      "sha256": "9c2c9396a49e796d88497758caa4637d2bcbb433c318e2dd9cebcffbaf0f6c54",
+      "bytes": 123034,
+      "title": "FerriteCore",
+      "license": "MIT",
+      "upstream": "https://cdn.modrinth.com/data/uXXizFIs/versions/DG5Fn9Sz/ferritecore-6.0.1-forge.jar"
+    },
+    {
+      "file": "frontier-arcade-style-1.1.0.jar",
+      "sha256": "58990022bdfb438981a42f8827c1fefa003b0972418ad82b80f91f6a7e89c04d",
+      "bytes": 308675
+    },
+    {
+      "file": "frontier-arcade-vehicles-1.7.0.jar",
+      "sha256": "2f1c383c1c99fdacfd1549036330a5f91b8b39034ab73500b2ca942a70239b45",
+      "bytes": 282953
+    },
+    {
+      "file": "frontier-flamingo-launch-fix-1.3.0.jar",
+      "sha256": "28ca51bde23d38c77b0d6f7d7bef4a9dd76c5e3f038ee3850945d245b7242f70",
+      "bytes": 29124
+    },
+    {
+      "file": "frontier-industry-1.20.1-0.4.0.jar",
+      "sha256": "aee9da30d4acd474ba638e07a76cafee57e794804449c3e210b1f85411d45c75",
+      "bytes": 548272
+    },
+    {
+      "file": "frontier-light-aviation-1.1.0.jar",
+      "sha256": "c85713196801b6abcede4b8eb7dd8e06e5d6f294a83edf44fd682e41d661bad3",
+      "bytes": 92361
+    },
+    {
+      "file": "frontier-nations-1.20.1-0.1.2-alpha.jar",
+      "sha256": "5fc1374d51ea7e5c931229cf6db5d3a197f6168b9e1a02624f4fb9f9d19abdee",
+      "bytes": 53877,
+      "title": "Frontier Nations",
+      "license": "MIT",
+      "upstream": null
+    },
+    {
+      "file": "geckolib-forge-1.20.1-4.8.4.jar",
+      "sha256": "4518779a31b6c2abb92c98b5ad17ef3d60177df68626bfc86c44de2764913c2b",
+      "bytes": 1038209,
+      "title": "Geckolib",
+      "license": "MIT",
+      "upstream": "https://cdn.modrinth.com/data/8BmcQJ2H/versions/aC5KMoNg/geckolib-forge-1.20.1-4.8.4.jar"
+    },
+    {
+      "file": "jei-1.20.1-forge-15.56.0.205.jar",
+      "sha256": "6b251e60a4719c874da89d750af97aa6498f6f4475e3ae79cb1288c7bf0cb65c",
+      "bytes": 1778129,
+      "title": "Just Enough Items (JEI)",
+      "license": "MIT",
+      "upstream": "https://cdn.modrinth.com/data/u6dRKJwZ/versions/9jqubC9n/jei-1.20.1-forge-15.56.0.205.jar"
+    },
+    {
+      "file": "kotlinforforge-4.12.0-all.jar",
+      "sha256": "6a66c6a68ec09f8717cdbf06883394f0ee24d7cd826b7134a0f81839e8e720ae",
+      "bytes": 7442998,
+      "title": "Kotlin for Forge",
+      "license": "LGPL-2.1-only",
+      "upstream": "https://cdn.modrinth.com/data/ordsPcFz/versions/Zsh14XeQ/kotlinforforge-4.12.0-all.jar"
+    },
+    {
+      "file": "mobplayeranimator-forge-1.20.1-1.3.3-all.jar",
+      "sha256": "823554808cbca10866742470b534276910a0634cf695edc9c2cf08913b2293c4",
+      "bytes": 223397,
+      "title": "Mob Player Animator",
+      "license": "MIT",
+      "upstream": "https://cdn.modrinth.com/data/zkK9lPaS/versions/LW7pk4QA/mobplayeranimator-forge-1.20.1-1.3.3-all.jar"
+    },
+    {
+      "file": "modernfix-forge-5.27.89+mc1.20.1.jar",
+      "sha256": "96750ec3e12b581ee7a936ce2b7c2b35251e97b6f729b2db8bc0d5c9a2dc12fa",
+      "bytes": 1010226,
+      "title": "ModernFix",
+      "license": "LGPL-3.0-only",
+      "upstream": "https://cdn.modrinth.com/data/nmDcB62a/versions/sgbtnCX5/modernfix-forge-5.27.89%2Bmc1.20.1.jar"
+    },
+    {
+      "file": "player-animation-lib-forge-1.0.2-rc1+1.20.jar",
+      "sha256": "90d9965cb9efdbda29fdc5610be3914cf7008bf5c392ff34f7ab25f96a852691",
+      "bytes": 181437,
+      "title": "playerAnimator",
+      "license": "MIT",
+      "upstream": "https://cdn.modrinth.com/data/gedNE4y2/versions/xe2EVE6q/player-animation-lib-forge-1.0.2-rc1%2B1.20.jar"
+    },
+    {
+      "file": "recruits-1.20.1-1.15.2.jar",
+      "sha256": "4b53c1b752e886ba10985aad2df30d668971810230eb77867e07428a21d1af7f",
+      "bytes": 2811101,
+      "title": "Villager Recruits",
+      "license": "LicenseRef-All-Rights-Reserved",
+      "upstream": "https://cdn.modrinth.com/data/WOg9lm4u/versions/2zXpVxK4/recruits-1.20.1-1.15.2.jar"
+    },
+    {
+      "file": "recruits-tacz-1.022-frontier.1.jar",
+      "sha256": "2d0bc509573f927c141d7972719cf97175e04907b63e3b17dee2e6877d96b965",
+      "bytes": 69575,
+      "title": "TACZ Recruits",
+      "license": "MIT",
+      "upstream": null
+    },
+    {
+      "file": "recruitsvillages-1.1.0.jar",
+      "sha256": "55a7da1802360bbc18337ad190b826a1a2292f3038c623ab09f926bb0746dda8",
+      "bytes": 600866,
+      "title": "Recruits Living Villages",
+      "license": "LicenseRef-All-Rights-Reserved",
+      "upstream": "https://cdn.modrinth.com/data/TLtnScVf/versions/DhD8obdv/recruitsvillages-1.1.0.jar"
+    },
+    {
+      "file": "superbrecruits-1.115.jar",
+      "sha256": "09038e816c0a7249f28c51f0b80a12a9d94b78fd81e8487941233318151eab0d",
+      "bytes": 67884,
+      "title": "Superb Recruits",
+      "license": "MIT",
+      "upstream": "https://mediafilez.forgecdn.net/files/8284/503/superbrecruits-1.115.jar"
+    },
+    {
+      "file": "superbwarfare-0.8.9.1-hotfix-mc1.20.1-993063bed-all.jar",
+      "sha256": "3aaf4c239bc0fb31f9217927a44d74071d904d1dd03c5308ca3395ecd67d86dc",
+      "bytes": 42162514,
+      "title": "Superb Warfare",
+      "license": "GPL-3.0-only",
+      "upstream": "https://cdn.modrinth.com/data/Cd3DYqzn/versions/mHmtMuKF/superbwarfare-0.8.9.1-hotfix-mc1.20.1-993063bed-all.jar"
+    },
+    {
+      "file": "tacz-1.20.1-1.1.8-hotfix2.jar",
+      "sha256": "2cbb89f44333d2eb4e825d86d789ff119b272ff75184390b55bafd4f0e7f10c2",
+      "bytes": 57472579,
+      "title": "[TaCZ] Timeless and Classics Zero",
+      "license": "GPL-3.0-only",
+      "upstream": "https://cdn.modrinth.com/data/SzzJttH8/versions/AzCBJlex/tacz-1.20.1-1.1.8-hotfix2.jar"
+    },
+    {
+      "file": "uncomplicated-fpv-1.0.1.jar",
+      "sha256": "289f5ac93d67aaf0e008c7080758569e2d09b91c0df44065b833d49ce39c35de",
+      "bytes": 1304255,
+      "title": "Uncomplicated FPV",
+      "license": "GPL-3.0-only",
+      "upstream": "https://cdn.modrinth.com/data/iS1QJ8ii/versions/hzHrH9yY/uncomplicated-fpv-1.0.1.jar"
+    },
+    {
+      "file": "xaerominimap-forge-1.20.1-26.6.0.jar",
+      "sha256": "9b39cd06094d7631c8614d172d0ba8399c71c981530af417f12a7909fcb855bd",
+      "bytes": 2196194,
+      "title": "Xaero's Minimap",
+      "license": "LicenseRef-All-Rights-Reserved",
+      "upstream": "https://cdn.modrinth.com/data/1bokaNcj/versions/dB6E0CY9/xaerominimap-forge-1.20.1-26.6.0.jar"
+    },
+    {
+      "file": "xaeroworldmap-forge-1.20.1-1.47.0.jar",
+      "sha256": "88c6d844163c95a94d92bc6d87d9011cc840bd6207c3099a81b113d4450a3f6b",
+      "bytes": 1429424,
+      "title": "Xaero's World Map",
+      "license": "LicenseRef-All-Rights-Reserved",
+      "upstream": "https://cdn.modrinth.com/data/NcUtCpym/versions/KtEupJvB/xaeroworldmap-forge-1.20.1-1.47.0.jar"
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "release": "0.4.0",
+  "minecraft": "1.20.1",
+  "forge": "47.4.0",
+  "artifact": "frontier-industry-1.20.1-0.4.0.jar",
+  "sha256": "aee9da30d4acd474ba638e07a76cafee57e794804449c3e210b1f85411d45c75",
+  "installed": true,
+  "installedJarCount": 27,
+  "unrelatedJarsUnchanged": 26,
+  "sourceCommit": "ee3212b",
+  "finalArtifactChecks": {
+    "dedicatedTwoTCPClients": {
+      "pass": true,
+      "count": 27,
+      "checks": {
+        "native members share one scope without a settlement": true,
+        "offline native roster resolves shared country": true,
+        "founding capital retains research identity": true,
+        "concrete frozen v1 site remains structurally functional": true,
+        "concrete frozen v2 site remains structurally functional": true,
+        "two actual legacy records migrate without entering construction": true,
+        "two live powered native centres": true,
+        "both TCP clients opened owned menus and sent start": true,
+        "simultaneous client starts create one country job": true,
+        "two clients charge only one centre once": true,
+        "two centres advance country only once per server tick": true,
+        "both real clients receive the shared unlock": true,
+        "display rename retains technology": true,
+        "capital replacement retains technology": true,
+        "leaving country does not copy its knowledge": true,
+        "rejoining restores country knowledge": true,
+        "reusing disbanded native ID cannot inherit former country research": true,
+        "native use-event research gate deepstrike:su24m": true,
+        "native use-event research gate deepstrike:an_mpq_65": true,
+        "native use-event research gate deepstrike:spike_nlos_jltv": true,
+        "native claim allows current member": true,
+        "native claim rejects former member despite saved team and claim NBT snapshot": true,
+        "native admin claim distinguishes placement and breaking": true,
+        "survival item use consumes kit and starts a paid partial site": true,
+        "native partial construction advances before restart": true,
+        "foreign TCP packet cannot cancel another owner construction": true,
+        "both grids offline pause paid country research": true
+      }
+    },
+    "dedicatedActualRestart": {
+      "pass": true,
+      "count": 10,
+      "checks": {
+        "actual dedicated restart preserves country binding": true,
+        "actual restart preserves completed and paid active research": true,
+        "actual restart preserves exact partial construction cursor": true,
+        "restart does not debit stock twice 0": true,
+        "restart does not debit stock twice 1": true,
+        "both reconnected TCP clients see persisted country": true,
+        "paid research resumes after real restart and power restore": true,
+        "blocked partial repair can be cancelled without losing foreign inventory": true,
+        "reserved repair kit is returned exactly once": true,
+        "repeated cancel cannot return another repair kit": true
+      }
+    },
+    "renderedBuildingsCleanJVMRestart": {
+      "pass": true,
+      "count": 5,
+      "checks": {
+        "actual JVM restart retains all seven completed sites": true,
+        "actual restart retains completed research": true,
+        "actual restart does not debit materials again": true,
+        "actual restart resumes working grid": true,
+        "restart and visual scenario completed": true
+      }
+    }
+  },
+  "pureRules": {
+    "pass": true,
+    "count": 29
+  },
+  "earlierFullConstructionAndNinetySecondResearchIntegration": {
+    "pass": true,
+    "count": 49,
+    "scope": "Prior candidate with final geometry; later source fixes covered by final targeted multiplayer acceptance."
+  },
+  "assets": {
+    "originalDetailModels": 39,
+    "originalPixelTextures": 22,
+    "embeddedControllers": 7,
+    "noSeparateResourcePack": true
+  },
+  "combatBridgePreservedByteForByte": true,
+  "testAddonNotInstalled": true,
+  "userSavesTouched": false,
+  "review": {
+    "independent": true,
+    "allMaterialFindingsFixed": true,
+    "minorCostConfigurationFixed": true
+  },
+  "limits": [
+    "New appearance applies to newly built V3 objects. Existing V1/V2 layouts are preserved.",
+    "NPC workers execute player construction orders; autonomous country industry planning is outside this release.",
+    "New external mods and their alternative fabrication systems require explicit policy integration.",
+    "Normal Gradle offline dependency resolution was unavailable; release uses verified cached javac/FART. Source archive documents the preserved combat postprocessing.",
+    "Dedicated actual chunk unload/resume was not separately exercised; loaded-chunk guards reviewed, power/dead-worker pauses and actual restart persistence tested."
+  ]
+}

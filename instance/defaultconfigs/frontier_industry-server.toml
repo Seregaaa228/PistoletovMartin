@@ -1,0 +1,49 @@
+[construction]
+globalBlocksPerTick = 64
+substationSeconds = 20
+drone_factorySeconds = 30
+equipment_factorySeconds = 30
+vehicle_factorySeconds = 40
+research_centerSeconds = 40
+power_stationSeconds = 45
+missile_factorySeconds = 45
+
+[research.small_arms]
+seconds = 90
+emeralds = 4
+redstone = 4
+
+[research.recon]
+seconds = 90
+emeralds = 4
+redstone = 8
+
+[research.strike_drones]
+seconds = 150
+emeralds = 8
+redstone = 8
+
+[research.armor]
+seconds = 180
+emeralds = 8
+redstone = 8
+
+[research.air_defense]
+seconds = 180
+emeralds = 8
+redstone = 12
+
+[research.missiles]
+seconds = 180
+emeralds = 12
+redstone = 12
+
+[research.aviation]
+seconds = 240
+emeralds = 12
+redstone = 16
+
+[research.advanced_aa]
+seconds = 240
+emeralds = 16
+redstone = 16

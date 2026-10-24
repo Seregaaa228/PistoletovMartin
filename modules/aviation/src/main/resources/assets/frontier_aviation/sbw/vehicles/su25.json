@@ -1,0 +1,14 @@
+{
+  "Animation": "frontier_aviation:animations/bedrock/vehicle/su25.animation.json",
+  "Models": [
+    {
+      "Model": "frontier_aviation:models/bedrock/vehicle/su25.geo.json",
+      "Texture": "frontier_aviation:textures/bedrock/vehicle/su25.png"
+    },
+    {
+      "Model": "frontier_aviation:models/bedrock/vehicle_lod/su25.geo.json",
+      "Texture": "frontier_aviation:textures/bedrock/vehicle/su25.png",
+      "LODDistance": 96
+    }
+  ]
+}

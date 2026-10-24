@@ -1,0 +1,14 @@
+{
+  "assets/superbwarfare/animations/bedrock/vehicle/bmp_2.animation.json": "1f63abe886bd05c01ca22b3aad1e3c1efca6b02110cc790db44062309937196b",
+  "assets/superbwarfare/animations/bedrock/vehicle/bradley.animation.json": "1f63abe886bd05c01ca22b3aad1e3c1efca6b02110cc790db44062309937196b",
+  "assets/superbwarfare/models/bedrock/vehicle/bmp_2.geo.json": "88e82ea8c47626448f0e3172ca727fc115820d5ec18acd3a1d3a7d586a9bd762",
+  "assets/superbwarfare/models/bedrock/vehicle/bradley.geo.json": "171af61afd2398b7a25afa265f5f206176ec1fffa4e9d33774fcab3bb0e74717",
+  "assets/superbwarfare/models/bedrock/vehicle_lod/bmp_2.lod1.geo.json": "8a1067afd88530e33deffda197236cf6754fcaad8d1cfcf0d2ccaedd72ff3ba0",
+  "assets/superbwarfare/models/bedrock/vehicle_lod/bradley.lod1.geo.json": "c9c81479d69f19b28beab8daa6408d95c50f2b4cd5bda3777dff0cb7a5a55001",
+  "assets/superbwarfare/sbw/vehicles/bmp_2.json": "ceb2efc1e1e87596f07a1139b9ba7a9919d09c0e5d9b9058c358717e924dc38a",
+  "assets/superbwarfare/sbw/vehicles/bradley.json": "6e56e8615c83b98675850b35a5b03de0450e44a0abff67c785e1927ee3d3dc5f",
+  "assets/superbwarfare/textures/bedrock/vehicle/bmp_2.png": "2e5f0df0994fd7d0fbdb27878042401e7a61ab2365dd1d16a9fec05026960994",
+  "assets/superbwarfare/textures/bedrock/vehicle/bradley.png": "21f7c7e282b1286b4f332695918402365c47e2e352adc0a7a03be43aa0c59287",
+  "assets/superbwarfare/textures/bedrock/vehicle_lod/bmp_2.lod.png": "2e5f0df0994fd7d0fbdb27878042401e7a61ab2365dd1d16a9fec05026960994",
+  "assets/superbwarfare/textures/bedrock/vehicle_lod/bradley.lod.png": "21f7c7e282b1286b4f332695918402365c47e2e352adc0a7a03be43aa0c59287"
+}

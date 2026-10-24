@@ -1,0 +1,33 @@
+{
+  "checks": {
+    "native members share one scope without a settlement": true,
+    "offline native roster resolves shared country": true,
+    "founding capital retains research identity": true,
+    "concrete frozen v1 site remains structurally functional": true,
+    "concrete frozen v2 site remains structurally functional": true,
+    "two actual legacy records migrate without entering construction": true,
+    "two live powered native centres": true,
+    "both TCP clients opened owned menus and sent start": true,
+    "simultaneous client starts create one country job": true,
+    "two clients charge only one centre once": true,
+    "two centres advance country only once per server tick": true,
+    "both real clients receive the shared unlock": true,
+    "display rename retains technology": true,
+    "capital replacement retains technology": true,
+    "leaving country does not copy its knowledge": true,
+    "rejoining restores country knowledge": true,
+    "reusing disbanded native ID cannot inherit former country research": true,
+    "native use-event research gate deepstrike:su24m": true,
+    "native use-event research gate deepstrike:an_mpq_65": true,
+    "native use-event research gate deepstrike:spike_nlos_jltv": true,
+    "native claim allows current member": true,
+    "native claim rejects former member despite saved team and claim NBT snapshot": true,
+    "native admin claim distinguishes placement and breaking": true,
+    "survival item use consumes kit and starts a paid partial site": true,
+    "native partial construction advances before restart": true,
+    "foreign TCP packet cannot cancel another owner construction": true,
+    "both grids offline pause paid country research": true
+  },
+  "pass": true,
+  "ticks": 540
+}

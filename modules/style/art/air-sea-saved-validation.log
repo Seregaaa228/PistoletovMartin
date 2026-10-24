@@ -1,0 +1,7 @@
+PASS ah_6: saved models, exact native pivots, hierarchy, animation targets/flash reset, UVs, icon and profile references
+PASS mi_28: saved models, exact native pivots, hierarchy, animation targets/flash reset, UVs, icon and profile references
+PASS speedboat: saved models, exact native pivots, hierarchy, animation targets/flash reset, UVs, icon and profile references
+PASS tiny_speedboat: saved models, exact native pivots, hierarchy, animation targets/flash reset, UVs, icon and profile references
+PASS 29 shipped resources: SHA-256 manifest verified
+PASS two levels per vehicle: native default near + one far profile at 64 blocks
+NOT RUN: Minecraft, rendering engine or mod build; verification is static + software projection only

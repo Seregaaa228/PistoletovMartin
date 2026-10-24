@@ -1,0 +1,14 @@
+{
+  "Animation": "superbwarfare:animations/bedrock/vehicle/speedboat.animation.json",
+  "Models": [
+    {
+      "Model": "superbwarfare:models/bedrock/vehicle/speedboat.geo.json",
+      "Texture": "superbwarfare:textures/bedrock/vehicle/speedboat.png"
+    },
+    {
+      "Model": "superbwarfare:models/bedrock/vehicle_lod/speedboat.lod1.geo.json",
+      "Texture": "superbwarfare:textures/bedrock/vehicle_lod/speedboat.lod.png",
+      "LODDistance": 64
+    }
+  ]
+}

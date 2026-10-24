@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=true": {
+      "model": "frontier_industry:block/missile_factory"
+    },
+    "lit=false": {
+      "model": "frontier_industry:block/missile_factory_off"
+    }
+  }
+}

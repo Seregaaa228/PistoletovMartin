@@ -1,0 +1,76 @@
+# Frontier Nations: conservative native Living Villages simulation.
+# Exact keys verified against recruitsvillages-1.1.0.jar config bytecode.
+# Missing keys retain upstream defaults. This seeds NEW worlds only.
+
+[simulation]
+simIntervalTicks = 200
+
+[worldgen]
+naturalGenEnabled = true
+villageSpacingChunks = 24
+villageSeparationChunks = 8
+minVillageDistance = 320.0
+scanIntervalTicks = 120
+scanRadiusChunks = 10
+createRenderRadiusChunks = 2
+
+[catchup]
+newVillageCatchupProgress = true
+maxSteps = 600
+
+[founding]
+startingHouses = 3
+startingRecruits = 6
+startingCivilians = 4
+startingEmeralds = 128
+
+[population]
+bedsPerHouse = 4
+bedsPerUpgradedHouse = 6
+civilianShare = 0.5
+villagerIntervalSteps = 15
+villagersPerInterval = 2
+conversionsPerInterval = 2
+
+[expansion]
+enabled = true
+houseCap = 4
+houseCapUpgraded = 6
+maxStructures = 14
+
+[recruits]
+# Native ranged classes are converted to NBT-complete TaCZ rifles by the helper.
+weights = ["recruits:recruit=2", "recruits:recruit_shieldman=2", "recruits:bowman=8", "recruits:nomad=1", "recruits:horseman=1"]
+
+[deferred]
+enabled = true
+maxSteps = 600
+
+[war]
+aiWarEnabled = true
+aiWarIntervalSteps = 30
+aiWarRange = 768.0
+aiWarMaxPerCheck = 1
+minWarRecruits = 8
+retreatRecruits = 4
+committedFraction = 0.5
+warDeclareCooldownSeconds = 600
+warTimeoutSeconds = 600
+siegeAllowNoOwner = true
+siegeTriggerRecruits = 4
+
+[leader]
+retinueSize = 4
+guardRetinueSize = 3
+aiIntervalTicks = 10
+
+[materialization]
+# Native code raises this to at least server view-distance * 16 blocks.
+materializeRadius = 128.0
+dematerializeBuffer = 48.0
+proximityIntervalTicks = 40
+liveSyncIntervalTicks = 60
+
+[claim]
+claimRadiusChunks = 3
+maxClaimChunks = 64

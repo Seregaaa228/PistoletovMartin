@@ -1,0 +1,69 @@
+version = '0.4.0'
+base { archivesName = 'frontier-industry-1.20.1' }
+
+// These two source files do not match the retained production classes. Keep the
+// running 0.4.0 behavior until matching sources are recovered and reviewed.
+sourceSets.main.java {
+    exclude 'dev/frontier/industry/combat/NativeCombatEvents.java'
+    exclude 'dev/frontier/industry/combat/ReadyWeapons.java'
+}
+
+// A tiny FG-remapped overlay supplies these APIs to javac and to opt-in dev
+// runs, without placing the old full Industry JAR on the runtime classpath.
+configurations { preservedCombat }
+dependencies {
+    def pinned = new groovy.json.JsonSlurper().parse(rootProject.file('vendor/dependencies.json'))
+                    .artifacts.find { it.module == 'industry' }
+    preservedCombat fg.deobf(pinned.coordinate)
+}
+sourceSets.main.compileClasspath += configurations.preservedCombat
+def generatedCombat = layout.buildDirectory.dir('generated/preserved-combat')
+def prepareCombat = tasks.register('preparePreservedCombat', Sync) {
+    from { zipTree(configurations.preservedCombat.singleFile) }
+    include '**/*.class'
+    into generatedCombat
+}
+sourceSets.main.output.dir(generatedCombat, builtBy: prepareCombat)
+tasks.named('compileJava').configure { dependsOn prepareCombat }
+
+tasks.named('jar', Jar).configure {
+    from('LICENSE.txt') { into 'META-INF'; rename { 'LICENSE.frontier-industry' } }
+}
+
+def restoreCombat = tasks.register('restorePreservedCombat') {
+    dependsOn 'reobfJar'
+    inputs.dir('preserved-combat')
+    // Insert AFTER reobfuscation: these are already runtime/SRG classes.
+    doLast {
+        def destination = tasks.named('jar', Jar).get().archiveFile.get().asFile
+        def preserved = file('preserved-combat')
+        ['NativeCombatEvents', 'ReadyWeapons'].each { className ->
+            if (!new File(preserved, "dev/frontier/industry/combat/${className}.class").isFile()) {
+                throw new GradleException("Missing preserved production class: ${className}")
+            }
+        }
+        def entries = new TreeMap<String, byte[]>()
+        new java.util.zip.ZipFile(destination).withCloseable { archive ->
+            archive.entries().each { entry ->
+                if (!entry.directory) entries[entry.name] = archive.getInputStream(entry).bytes
+            }
+        }
+        fileTree(preserved).matching { include '**/*.class' }.each { source ->
+            entries[preserved.toPath().relativize(source.toPath()).toString().replace('\\', '/')] = source.bytes
+        }
+        def temporary = new File(destination.parentFile, destination.name + '.overlay-tmp')
+        new java.util.zip.ZipOutputStream(new FileOutputStream(temporary)).withCloseable { archive ->
+            entries.each { name, data ->
+                def entry = new java.util.zip.ZipEntry(name)
+                entry.time = 315532800000L
+                archive.putNextEntry(entry)
+                archive.write(data)
+                archive.closeEntry()
+            }
+        }
+        java.nio.file.Files.move(temporary.toPath(), destination.toPath(),
+                                  java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+    }
+}
+tasks.matching { it.name == 'reobfJar' }.configureEach { finalizedBy restoreCombat }
+tasks.named('build').configure { dependsOn restoreCombat }

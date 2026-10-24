@@ -1,0 +1,46 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.frontier_aviation.bind": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "body": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "canopy": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_nose": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_main_l": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_main_r": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    }
+  }
+}

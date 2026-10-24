@@ -1,0 +1,47 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+[[mods]]
+modId="frontier_nations"
+version="0.1.2-alpha"
+displayName="Frontier Nations"
+authors="Frontier Nations contributors"
+description='''Compatibility layer for the Frontier Nations pack: native political map, initial AI countries and TaCZ equipment for ranged Recruits. Original Recruits/Living Villages own all faction and territory state. Experimental alpha.'''
+[[dependencies.frontier_nations]]
+modId="forge"
+mandatory=true
+versionRange="[47.4.0,48)"
+ordering="NONE"
+side="BOTH"
+[[dependencies.frontier_nations]]
+modId="recruits"
+mandatory=true
+versionRange="[1.15.2,1.16)"
+ordering="AFTER"
+side="BOTH"
+[[dependencies.frontier_nations]]
+modId="recruitsvillages"
+mandatory=true
+versionRange="[1.1.0,1.2)"
+ordering="AFTER"
+side="BOTH"
+[[dependencies.frontier_nations]]
+modId="tacz"
+mandatory=true
+versionRange="[1.1.8,1.2)"
+ordering="AFTER"
+side="BOTH"
+[[dependencies.frontier_nations]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.1,1.20.2)"
+ordering="NONE"
+side="BOTH"
+
+# Ensure our native drone-attachment data overrides load after Superb Warfare.
+[[dependencies.frontier_nations]]
+modId="superbwarfare"
+mandatory=false
+versionRange="[0,)"
+ordering="AFTER"
+side="BOTH"

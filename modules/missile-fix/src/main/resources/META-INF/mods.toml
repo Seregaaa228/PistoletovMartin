@@ -1,0 +1,32 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+[[mods]]
+modId="frontier_flamingo_launch_fix"
+version="1.3.0"
+displayName="Frontier Flamingo Launch Fix"
+description="Native launcher compatibility and physical damage, with bounded vanilla missile effects and lightweight multiplayer rendering."
+[[dependencies.frontier_flamingo_launch_fix]]
+modId="forge"
+mandatory=true
+versionRange="[47.4.0,48)"
+ordering="NONE"
+side="BOTH"
+[[dependencies.frontier_flamingo_launch_fix]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.1]"
+ordering="NONE"
+side="BOTH"
+[[dependencies.frontier_flamingo_launch_fix]]
+modId="deepstrike"
+mandatory=true
+versionRange="[0.9.0]"
+ordering="AFTER"
+side="BOTH"
+[[dependencies.frontier_flamingo_launch_fix]]
+modId="frontier_industry"
+mandatory=true
+versionRange="[0.3.1-alpha,0.5)"
+ordering="AFTER"
+side="BOTH"

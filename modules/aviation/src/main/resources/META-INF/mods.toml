@@ -1,0 +1,32 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+[[mods]]
+modId="frontier_aviation"
+version="1.1.0"
+displayName="Frontier Light Aviation"
+description="Original lightweight Su-25, F-16 and J-10 aircraft using native DeepStrike control, stores and server authorization."
+[[dependencies.frontier_aviation]]
+modId="forge"
+mandatory=true
+versionRange="[47.4.0,48)"
+ordering="NONE"
+side="BOTH"
+[[dependencies.frontier_aviation]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.1]"
+ordering="NONE"
+side="BOTH"
+[[dependencies.frontier_aviation]]
+modId="deepstrike"
+mandatory=true
+versionRange="[0.9.0]"
+ordering="AFTER"
+side="BOTH"
+[[dependencies.frontier_aviation]]
+modId="superbwarfare"
+mandatory=true
+versionRange="[0.8.9.1]"
+ordering="AFTER"
+side="BOTH"

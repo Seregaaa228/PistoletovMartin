@@ -1,0 +1,134 @@
+{
+  "bmp_2": {
+    "native_render_scale": 0.9,
+    "pivots_absolute": {
+      "base": [
+        0,
+        0,
+        0
+      ],
+      "turret": [
+        0,
+        36,
+        11.25
+      ],
+      "barrel": [
+        0,
+        40.8656,
+        -1.78073
+      ]
+    },
+    "lod_distances": [
+      0,
+      64
+    ],
+    "lods": [
+      {
+        "lod": 0,
+        "cubes": 61,
+        "triangles": 732,
+        "static_cubes": 61,
+        "static_triangles": 732,
+        "bones": 22,
+        "bounds_model_units": [
+          [
+            -35.0,
+            1.0,
+            -72.0
+          ],
+          [
+            35.00000000000001,
+            68.0,
+            63.0
+          ]
+        ]
+      },
+      {
+        "lod": 1,
+        "cubes": 22,
+        "triangles": 264,
+        "static_cubes": 22,
+        "static_triangles": 264,
+        "bones": 22,
+        "bounds_model_units": [
+          [
+            -34.0,
+            1.0,
+            -72.0
+          ],
+          [
+            34.0,
+            61.0,
+            61.0
+          ]
+        ]
+      }
+    ]
+  },
+  "bradley": {
+    "native_render_scale": 1.0,
+    "pivots_absolute": {
+      "base": [
+        0,
+        12,
+        0
+      ],
+      "turret": [
+        -2.42952,
+        35.776,
+        2.04492
+      ],
+      "barrel": [
+        -2.42952,
+        42.7592,
+        -7.568
+      ]
+    },
+    "lod_distances": [
+      0,
+      64
+    ],
+    "lods": [
+      {
+        "lod": 0,
+        "cubes": 60,
+        "triangles": 720,
+        "static_cubes": 60,
+        "static_triangles": 720,
+        "bones": 22,
+        "bounds_model_units": [
+          [
+            -30.0,
+            1.0,
+            -66.0
+          ],
+          [
+            30.0,
+            72.0,
+            58.0
+          ]
+        ]
+      },
+      {
+        "lod": 1,
+        "cubes": 22,
+        "triangles": 264,
+        "static_cubes": 22,
+        "static_triangles": 264,
+        "bones": 22,
+        "bounds_model_units": [
+          [
+            -29.0,
+            1.0,
+            -66.0
+          ],
+          [
+            29.0,
+            60.0,
+            56.0
+          ]
+        ]
+      }
+    ]
+  }
+}

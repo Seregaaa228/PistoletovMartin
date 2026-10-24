@@ -1,0 +1,7 @@
+version = '1.1.0'
+base { archivesName = 'frontier-light-aviation' }
+// Authoring copies live beside near geometry; native runtime LODs are the
+// corresponding files under vehicle_lod. Match the accepted release layout.
+tasks.named('processResources', ProcessResources).configure {
+    exclude 'assets/frontier_aviation/models/bedrock/vehicle/*_lod.geo.json'
+}

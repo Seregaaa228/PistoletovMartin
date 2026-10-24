@@ -1,0 +1,16 @@
+{
+  "ID": "frontier_arcade_vehicles:relay_drone",
+  "Type": "Drone",
+  "MaxHealth": 20,
+  "MaxEnergy": 96000,
+  "Mass": 2,
+  "Gravity": 0,
+  "KeepChunkLoaded": false,
+  "HasLowHealthWarning": false,
+  "SendHitParticles": false,
+  "VehicleContainerType": "Empty",
+  "EngineSound": "uncomplicatedfpv:shahed136_engine",
+  "EngineInfo": {
+    "EngineSoundVolume": 0.38
+  }
+}

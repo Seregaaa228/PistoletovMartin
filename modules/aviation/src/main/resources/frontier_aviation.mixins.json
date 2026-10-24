@@ -1,0 +1,25 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.frontier.aviation.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "FreshAircraftDeployment",
+    "AuthorizeAircraftCannon",
+    "HumanRecruitDamage",
+    "PlayerTeamDamage",
+    "HumanWeaponSeeking",
+    "ManualPatriotPackets",
+    "ManualCommandDefense",
+    "ManualPatriotDiplomacy",
+    "ManualCommandCenter",
+    "ManualIronDomePackets",
+    "ManualIronDomeLaunch"
+  ],
+  "client": [
+    "SkipNativeAircraftLights"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,0 +1,4 @@
+#Terrain provider for every DeepStrike map. AUTO prefers Xaero when both are installed.
+#Allowed Values: AUTO, XAERO, JOURNEYMAP
+mapProvider = "AUTO"
+

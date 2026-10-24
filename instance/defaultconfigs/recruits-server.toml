@@ -1,0 +1,26 @@
+# Exact case-sensitive keys verified against Recruits 1.15.2 bytecode.
+[Recruits]
+MaxRecruitsForPlayer = 48
+# TACZ Recruits delegates ammo checking to this native switch for NPCs.
+RangedRecruitsNeedArrowsToShoot = false
+# Living Villages already simulates distant garrisons as native saved data.
+RecruitsChunkLoading = false
+
+[Villages]
+NobleVillagerSpawns = false
+
+[Patrols]
+# Avoid an additional uncontrolled source of squads outside country rosters.
+ShouldRecruitPatrolsSpawn = false
+
+[Factions]
+MaxNPCsInFaction = 96
+
+[Claiming]
+AllowClaiming = true
+MaxClaimChunks = 256
+FogOfWarEnabled = true
+# Upstream key is misleading: TRUE enables explosion PROTECTION.
+# FALSE keeps weapons able to damage settlements. See audit report.
+ExplosionBreaksBlocksInClaims = false
+SiegeRequiresOwnerOnline = false

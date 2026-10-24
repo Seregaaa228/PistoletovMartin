@@ -1,0 +1,95 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.machine_gun.idle": {
+      "loop": true,
+      "bones": {
+        "flare": {
+          "scale": 0
+        },
+        "mg2": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "fxp": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.machine_gun.fire": {
+      "loop": "hold_on_last_frame",
+      "animation_length": 0.12,
+      "bones": {
+        "flare": {
+          "scale": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "0.008": [
+              3,
+              3,
+              3
+            ],
+            "0.045": [
+              0,
+              0,
+              0
+            ],
+            "0.12": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "action": {
+          "position": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "0.025": [
+              0,
+              0,
+              1.5
+            ],
+            "0.12": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "mg2": {
+          "position": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "0.025": [
+              0,
+              0,
+              0.25
+            ],
+            "0.12": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    }
+  }
+}

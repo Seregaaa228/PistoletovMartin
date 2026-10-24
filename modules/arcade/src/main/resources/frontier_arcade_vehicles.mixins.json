@@ -1,0 +1,29 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.frontier.arcade.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "TankAmmoGuard",
+    "TankNpcSafety",
+    "SbwRecruitCompatibility",
+    "SbwInventoryCompatibility",
+    "GeraniumSignalRange",
+    "GeraniumNativePacketGuard",
+    "RemoteDroneChunks",
+    "RemoteDroneTracking",
+    "RelaySignalModel",
+    "RelaySignalRules",
+    "ItemStackMonitorCompatibility",
+    "AddonControlAccess",
+    "AddonControlLifecycle",
+    "NativeMonitorReconnect"
+  ],
+  "client": [
+    "GeraniumInteriorSound",
+    "GeraniumRenderTint"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

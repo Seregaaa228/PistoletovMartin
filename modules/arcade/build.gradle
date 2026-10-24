@@ -1,0 +1,7 @@
+version = '1.7.0'
+base { archivesName = 'frontier-arcade-vehicles' }
+sourceSets.main.java.exclude 'dev/frontier/arcade/smoke/**'
+tasks.named('jar', Jar).configure {
+    manifest.attributes 'MixinConfigs': 'frontier_arcade_vehicles.mixins.json'
+    from('LICENSE.txt') { into 'META-INF'; rename { 'LICENSE.frontier-arcade' } }
+}

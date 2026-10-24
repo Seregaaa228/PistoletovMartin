@@ -1,0 +1,14 @@
+{
+  "Animation": "superbwarfare:animations/bedrock/vehicle/tow.animation.json",
+  "Models": [
+    {
+      "Model": "superbwarfare:models/bedrock/vehicle/tow.geo.json",
+      "Texture": "superbwarfare:textures/bedrock/vehicle/tow.png"
+    },
+    {
+      "Model": "superbwarfare:models/bedrock/vehicle_lod/tow.lod1.geo.json",
+      "Texture": "superbwarfare:textures/bedrock/vehicle_lod/tow.lod.png",
+      "LODDistance": 64
+    }
+  ]
+}

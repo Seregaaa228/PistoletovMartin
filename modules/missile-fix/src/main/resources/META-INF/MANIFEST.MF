@@ -1,0 +1,3 @@
+Manifest-Version: 1.0
+MixinConfigs: frontier_flamingo_launch_fix.mixins.json
+

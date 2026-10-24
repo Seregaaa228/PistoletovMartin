@@ -1,0 +1,13 @@
+version:3465
+lang:ru_ru
+onboardAccessibility:false
+tutorialStep:none
+renderDistance:8
+simulationDistance:6
+maxFps:120
+guiScale:2
+fullscreen:false
+pauseOnLostFocus:false
+resourcePacks:[]
+incompatibleResourcePacks:[]
+key_key.recruits.map_screen_key:key.keyboard.unknown

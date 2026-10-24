@@ -1,0 +1,114 @@
+import groovy.json.JsonSlurper
+import java.util.jar.Manifest
+
+plugins {
+    id 'base'
+    id 'net.minecraftforge.gradle' version '6.0.54' apply false
+}
+
+def dependencyIndex = file('vendor/dependencies.json')
+if (!dependencyIndex.isFile()) {
+    throw new GradleException('Run python3 tools/prepare_dependencies.py before Gradle (see BUILD-RU.md).')
+}
+def pinnedDependencies = new JsonSlurper().parse(dependencyIndex).artifacts
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'net.minecraftforge.gradle'
+    apply plugin: 'idea'
+}
+
+subprojects {
+    group = 'dev.frontier'
+    java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+    minecraft {
+        mappings channel: 'official', version: rootProject.minecraft_version
+        copyIdeResources = true
+    }
+
+    repositories {
+        maven { name = 'FrontierSnapshot'; url = rootProject.uri('vendor/maven') }
+        mavenCentral()
+    }
+
+    dependencies {
+        minecraft "net.minecraftforge:forge:${rootProject.minecraft_version}-${rootProject.forge_version}"
+        // Exact files from instance/mods, addressed by content hash. Nested SBW
+        // model libraries are compile-only: the existing runtime JAR owns them.
+        pinnedDependencies.findAll { !it.module }.each { pinned ->
+            if (pinned.source.contains('!/')) compileOnly fg.deobf(pinned.coordinate)
+            else implementation fg.deobf(pinned.coordinate)
+        }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.release = 17
+        // Current mixins use explicit runtime descriptors and remap=false.
+        // An annotation processor would incorrectly remap those a second time.
+        options.compilerArgs += ['-proc:none']
+    }
+
+    tasks.withType(AbstractArchiveTask).configureEach {
+        preserveFileTimestamps = false
+        reproducibleFileOrder = true
+    }
+
+    tasks.named('processResources', ProcessResources).configure {
+        inputs.property 'mod_version', provider { project.version.toString() }
+        filesMatching('META-INF/mods.toml') { expand(mod_version: project.version) }
+        // The Jar task writes the actual manifest, including MixinConfigs.
+        exclude 'META-INF/MANIFEST.MF'
+    }
+
+    tasks.named('jar', Jar).configure {
+        def sourceManifest = file('src/main/resources/META-INF/MANIFEST.MF')
+        if (sourceManifest.isFile()) {
+            sourceManifest.withInputStream { stream ->
+                def original = new Manifest(stream)
+                original.mainAttributes.each { key, value ->
+                    if (key.toString() != 'Manifest-Version') manifest.attributes([(key.toString()): value.toString()])
+                }
+            }
+        }
+        manifest.attributes('Implementation-Title': project.name,
+                            'Implementation-Version': provider { project.version.toString() })
+        finalizedBy 'reobfJar'
+    }
+
+    tasks.named('build').configure { dependsOn 'reobfJar' }
+}
+
+// Explicit opt-in dev launches. Every editable module is supplied as source
+// output; none of the six baseline production JARs is a runtime dependency.
+def modIds = [arcade: 'frontier_arcade_vehicles', nations: 'frontier_nations',
+              industry: 'frontier_industry', style: 'frontier_ifv',
+              aviation: 'frontier_aviation', 'missile-fix': 'frontier_flamingo_launch_fix']
+subprojects { developmentProject ->
+    minecraft.runs {
+        configureEach {
+            workingDirectory rootProject.file('run')
+            property 'forge.logging.console.level', 'info'
+            mods {
+                rootProject.subprojects.each { module ->
+                    create(modIds[module.name]) { source module.sourceSets.main }
+                }
+            }
+        }
+        client {}
+        server { args '--nogui' }
+    }
+}
+
+tasks.named('build').configure { dependsOn subprojects.collect { it.tasks.named('build') } }
+tasks.named('clean').configure { dependsOn subprojects.collect { it.tasks.named('clean') } }
+
+def releaseJars = tasks.register('releaseJars', Sync) {
+    group = 'build'
+    description = 'Collect the six reobfuscated modules into build/team-mods.'
+    dependsOn subprojects.collect { it.tasks.named('build') }
+    from subprojects.collect { it.tasks.named('jar', Jar).flatMap { jar -> jar.archiveFile } }
+    into layout.buildDirectory.dir('team-mods')
+}
+tasks.named('build').configure { dependsOn releaseJars }

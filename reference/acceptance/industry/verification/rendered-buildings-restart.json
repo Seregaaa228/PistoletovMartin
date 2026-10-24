@@ -1,0 +1,12 @@
+{
+  "checks": {
+    "actual JVM restart retains all seven completed sites": true,
+    "actual restart retains completed research": true,
+    "actual restart does not debit materials again": true,
+    "actual restart resumes working grid": true,
+    "restart and visual scenario completed": true
+  },
+  "allPassed": true,
+  "ticks": 799,
+  "phase": 0
+}

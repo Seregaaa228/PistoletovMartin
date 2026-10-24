@@ -1,0 +1,1058 @@
+{
+  "audit_date": "2026-10-24",
+  "scope": "Read-only provenance comparison; no builds, installations or game launches performed by this audit. Only this JSON and companion Markdown written.",
+  "runtime": {
+    "minecraft": "1.20.1",
+    "forge": "47.4.0",
+    "java": 17
+  },
+  "installed_inventory": [
+    {
+      "file": "architectury-9.2.14-forge.jar",
+      "bytes": 580602,
+      "sha256": "218b471d0b8a1f6cda14cfc1beb9eeb0df54304500acc6c5613d9b88ec65d9af",
+      "metadata": {
+        "license": "GNU LGPLv3",
+        "modLoader": "javafml",
+        "loaderVersion": "[46,)",
+        "mods": [
+          {
+            "modId": "architectury",
+            "version": "9.2.14",
+            "displayName": "Architectury",
+            "authors": "shedaniel"
+          }
+        ],
+        "metadata_text": "modLoader = \"javafml\"\nloaderVersion = \"[46,)\"\nissueTrackerURL = \"https://github.com/shedaniel/architectury/issues\"\nlicense = \"GNU LGPLv3\"\n\n[[mods]]\nmodId = \"architectury\"\nversion = \"9.2.14\"\ndisplayName = \"Architectury\"\nauthors = \"shedaniel\"\ndescription = '''\nA intermediary api aimed to ease developing multiplatform mods.\n'''\nlogoFile = \"icon.png\"\nlicense = \"LGPL-3\"\n\n[[dependencies.architectury]]\nmodId = \"minecraft\"\nmandatory = true\nversionRange = \"[1.20,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n\n[[dependencies.architectury]]\nmodId = \"forge\"\nmandatory = true\nversionRange = \"[46,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n"
+      },
+      "bundled_notices": [],
+      "manifest_text": "Manifest-Version: 1.0\r\nMixinConfigs: architectury.mixins.json,architectury-common.mixins.json\r\n\r\n"
+    },
+    {
+      "file": "cloth-config-11.1.136-forge.jar",
+      "bytes": 1181413,
+      "sha256": "1e895e85cf5b1e1905ef3178ec155c8badfe22a1577b92c09143a5aa1f4ce0f2",
+      "metadata": {
+        "license": "GNU LGPLv3",
+        "modLoader": "javafml",
+        "loaderVersion": "[34,)",
+        "mods": [
+          {
+            "modId": "cloth_config",
+            "version": "11.1.136",
+            "displayName": "Cloth Config v10 API"
+          }
+        ],
+        "metadata_text": "modLoader = \"javafml\"\nloaderVersion = \"[34,)\"\nissueTrackerURL = \"https://github.com/architectury/ClothConfig/issues/\"\ndisplayURL = \"https://www.curseforge.com/minecraft/mc-mods/cloth-config-forge/\"\nlogoFile = \"icon.png\"\nauthors = \"shedaniel\"\nlicense = \"GNU LGPLv3\"\n\n[[mods]]\nmodId = \"cloth_config\"\nversion = \"11.1.136\"\ndisplayName = \"Cloth Config v10 API\"\ndescription = '''\nAn API for config screens.\n'''\n\n[[dependencies.cloth_config]]\nmodId = \"forge\"\nmandatory = true\nversionRange = \"[45,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n"
+      },
+      "bundled_notices": [
+        {
+          "entry": "LICENSE.md",
+          "sha256": "c084d3d0560c3731716fc2f2d7993647953810bba5d880e2aa2290d1c66d18d6"
+        }
+      ],
+      "manifest_text": "Manifest-Version: 1.0\r\n\r\n"
+    },
+    {
+      "file": "curios-forge-5.14.1+1.20.1.jar",
+      "bytes": 398066,
+      "sha256": "1e817919a35b37cf30524aaec73f0ca5130452f23f168f844854df282eb8e51f",
+      "metadata": {
+        "license": "LGPL-3.0-or-later",
+        "modLoader": "javafml",
+        "loaderVersion": "[41,)",
+        "mods": [
+          {
+            "modId": "curios",
+            "version": "${file.jarVersion}",
+            "displayName": "Curios API",
+            "authors": "C4",
+            "displayURL": "https://www.curseforge.com/minecraft/mc-mods/curios"
+          }
+        ],
+        "metadata_text": "modLoader=\"javafml\"\r\nloaderVersion=\"[41,)\"\r\nlicense=\"LGPL-3.0-or-later\"\r\nissueTrackerURL=\"https://github.com/TheIllusiveC4/Curios/issues\"\r\nlogoFile=\"curios_icon.png\"\r\nlogoBlur=false\r\n[[mods]]\r\nmodId=\"curios\"\r\nversion=\"${file.jarVersion}\"\r\ndisplayName=\"Curios API\"\r\ndisplayURL=\"https://www.curseforge.com/minecraft/mc-mods/curios\"\r\nauthors=\"C4\"\r\ndescription='''\r\nA flexible and expandable accessory/equipment API for users and developers.\r\n'''\r\n[[dependencies.curios]]\r\n    modId=\"forge\"\r\n    mandatory=true\r\n    versionRange=\"[46,)\"\r\n    ordering=\"NONE\"\r\n    side=\"BOTH\"\r\n[[dependencies.curios]]\r\n    modId=\"minecraft\"\r\n    mandatory=true\r\n    versionRange=\"[1.20,1.21)\"\r\n    ordering=\"NONE\"\r\n    side=\"BOTH\"\r\n[modproperties.curios]\r\n    catalogueImageIcon=\"curios_icon.png\""
+      },
+      "bundled_notices": [
+        {
+          "entry": "licenses/LICENSE",
+          "sha256": "1f2e9f9bb0335f0a895b6e3e15e67c75d0f81fb7a3fa95aa9756d4a29b6a3564"
+        }
+      ],
+      "manifest_text": "Manifest-Version: 1.0\r\nSpecification-Title: curios\r\nSpecification-Vendor: C4\r\nSpecification-Version: 1\r\nImplementation-Title: curios\r\nImplementation-Version: 5.14.1+1.20.1\r\nImplementation-Vendor: C4\r\nImplementation-Timestamp: 2025-04-13T06:09:21-0700\r\nMixinConfigs: curios.mixins.json\r\n\r\n"
+    },
+    {
+      "file": "dsm-0.9.0.jar",
+      "bytes": 29361882,
+      "sha256": "e4a9ce6f27b53228e10e20ac2f18400f82d3d2ffcd36486fcaddf588a411ccc9",
+      "metadata": {
+        "license": "All Rights Reserved",
+        "modLoader": "javafml",
+        "loaderVersion": "[47,)",
+        "mods": [
+          {
+            "modId": "deepstrike",
+            "version": "0.9.0",
+            "displayName": "DeepStrike"
+          }
+        ],
+        "metadata_text": "modLoader=\"javafml\"\nloaderVersion=\"[47,)\"\nlicense=\"All Rights Reserved\"\n[[mods]]\nmodId=\"deepstrike\"\nversion=\"0.9.0\"\ndisplayName=\"DeepStrike\"\ndescription='''DeepStrike precision missile strike and launcher systems with Xaero or JourneyMap targeting.'''\n[[dependencies.deepstrike]]\n    modId=\"forge\"\n    mandatory=true\n    versionRange=\"[47,)\"\n    ordering=\"NONE\"\n    side=\"BOTH\"\n[[dependencies.deepstrike]]\n    modId=\"minecraft\"\n    mandatory=true\n    versionRange=\"[1.20.1,1.21)\"\n    ordering=\"NONE\"\n    side=\"BOTH\"\n[[dependencies.deepstrike]]\n    modId=\"superbwarfare\"\n    mandatory=true\n    versionRange=\"[0.8.9.1,)\"\n    ordering=\"AFTER\"\n    side=\"BOTH\"\n[[dependencies.deepstrike]]\n    modId=\"geckolib\"\n    mandatory=true\n    versionRange=\"[4.4.6,)\"\n    ordering=\"AFTER\"\n    side=\"BOTH\"\n[[dependencies.deepstrike]]\n    modId=\"xaeroworldmap\"\n    mandatory=false\n    versionRange=\"[1.0.0,)\"\n    ordering=\"AFTER\"\n    side=\"CLIENT\"\n[[dependencies.deepstrike]]\n    modId=\"xaerominimap\"\n    mandatory=false\n    versionRange=\"[1.0.0,)\"\n    ordering=\"AFTER\"\n    side=\"CLIENT\"\n\n[[dependencies.deepstrike]]\n    modId=\"journeymap\"\n    mandatory=false\n    versionRange=\"[1.20.1-6.0.0,1.20.1-7),[5.10.3,7)\"\n    ordering=\"AFTER\"\n    side=\"CLIENT\"\n"
+      },
+      "bundled_notices": [],
+      "manifest_text": "Manifest-Version: 1.0\r\nMixinConfigs: deepstrike.mixins.json\r\n\r\n"
+    },
+    {
+      "file": "embeddium-0.3.31+mc1.20.1.jar",
+      "bytes": 1320675,
+      "sha256": "eed3d1325f2acc2fd4e69bb495e5ccb91d962126ac5330f0582ebc2a3daf47fb",
+      "metadata": {
+        "license": "LGPL-3.0-only",
+        "modLoader": "javafml",
+        "loaderVersion": "[47,)",
+        "mods": [
+          {
+            "modId": "embeddium",
+            "version": "0.3.31+mc1.20.1",
+            "displayName": "Embeddium",
+            "authors": "embeddedt"
+          },
+          {
+            "modId": "rubidium",
+            "version": "0.7.1",
+            "displayName": "Rubidium (Embeddium)"
+          }
+        ],
+        "metadata_text": "modLoader=\"javafml\"\nloaderVersion=\"[47,)\"\nlicense=\"LGPL-3.0-only\"\n[[mods]]\nmodId=\"embeddium\"\nversion=\"0.3.31+mc1.20.1\"\ndisplayName=\"Embeddium\"\nlogoFile=\"icon.png\"\ndescription='''\nEmbeddium is a fork of Rubidium, a fork of Sodium with patches for Forge\n'''\ncredits=\"embeddedt, NanoLive, CaffeineMC\"\nauthors=\"embeddedt\"\n\n[[mods]]\nmodId = \"rubidium\"\nversion = \"0.7.1\"\ndisplayName = \"Rubidium (Embeddium)\"\ndescription = '''\nStub, to allow mods detecting Rubidium to function as expected.\n'''\n\n# Enforce new enough Oculus\n[[dependencies.embeddium]]\nmodId = \"oculus\"\nmandatory = false\nversionRange = \"(1.6.15,)\"\nordering = \"BEFORE\"\nside = \"CLIENT\"\n\n# The new config screen supersedes TexTrue's Embeddium Options\n[[dependencies.embeddium]]\nmodId = \"textrues_embeddium_options\"\nmandatory = false\nversionRange = \"[0.0.0-NOT-COMPATIBLE]\"\nordering = \"BEFORE\"\nside = \"CLIENT\""
+      },
+      "bundled_notices": [
+        {
+          "entry": "COPYING",
+          "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+        },
+        {
+          "entry": "COPYING.LESSER",
+          "sha256": "e3a994d82e644b03a792a930f574002658412f62407f5fee083f2555c5f23118"
+        }
+      ],
+      "manifest_text": "Manifest-Version: 1.0\r\nMixinConfigs: embeddium.mixins.json\r\n\r\n"
+    },
+    {
+      "file": "ferritecore-6.0.1-forge.jar",
+      "bytes": 123034,
+      "sha256": "9c2c9396a49e796d88497758caa4637d2bcbb433c318e2dd9cebcffbaf0f6c54",
+      "metadata": {
+        "license": "MIT",
+        "modLoader": "javafml",
+        "loaderVersion": "[28,)",
+        "mods": [
+          {
+            "modId": "ferritecore",
+            "version": "${file.jarVersion}",
+            "displayName": "Ferrite Core",
+            "authors": "malte0811"
+          }
+        ],
+        "metadata_text": "modLoader = \"javafml\"\nloaderVersion = \"[28,)\"\n\nlicense = \"MIT\"\n[[mods]]\nmodId = \"ferritecore\"\nversion = \"${file.jarVersion}\"\ndisplayName = \"Ferrite Core\"\nauthors = \"malte0811\"\ndescription = '''\nReduces memory usage.\n'''\nlogoFile = \"logo.png\"\n[[dependencies.ferritecore]]\nmodId = \"forge\"\nmandatory = true\nversionRange = \"[46.0.1,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n[[dependencies.ferritecore]]\nmodId = \"minecraft\"\nmandatory = true\nversionRange = \"[1.20,1.21)\"\nordering = \"NONE\"\nside = \"BOTH\"\n"
+      },
+      "bundled_notices": [],
+      "manifest_text": "Manifest-Version: 1.0\r\nSpecification-Title: FerriteCore\r\nSpecification-Vendor: malte0811\r\nSpecification-Version: 6.0.1\r\nImplementation-Title: Forge\r\nImplementation-Version: 6.0.1\r\nImplementation-Vendor: malte0811\r\nImplementation-Timestamp: 2023-10-22T15:27:07+0200\r\nTimestampe: 1697981227214\r\nBuilt-On-Java: 17.0.8.1+1 (Eclipse Adoptium)\r\nBuild-On-Minecraft: 1.20.1\r\nMixinConfigs: ferritecore.predicates.mixin.json,ferritecore.fastmap.mixi\r\n n.json,ferritecore.mrl.mixin.json,ferritecore.dedupmultipart.mixin.json\r\n ,ferritecore.blockstatecache.mixin.json,ferritecore.dedupbakedquad.mixi\r\n n.json,ferritecore.threaddetec.mixin.json,ferritecore.modelsides.mixin.\r\n json\r\n\r\nName: malte0811/ferritecore/mixin/config/FerriteMixinConfig$LithiumSuppo\r\n rtState.class\r\nSHA-256-Digest: Mmah+ezNWIPE7wNCVV5oucF4OIAl2QnnE70XlrZqYgQ=\r\n\r\nName: malte0811/ferritecore/mixin/mrl/Config.class\r\nSHA-256-Digest: M71Y/DrL29YDHnCa/zj7cJ0HgBxVmuPdqs7AITEU6JI=\r\n\r\nName: malte0811/ferritecore/mixin/predicates/Config.class\r\nSHA-256-Digest: kuYzB7/thJ1XgFbJOwnb3Qk/mHAHu0aLDbxG2j/Qu8k=\r\n\r\nName: malte0811/ferritecore/mixin/predicates/AndConditionMixin.class\r\nSHA-256-Digest: qhHDZw8lQBusQss72pPVLuNcoo3rKh0UaVUWrBLsyDw=\r\n\r\nName: googleaccess/com/google/common/collect/FerriteCoreImmutableMapAcce\r\n ss.class_manual\r\nSHA-256-Digest: t70MgtPNgXCq2+I6zXjBb4G5zEXBAo5RiFkiHbvnJvM=\r\n\r\nName: malte0811/ferritecore/fastmap/PropertyIndexer$1.class\r\nSHA-256-Digest: uBvc5KCdi3uWgSBG+EtiHddvIexYzwaANClcrmbyTWo=\r\n\r\nName: malte0811/ferritecore/mixin/blockstatecache/SliceShapeAccess.class\r\nSHA-256-Digest: jYTuOL/0b9MH18Wqjnh69jh9I5yeBzUVV2puLLdXPEs=\r\n\r\nName: malte0811/ferritecore/util/Constants.class\r\nSHA-256-Digest: sfiJdTkiIi2CMqs504kcmT/P+agY7ZBxFgMg/C7MvI4=\r\n\r\nName: malte0811/ferritecore/util/SmallThreadingDetector$GlobalCrashHandl\r\n er.class\r\nSHA-256-Digest: a0tD7kruCA+lnxYXaScXzn1tizKfymlFblqo9dF9QgY=\r\n\r\nName: malte0811/ferritecore/mixin/config/FerriteConfig.class\r\nSHA-256-Digest: VW4xpkI2XfvV1XqIo9iknd9u1suZA0WpGxOVNm7b9To=\r\n\r\nName: malte0811/ferritecore/hash/SliceShapeHash.class\r\nSHA-256-Digest: uMnTG3yCKQNHh0FbpQp7HnmYOxokqsfcNWqSa80d0g8=\r\n\r\nName: malte0811/ferritecore/mixin/blockstatecache/VoxelShapeAccess.class\r\nSHA-256-Digest: gFqKvo8VTZfHjRd/ohrm/okMN1aiDs9sUWceWEcpz+U=\r\n\r\nName: malte0811/ferritecore/mixin/threaddetec/PalettedContainerMixin.cla\r\n ss\r\nSHA-256-Digest: maeELUA/N98M1RMmL5/rBdl9cO/cYKdnr9gZ6prCQ3M=\r\n\r\nName: malte0811/ferritecore/ducks/FastMapStateHolder.class\r\nSHA-256-Digest: rqcn6pI+2XnCpxVZKpZ7E9SFIMUCrxTCkD1+bv9Wh5M=\r\n\r\nName: malte0811/ferritecore/mixin/blockstatecache/DiscreteVSAccess.class\r\nSHA-256-Digest: 2k6FxKoIIFSiGaNRlCzRSM5TRkcT1WH+vHdZAOP0+fo=\r\n\r\nName: malte0811/ferritecore/impl/Deduplicator$1.class\r\nSHA-256-Digest: jCZqiX80tEpO551vvida/BXYUFCONjXe4RmqnnrkSgA=\r\n\r\nName: malte0811/ferritecore/fastmap/immutable/FastMapValueSet$1.class\r\nSHA-256-Digest: kDoRXgFxqdzyKZBQl6h/oMSqQc+LfM1lZ5rllnS/yXs=\r\n\r\nName: ferritecore.dedupmultipart.mixin.json\r\nSHA-256-Digest: GAjYdav9M6h2SeHxLXCgrHVPRcxl37Hk7v+EMX/dxp4=\r\n\r\nName: malte0811/ferritecore/ducks/BlockStateCacheAccess.class\r\nSHA-256-Digest: RTw8IBYIkaCTpWV60uhrTZrN5t0PH+n9dgvE/P4ZRE4=\r\n\r\nName: malte0811/ferritecore/fastmap/PropertyIndexer$WeirdVanillaDirectio\r\n nIndexer.class\r\nSHA-256-Digest: SkNq7lcUeG12jDdyNQQyn90307mozXtBwFh3EI1pnOQ=\r\n\r\nName: malte0811/ferritecore/mixin/platform/ConfigFileHandler.class\r\nSHA-256-Digest: F4nJkSBMH3ng4DsZkN7buGQ64Awu39t4is4KWm5JwQ4=\r\n\r\nName: malte0811/ferritecore/fastmap/BinaryFastMapKey.class\r\nSHA-256-Digest: OeT/BSx16u0mCxSFf+bC7+ss13ikIpl+TWQ8Hc8ppes=\r\n\r\nName: malte0811/ferritecore/fastmap/table/NeighborTableBase.class\r\nSHA-256-Digest: sBx+HOJra0vVKr2UL4cu8eEuDntVs6rlGExwCYdEp14=\r\n\r\nName: malte0811/ferritecore/mixin/config/FerriteMixinConfig.class\r\nSHA-256-Digest: UOoeZGZAQfXoee5Fwf+zNZxwMelG3ue9TjQq1WhfvQw=\r\n\r\nName: malte0811/ferritecore/mixin/dedupbakedquad/BakedQuadAccess.class\r\nSHA-256-Digest: 9r6VbIt3V3JntOVumBh9rK7wVdLpck4IfnPDaOcyJ7o=\r\n\r\nName: malte0811/ferritecore/mixin/fastmap/FastMapStateHolderMixin.class\r\nSHA-256-Digest: RY8/7C7VzKabox44Jit+g3gyoB38VOWV2/qkk8KMCtw=\r\n\r\nName: ferritecore.blockstatecache.mixin.json\r\nSHA-256-Digest: AAG1PJNmRx9y6em1eZh2KtsIOj9NDVfIJSqGW11cXVg=\r\n\r\nName: malte0811/ferritecore/fastmap/CompactFastMapKey.class\r\nSHA-256-Digest: OvU2SHNO5yLKAG794RuO+3ZzBYmBTqNCokYKP9fMJ5c=\r\n\r\nName: ferritecore.threaddetec.mixin.json\r\nSHA-256-Digest: H7R6Qm/cNCDWA0ZGK+pLBiMBYFmEVSza8dL72dOm0a4=\r\n\r\nName: malte0811/ferritecore/mixin/dedupmultipart/Config.class\r\nSHA-256-Digest: 1N5jwKQbuqYiySwXLbi0ebYkv6o5P+MuLzDoMY0xUEI=\r\n\r\nName: malte0811/ferritecore/impl/ModelSidesImpl.class\r\nSHA-256-Digest: /2Y2HnlYnZG/uSPHVmQ42j8QvuTpQARcZ2KNjpH07H0=\r\n\r\nName: ferritecore.fastmap.mixin.json\r\nSHA-256-Digest: v/4D8CoHZVx9AzEQc2MsUkMX07AJ64vPgVtlXrrFLFo=\r\n\r\nName: malte0811/ferritecore/util/SmallThreadingDetector.class\r\nSHA-256-Digest: nESfjVKOZsNo1PhXq8ktUCCB0EKKznBQdSEEOfKKrpI=\r\n\r\nName: ferritecore.refmap.json\r\nSHA-256-Digest: 5fG52yGcL1gpxKQgU2QfwyxNFv9Iw7vsrwEHwoDT5j4=\r\n\r\nName: googleaccess/com/google/common/collect/FerriteCoreImmutableCollect\r\n ionAccess.class_manual\r\nSHA-256-Digest: Vf/sPDp7psYjbSeeFfm29JYuuggryC+kzNLgkOwXHLg=\r\n\r\nName: malte0811/ferritecore/util/PredicateHelper.class\r\nSHA-256-Digest: V+vsCIoTJViyKARDl82i5y6OAMVkvWEpcuWVO32du/s=\r\n\r\nName: malte0811/ferritecore/fastmap/immutable/FastMapEntryIterator.class\r\nSHA-256-Digest: TFbZvUVIB5WSHKBRazO4Ipsi20pO+JgN7pUZH29PZbQ=\r\n\r\nName: malte0811/ferritecore/mixin/dedupbakedquad/SimpleModelBuilderMixin\r\n .class\r\nSHA-256-Digest: rAVKM4/1WL1mzqFc+jX9Eggtb8WiLzlr7cMTlYOrP+g=\r\n\r\nName: ferritecore.modelsides.mixin.json\r\nSHA-256-Digest: nhAdomk4ispUcDTUJd7YzkIxLvLSpmxWX2HeNMd2Yo0=\r\n\r\nName: googleaccess/com/google/common/collect/FerriteCoreEntrySetAccess.c\r\n lass_manual\r\nSHA-256-Digest: /rxMarHU28nqLNMYixw2DdRY3O/mftv5v4sCEYGQb7I=\r\n\r\nName: malte0811/ferritecore/ModClientForge.class\r\nSHA-256-Digest: FFQjLvi0waIsRH2XSevfSLegn/aeWOYA5jQBNI3yxO4=\r\n\r\nName: malte0811/ferritecore/mixin/mrl/ResourceLocationAccess.class\r\nSHA-256-Digest: RM7qtFw7ntTuAxt9/+6eKtqu2+d3rLyLC/BBbYN/xvU=\r\n\r\nName: malte0811/ferritecore/fastmap/PropertyIndexer$BoolIndexer.class\r\nSHA-256-Digest: LacLMUESoOEK5JRdNZkFqwI38vzwdIuK/lsrRxFnAf8=\r\n\r\nName: malte0811/ferritecore/mixin/blockstatecache/BlockStateCacheMixin.c\r\n lass\r\nSHA-256-Digest: brfiPfZmXFuI5cZemQrnm/eKzv0O7E2np3xIPIwbmDs=\r\n\r\nName: malte0811/ferritecore/mixin/blockstatecache/BitSetDVSAccess.class\r\nSHA-256-Digest: SVxkcv9spoP4PaDvKzL5h4NwU3JUtAunmnsEcqxqRtc=\r\n\r\nName: pack.mcmeta\r\nSHA-256-Digest: kK9pkOJ+w3PTlq9AWSAfVFW5MIwA6hnO5ZYUBOpIDYg=\r\n\r\nName: malte0811/ferritecore/PlatformHooks.class\r\nSHA-256-Digest: cAUMweGe4zC/CJ3tkL0DkcxBQBa5L7oP2rutDI/YJgM=\r\n\r\nName: malte0811/ferritecore/hash/ArrayVoxelShapeHash.class\r\nSHA-256-Digest: qAiQ2IGlKrGW35/C+7TiipudlzQRz1wZJQ4x0dCcgRQ=\r\n\r\nName: malte0811/ferritecore/mixin/threaddetec/Config.class\r\nSHA-256-Digest: fUSkBVI7ykzju94IbcLV+xg2l1+2euKTna/zHMgWZ5g=\r\n\r\nName: malte0811/ferritecore/mixin/modelsides/SimpleBakedModelMixin.class\r\nSHA-256-Digest: 1loy7c8TF+iZadfUff6lg1wZUrypZjhkOGQCWlsuNYo=\r\n\r\nName: malte0811/ferritecore/hash/DiscreteVSHash.class\r\nSHA-256-Digest: sKtuyBdQgSOF+DG5zZik5gfe7BTdXQJbrMg1DkxO4ZI=\r\n\r\nName: malte0811/ferritecore/hash/LambdaBasedHash.class\r\nSHA-256-Digest: nZhbp8+UBSJpYVzu35DXB67X964QNfsSVNGnX3hahs0=\r\n\r\nName: ferritecore.predicates.mixin.json\r\nSHA-256-Digest: PdmrknCj7l0CddV1RtM7n69ghfPA7f8zU6ky7sCsHTw=\r\n\r\nName: malte0811/ferritecore/mixin/config/FerriteConfig$ConfigBuilder.cla\r\n ss\r\nSHA-256-Digest: 9gMWGS1le3Bdfn1QCHswH1piXrfnfeZmxXeF7Fak0DI=\r\n\r\nName: META-INF/mods.toml\r\nSHA-256-Digest: vHNa4XgCjunYw87cLp0PAWgkYvCLMLN8mfHHpsK4ZZg=\r\n\r\nName: malte0811/ferritecore/ModMainForge.class\r\nSHA-256-Digest: 9Zv0zcfKLn/hBFeUmMjfGATw+GwHd8H7Fo1+OXFkyLk=\r\n\r\nName: malte0811/ferritecore/fastmap/immutable/FastMapValueSet.class\r\nSHA-256-Digest: 4jNJuTzOc+71b4GgiSPcFXDXXmZd+7x9wtLjnqaCoJY=\r\n\r\nName: malte0811/ferritecore/fastmap/immutable/FastMapEntryEntrySet.class\r\nSHA-256-Digest: lTaMbHM3RQwyZli1isf2UVAomNOoWofRqSklC5VPrJs=\r\n\r\nName: ferritecore.dedupbakedquad.mixin.json\r\nSHA-256-Digest: ILah5qb3E+IPJ7bR+l4tKhBoTVmzMkE72a1XU5aKIF0=\r\n\r\nName: malte0811/ferritecore/util/SmallThreadingDetector$ThreadRole.class\r\nSHA-256-Digest: UH3cw1Vbp24pXhRP2SH2dw7thXQIW1XJh87LzIvn5YM=\r\n\r\nName: malte0811/ferritecore/mixin/blockstatecache/Config.class\r\nSHA-256-Digest: hLb+iCLfM8LjA23bAKbJj49MwH0N4neoeU5vxILf4jU=\r\n\r\nName: malte0811/ferritecore/IPlatformHooks.class\r\nSHA-256-Digest: aBDEcNJGbvPZQtAeVE7+/wj5J7BNe1C1FydJwzffggM=\r\n\r\nName: malte0811/ferritecore/mixin/config/FerriteMixinConfig$1.class\r\nSHA-256-Digest: K0LGx+sfAUSWL6OYve7JfqZojjDRGyIfTkoVoD0HQuI=\r\n\r\nName: malte0811/ferritecore/mixin/dedupmultipart/MixinMultipartBuilder.c\r\n lass\r\nSHA-256-Digest: QXlIHIfFbWseNEt3GzodqlufGsgGAigobJjfREWwsto=\r\n\r\nName: malte0811/ferritecore/fastmap/table/FastmapNeighborTable.class\r\nSHA-256-Digest: Tm0PAWwGW6tPZaR7kOeRZINlSJu3mVwrvH6yEBnPMQw=\r\n\r\nName: malte0811/ferritecore/mixin/fastmap/Config.class\r\nSHA-256-Digest: gNn+k6/TH5VT2smDc5FOOSG7ZhUR1KfHAXcytAAV9wg=\r\n\r\nName: malte0811/ferritecore/hash/VoxelShapeHash.class\r\nSHA-256-Digest: 9aobG2DZ2L0He7zintZumh/vrFB3FoOy+TQa7wWhLXM=\r\n\r\nName: malte0811/ferritecore/mixin/predicates/OrConditionMixin.class\r\nSHA-256-Digest: hJRRWtEynMNpGcpBf43Ejpd+QRL2Me4LKakpzTiUOhA=\r\n\r\nName: logo.png\r\nSHA-256-Digest: A2wl8V/0e+TNbofFhnSjC0mTNkZcG30SrPLqZ80CYH4=\r\n\r\nName: malte0811/ferritecore/classloading/FastImmutableMapDefiner.class\r\nSHA-256-Digest: LQyx77Tac/ovFR836EBly18G/RfSMAS7p3rnDiy4e44=\r\n\r\nName: malte0811/ferritecore/impl/BlockStateCacheImpl.class\r\nSHA-256-Digest: 8XB0BdrfXMwNkRB2Zsxr38t3wPyuwbC6FaCdL730TAE=\r\n\r\nName: ferritecore.mrl.mixin.json\r\nSHA-256-Digest: wda2ce9+h+Yh3aLugUvdLQkIqyeHpZe5SZU/BeMB0Gs=\r\n\r\nName: malte0811/ferritecore/fastmap/PropertyIndexer$GenericIndexer.class\r\nSHA-256-Digest: oGhjjQLotdBN0ewIKJhF4Jc2JdNOVxOwnp/eVcPMfAA=\r\n\r\nName: malte0811/ferritecore/mixin/predicates/KeyValueConditionMixin.clas\r\n s\r\nSHA-256-Digest: NfwwS+VEyEjuDrf2zcuD6DmlrfN71izfBwE6SINO9ns=\r\n\r\nName: malte0811/ferritecore/impl/Deduplicator.class\r\nSHA-256-Digest: EFh18H8k6gxwHO6aXKQQF+GtZQNNAcM0J+Bl5BC08aE=\r\n\r\nName: malte0811/ferritecore/fastmap/PropertyIndexer$IntIndexer.class\r\nSHA-256-Digest: MFV//QbtCgwN8A0ecb6qEind9tkUUBTioukEGOPaStA=\r\n\r\nName: malte0811/ferritecore/mixin/dedupmultipart/MixinMultipartModel.cla\r\n ss\r\nSHA-256-Digest: iKH8a/1CVWDLDaIvKDZ7s21laOsTXLBr2ebrZHjUNvg=\r\n\r\nName: malte0811/ferritecore/fastmap/table/CrashNeighborTable.class\r\nSHA-256-Digest: UKcKSydBcnZg7bygvAHQOKDFB3dMFb2jW5P50pj7jvo=\r\n\r\nName: malte0811/ferritecore/fastmap/PropertyIndexer$EnumIndexer.class\r\nSHA-256-Digest: PKPRpAZgVkRuFubbQqFMi39Jpo9O0RmPetGBUZ49NR0=\r\n\r\nName: malte0811/ferritecore/mixin/config/FerriteConfig$Option.class\r\nSHA-256-Digest: flzUTwVxfIstUEQPPHa8ebuAuF5/VkNy6rvOabDMaag=\r\n\r\nName: malte0811/ferritecore/fastmap/FastMapKey.class\r\nSHA-256-Digest: 8hrZ60/uGwmHTd2Vu8w/5S9MK+dexn8IVXcZU5u7ms4=\r\n\r\nName: malte0811/ferritecore/util/SmallThreadingDetector$CrashingState.cl\r\n ass\r\nSHA-256-Digest: 8E+Bqxh9tKGNFjancwjScFuEW6EfJSFGv5hP2pT52BU=\r\n\r\nName: malte0811/ferritecore/fastmap/PropertyIndexer.class\r\nSHA-256-Digest: jtK7DqZCaDBSO3lHov9D03fV4sF/+So8VXbgwaHnvy0=\r\n\r\nName: malte0811/ferritecore/fastmap/immutable/FastMapEntryEntrySet$1.cla\r\n ss\r\nSHA-256-Digest: dhP4x+DEf3vlTtbgfwXfE0fY0PeSjSpsz8wLIwPjQOM=\r\n\r\nName: malte0811/ferritecore/mixin/modelsides/Config.class\r\nSHA-256-Digest: X/T/9P2D0crTfNNP5dRwq6kkBej3cCSwV/KmRAEer0c=\r\n\r\nName: malte0811/ferritecore/fastmap/FastMap.class\r\nSHA-256-Digest: 4K2UJRGhwqSPYuaLf0DDVii2TblkFR/l4XLMYo3HBsE=\r\n\r\nName: malte0811/ferritecore/mixin/blockstatecache/SubShapeAccess.class\r\nSHA-256-Digest: yEoYU2q4pNyTHSSRvH6WLM3ckndW0AUqi9j2wWzhx0o=\r\n\r\nName: malte0811/ferritecore/fastmap/immutable/FastMapEntryImmutableMap.c\r\n lass\r\nSHA-256-Digest: nSLkLnIVnf1Y91VNFHIQ5ibRWFEEomsiblwuTx+nTxY=\r\n\r\nName: malte0811/ferritecore/mixin/blockstatecache/ArrayVSAccess.class\r\nSHA-256-Digest: jW8BAEucjShslj8ElpxnPGdyFosA5Wv4qRA8BCNCENk=\r\n\r\nName: roadrunner.overrides.properties\r\nSHA-256-Digest: hhRWwF7kwSo7jVYG2nDJE1cSNOWPoEBakAanOUiJpMU=\r\n\r\nName: malte0811/ferritecore/classloading/FastImmutableMapDefiner$Definer\r\n .class\r\nSHA-256-Digest: +ppAsUK6kwq9G3WLzM2q+AB2FBIQnOcK/xvl8eSF2wM=\r\n\r\nName: malte0811/ferritecore/mixin/blockstatecache/BlockStateBaseMixin.cl\r\n ass\r\nSHA-256-Digest: ffReZ8q5yuD/jvjSrAnqXQmh9Uw5L50LujnKtuBaAM0=\r\n\r\nName: malte0811/ferritecore/ducks/SmallThreadDetectable.class\r\nSHA-256-Digest: ZTb+EN2VAVWwBng7uWnxoSbvOKV9qoPNMgNIRbUNmZM=\r\n\r\nName: malte0811/ferritecore/impl/KeyValueConditionImpl.class\r\nSHA-256-Digest: u3gCnckeslWgJWeVmaxzGBYYrE3B06bRgMiKRyNL7eY=\r\n\r\nName: malte0811/ferritecore/impl/StateHolderImpl.class\r\nSHA-256-Digest: hZMlzmXHpU8qVgtlO/kxqnyq3CQdIQAH0dXxHOfY1+I=\r\n\r\nName: malte0811/ferritecore/mixin/mrl/ModelResourceLocationMixin.class\r\nSHA-256-Digest: QdVzgWi3qx1Ox+zUifvnbNjD2RN4pQTO6SEx+SvKA9M=\r\n\r\nName: malte0811/ferritecore/mixin/dedupbakedquad/Config.class\r\nSHA-256-Digest: yE5LKe8KOrspB5cMKbIc2NCbcEITCyVr+pncFaPVqmo=\r\n\r\n"
+    },
+    {
+      "file": "frontier-arcade-style-1.1.0.jar",
+      "bytes": 308675,
+      "sha256": "58990022bdfb438981a42f8827c1fefa003b0972418ad82b80f91f6a7e89c04d",
+      "metadata": {
+        "license": "MIT",
+        "modLoader": "javafml",
+        "loaderVersion": "[47,)",
+        "mods": [
+          {
+            "modId": "frontier_ifv",
+            "version": "1.1.0",
+            "displayName": "Frontier · Единый аркадный стиль"
+          }
+        ],
+        "metadata_text": "modLoader=\"javafml\"\nloaderVersion=\"[47,)\"\nlicense=\"MIT\"\n\n[[mods]]\nmodId=\"frontier_ifv\"\nversion=\"1.1.0\"\ndisplayName=\"Frontier · Единый аркадный стиль\"\ndisplayTest=\"IGNORE_ALL_VERSION\"\ndescription=\"Единый лёгкий вид рабочей техники Superb Warfare и компактный каталог.\"\n\n[[dependencies.frontier_ifv]]\nmodId=\"forge\"\nmandatory=true\nversionRange=\"[47.4.0,)\"\nordering=\"NONE\"\nside=\"BOTH\"\n\n[[dependencies.frontier_ifv]]\nmodId=\"minecraft\"\nmandatory=true\nversionRange=\"[1.20.1,1.20.2)\"\nordering=\"NONE\"\nside=\"BOTH\"\n\n[[dependencies.frontier_ifv]]\nmodId=\"superbwarfare\"\nmandatory=true\nversionRange=\"[0.8.9,)\"\nordering=\"AFTER\"\nside=\"BOTH\"\n\n[[dependencies.frontier_ifv]]\nmodId=\"frontier_arcade_vehicles\"\nmandatory=true\nversionRange=\"[1.7.0,)\"\nordering=\"AFTER\"\nside=\"BOTH\"\n"
+      },
+      "bundled_notices": [],
+      "manifest_text": "Manifest-Version: 1.0\nMixinConfigs: frontier_style.mixins.json,frontier_style_client.mixins.json\n\n"
+    },
+    {
+      "file": "frontier-arcade-vehicles-1.7.0.jar",
+      "bytes": 282953,
+      "sha256": "2f1c383c1c99fdacfd1549036330a5f91b8b39034ab73500b2ca942a70239b45",
+      "metadata": {
+        "license": "GPL-3.0-only",
+        "modLoader": "javafml",
+        "loaderVersion": "[47,)",
+        "mods": [
+          {
+            "modId": "frontier_arcade_vehicles",
+            "version": "1.7.0",
+            "displayName": "Frontier Arcade Vehicles"
+          }
+        ],
+        "metadata_text": "modLoader=\"javafml\"\nloaderVersion=\"[47,)\"\nlicense=\"GPL-3.0-only\"\n[[mods]]\nmodId=\"frontier_arcade_vehicles\"\nversion=\"1.7.0\"\ndisplayName=\"Frontier Arcade Vehicles\"\ndescription='''BMP crews, native Superb Warfare aviation and drone operations. Legacy vehicle access policy preserves saved-world registries.'''\n[[dependencies.frontier_arcade_vehicles]]\nmodId=\"forge\"\nmandatory=true\nversionRange=\"[47.4.0,48)\"\nordering=\"NONE\"\nside=\"BOTH\"\n[[dependencies.frontier_arcade_vehicles]]\nmodId=\"minecraft\"\nmandatory=true\nversionRange=\"[1.20.1,1.20.2)\"\nordering=\"NONE\"\nside=\"BOTH\"\n[[dependencies.frontier_arcade_vehicles]]\nmodId=\"superbwarfare\"\nmandatory=true\nversionRange=\"[0,)\"\nordering=\"AFTER\"\nside=\"BOTH\"\n[[dependencies.frontier_arcade_vehicles]]\nmodId=\"simpleplanes\"\nmandatory=false\nversionRange=\"[1.20.1-5.3.3]\"\nordering=\"AFTER\"\nside=\"BOTH\"\n[[dependencies.frontier_arcade_vehicles]]\nmodId=\"trajanstanks\"\nmandatory=false\nversionRange=\"[2.4]\"\nordering=\"AFTER\"\nside=\"BOTH\"\n[[dependencies.frontier_arcade_vehicles]]\nmodId=\"trajanscore\"\nmandatory=false\nversionRange=\"[1.7]\"\nordering=\"AFTER\"\nside=\"BOTH\"\n\n[[dependencies.frontier_arcade_vehicles]]\nmodId=\"superbrecruits\"\nmandatory=true\nversionRange=\"[1.115]\"\nordering=\"AFTER\"\nside=\"BOTH\"\n\n[[dependencies.frontier_arcade_vehicles]]\nmodId=\"uncomplicatedfpv\"\nmandatory=true\nversionRange=\"[1.0.1]\"\nordering=\"AFTER\"\nside=\"BOTH\"\n"
+      },
+      "bundled_notices": [
+        {
+          "entry": "META-INF/LICENSE-SBW-data.txt",
+          "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+        },
+        {
+          "entry": "META-INF/NOTICE.txt",
+          "sha256": "0966c29c88fd87519186d2b7d66ac0638c8d4599c74f6e785642ab36d9db28c5"
+        }
+      ],
+      "manifest_text": "Manifest-Version: 1.0\r\nMixinConfigs: frontier_arcade_vehicles.mixins.json\r\n\r\n"
+    },
+    {
+      "file": "frontier-flamingo-launch-fix-1.3.0.jar",
+      "bytes": 29124,
+      "sha256": "28ca51bde23d38c77b0d6f7d7bef4a9dd76c5e3f038ee3850945d245b7242f70",
+      "metadata": {
+        "license": "MIT",
+        "modLoader": "javafml",
+        "loaderVersion": "[47,)",
+        "mods": [
+          {
+            "modId": "frontier_flamingo_launch_fix",
+            "version": "1.3.0",
+            "displayName": "Frontier Flamingo Launch Fix"
+          }
+        ],
+        "metadata_text": "modLoader=\"javafml\"\nloaderVersion=\"[47,)\"\nlicense=\"MIT\"\n[[mods]]\nmodId=\"frontier_flamingo_launch_fix\"\nversion=\"1.3.0\"\ndisplayName=\"Frontier Flamingo Launch Fix\"\ndescription=\"Native launcher compatibility and physical damage, with bounded vanilla missile effects and lightweight multiplayer rendering.\"\n[[dependencies.frontier_flamingo_launch_fix]]\nmodId=\"forge\"\nmandatory=true\nversionRange=\"[47.4.0,48)\"\nordering=\"NONE\"\nside=\"BOTH\"\n[[dependencies.frontier_flamingo_launch_fix]]\nmodId=\"minecraft\"\nmandatory=true\nversionRange=\"[1.20.1]\"\nordering=\"NONE\"\nside=\"BOTH\"\n[[dependencies.frontier_flamingo_launch_fix]]\nmodId=\"deepstrike\"\nmandatory=true\nversionRange=\"[0.9.0]\"\nordering=\"AFTER\"\nside=\"BOTH\"\n[[dependencies.frontier_flamingo_launch_fix]]\nmodId=\"frontier_industry\"\nmandatory=true\nversionRange=\"[0.3.1-alpha,0.5)\"\nordering=\"AFTER\"\nside=\"BOTH\"\n"
+      },
+      "bundled_notices": [],
+      "manifest_text": "Manifest-Version: 1.0\nMixinConfigs: frontier_flamingo_launch_fix.mixins.json\n\n"
+    },
+    {
+      "file": "frontier-industry-1.20.1-0.4.0.jar",
+      "bytes": 548272,
+      "sha256": "aee9da30d4acd474ba638e07a76cafee57e794804449c3e210b1f85411d45c75",
+      "metadata": {
+        "license": "MIT",
+        "modLoader": "javafml",
+        "loaderVersion": "[47,)",
+        "mods": [
+          {
+            "modId": "frontier_industry",
+            "version": "0.4.0",
+            "displayName": "Frontier Industry",
+            "authors": "Frontier Nations contributors"
+          }
+        ],
+        "metadata_text": "modLoader=\"javafml\"\nloaderVersion=\"[47,)\"\nlicense=\"MIT\"\n[[mods]]\nmodId=\"frontier_industry\"\nversion=\"0.4.0\"\ndisplayName=\"Frontier Industry\"\nauthors=\"Frontier Nations contributors\"\ndescription=\"Electricity, factories, workforce, repair and coordinated vehicle/missile operations for Frontier Nations.\"\n[[dependencies.frontier_industry]]\nmodId=\"forge\"\nmandatory=true\nversionRange=\"[47.4.0,48)\"\nordering=\"NONE\"\nside=\"BOTH\"\n[[dependencies.frontier_industry]]\nmodId=\"minecraft\"\nmandatory=true\nversionRange=\"[1.20.1,1.20.2)\"\nordering=\"NONE\"\nside=\"BOTH\"\n[[dependencies.frontier_industry]]\nmodId=\"recruits\"\nmandatory=true\nversionRange=\"[1.15.2,1.16)\"\nordering=\"AFTER\"\nside=\"BOTH\"\n[[dependencies.frontier_industry]]\nmodId=\"tacz\"\nmandatory=true\nversionRange=\"[1.1.8,1.2)\"\nordering=\"AFTER\"\nside=\"BOTH\"\n"
+      },
+      "bundled_notices": []
+    },
+    {
+      "file": "frontier-light-aviation-1.1.0.jar",
+      "bytes": 92361,
+      "sha256": "c85713196801b6abcede4b8eb7dd8e06e5d6f294a83edf44fd682e41d661bad3",
+      "metadata": {
+        "license": "MIT",
+        "modLoader": "javafml",
+        "loaderVersion": "[47,)",
+        "mods": [
+          {
+            "modId": "frontier_aviation",
+            "version": "1.1.0",
+            "displayName": "Frontier Light Aviation"
+          }
+        ],
+        "metadata_text": "modLoader=\"javafml\"\nloaderVersion=\"[47,)\"\nlicense=\"MIT\"\n[[mods]]\nmodId=\"frontier_aviation\"\nversion=\"1.1.0\"\ndisplayName=\"Frontier Light Aviation\"\ndescription=\"Original lightweight Su-25, F-16 and J-10 aircraft using native DeepStrike control, stores and server authorization.\"\n[[dependencies.frontier_aviation]]\nmodId=\"forge\"\nmandatory=true\nversionRange=\"[47.4.0,48)\"\nordering=\"NONE\"\nside=\"BOTH\"\n[[dependencies.frontier_aviation]]\nmodId=\"minecraft\"\nmandatory=true\nversionRange=\"[1.20.1]\"\nordering=\"NONE\"\nside=\"BOTH\"\n[[dependencies.frontier_aviation]]\nmodId=\"deepstrike\"\nmandatory=true\nversionRange=\"[0.9.0]\"\nordering=\"AFTER\"\nside=\"BOTH\"\n[[dependencies.frontier_aviation]]\nmodId=\"superbwarfare\"\nmandatory=true\nversionRange=\"[0.8.9.1]\"\nordering=\"AFTER\"\nside=\"BOTH\"\n"
+      },
+      "bundled_notices": [],
+      "manifest_text": "Manifest-Version: 1.0\nMixinConfigs: frontier_aviation.mixins.json\n\n"
+    },
+    {
+      "file": "frontier-nations-1.20.1-0.1.2-alpha.jar",
+      "bytes": 53877,
+      "sha256": "5fc1374d51ea7e5c931229cf6db5d3a197f6168b9e1a02624f4fb9f9d19abdee",
+      "metadata": {
+        "license": "MIT",
+        "modLoader": "javafml",
+        "loaderVersion": "[47,)",
+        "mods": [
+          {
+            "modId": "frontier_nations",
+            "version": "0.1.2-alpha",
+            "displayName": "Frontier Nations",
+            "authors": "Frontier Nations contributors"
+          }
+        ],
+        "metadata_text": "modLoader=\"javafml\"\nloaderVersion=\"[47,)\"\nlicense=\"MIT\"\n[[mods]]\nmodId=\"frontier_nations\"\nversion=\"0.1.2-alpha\"\ndisplayName=\"Frontier Nations\"\nauthors=\"Frontier Nations contributors\"\ndescription='''Compatibility layer for the Frontier Nations pack: native political map, initial AI countries and TaCZ equipment for ranged Recruits. Original Recruits/Living Villages own all faction and territory state. Experimental alpha.'''\n[[dependencies.frontier_nations]]\nmodId=\"forge\"\nmandatory=true\nversionRange=\"[47.4.0,48)\"\nordering=\"NONE\"\nside=\"BOTH\"\n[[dependencies.frontier_nations]]\nmodId=\"recruits\"\nmandatory=true\nversionRange=\"[1.15.2,1.16)\"\nordering=\"AFTER\"\nside=\"BOTH\"\n[[dependencies.frontier_nations]]\nmodId=\"recruitsvillages\"\nmandatory=true\nversionRange=\"[1.1.0,1.2)\"\nordering=\"AFTER\"\nside=\"BOTH\"\n[[dependencies.frontier_nations]]\nmodId=\"tacz\"\nmandatory=true\nversionRange=\"[1.1.8,1.2)\"\nordering=\"AFTER\"\nside=\"BOTH\"\n[[dependencies.frontier_nations]]\nmodId=\"minecraft\"\nmandatory=true\nversionRange=\"[1.20.1,1.20.2)\"\nordering=\"NONE\"\nside=\"BOTH\"\n\n# Ensure our native drone-attachment data overrides load after Superb Warfare.\n[[dependencies.frontier_nations]]\nmodId=\"superbwarfare\"\nmandatory=false\nversionRange=\"[0,)\"\nordering=\"AFTER\"\nside=\"BOTH\"\n"
+      },
+      "bundled_notices": [
+        {
+          "entry": "META-INF/LICENSE.frontier-nations",
+          "sha256": "1d3ac098da9cdae3e6eb8049adfd4ea504551c92c6a7dcf42f61c794bd04f147"
+        }
+      ],
+      "manifest_text": "Manifest-Version: 1.0\r\nImplementation-Title: Frontier Nations\r\nImplementation-Version: 0.1.2-alpha\r\n\r\n"
+    },
+    {
+      "file": "geckolib-forge-1.20.1-4.8.4.jar",
+      "bytes": 1038209,
+      "sha256": "4518779a31b6c2abb92c98b5ad17ef3d60177df68626bfc86c44de2764913c2b",
+      "metadata": {
+        "license": "MIT",
+        "modLoader": "javafml",
+        "loaderVersion": "[47,)",
+        "mods": [
+          {
+            "modId": "geckolib",
+            "version": "4.8.4",
+            "displayName": "GeckoLib 4",
+            "authors": "Gecko, Eliot, AzureDoom, DerToaster, Tslat, Witixin",
+            "displayURL": "http://geckolib.com/"
+          }
+        ],
+        "metadata_text": "modLoader=\"javafml\"\nloaderVersion=\"[47,)\"\nissueTrackerURL=\"https://github.com/bernie-g/geckolib/issues\"\nlicense=\"MIT\"\n\n[[mods]]\nmodId=\"geckolib\"\nversion=\"4.8.4\"\ndisplayName=\"GeckoLib 4\"\ndisplayURL=\"http://geckolib.com/\"\nlogoFile=\"geckolib.png\" \ncredits=\"Gecko, Eliot, AzureDoom, DerToaster, Tslat, Witixin\"\nauthors=\"Gecko, Eliot, AzureDoom, DerToaster, Tslat, Witixin\"\ndescription='''\nGeckoLib is an animation engine for Minecraft Mods, with support for complex 3D keyframe-based animations, 30+ easings, concurrent animation support, sound and particle keyframes, event keyframes, and more.\n'''\n\n[[dependencies.geckolib]]\n    modId=\"forge\"\n    mandatory=true \n    versionRange=\"[47.1,)\"\n    ordering=\"NONE\"\n    side=\"BOTH\"\n[[dependencies.geckolib]]\n    modId=\"minecraft\"\n    mandatory=true\n    versionRange=\"[1.20.1,)\"\n    ordering=\"NONE\"\n    side=\"BOTH\"\n[[dependencies.geckolib]]\n    modId=\"geckoanimfix\"\n    mandatory=false\n    versionRange=\"[9.removeoculusgeckolibcompat,)\"\n    ordering=\"NONE\"\n    side=\"BOTH\""
+      },
+      "bundled_notices": [
+        {
+          "entry": "LICENSE",
+          "sha256": "5d81eb014c3132e728653bc93bdceb2cdcd0b43c2989a8fbe64a6b08ff866d80"
+        }
+      ],
+      "manifest_text": "Manifest-Version: 1.0\r\nSpecification-Title: GeckoLib 4\r\nSpecification-Vendor: Gecko, Eliot, AzureDoom, DerToaster, Tslat, Witixi\r\n n\r\nSpecification-Version: 4\r\nImplementation-Title: GeckoLib 4 Forge\r\nImplementation-Version: 4.8.4\r\nImplementation-Vendor: Gecko, Eliot, AzureDoom, DerToaster, Tslat, Witix\r\n in\r\nImplementation-Timestamp: 2026-06-20T21:07:15+1000\r\nMixinConfigs: geckolib.mixins.json\r\n\r\n"
+    },
+    {
+      "file": "jei-1.20.1-forge-15.56.0.205.jar",
+      "bytes": 1778129,
+      "sha256": "6b251e60a4719c874da89d750af97aa6498f6f4475e3ae79cb1288c7bf0cb65c",
+      "metadata": {
+        "license": "The MIT License (MIT)",
+        "modLoader": "javafml",
+        "loaderVersion": "[47,)",
+        "mods": [
+          {
+            "modId": "jei",
+            "version": "15.56.0.205",
+            "displayName": "Just Enough Items",
+            "authors": "mezz",
+            "displayURL": "https://www.curseforge.com/minecraft/mc-mods/jei"
+          }
+        ],
+        "metadata_text": "# There are several mandatory fields (#mandatory), and many more that are optional (#optional).\n# The overall format is standard TOML format, v0.5.0.\n# Note that there are a couple of TOML lists in this file.\n# Find more information on toml format here:  https://github.com/toml-lang/toml\n\n# The name of the mod loader type to load - for regular FML @Mod mods it should be javafml\nmodLoader=\"javafml\" #mandatory\n\n# A version range to match for said mod loader - for regular FML @Mod it will be the minecraft version (without the 1.)\nloaderVersion=\"[47,)\" #mandatory\n\n# A URL to refer people to when problems occur with this mod\nissueTrackerURL=\"https://github.com/mezz/JustEnoughItems/issues?q=is%3Aissue\" #optional\n\n# License\nlicense=\"The MIT License (MIT)\"\n\n# A text field displayed in the mod UI\n#credits=\"Thanks for this example mod goes to Java\" #optional\n\n# A list of mods - how many allowed here is determined by the individual mod loader\n[[mods]] #mandatory\n\n# The modid of the mod\nmodId=\"jei\" #mandatory\n\n# The version number of the mod\nversion=\"15.56.0.205\" #mandatory\n\n# A display name for the mod\ndisplayName=\"Just Enough Items\" #mandatory\n\n# A URL for the \"homepage\" for this mod, displayed in the mod UI\ndisplayURL=\"https://www.curseforge.com/minecraft/mc-mods/jei\" #optional\n\n# A URL to query for updates for this mod. See the JSON update specification <here>\n#updateJSONURL=\"\" #optional\n\n# A text field displayed in the mod UI\n# credits=\"\" #optional\n\n# A file name (in the root of the mod JAR) containing a logo for display\nlogoFile=\"jei-icon.png\"\n\n# A text field displayed in the mod UI\nauthors=\"mezz\" #optional\n\n# The description text for the mod (multi line!) (#mandatory)\ndescription='''\nJEI is an item and recipe viewing mod for Minecraft, built from the ground up for stability and performance.\n'''\n\n# A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.\n[[dependencies.jei]]\n    modId=\"forge\" #mandatory\n    mandatory=true #mandatory\n    versionRange=\"[47.0,)\" #mandatory\n    # An ordering relationship for the dependency - BEFORE or AFTER required if the relationship is not mandatory\n    ordering=\"NONE\"\n    # Side this dependency is applied on - BOTH, CLIENT or SERVER\n    side=\"BOTH\"\n\n[[dependencies.jei]]\n    modId=\"minecraft\" #mandatory\n    mandatory=true #mandatory\n    versionRange=\"[1.20.1, 1.20.2)\" #mandatory\n    # An ordering relationship for the dependency - BEFORE or AFTER required if the relationship is not mandatory\n    ordering=\"NONE\"\n    # Side this dependency is applied on - BOTH, CLIENT or SERVER\n    side=\"BOTH\"\n\n[modproperties.jei]\n    catalogueImageIcon=\"jei-icon.png\"\n"
+      },
+      "bundled_notices": [],
+      "manifest_text": "Manifest-Version: 1.0\r\nSpecification-Title: Just Enough Items\r\nSpecification-Vendor: mezz\r\nSpecification-Version: 15.56.0\r\nImplementation-Title: modShadeJar\r\nImplementation-Version: 15.56.0.205\r\nImplementation-Vendor: mezz\r\n\r\n"
+    },
+    {
+      "file": "kotlinforforge-4.12.0-all.jar",
+      "bytes": 7442998,
+      "sha256": "6a66c6a68ec09f8717cdbf06883394f0ee24d7cd826b7134a0f81839e8e720ae",
+      "metadata": {},
+      "bundled_notices": [],
+      "manifest_text": "Manifest-Version: 1.0\r\nAutomatic-Module-Name: thedarkcolour.kotlinforforge\r\nFMLModType: LIBRARY\r\n\r\n",
+      "other_metadata_entries": [],
+      "manifest_only_identity_note": "No top-level META-INF/mods.toml; see manifest_text and upstream lock for language-provider/version identity."
+    },
+    {
+      "file": "mobplayeranimator-forge-1.20.1-1.3.3-all.jar",
+      "bytes": 223397,
+      "sha256": "823554808cbca10866742470b534276910a0634cf695edc9c2cf08913b2293c4",
+      "metadata": {
+        "license": "C0-1.0",
+        "modLoader": "javafml",
+        "loaderVersion": "[47,)",
+        "mods": [
+          {
+            "modId": "mobplayeranimator",
+            "version": "1.3.3",
+            "displayName": "Mob Player Animator",
+            "authors": "Thelnfamous1"
+          }
+        ],
+        "metadata_text": "modLoader = \"javafml\" #mandatory\nloaderVersion = \"[47,)\" #mandatory This is typically bumped every Minecraft version by Forge. See https://files.minecraftforge.net/ for a list of versions.\nlicense = \"C0-1.0\" # Review your options at https://choosealicense.com/.\n#issueTrackerURL=\"https://change.me.to.your.issue.tracker.example.invalid/\" #optional\n[[mods]] #mandatory\nmodId = \"mobplayeranimator\" #mandatory\nversion = \"1.3.3\" #mandatory\ndisplayName = \"Mob Player Animator\" #mandatory\n#updateJSONURL=\"https://change.me.example.invalid/updates.json\" #optional (see https://mcforge.readthedocs.io/en/latest/gettingstarted/autoupdate/)\n#displayURL=\"https://change.me.to.your.mods.homepage.example.invalid/\" #optional (displayed in the mod UI)\nlogoFile = \"mobplayeranimator.png\" #optional (needs to be in the root of your mod jar (root of your 'resources' folder))\ncredits = \"KosmX\" #optional\nauthors = \"Thelnfamous1\" #optional\ndescription = '''An add-on mod to Player Animator that allows it to work with (humanoid) mobs.''' #mandatory (Supports multiline text)\n[[dependencies.mobplayeranimator]] #optional\nmodId = \"forge\" #mandatory\nmandatory = true #mandatory\nversionRange = \"[47,)\" #mandatory\nordering = \"NONE\" # The order that this dependency should load in relation to your mod, required to be either 'BEFORE' or 'AFTER' if the dependency is not mandatory\nside = \"BOTH\" # Side this dependency is applied on - 'BOTH', 'CLIENT' or 'SERVER'\n[[dependencies.mobplayeranimator]]\nmodId = \"minecraft\"\nmandatory = true\nversionRange = \"[1.20.1, 1.21)\"\nordering = \"NONE\"\nside = \"BOTH\"\n[[dependencies.mobplayeranimator]]\nmodId=\"playeranimator\"\nmandatory=true\nversionRange=\"[1,)\"\nordering=\"AFTER\"\nside=\"BOTH\"\n[[dependencies.mobplayeranimator]]\nmodId=\"cloth_config\"\nmandatory=true\nversionRange=\"[11.0.0,)\"\nordering=\"AFTER\"\nside=\"BOTH\"\n[[dependencies.mobplayeranimator]]\nmodId = \"guardvillagers\"\nmandatory = false\nversionRange = \"[1.6.1,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n[[dependencies.mobplayeranimator]]\nmodId = \"entity_model_features\"\nmandatory = false\nversionRange = \"[2.2.6,)\"\nordering = \"NONE\"\nside = \"CLIENT\"\n"
+      },
+      "bundled_notices": [],
+      "manifest_text": "Manifest-Version: 1.0\r\nSpecification-Title: Mob Player Animator\r\nSpecification-Vendor: Thelnfamous1\r\nSpecification-Version: 1.3.3\r\nImplementation-Title: forge\r\nImplementation-Version: 1.3.3\r\nImplementation-Vendor: Thelnfamous1\r\nImplementation-Timestamp: 2025-01-25T21:59:27-0600\r\nTimestamp: 1737863967271\r\nBuilt-On-Java: 17.0.9+8-b1166.2 (JetBrains s.r.o.)\r\nBuilt-On-Minecraft: 1.20.1\r\nMixinConfigs: mobplayeranimator.mixins.json,mobplayeranimator.forge.mixi\r\n ns.json\r\n\r\n"
+    },
+    {
+      "file": "modernfix-forge-5.27.89+mc1.20.1.jar",
+      "bytes": 1010226,
+      "sha256": "96750ec3e12b581ee7a936ce2b7c2b35251e97b6f729b2db8bc0d5c9a2dc12fa",
+      "metadata": {
+        "license": "GNU LGPL 3.0",
+        "modLoader": "javafml",
+        "loaderVersion": "[46,)",
+        "mods": [
+          {
+            "modId": "modernfix",
+            "version": "5.27.89+mc1.20.1",
+            "displayName": "ModernFix",
+            "authors": "embeddedt",
+            "displayURL": "https://modrinth.com/mod/modernfix"
+          }
+        ],
+        "metadata_text": "# This is an example mods.toml file. It contains the data relating to the loading mods.\n# There are several mandatory fields (#mandatory), and many more that are optional (#optional).\n# The overall format is standard TOML format, v0.5.0.\n# Note that there are a couple of TOML lists in this file.\n# Find more information on toml format here:  https://github.com/toml-lang/toml\n# The name of the mod loader type to load - for regular FML @Mod mods it should be javafml\nmodLoader = \"javafml\" #mandatory\n# A version range to match for said mod loader - for regular FML @Mod it will be the forge version\nloaderVersion = \"[46,)\" #mandatory This is typically bumped every Minecraft version by Forge. See our download page for lists of versions.\n# The license for you mod. This is mandatory metadata and allows for easier comprehension of your redistributive properties.\n# Review your options at https://choosealicense.com/. All rights reserved is the default copyright stance, and is thus the default here.\nlicense = \"GNU LGPL 3.0\"\n# A URL to refer people to when problems occur with this mod\nissueTrackerURL=\"https://github.com/embeddedt/ModernFix/issues\" #optional\n# A list of mods - how many allowed here is determined by the individual mod loader\n[[mods]] #mandatory\n# The modid of the mod\nmodId = \"modernfix\" #mandatory\nversion = \"5.27.89+mc1.20.1\" #mandatory\n# A display name for the mod\ndisplayName = \"ModernFix\" #mandatory\n# A URL to query for updates for this mod. See the JSON update specification <here>\n#updateJSONURL=\"http://myurl.me/\" #optional\n# A URL for the \"homepage\" for this mod, displayed in the mod UI\ndisplayURL=\"https://modrinth.com/mod/modernfix\" #optional\n# A file name (in the root of the mod JAR) containing a logo for display\nlogoFile=\"icon.png\" #optional\n# A text field displayed in the mod UI\n#credits=\"Thanks for this example mod goes to Java\" #optional\n# A text field displayed in the mod UI\nauthors=\"embeddedt\" #optional\n# The description text for the mod (multi line!) (#mandatory)\ndescription = '''\nEgregious, yet effective performance improvements for modern Minecraft\n'''\n# A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.\n[[dependencies.modernfix]] #optional\n# the modid of the dependency\nmodId = \"forge\" #mandatory\n# Does this dependency have to exist - if not, ordering below must be specified\nmandatory = true #mandatory\n# The version range of the dependency\nversionRange = \"[46.0.1,)\" #mandatory\n# An ordering relationship for the dependency - BEFORE or AFTER required if the relationship is not mandatory\nordering = \"NONE\"\n# Side this dependency is applied on - BOTH, CLIENT or SERVER\nside = \"BOTH\"\n# Here's another dependency\n[[dependencies.modernfix]]\nmodId = \"minecraft\"\nmandatory = true\n# This version range declares a minimum of the current minecraft version up to but not including the next major version\nversionRange = \"[1.20, 1.21)\"\nordering = \"NONE\"\nside = \"BOTH\"\n[[dependencies.modernfix]]\nmodId = \"jei\"\nmandatory = false\n# This version range declares a minimum of the current minecraft version up to but not including the next major version\nversionRange = \"[15.8.0.11,)\"\nordering = \"NONE\"\nside = \"CLIENT\"\n"
+      },
+      "bundled_notices": [],
+      "manifest_text": "Manifest-Version: 1.0\r\nMixinConfigs: modernfix-modernfix.mixins.json\r\nSpecification-Version: 1\r\nImplementation-Title: modernfix\r\nImplementation-Version: 5.27.89+mc1.20.1\r\n\r\n"
+    },
+    {
+      "file": "player-animation-lib-forge-1.0.2-rc1+1.20.jar",
+      "bytes": 181437,
+      "sha256": "90d9965cb9efdbda29fdc5610be3914cf7008bf5c392ff34f7ab25f96a852691",
+      "metadata": {
+        "license": "MIT",
+        "modLoader": "javafml",
+        "loaderVersion": "[46.0.0,)",
+        "mods": [
+          {
+            "modId": "playeranimator",
+            "version": "1.0.2-rc1+1.20",
+            "displayName": "Player Animator",
+            "authors": "KosmX"
+          }
+        ],
+        "metadata_text": "modLoader = \"javafml\"\nloaderVersion = \"[46.0.0,)\"\n#issueTrackerURL = \"\"\nlicense = \"MIT\"\n\n[[mods]]\nmodId = \"playeranimator\"\nversion = \"1.0.2-rc1+1.20\"\ndisplayName = \"Player Animator\"\nauthors = \"KosmX\"\ndescription = '''\nLook for FabricMC (or QuiltMC) builds...\n'''\n#logoFile = \"\"\n\n[[dependencies.playeranimator]]\nmodId = \"minecraft\"\nmandatory = true\nversionRange = \"[1.20,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n"
+      },
+      "bundled_notices": [],
+      "manifest_text": "Manifest-Version: 1.0\r\nMixinConfigs: playerAnimator-common.mixins.json\r\n\r\n"
+    },
+    {
+      "file": "recruits-1.20.1-1.15.2.jar",
+      "bytes": 2811101,
+      "sha256": "4b53c1b752e886ba10985aad2df30d668971810230eb77867e07428a21d1af7f",
+      "metadata": {
+        "license": "All rights reserved",
+        "modLoader": "javafml",
+        "loaderVersion": "[47,)",
+        "mods": [
+          {
+            "modId": "recruits",
+            "displayName": "Villager Recruits Mod",
+            "authors": "talhanation, messire, kaiserroman",
+            "displayURL": "https://modrinth.com/mod/villager-recruits/versions"
+          }
+        ],
+        "metadata_text": "license=\"All rights reserved\"\r\n\r\nmodLoader=\"javafml\"\r\n\r\nloaderVersion=\"[47,)\" #mandatory This is typically bumped every Minecraft version by Forge. See our download page for lists of versions.\r\n\r\n[[mods]] #mandatory\r\n\r\nmodId=\"recruits\"\r\n\r\nversion='1.15.2'\r\n\r\ndisplayName=\"Villager Recruits Mod\"\r\nupdateJSONURL=\"https://raw.githubusercontent.com/talhanation/recruits/main/update.json\"\r\ndisplayURL=\"https://modrinth.com/mod/villager-recruits/versions\"\r\n\r\nlogoFile=\"logo.png\"\r\n\r\ncredits=\"talhanation, messire, kaiserroman\"\r\nauthors=\"talhanation, messire, kaiserroman\"\r\n\r\n# The description text for the mod (multi line!) (#mandatory)\r\ndescription='''\r\nThis Mod adds hire-able Villager Recruits with different Ranks like in M&B-Bannerlord into Minecraft. Adds Ability to claim und siege.\r\n'''\r\n\r\n"
+      },
+      "bundled_notices": [],
+      "manifest_text": "Manifest-Version: 1.0\r\nMixinConfigs: mixins.recruits.json\r\nClass-Path: corelib-1.20.1-1.1.3_mapped_official_1.20.1-api.jar\r\n\r\n"
+    },
+    {
+      "file": "recruits-tacz-1.022-frontier.1.jar",
+      "bytes": 69575,
+      "sha256": "2d0bc509573f927c141d7972719cf97175e04907b63e3b17dee2e6877d96b965",
+      "metadata": {
+        "license": "MIT",
+        "modLoader": "javafml",
+        "loaderVersion": "[47,)",
+        "mods": [
+          {
+            "modId": "recruitstacz",
+            "version": "1.022-frontier.1",
+            "displayName": "TACZ Recruits (Frontier patch)",
+            "authors": "LogicalMaximus"
+          }
+        ],
+        "metadata_text": "# This is an example mods.toml file. It contains the data relating to the loading mods.\n# There are several mandatory fields (#mandatory), and many more that are optional (#optional).\n# The overall format is standard TOML format, v0.5.0.\n# Note that there are a couple of TOML lists in this file.\n# Find more information on toml format here:  https://github.com/toml-lang/toml\n# The name of the mod loader type to load - for regular FML @Mod mods it should be javafml\nmodLoader = \"javafml\" #mandatory\n# A version range to match for said mod loader - for regular FML @Mod it will be the forge version\nloaderVersion = \"[47,)\" #mandatory This is typically bumped every Minecraft version by Forge. See our download page for lists of versions.\n# The license for you mod. This is mandatory metadata and allows for easier comprehension of your redistributive properties.\n# Review your options at https://choosealicense.com/. All rights reserved is the default copyright stance, and is thus the default here.\nlicense = \"MIT\"\n# A URL to refer people to when problems occur with this mod\n#issueTrackerURL=\"https://change.me.to.your.issue.tracker.example.invalid/\" #optional\n# A list of mods - how many allowed here is determined by the individual mod loader\n[[mods]] #mandatory\n# The modid of the mod\nmodId = \"recruitstacz\" #mandatory\n# The version number of the mod\nversion = \"1.022-frontier.1\" #mandatory\n# A display name for the mod\ndisplayName = \"TACZ Recruits (Frontier patch)\" #mandatory\n# A URL to query for updates for this mod. See the JSON update specification https://docs.minecraftforge.net/en/latest/misc/updatechecker/\n#updateJSONURL=\"https://change.me.example.invalid/updates.json\" #optional\n# A URL for the \"homepage\" for this mod, displayed in the mod UI\n#displayURL=\"https://change.me.to.your.mods.homepage.example.invalid/\" #optional\n# A file name (in the root of the mod JAR) containing a logo for display\n#logoFile=\"recruitstacz.png\" #optional\n# A text field displayed in the mod UI\n#credits=\"Thanks for this example mod goes to Java\" #optional\n# A text field displayed in the mod UI\nauthors = \"LogicalMaximus\" #optional\n# Display Test controls the display for your mod in the server connection screen\n# MATCH_VERSION means that your mod will cause a red X if the versions on client and server differ. This is the default behaviour and should be what you choose if you have server and client elements to your mod.\n# IGNORE_SERVER_VERSION means that your mod will not cause a red X if it's present on the server but not on the client. This is what you should use if you're a server only mod.\n# IGNORE_ALL_VERSION means that your mod will not cause a red X if it's present on the client or the server. This is a special case and should only be used if your mod has no server component.\n# NONE means that no display test is set on your mod. You need to do this yourself, see IExtensionPoint.DisplayTest for more information. You can define any scheme you wish with this value.\n# IMPORTANT NOTE: this is NOT an instruction as to which environments (CLIENT or DEDICATED SERVER) your mod loads on. Your mod should load (and maybe do nothing!) whereever it finds itself.\n#displayTest=\"MATCH_VERSION\" # MATCH_VERSION is the default if nothing is specified (#optional)\n\n# The description text for the mod (multi line!) (#mandatory)\ndescription = ''''''\n# A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.\n[[dependencies.\"recruitstacz\"]] #optional\n# the modid of the dependency\nmodId = \"forge\" #mandatory\n# Does this dependency have to exist - if not, ordering below must be specified\nmandatory = true #mandatory\n# The version range of the dependency\nversionRange = \"[47,)\" #mandatory\n# An ordering relationship for the dependency - BEFORE or AFTER required if the dependency is not mandatory\n# BEFORE - This mod is loaded BEFORE the dependency\n# AFTER - This mod is loaded AFTER the dependency\nordering = \"NONE\"\n# Side this dependency is applied on - BOTH, CLIENT, or SERVER\nside = \"BOTH\"# Here's another dependency\n[[dependencies.\"recruitstacz\"]]\nmodId = \"minecraft\"\nmandatory = true\n# This version range declares a minimum of the current minecraft version up to but not including the next major version\nversionRange = \"[1.20.1,1.21)\"\nordering = \"NONE\"\nside = \"BOTH\"\n\n# Local patch is audited for exactly Recruits 1.15.2.\n[[dependencies.recruitstacz]]\nmodId = \"recruits\"\nmandatory = true\nversionRange = \"[1.15.2]\"\nordering = \"AFTER\"\nside = \"BOTH\"\n"
+      },
+      "bundled_notices": [
+        {
+          "entry": "META-INF/LICENSE.frontier-tacz-recruits",
+          "sha256": "df37963f680b83688a18395edfd85cd54dc96e8d40ac87f9d16dc5512a338a10"
+        }
+      ],
+      "manifest_text": "Manifest-Version: 1.0\r\nSpecification-Title: recruitstacz\r\nSpecification-Vendor: LogicalMaximus\r\nSpecification-Version: 1\r\nImplementation-Title: recruitstacz\r\nImplementation-Version: 1.022\r\nImplementation-Vendor: LogicalMaximus\r\nImplementation-Timestamp: 2026-06-20T01:29:32-0400\r\nMixinConfigs: recruitstacz.mixins.json\r\n\r\n"
+    },
+    {
+      "file": "recruitsvillages-1.1.0.jar",
+      "bytes": 600866,
+      "sha256": "55a7da1802360bbc18337ad190b826a1a2292f3038c623ab09f926bb0746dda8",
+      "metadata": {
+        "license": "All Rights Reserved",
+        "modLoader": "javafml",
+        "loaderVersion": "[47,)",
+        "mods": [
+          {
+            "modId": "recruitsvillages",
+            "version": "1.1.0",
+            "displayName": "Recruits: Living Villages",
+            "authors": "__bigd"
+          }
+        ],
+        "metadata_text": "# This is an example mods.toml file. It contains the data relating to the loading mods.\n# There are several mandatory fields (#mandatory), and many more that are optional (#optional).\n# The overall format is standard TOML format, v0.5.0.\n# Note that there are a couple of TOML lists in this file.\n# Find more information on toml format here:  https://github.com/toml-lang/toml\n# The name of the mod loader type to load - for regular FML @Mod mods it should be javafml\nmodLoader=\"javafml\" #mandatory\n# A version range to match for said mod loader - for regular FML @Mod it will be the forge version\nloaderVersion=\"[47,)\" #mandatory This is typically bumped every Minecraft version by Forge. See our download page for lists of versions.\n# The license for you mod. This is mandatory metadata and allows for easier comprehension of your redistributive properties.\n# Review your options at https://choosealicense.com/. All rights reserved is the default copyright stance, and is thus the default here.\nlicense=\"All Rights Reserved\"\n# A URL to refer people to when problems occur with this mod\n#issueTrackerURL=\"https://change.me.to.your.issue.tracker.example.invalid/\" #optional\n# If your mod is purely client-side and has no multiplayer functionality (be it dedicated servers or Open to LAN),\n# set this to true, and Forge will set the correct displayTest for you and skip loading your mod on dedicated servers.\n#clientSideOnly=true #optional - defaults to false if absent\n# A list of mods - how many allowed here is determined by the individual mod loader\n[[mods]] #mandatory\n# The modid of the mod\nmodId=\"recruitsvillages\" #mandatory\n# The version number of the mod\nversion=\"1.1.0\" #mandatory\n# A display name for the mod\ndisplayName=\"Recruits: Living Villages\" #mandatory\n# A URL to query for updates for this mod. See the JSON update specification https://docs.minecraftforge.net/en/latest/misc/updatechecker/\n#updateJSONURL=\"https://change.me.example.invalid/updates.json\" #optional\n# A URL for the \"homepage\" for this mod, displayed in the mod UI\n#displayURL=\"https://change.me.to.your.mods.homepage.example.invalid/\" #optional\n# A file name (in the root of the mod JAR) containing a logo for display\n#logoFile=\"examplemod.png\" #optional\n# A text field displayed in the mod UI\n#credits=\"\" #optional\n# A text field displayed in the mod UI\nauthors=\"__bigd\" #optional\n# Display Test controls the display for your mod in the server connection screen\n# MATCH_VERSION means that your mod will cause a red X if the versions on client and server differ. This is the default behaviour and should be what you choose if you have server and client elements to your mod.\n# IGNORE_SERVER_VERSION means that your mod will not cause a red X if it's present on the server but not on the client. This is what you should use if you're a server only mod.\n# IGNORE_ALL_VERSION means that your mod will not cause a red X if it's present on the client or the server. This is a special case and should only be used if your mod has no server component.\n# NONE means that no display test is set on your mod. You need to do this yourself, see IExtensionPoint.DisplayTest for more information. You can define any scheme you wish with this value.\n# IMPORTANT NOTE: this is NOT an instruction as to which environments (CLIENT or DEDICATED SERVER) your mod loads on. Your mod should load (and maybe do nothing!) whereever it finds itself.\n#displayTest=\"MATCH_VERSION\" # if nothing is specified, MATCH_VERSION is the default when clientSideOnly=false, otherwise IGNORE_ALL_VERSION when clientSideOnly=true (#optional)\n\n# The description text for the mod (multi line!) (#mandatory)\ndescription='''An addon for Talhanation's Recruits that lets villager factions grow, gear up, and wage war autonomously, even in unloaded chunks, while keeping every battle a real, live fight.'''\n# A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.\n[[dependencies.recruitsvillages]] #optional\n    # the modid of the dependency\n    modId=\"forge\" #mandatory\n    # Does this dependency have to exist - if not, ordering below must be specified\n    mandatory=true #mandatory\n    # The version range of the dependency\n    versionRange=\"[47,)\" #mandatory\n    # An ordering relationship for the dependency - BEFORE or AFTER required if the dependency is not mandatory\n    # BEFORE - This mod is loaded BEFORE the dependency\n    # AFTER - This mod is loaded AFTER the dependency\n    ordering=\"NONE\"\n    # Side this dependency is applied on - BOTH, CLIENT, or SERVER\n    side=\"BOTH\"\n# Here's another dependency\n[[dependencies.recruitsvillages]]\n    modId=\"minecraft\"\n    mandatory=true\n    # This version range declares a minimum of the current minecraft version up to but not including the next major version\n    versionRange=\"[1.20.1,1.21)\"\n    ordering=\"NONE\"\n    side=\"BOTH\"\n\n# Recruits (Villager Recruits) by Talhanation — MANDATORY. Our addon refuses to start without it,\n# and must load AFTER it so Recruits' registries/APIs are available when we attach (CLAUDE.md §4).\n# NOTE: Recruits shades CoreLib into its own jar (package de.maxhenkel.recruits.corelib), so there is\n# NO separate \"corelib\" mod at runtime — do not declare a dependency on one.\n[[dependencies.recruitsvillages]]\n    modId=\"recruits\"\n    mandatory=true\n    versionRange=\"[1.15.2,)\"\n    ordering=\"AFTER\"\n    side=\"BOTH\"\n\n# Features are specific properties of the game environment, that you may want to declare you require. This example declares\n# that your mod requires GL version 3.2 or higher. Other features will be added. They are side aware so declaring this won't\n# stop your mod loading on the server for example.\n#[features.recruitsvillages]\n#openGLVersion=\"[3.2,)\"\n"
+      },
+      "bundled_notices": [],
+      "manifest_text": "Manifest-Version: 1.0\r\nSpecification-Title: recruitsvillages\r\nSpecification-Vendor: __bigd\r\nSpecification-Version: 1\r\nImplementation-Title: forge-1.20.1-47.4.10-mdk\r\nImplementation-Version: 1.1.0\r\nImplementation-Vendor: __bigd\r\nImplementation-Timestamp: 2026-08-22T15:52:10+1000\r\nMixinConfigs: recruitsvillages.mixins.json\r\n\r\n"
+    },
+    {
+      "file": "superbrecruits-1.115.jar",
+      "bytes": 67884,
+      "sha256": "09038e816c0a7249f28c51f0b80a12a9d94b78fd81e8487941233318151eab0d",
+      "metadata": {
+        "license": "MIT",
+        "modLoader": "javafml",
+        "loaderVersion": "[47,)",
+        "mods": [
+          {
+            "modId": "superbrecruits",
+            "version": "1.115",
+            "displayName": "superbrecruits",
+            "authors": "LogicalMaximus"
+          }
+        ],
+        "metadata_text": "# This is an example mods.toml file. It contains the data relating to the loading mods.\n# There are several mandatory fields (#mandatory), and many more that are optional (#optional).\n# The overall format is standard TOML format, v0.5.0.\n# Note that there are a couple of TOML lists in this file.\n# Find more information on toml format here:  https://github.com/toml-lang/toml\n# The name of the mod loader type to load - for regular FML @Mod mods it should be javafml\nmodLoader = \"javafml\" #mandatory\n# A version range to match for said mod loader - for regular FML @Mod it will be the forge version\nloaderVersion = \"[47,)\" #mandatory This is typically bumped every Minecraft version by Forge. See our download page for lists of versions.\n# The license for you mod. This is mandatory metadata and allows for easier comprehension of your redistributive properties.\n# Review your options at https://choosealicense.com/. All rights reserved is the default copyright stance, and is thus the default here.\nlicense = \"MIT\"\n# A URL to refer people to when problems occur with this mod\n#issueTrackerURL=\"https://change.me.to.your.issue.tracker.example.invalid/\" #optional\n# A list of mods - how many allowed here is determined by the individual mod loader\n[[mods]] #mandatory\n# The modid of the mod\nmodId = \"superbrecruits\" #mandatory\n# The version number of the mod\nversion = \"1.115\" #mandatory\n# A display name for the mod\ndisplayName = \"superbrecruits\" #mandatory\n# A URL to query for updates for this mod. See the JSON update specification https://docs.minecraftforge.net/en/latest/misc/updatechecker/\n#updateJSONURL=\"https://change.me.example.invalid/updates.json\" #optional\n# A URL for the \"homepage\" for this mod, displayed in the mod UI\n#displayURL=\"https://change.me.to.your.mods.homepage.example.invalid/\" #optional\n# A file name (in the root of the mod JAR) containing a logo for display\n#logoFile=\"superbrecruits.png\" #optional\n# A text field displayed in the mod UI\n#credits=\"Thanks for this example mod goes to Java\" #optional\n# A text field displayed in the mod UI\nauthors = \"LogicalMaximus\" #optional\n# Display Test controls the display for your mod in the server connection screen\n# MATCH_VERSION means that your mod will cause a red X if the versions on client and server differ. This is the default behaviour and should be what you choose if you have server and client elements to your mod.\n# IGNORE_SERVER_VERSION means that your mod will not cause a red X if it's present on the server but not on the client. This is what you should use if you're a server only mod.\n# IGNORE_ALL_VERSION means that your mod will not cause a red X if it's present on the client or the server. This is a special case and should only be used if your mod has no server component.\n# NONE means that no display test is set on your mod. You need to do this yourself, see IExtensionPoint.DisplayTest for more information. You can define any scheme you wish with this value.\n# IMPORTANT NOTE: this is NOT an instruction as to which environments (CLIENT or DEDICATED SERVER) your mod loads on. Your mod should load (and maybe do nothing!) whereever it finds itself.\n#displayTest=\"MATCH_VERSION\" # MATCH_VERSION is the default if nothing is specified (#optional)\n\n# The description text for the mod (multi line!) (#mandatory)\ndescription = ''''''\n# A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.\n[[dependencies.\"superbrecruits\"]] #optional\n# the modid of the dependency\nmodId = \"forge\" #mandatory\n# Does this dependency have to exist - if not, ordering below must be specified\nmandatory = true #mandatory\n# The version range of the dependency\nversionRange = \"[47,)\" #mandatory\n# An ordering relationship for the dependency - BEFORE or AFTER required if the dependency is not mandatory\n# BEFORE - This mod is loaded BEFORE the dependency\n# AFTER - This mod is loaded AFTER the dependency\nordering = \"NONE\"\n# Side this dependency is applied on - BOTH, CLIENT, or SERVER\nside = \"BOTH\"# Here's another dependency\n[[dependencies.\"superbrecruits\"]]\nmodId = \"minecraft\"\nmandatory = true\n# This version range declares a minimum of the current minecraft version up to but not including the next major version\nversionRange = \"[1.20.1,1.21)\"\nordering = \"NONE\"\nside = \"BOTH\"\n"
+      },
+      "bundled_notices": [],
+      "manifest_text": "Manifest-Version: 1.0\r\nSpecification-Title: superbrecruits\r\nSpecification-Vendor: LogicalMaximus\r\nSpecification-Version: 1\r\nImplementation-Title: superbrecruits\r\nImplementation-Version: 1.115\r\nImplementation-Vendor: LogicalMaximus\r\nImplementation-Timestamp: 2026-06-20T01:36:11-0400\r\nMixinConfigs: superbrecruits.mixins.json\r\n\r\n"
+    },
+    {
+      "file": "superbwarfare-0.8.9.1-hotfix-mc1.20.1-993063bed-all.jar",
+      "bytes": 42162514,
+      "sha256": "3aaf4c239bc0fb31f9217927a44d74071d904d1dd03c5308ca3395ecd67d86dc",
+      "metadata": {
+        "license": "GNU General Public License v3.0",
+        "modLoader": "kotlinforforge",
+        "loaderVersion": "[4.11.0,)",
+        "mods": [
+          {
+            "modId": "superbwarfare",
+            "version": "0.8.9.1",
+            "displayName": "Superb Warfare",
+            "authors": "Atsuishio, Roki27, Light_Quanta and other contributors"
+          }
+        ],
+        "metadata_text": "modLoader = \"kotlinforforge\"\nloaderVersion = \"[4.11.0,)\"\nlicense = \"GNU General Public License v3.0\"\n\n[[mods]]\nmodId = \"superbwarfare\"\nversion = \"0.8.9.1\"\ndisplayName = \"Superb Warfare\"\nauthors = \"Atsuishio, Roki27, Light_Quanta and other contributors\"\nlogoFile = \"logo.png\"\ndescription = \"A Warfare Mod\"\n\n[[dependencies.superbwarfare]]\nmodId = \"forge\" #mandatory\nmandatory = true #mandatory\nversionRange = \"[47,)\" #mandatory\nordering = \"NONE\"\nside = \"BOTH\"# Here's another dependency\n\n[[dependencies.superbwarfare]]\nmodId = \"minecraft\"\nmandatory = true\nversionRange = \"[1.20.1,1.21)\"\nordering = \"NONE\"\nside = \"BOTH\"\n\n[[dependencies.superbwarfare]]\nmodId = \"simplebedrockmodel\"\nmandatory = true\nversionRange = \"[2.5.1,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n\n[[dependencies.superbwarfare]]\nmodId = \"geckolib\"\nmandatory = false\nversionRange = \"[4.4.6,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n\n[[dependencies.superbwarfare]]\nmodId = \"curios\"\nmandatory = false\nversionRange = \"[5.4.0,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n\n[[dependencies.superbwarfare]]\nmodId = \"cloth_config\"\nmandatory = false\nversionRange = \"[11.1.0,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n\n[[dependencies.superbwarfare]]\nmodId = \"geckoanimfix\"\nmandatory = false\nversionRange = \"[114.514.Remove Iris/Oculus & GeckoLib Compat as it is incompatible with Superb Warfare and does nothing along with the latest version of GeckoLib!,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n\n[[dependencies.superbwarfare]]\nmodId = \"patchouli\"\nmandatory = false\nversionRange = \"[1.20.1-84,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n\n[[dependencies.superbwarfare]]\nmodId = \"realcamera\"\nmandatory = false\nversionRange = \"[0.7.0-beta,)\"\nordering = \"NONE\"\nside = \"CLIENT\"\n"
+      },
+      "bundled_notices": [
+        {
+          "entry": "COPYING",
+          "sha256": "0b383d5a63da644f628d99c33976ea6487ed89aaa59f0b3257992deac1171e6b"
+        },
+        {
+          "entry": "COPYING.LESSER",
+          "sha256": "7d3a95e5e06978064ed3f8e2b7c8f845e7fd8a405294727cc708f94cb83b8059"
+        }
+      ],
+      "manifest_text": "Manifest-Version: 1.0\r\nSpecification-Title: superbwarfare\r\nSpecification-Vendor: Atsuishio, Roki27, Light_Quanta and other contribu\r\n tors\r\nSpecification-Version: 1\r\nImplementation-Title: SuperbWarfare\r\nImplementation-Version: 0.8.9.1-mc1.20.1-993063bed\r\nImplementation-Vendor: Atsuishio, Roki27, Light_Quanta and other contrib\r\n utors\r\nImplementation-Timestamp: 2026-08-20T07:02:37.234715500Z\r\nMixinConfigs: mixins.superbwarfare.json\r\n\r\n"
+    },
+    {
+      "file": "tacz-1.20.1-1.1.8-hotfix2.jar",
+      "bytes": 57472579,
+      "sha256": "2cbb89f44333d2eb4e825d86d789ff119b272ff75184390b55bafd4f0e7f10c2",
+      "metadata": {
+        "license": "GPL3 / CC BY-NC-ND 4.0",
+        "modLoader": "javafml",
+        "loaderVersion": "[46,)",
+        "mods": [
+          {
+            "modId": "tacz",
+            "version": "${file.jarVersion}",
+            "displayName": "Timeless & Classics Guns: Zero",
+            "authors": "Serene Wave Studio | Timeless Squad",
+            "displayURL": ""
+          }
+        ],
+        "metadata_text": "modLoader = \"javafml\"\r\nloaderVersion = \"[46,)\"\r\nlicense = \"GPL3 / CC BY-NC-ND 4.0\"\r\n\r\n[[mods]]\r\nmodId = \"tacz\"\r\nversion = \"${file.jarVersion}\"\r\ndisplayName = \"Timeless & Classics Guns: Zero\"\r\nlogoFile = \"logo.png\"\r\nupdateJSONURL = \"\"\r\ndisplayURL = \"\"\r\nauthors = \"Serene Wave Studio | Timeless Squad\"\r\ndescription = '''\r\n'''\r\n\r\n[[dependencies.tacz]]\r\nmodId = \"forge\"\r\nmandatory = true\r\nversionRange = \"[46,)\"\r\nordering = \"NONE\"\r\nside = \"BOTH\"\r\n\r\n[[dependencies.tacz]]\r\nmodId = \"minecraft\"\r\nmandatory = true\r\nversionRange = \"[1.20,1.20.2)\"\r\nordering = \"NONE\"\r\nside = \"BOTH\"\r\n\r\n[[dependencies.tacz]]\r\nmodId = \"shouldersurfing\"\r\nmandatory = false\r\nversionRange = \"[1.20.1-4.0.0,)\"\r\nordering = \"NONE\"\r\nside = \"CLIENT\"\r\n\r\n[modproperties.tacz]\r\ncatalogueItemIcon = \"tacz:gun_smith_table\""
+      },
+      "bundled_notices": [],
+      "manifest_text": "Manifest-Version: 1.0\r\nImplementation-Title: tacz\r\nImplementation-Version: 1.1.8-hotfix2\r\nMixinConfigs: tacz.mixins.json,tacz.compat.acceleratedrendering.mixins.j\r\n son\r\n\r\n"
+    },
+    {
+      "file": "uncomplicated-fpv-1.0.1.jar",
+      "bytes": 1304255,
+      "sha256": "289f5ac93d67aaf0e008c7080758569e2d09b91c0df44065b833d49ce39c35de",
+      "metadata": {
+        "license": "All-Rights-Reserved",
+        "modLoader": "kotlinforforge",
+        "loaderVersion": "[4,)",
+        "mods": [
+          {
+            "modId": "uncomplicatedfpv",
+            "version": "1.0.1",
+            "displayName": "Uncomplicated fpv",
+            "authors": "lava_frai"
+          }
+        ],
+        "metadata_text": "modLoader = \"kotlinforforge\"\nloaderVersion = \"[4,)\"\nlicense = \"All-Rights-Reserved\"\n\n[[mods]]\nmodId = \"uncomplicatedfpv\"\nversion = \"1.0.1\"\ndisplayName = \"Uncomplicated fpv\"\nauthors = \"lava_frai\"\ndescription = '''Simple mod with uncomplicated fpv drones'''\n\n[[mixins]]\nconfig = \"uncomplicatedfpv.mixins.json\"\n\n[[dependencies.\"uncomplicatedfpv\"]]\nmodId = \"forge\"\nmandatory = true\nversionRange = \"[47,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n\n[[dependencies.\"uncomplicatedfpv\"]]\nmodId = \"minecraft\"\nmandatory = true\nversionRange = \"[1.20.1,1.21)\"\nordering = \"NONE\"\nside = \"BOTH\"\n\n[[dependencies.\"uncomplicatedfpv\"]]\nmodId = \"superbwarfare\"\nmandatory = true\nversionRange = \"[0.8.8,0.9.0)\"\nordering = \"AFTER\"\nside = \"BOTH\"\n"
+      },
+      "bundled_notices": [],
+      "manifest_text": "Manifest-Version: 1.0\r\nSpecification-Title: uncomplicatedfpv\r\nSpecification-Vendor: lava_frai\r\nSpecification-Version: 1\r\nImplementation-Title: uncomplicated-fpv\r\nImplementation-Version: 1.0.1\r\nImplementation-Vendor: lava_frai\r\nImplementation-Timestamp: 2026-08-28T20:53:06+0900\r\n\r\n"
+    },
+    {
+      "file": "xaerominimap-forge-1.20.1-26.6.0.jar",
+      "bytes": 2196194,
+      "sha256": "9b39cd06094d7631c8614d172d0ba8399c71c981530af417f12a7909fcb855bd",
+      "metadata": {
+        "license": "All Rights Reserved",
+        "modLoader": "javafml",
+        "loaderVersion": "[46, 48)",
+        "mods": [
+          {
+            "modId": "xaerominimap",
+            "version": "26.6.0",
+            "displayName": "Xaero's Minimap",
+            "authors": "xaero96"
+          }
+        ],
+        "metadata_text": "modLoader = \"javafml\" #mandatory\nloaderVersion = \"[46, 48)\" #mandatory This is typically bumped every Minecraft version by Forge. See https://files.minecraftforge.net/ for a list of versions.\nlicense = \"All Rights Reserved\" # Review your options at https://choosealicense.com/.\nissueTrackerURL = \"https://www.curseforge.com/minecraft/mc-mods/xaeros-minimap/issues\"\n[[mods]] #mandatory\nmodId = \"xaerominimap\" #mandatory\nversion = \"26.6.0\" #mandatory\ndisplayName = \"Xaero's Minimap\" #mandatory\n#updateJSONURL=\"https://change.me.example.invalid/updates.json\" #optional (see https://mcforge.readthedocs.io/en/latest/gettingstarted/autoupdate/)\n#displayURL=\"https://change.me.to.your.mods.homepage.example.invalid/\" #optional (displayed in the mod UI)\ncredits = \"\" #optional\nauthors = \"xaero96\" #optional\ndescription = '''The most vanilla-looking minimap for Minecraft.''' #mandatory (Supports multiline text)\n[[dependencies.xaerominimap]] #optional\nmodId = \"forge\" #mandatory\nmandatory = true #mandatory\nversionRange = \"[46, 48)\" #mandatory\nordering = \"NONE\" # The order that this dependency should load in relation to your mod, required to be either 'BEFORE' or 'AFTER' if the dependency is not mandatory\nside = \"BOTH\" # Side this dependency is applied on - 'BOTH', 'CLIENT' or 'SERVER'\n[[dependencies.xaerominimap]]\nmodId = \"minecraft\"\nmandatory = true\nversionRange = \"[1.20, 1.20.1]\"\nordering = \"NONE\"\nside = \"BOTH\"\n[[dependencies.xaerominimap]]\nmodId = \"openpartiesandclaims\"\nmandatory = false\nversionRange = \"[0.32.4,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n[[dependencies.xaerominimap]]\nmodId = \"xaeroworldmap\"\nmandatory = false\nversionRange = \"[1.44.0,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n[[dependencies.xaerobetterpvp]]\nmodId = \"xaerolib\"\nmandatory = true\nversionRange = \"[1.0,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n"
+      },
+      "bundled_notices": [],
+      "manifest_text": "Manifest-Version: 1.0\r\nSpecification-Title: xaerohud\r\nSpecification-Vendor: xaero96\r\nSpecification-Version: 26.6.0\r\nImplementation-Title: forge_minimap\r\nImplementation-Version: 26.6.0\r\nImplementation-Vendor: xaero96\r\nImplementation-Timestamp: 2026-10-04T12:58:15+0300\r\nTimestamp: 1791107895830\r\nBuilt-On-Java: 17.0.9+9 (Eclipse Adoptium)\r\nBuilt-On-Minecraft: 1.20.1\r\nMixinConfigs: xaerohud.mixins.json,xaerohud.forge.mixins.json,xaerominim\r\n ap.mixins.json,xaerominimap.forge.mixins.json\r\n\r\n"
+    },
+    {
+      "file": "xaeroworldmap-forge-1.20.1-1.47.0.jar",
+      "bytes": 1429424,
+      "sha256": "88c6d844163c95a94d92bc6d87d9011cc840bd6207c3099a81b113d4450a3f6b",
+      "metadata": {
+        "license": "All Rights Reserved",
+        "modLoader": "javafml",
+        "loaderVersion": "[46, 48)",
+        "mods": [
+          {
+            "modId": "xaeroworldmap",
+            "version": "1.47.0",
+            "displayName": "Xaero's World Map",
+            "authors": "xaero96"
+          }
+        ],
+        "metadata_text": "modLoader = \"javafml\" #mandatory\nloaderVersion = \"[46, 48)\" #mandatory This is typically bumped every Minecraft version by Forge. See https://files.minecraftforge.net/ for a list of versions.\nlicense = \"All Rights Reserved\" # Review your options at https://choosealicense.com/.\n#issueTrackerURL=\"https://change.me.to.your.issue.tracker.example.invalid/\" #optional\n[[mods]] #mandatory\nmodId = \"xaeroworldmap\" #mandatory\nversion = \"1.47.0\" #mandatory\ndisplayName = \"Xaero's World Map\" #mandatory\n#updateJSONURL=\"https://change.me.example.invalid/updates.json\" #optional (see https://mcforge.readthedocs.io/en/latest/gettingstarted/autoupdate/)\n#displayURL=\"https://change.me.to.your.mods.homepage.example.invalid/\" #optional (displayed in the mod UI)\nlogoFile = \"xaeroworldmap.png\" #optional\ncredits = \"\" #optional\nauthors = \"xaero96\" #optional\ndescription = '''A self-writing fullscreen map which also works as an add-on to Xaero's Minimap.''' #mandatory (Supports multiline text)\n[[dependencies.xaeroworldmap]] #optional\nmodId = \"forge\" #mandatory\nmandatory = true #mandatory\nversionRange = \"[46, 48)\" #mandatory\nordering = \"NONE\" # The order that this dependency should load in relation to your mod, required to be either 'BEFORE' or 'AFTER' if the dependency is not mandatory\nside = \"BOTH\" # Side this dependency is applied on - 'BOTH', 'CLIENT' or 'SERVER'\n[[dependencies.xaeroworldmap]]\nmodId = \"minecraft\"\nmandatory = true\nversionRange = \"[1.20, 1.20.1]\"\nordering = \"NONE\"\nside = \"BOTH\"\n[[dependencies.xaeroworldmap]]\nmodId = \"openpartiesandclaims\"\nmandatory = false\nversionRange = \"[0.32.4,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n[[dependencies.xaeroworldmap]]\nmodId = \"xaerominimap\"\nmandatory = false\nversionRange = \"[26.4.0,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n[[dependencies.xaeroworldmap]]\nmodId = \"xaerobetterpvp\"\nmandatory = false\nversionRange = \"[26.4.0,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n[[dependencies.xaeroworldmap]]\nmodId = \"xaerolib\"\nmandatory = true\nversionRange = \"[1.0,)\"\nordering = \"NONE\"\nside = \"BOTH\"\n"
+      },
+      "bundled_notices": [],
+      "manifest_text": "Manifest-Version: 1.0\r\nSpecification-Title: Xaero's World Map\r\nSpecification-Vendor: xaero96\r\nSpecification-Version: 1.47.0\r\nImplementation-Title: forge\r\nImplementation-Version: 1.47.0\r\nImplementation-Vendor: xaero96\r\nImplementation-Timestamp: 2026-10-04T11:59:38+0300\r\nTimestamp: 1791104378997\r\nBuilt-On-Java: 17.0.9+9 (Eclipse Adoptium)\r\nBuilt-On-Minecraft: 1.20.1\r\nMixinConfigs: xaeroworldmap.mixins.json,xaeroworldmap.forge.mixins.json\r\n\r\n"
+    }
+  ],
+  "modules": [
+    {
+      "key": "arcade",
+      "installed_file": "/home/chpoka/.minecraft/mods/frontier-arcade-vehicles-1.7.0.jar",
+      "installed_sha256": "2f1c383c1c99fdacfd1549036330a5f91b8b39034ab73500b2ca942a70239b45",
+      "release_jar": "/home/chpoka/Documents/Codex/2026-10-23/new-chat/outputs/drone-terminals/frontier-arcade-vehicles-1.7.0.jar",
+      "release_equals_installed": true,
+      "source_archive": "/home/chpoka/Documents/Codex/2026-10-23/new-chat/outputs/drone-terminals/frontier-arcade-source-1.7.0.zip",
+      "source_archive_sha256": "aa859a4c7fd852414bd02fd6ab63ec522670acee819140e0885c4c6735c1d0bb",
+      "project_subroot": "frontier-arcade-vehicles/",
+      "resource_subroot": "frontier-arcade-vehicles/src/main/resources/",
+      "archive_entries": 158,
+      "license_files": [
+        "frontier-arcade-vehicles/LICENSE.txt",
+        "frontier-arcade-vehicles/src/main/resources/META-INF/LICENSE-SBW-data.txt",
+        "frontier-arcade-vehicles/src/main/resources/META-INF/NOTICE.txt"
+      ],
+      "embedded_jars": [],
+      "source_metadata_entries": [
+        "frontier-arcade-vehicles/src/main/resources/META-INF/mods.toml"
+      ],
+      "resource_provenance": {
+        "compared_equal_count": 74,
+        "mismatches": [],
+        "missing": [],
+        "intentional_transformations": []
+      },
+      "source_class_name_coverage": {
+        "java_count_in_main": 70,
+        "production_outer_class_count": 49,
+        "all_production_class_count": 74,
+        "class_without_java": [],
+        "java_without_production_class": [
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/AirSmoke.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/AirSmokeClient.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/ArcadeSmoke.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/ArcadeSmokeClient.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/BmpSmoke.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/BmpSmokeClient.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/GeraniumSmoke.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/GeraniumSmokeClient.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/NpcAirSmoke.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/NpcAirSmokeClient.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/RelayAirframeChecks.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/RelayPilotSmoke.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/RelayPilotSmokeClient.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/RelayRadioChecks.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/RelaySmoke.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/RelaySmokeClient.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/ShopSmoke.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/TerminalSmoke.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/TerminalSmokeClient.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/UavSmoke.java",
+          "frontier-arcade-vehicles/src/main/java/dev/frontier/arcade/smoke/UavSmokeClient.java"
+        ],
+        "comparison_scope": "Path/name coverage only; not compiled bytecode reproducibility"
+      }
+    },
+    {
+      "key": "style",
+      "installed_file": "/home/chpoka/.minecraft/mods/frontier-arcade-style-1.1.0.jar",
+      "installed_sha256": "58990022bdfb438981a42f8827c1fefa003b0972418ad82b80f91f6a7e89c04d",
+      "release_jar": "/home/chpoka/Documents/Codex/2026-10-23/new-chat/outputs/sbw-unification/frontier-arcade-style-1.1.0.jar",
+      "release_equals_installed": true,
+      "source_archive": "/home/chpoka/Documents/Codex/2026-10-23/new-chat/outputs/sbw-unification/frontier-arcade-style-source-1.1.0.zip",
+      "source_archive_sha256": "be614b01f9ad36c085232c95403fc3116a1aa9cdd87dc5351425783af962f1e1",
+      "project_subroot": "",
+      "resource_subroot": "resources/",
+      "archive_entries": 247,
+      "license_files": [
+        "LICENSE"
+      ],
+      "embedded_jars": [],
+      "source_metadata_entries": [
+        "resources/META-INF/mods.toml"
+      ],
+      "resource_provenance": {
+        "compared_equal_count": 144,
+        "mismatches": [],
+        "missing": [],
+        "intentional_transformations": []
+      },
+      "source_class_name_coverage": {
+        "java_count_in_main": 14,
+        "production_outer_class_count": 14,
+        "all_production_class_count": 14,
+        "class_without_java": [],
+        "java_without_production_class": [],
+        "comparison_scope": "Path/name coverage only; not compiled bytecode reproducibility"
+      }
+    },
+    {
+      "key": "nations",
+      "installed_file": "/home/chpoka/.minecraft/mods/frontier-nations-1.20.1-0.1.2-alpha.jar",
+      "installed_sha256": "5fc1374d51ea7e5c931229cf6db5d3a197f6168b9e1a02624f4fb9f9d19abdee",
+      "release_jar": "/home/chpoka/Documents/Codex/2026-10-23/new-chat/outputs/frontier-nations/instance/mods/frontier-nations-1.20.1-0.1.2-alpha.jar",
+      "release_equals_installed": true,
+      "source_archive": "/home/chpoka/Documents/Codex/2026-10-23/new-chat/outputs/frontier-nations/sources/Frontier-Nations-source-0.1.2-alpha.zip",
+      "source_archive_sha256": "66d44d4710e2fb30a04d20f2a6958f8202b45a56a1c0ab6055884118c3c3e550",
+      "project_subroot": "work/frontier-nations/",
+      "resource_subroot": "work/frontier-nations/src/main/resources/",
+      "archive_entries": 64,
+      "license_files": [
+        "work/frontier-nations/LICENSE.txt",
+        "work/frontier-nations/notices/CREDITS.txt",
+        "work/recruits-tacz-patch/LICENSE"
+      ],
+      "embedded_jars": [
+        "outputs/frontier-nations/instance/mods/frontier-nations-1.20.1-0.1.2-alpha.jar",
+        "outputs/frontier-nations/instance/mods/recruits-tacz-1.022-frontier.1.jar",
+        "work/recruits-tacz-patch/maven/dev/frontier/recruits-tacz/1.022-frontier.1/recruits-tacz-1.022-frontier.1.jar",
+        "work/recruits-tacz-patch/upstream/recruitstacz-1.022.jar"
+      ],
+      "source_metadata_entries": [
+        "work/frontier-nations/src/main/resources/META-INF/mods.toml"
+      ],
+      "resource_provenance": {
+        "compared_equal_count": 6,
+        "mismatches": [],
+        "missing": [],
+        "intentional_transformations": []
+      },
+      "source_class_name_coverage": {
+        "java_count_in_main": 8,
+        "production_outer_class_count": 8,
+        "all_production_class_count": 14,
+        "class_without_java": [],
+        "java_without_production_class": [],
+        "comparison_scope": "Path/name coverage only; not compiled bytecode reproducibility"
+      }
+    },
+    {
+      "key": "industry",
+      "installed_file": "/home/chpoka/.minecraft/mods/frontier-industry-1.20.1-0.4.0.jar",
+      "installed_sha256": "aee9da30d4acd474ba638e07a76cafee57e794804449c3e210b1f85411d45c75",
+      "release_jar": "/home/chpoka/Documents/Codex/2026-10-24/minecraft-thread-01a1696f-5a73-7733-93c7/outputs/frontier-industry-1.20.1-0.4.0.jar",
+      "release_equals_installed": true,
+      "source_archive": "/home/chpoka/Documents/Codex/2026-10-24/minecraft-thread-01a1696f-5a73-7733-93c7/outputs/frontier-industry-0.4.0-source.zip",
+      "source_archive_sha256": "3a5fdda978b331a3ee7c8f321bff5986cb6a6786d7ebc5169b82a33cbeba7ad9",
+      "project_subroot": "frontier-industry/",
+      "resource_subroot": "frontier-industry/src/main/resources/",
+      "archive_entries": 308,
+      "license_files": [
+        "frontier-industry/LICENSE.txt"
+      ],
+      "embedded_jars": [],
+      "source_metadata_entries": [
+        "frontier-industry/src/main/resources/META-INF/mods.toml"
+      ],
+      "resource_provenance": {
+        "compared_equal_count": 209,
+        "mismatches": [],
+        "missing": [],
+        "intentional_transformations": []
+      },
+      "source_class_name_coverage": {
+        "java_count_in_main": 56,
+        "production_outer_class_count": 56,
+        "all_production_class_count": 103,
+        "class_without_java": [],
+        "java_without_production_class": [],
+        "comparison_scope": "Path/name coverage only; not compiled bytecode reproducibility"
+      }
+    },
+    {
+      "key": "aviation",
+      "installed_file": "/home/chpoka/.minecraft/mods/frontier-light-aviation-1.1.0.jar",
+      "installed_sha256": "c85713196801b6abcede4b8eb7dd8e06e5d6f294a83edf44fd682e41d661bad3",
+      "release_jar": "/home/chpoka/Documents/Codex/2026-10-24/flamingo-launch-fix/outputs/aviation-1.1.0/frontier-light-aviation-1.1.0.jar",
+      "release_equals_installed": true,
+      "source_archive": "/home/chpoka/Documents/Codex/2026-10-24/flamingo-launch-fix/outputs/aviation-1.1.0/frontier-light-aviation-1.1.0-source.zip",
+      "source_archive_sha256": "85059dcc8d1ce325a79168a67028c5f9944785ac5019e2f5a5f9a761442c701f",
+      "project_subroot": "",
+      "resource_subroot": "resources/",
+      "archive_entries": 92,
+      "license_files": [],
+      "embedded_jars": [],
+      "source_metadata_entries": [
+        "resources/META-INF/mods.toml"
+      ],
+      "resource_provenance": {
+        "compared_equal_count": 35,
+        "mismatches": [],
+        "missing": [],
+        "intentional_transformations": [
+          {
+            "source": "resources/assets/frontier_aviation/models/bedrock/vehicle/f16_lod.geo.json",
+            "omitted": "authoring-only *_lod geometry omitted by archived build.py; runtime copies exist under vehicle_lod"
+          },
+          {
+            "source": "resources/assets/frontier_aviation/models/bedrock/vehicle/j10_lod.geo.json",
+            "omitted": "authoring-only *_lod geometry omitted by archived build.py; runtime copies exist under vehicle_lod"
+          },
+          {
+            "source": "resources/assets/frontier_aviation/models/bedrock/vehicle/su25_lod.geo.json",
+            "omitted": "authoring-only *_lod geometry omitted by archived build.py; runtime copies exist under vehicle_lod"
+          }
+        ]
+      },
+      "source_class_name_coverage": {
+        "java_count_in_main": 21,
+        "production_outer_class_count": 21,
+        "all_production_class_count": 23,
+        "class_without_java": [],
+        "java_without_production_class": [],
+        "comparison_scope": "Path/name coverage only; not compiled bytecode reproducibility"
+      }
+    },
+    {
+      "key": "launch_fix",
+      "installed_file": "/home/chpoka/.minecraft/mods/frontier-flamingo-launch-fix-1.3.0.jar",
+      "installed_sha256": "28ca51bde23d38c77b0d6f7d7bef4a9dd76c5e3f038ee3850945d245b7242f70",
+      "release_jar": "/home/chpoka/Documents/Codex/2026-10-24/flamingo-launch-fix/outputs/missile-effects-1.3.0/frontier-flamingo-launch-fix-1.3.0.jar",
+      "release_equals_installed": true,
+      "source_archive": "/home/chpoka/Documents/Codex/2026-10-24/flamingo-launch-fix/outputs/missile-effects-1.3.0/frontier-flamingo-launch-fix-1.3.0-source.zip",
+      "source_archive_sha256": "b06334eb99bebd49aa52afda603e170ee258036b132f56835721b4e280406b5c",
+      "project_subroot": "",
+      "resource_subroot": "resources/",
+      "archive_entries": 55,
+      "license_files": [],
+      "embedded_jars": [],
+      "source_metadata_entries": [
+        "resources/META-INF/mods.toml"
+      ],
+      "resource_provenance": {
+        "compared_equal_count": 4,
+        "mismatches": [],
+        "missing": [],
+        "intentional_transformations": []
+      },
+      "source_class_name_coverage": {
+        "java_count_in_main": 22,
+        "production_outer_class_count": 22,
+        "all_production_class_count": 23,
+        "class_without_java": [],
+        "java_without_production_class": [],
+        "comparison_scope": "Path/name coverage only; not compiled bytecode reproducibility"
+      }
+    }
+  ],
+  "combined_runtime_proof": {
+    "proof_path": "/home/chpoka/Documents/Codex/2026-10-24/minecraft-thread-01a1696f-5a73-7733-93c7/outputs/verification/accepted-mods.json",
+    "production_count": 27,
+    "all_current_jars_present_identical": true,
+    "extra_test_jars": {
+      "frontier-industry-test.jar": "443df62fd26b51af42123851e4333a1b206469c4fe561d5814c979b18931ed77"
+    },
+    "no_extra_production_jars": true
+  },
+  "industry_preserved_binary_bridge": [
+    {
+      "entry": "dev/frontier/industry/combat/NativeCombatEvents.class",
+      "sha256": "8bdda1168156fa9ce5577498fb0d7f1b42a29938ed2b4ef3851393f45b56f407",
+      "equals_installed_0_4": true,
+      "equals_backup_0_3_1": true,
+      "source_java_correspondence": "NOT established; BUILD-0.4.md explicitly says archived Java is older"
+    },
+    {
+      "entry": "dev/frontier/industry/combat/ReadyWeapons.class",
+      "sha256": "9460e139b74ff680895b2d40065fb18dc9a41e4105e2ded05ba2aec28a29eef9",
+      "equals_installed_0_4": true,
+      "equals_backup_0_3_1": true,
+      "source_java_correspondence": "NOT established; BUILD-0.4.md explicitly says archived Java is older"
+    }
+  ],
+  "recruits_tacz_overlay": {
+    "source_dir": "/home/chpoka/Documents/Codex/2026-10-23/new-chat/work/recruits-tacz-patch",
+    "original_jar_sha256": "c9d69054118f912c8ad7010742d40a432f2579cea71688a4ad66269c9bb2f67a",
+    "installed_sha256": "2d0bc509573f927c141d7972719cf97175e04907b63e3b17dee2e6877d96b965",
+    "workspace_maven_equals_installed": true,
+    "changed_original_entries": [
+      "META-INF/mods.toml",
+      "com/logic/recruitstacz/mixin/MixinAbstractRecruitEntity.class"
+    ],
+    "added_entries": [
+      "META-INF/FRONTIER-PATCH.txt",
+      "META-INF/LICENSE.frontier-tacz-recruits"
+    ],
+    "removed_entries": [
+      "META-INF/",
+      "com/",
+      "com/logic/",
+      "com/logic/recruitstacz/",
+      "com/logic/recruitstacz/bridge/",
+      "com/logic/recruitstacz/client/",
+      "com/logic/recruitstacz/compat/",
+      "com/logic/recruitstacz/compat/playeranimator/",
+      "com/logic/recruitstacz/config/",
+      "com/logic/recruitstacz/entity/",
+      "com/logic/recruitstacz/entity/ai/",
+      "com/logic/recruitstacz/mixin/",
+      "com/logic/recruitstacz/mixin/client/",
+      "com/logic/recruitstacz/mixin/tacz/"
+    ],
+    "manifest": {
+      "kind": "local-patched",
+      "version": "1.022-frontier.1",
+      "coordinate": "dev.frontier:recruits-tacz:1.022-frontier.1",
+      "original": {
+        "filename": "recruitstacz-1.022.jar",
+        "size": 70217,
+        "hashes": {
+          "sha1": "a7c5a30b17096905d4827a3fa944932e409768c7",
+          "sha256": "c9d69054118f912c8ad7010742d40a432f2579cea71688a4ad66269c9bb2f67a",
+          "sha512": "a85216fa65242cd0a3ba3d99c83c86d1076f09e32d553046ce294ef49304bbb187b69f3310970b31d3a8c5d1356de5a5e6fedf930d12bf662b7152d410a4f808"
+        }
+      },
+      "patched": {
+        "filename": "recruits-tacz-1.022-frontier.1.jar",
+        "size": 69575,
+        "hashes": {
+          "sha1": "f93178e56aa4ebcff6f81984e2055a499f52eaf6",
+          "sha256": "2d0bc509573f927c141d7972719cf97175e04907b63e3b17dee2e6877d96b965",
+          "sha512": "1cb50e626208d9625284ebd04ba0c4c59cc8d90e813a152f8b7b401922ff93fbf3ebe277730f11007000a154d0a88cc1f3478e2ba98778b25c4df097b7247ad2"
+        }
+      },
+      "changed_entries": [
+        "META-INF/mods.toml",
+        "com/logic/recruitstacz/mixin/MixinAbstractRecruitEntity.class"
+      ],
+      "added_entries": [
+        "META-INF/LICENSE.frontier-tacz-recruits",
+        "META-INF/FRONTIER-PATCH.txt"
+      ],
+      "upstream_source_commit": "a4e8714dd28194173d8244e3a9e913b2e915c67b",
+      "source_url": "https://github.com/LogicalMaximus/TACZ-Recruits",
+      "patch_source": "src/PatchRecruitsTacz.java",
+      "runtime_status": "verified: development client11/11; production fresh11/11; production restart11/11; native N and R UI paths passed"
+    },
+    "removed_file_entries": [],
+    "original_source_scope": "Readable ASM patch/verifier plus two inspected upstream Java files at commit a4e8714dd28194173d8244e3a9e913b2e915c67b; not a full upstream source checkout."
+  },
+  "proof_files": [
+    {
+      "path": "/home/chpoka/Documents/Codex/2026-10-23/new-chat/outputs/drone-terminals/verification.json",
+      "sha256": "88a6e750bce1ee5cea415481933e05401ee83cd92556201d158c07a7d120bac5"
+    },
+    {
+      "path": "/home/chpoka/Documents/Codex/2026-10-23/new-chat/outputs/drone-terminals/tested-runtime.json",
+      "sha256": "c114cf3b1b1ed5b2b0bdcedb799886c6a288c1dc27cc130b0666404a9c56058f"
+    },
+    {
+      "path": "/home/chpoka/Documents/Codex/2026-10-23/new-chat/outputs/sbw-unification/verification.json",
+      "sha256": "d2050f21a49426727fd117b504d141e3d05285e951ee21a8183ee02f24f97c41"
+    },
+    {
+      "path": "/home/chpoka/Documents/Codex/2026-10-23/new-chat/outputs/sbw-unification/tested-runtime.json",
+      "sha256": "597932aa3cbfacd01c16c1522042ebbdf7175506776c65af23c7e5306b00f961"
+    },
+    {
+      "path": "/home/chpoka/Documents/Codex/2026-10-23/new-chat/outputs/sbw-unification/native-checks.json",
+      "sha256": "f6fed89c8cb80fc664d4995b7bdbd3d106e54f7ed758294cee7b208b6930fd6a"
+    },
+    {
+      "path": "/home/chpoka/Documents/Codex/2026-10-24/minecraft-thread-01a1696f-5a73-7733-93c7/outputs/ПРОВЕРКИ.json",
+      "sha256": "159d6cc8c37a49e6f9dfad3666878879ee79074b87ba871d5fdf768772de692b"
+    },
+    {
+      "path": "/home/chpoka/Documents/Codex/2026-10-24/minecraft-thread-01a1696f-5a73-7733-93c7/outputs/verification/accepted-mods.json",
+      "sha256": "190d1a87aded056d234205af634d1edde4554eba15c46ce9941bbf38735b2b34"
+    },
+    {
+      "path": "/home/chpoka/Documents/Codex/2026-10-24/minecraft-thread-01a1696f-5a73-7733-93c7/outputs/verification/binary-audit.json",
+      "sha256": "ceddbf8f468bb248cb70b7163653e8a3eed4935536bf224e75ff359d2a38c41c"
+    },
+    {
+      "path": "/home/chpoka/Documents/Codex/2026-10-24/minecraft-thread-01a1696f-5a73-7733-93c7/outputs/verification/dedicated-two-clients.json",
+      "sha256": "ed237b255adbaf433c66fc5c278ea9330fd50ec3643bc50e579280a7568d1590"
+    },
+    {
+      "path": "/home/chpoka/Documents/Codex/2026-10-24/minecraft-thread-01a1696f-5a73-7733-93c7/outputs/verification/dedicated-actual-restart.json",
+      "sha256": "e155dbc7eac56d4d80bdbefe16f6851cd4cf3793384f9d506268ea92115315bb"
+    },
+    {
+      "path": "/home/chpoka/Documents/Codex/2026-10-24/minecraft-thread-01a1696f-5a73-7733-93c7/outputs/verification/rendered-buildings-restart.json",
+      "sha256": "fb434ace0488beaacbc61b14223bc0bf960af1e6649965c449121c5d5c730a3c"
+    },
+    {
+      "path": "/home/chpoka/Documents/Codex/2026-10-24/flamingo-launch-fix/outputs/aviation-1.1.0/acceptance-summary.json",
+      "sha256": "8d4f0b0ee2386bdeca632028cbadd3eb04e8d4f6cf43fa21ff91adf9519624a1"
+    },
+    {
+      "path": "/home/chpoka/Documents/Codex/2026-10-24/flamingo-launch-fix/outputs/aviation-1.1.0/test-runtime-manifest.json",
+      "sha256": "661d68b21223ceaae15a97a3ca7d8e19fef6050cabbe3e86fcd6c79087c0eccf"
+    },
+    {
+      "path": "/home/chpoka/Documents/Codex/2026-10-24/flamingo-launch-fix/outputs/aviation-1.1.0/release-checksums.json",
+      "sha256": "89b0e9e14f5bcc34938faaa86a5eaef4d42998ab3478583f05bac93443a36f87"
+    },
+    {
+      "path": "/home/chpoka/Documents/Codex/2026-10-24/flamingo-launch-fix/outputs/missile-effects-1.3.0/acceptance-summary.json",
+      "sha256": "8d4f0b0ee2386bdeca632028cbadd3eb04e8d4f6cf43fa21ff91adf9519624a1"
+    },
+    {
+      "path": "/home/chpoka/Documents/Codex/2026-10-24/flamingo-launch-fix/outputs/missile-effects-1.3.0/test-runtime-manifest.json",
+      "sha256": "661d68b21223ceaae15a97a3ca7d8e19fef6050cabbe3e86fcd6c79087c0eccf"
+    },
+    {
+      "path": "/home/chpoka/Documents/Codex/2026-10-24/flamingo-launch-fix/outputs/missile-effects-1.3.0/release-checksums.json",
+      "sha256": "4b6006b4af00dba634cc9901a064c3be7b9c0bd2b8654d5d12823c179996b785"
+    }
+  ],
+  "limitations": [
+    "No clean build, network resolution, runtime launch or license grant verification performed in this read-only audit.",
+    "All six installed release binaries equal their released artifacts; resource correspondence is checked, but full Java-to-production-bytecode reproducibility was not established.",
+    "Industry NativeCombatEvents.java and ReadyWeapons.java are explicitly older than the preserved production bytecode. Corresponding exact production authored source is not established by the supplied source archive.",
+    "Old MODS-LICENSES.md/old lock are historical: own module versions and upstream license declarations differ from current JAR metadata.",
+    "Aviation/fix/style historical builders embed author-machine paths and existing ForgeGradle/JDK caches. They are not portable build scripts without adaptation.",
+    "The ASM overlay has one changed class and mods.toml, plus two added notice files; upstream directory marker ZIP entries are also omitted."
+  ],
+  "license_observations": [
+    {
+      "module": "arcade",
+      "observation": "source LICENSE.txt MIT; source/installed mods.toml GPL-3.0-only; unresolved conflicting declarations"
+    },
+    {
+      "module": "aviation",
+      "observation": "mods.toml MIT; no standalone LICENSE file in release source archive"
+    },
+    {
+      "module": "launch_fix",
+      "observation": "mods.toml MIT; no standalone LICENSE file in release source archive"
+    },
+    {
+      "module": "uncomplicated-fpv",
+      "observation": "installed mods.toml All-Rights-Reserved; historical MODS-LICENSES.md says GPL-3.0-only"
+    },
+    {
+      "module": "tacz",
+      "observation": "installed mods.toml GPL3 / CC BY-NC-ND 4.0; historical document says GPL-3.0-only"
+    },
+    {
+      "module": "mobplayeranimator",
+      "observation": "installed mods.toml C0-1.0; historical document says MIT"
+    }
+  ]
+}

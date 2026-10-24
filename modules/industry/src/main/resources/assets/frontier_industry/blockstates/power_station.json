@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=true": {
+      "model": "frontier_industry:block/power_station"
+    },
+    "lit=false": {
+      "model": "frontier_industry:block/power_station_off"
+    }
+  }
+}

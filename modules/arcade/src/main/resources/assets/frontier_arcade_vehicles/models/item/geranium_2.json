@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "frontier_arcade_vehicles:item/geranium_2"
+  }
+}

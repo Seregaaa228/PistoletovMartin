@@ -1,0 +1,20 @@
+{
+  "List": [
+    {
+      "Type": "superbwarfare:bmp_2",
+      "Weight": 5
+    },
+    {
+      "Type": "superbwarfare:lav_ad",
+      "Weight": 3
+    },
+    {
+      "Type": "superbwarfare:lav_25",
+      "Weight": 5
+    },
+    {
+      "Type": "superbwarfare:bradley",
+      "Weight": 5
+    }
+  ]
+}

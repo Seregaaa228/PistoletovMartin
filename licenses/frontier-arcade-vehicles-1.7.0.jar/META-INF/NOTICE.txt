@@ -1,0 +1,6 @@
+The three vehicle JSON files under data/superbwarfare/sbw/vehicles are derived from Superb Warfare 0.8.9.1 (Atsuishio, Roki27, Light_Quanta and contributors), GNU GPL version 3. They retain native physics, seats and weapons with reduced health and damage. Exact upstream sources: https://github.com/Mercurows/SuperbWarfare/tree/993063bed .
+The Frontier compatibility code is supplied under the MIT license (see source archive) and is distributed here together with the vehicle data under GNU GPL version 3.
+
+Geranium-2 addition, 2026-10-24: Shahed geometry is derived from Uncomplicated FPV by lavafrai, GPL-3.0. Native body geometry retained; camera geometry, graphite texture atlas, item icon and compatibility code authored for Frontier. Original model: uncomplicated-fpv-1.0.1.jar assets/uncomplicatedfpv/geo/shahed136.geo.json. Original mod remains unmodified.
+
+Geranium 1.4 flight is a manual-input adaptation of the GPL-3.0 Shahed136Entity.updateFlight algorithm from Uncomplicated FPV 1.0.1. The original 25-cube mesh and original texture/alpha are reused; only the additional Geranium entity receives a dark renderer tint and camera geometry. The original upstream JAR is not modified.

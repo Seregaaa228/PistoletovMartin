@@ -1,0 +1,16 @@
+{
+  "checks": {
+    "actual dedicated restart preserves country binding": true,
+    "actual restart preserves completed and paid active research": true,
+    "actual restart preserves exact partial construction cursor": true,
+    "restart does not debit stock twice 0": true,
+    "restart does not debit stock twice 1": true,
+    "both reconnected TCP clients see persisted country": true,
+    "paid research resumes after real restart and power restore": true,
+    "blocked partial repair can be cancelled without losing foreign inventory": true,
+    "reserved repair kit is returned exactly once": true,
+    "repeated cancel cannot return another repair kit": true
+  },
+  "pass": true,
+  "ticks": 199
+}

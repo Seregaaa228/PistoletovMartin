@@ -1,0 +1,7 @@
+# Native SBW 0.8.9 switches; damage/radius remain configurable per weapon.
+[explosion]
+explosion_destroy = true
+# Disables pre-explosion extra block destruction, independent of the blast list.
+extra_explosion_effect = false
+friendly_mines = true
+explosion_penetration_ratio = 15

@@ -1,0 +1,67 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.main.idle": {
+      "loop": true,
+      "bones": {
+        "flare": {
+          "scale": 0
+        }
+      }
+    },
+    "animation.main.fire": {
+      "loop": "hold_on_last_frame",
+      "animation_length": 0.24,
+      "bones": {
+        "flare": {
+          "scale": {
+            "0.000": [
+              0,
+              0,
+              0
+            ],
+            "0.008": [
+              4,
+              4,
+              4
+            ],
+            "0.045": [
+              5.5,
+              5.5,
+              5.5
+            ],
+            "0.075": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "rot_barrel": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "0.05": [
+              0,
+              0,
+              -120
+            ],
+            "0.14": [
+              0,
+              0,
+              -270
+            ],
+            "0.24": [
+              0,
+              0,
+              -360
+            ]
+          }
+        }
+      }
+    }
+  }
+}

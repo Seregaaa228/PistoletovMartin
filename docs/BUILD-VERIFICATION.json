@@ -1,0 +1,65 @@
+{
+  "build": "Gradle 8.8 / ForgeGradle 6.0.54 / Java 17",
+  "minecraft": "1.20.1",
+  "forge": "47.4.0",
+  "command": "python3 tools/build.py --offline build --console=plain",
+  "clean_build_preceded_final_resource_exclusion": true,
+  "preserved_combat_byte_identical": true,
+  "game_launched": false,
+  "artifacts": {
+    "frontier-arcade-style-1.1.0.jar": {
+      "sha256": "50c8b714548a34e7b522b2e6ca241379121fe6a4d5a16d7907d0c364f73462ef",
+      "size": 312227,
+      "classes": 14,
+      "runtime_resources": 143,
+      "production_class_set_matches": true,
+      "java_major": 61,
+      "production_runtime_resources_match": true
+    },
+    "frontier-arcade-vehicles-1.7.0.jar": {
+      "sha256": "2725a5db00d70b6126b8b95beeaefaebca27f7851e8e4389f2e9f92d83ab86ec",
+      "size": 283777,
+      "classes": 74,
+      "runtime_resources": 71,
+      "production_class_set_matches": true,
+      "java_major": 61,
+      "production_runtime_resources_match": true
+    },
+    "frontier-flamingo-launch-fix-1.3.0.jar": {
+      "sha256": "651d94055f9999cf5b4dd73d65bc67409ed307ea3f6b01d409a9c8d094845b30",
+      "size": 32350,
+      "classes": 23,
+      "runtime_resources": 2,
+      "production_class_set_matches": true,
+      "java_major": 61,
+      "production_runtime_resources_match": true
+    },
+    "frontier-industry-1.20.1-0.4.0.jar": {
+      "sha256": "ed54db9433c036a67e751ad48d32bc31fb5cc4d22eca341b5b221052d10e6399",
+      "size": 580170,
+      "classes": 103,
+      "runtime_resources": 208,
+      "production_class_set_matches": true,
+      "java_major": 61,
+      "production_runtime_resources_match": true
+    },
+    "frontier-light-aviation-1.1.0.jar": {
+      "sha256": "1b4a074324909da2a85254c58c741fb4408872b62c38778829f2f1794951ea1c",
+      "size": 95750,
+      "classes": 23,
+      "runtime_resources": 33,
+      "production_class_set_matches": true,
+      "java_major": 61,
+      "production_runtime_resources_match": true
+    },
+    "frontier-nations-1.20.1-0.1.2-alpha.jar": {
+      "sha256": "22fd1f14e860fe0dddf509c7485acfee3e6d49e234132cfaf7fb723b10219ada",
+      "size": 53867,
+      "classes": 14,
+      "runtime_resources": 5,
+      "production_class_set_matches": true,
+      "java_major": 61,
+      "production_runtime_resources_match": true
+    }
+  }
+}

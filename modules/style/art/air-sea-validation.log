@@ -1,0 +1,5 @@
+ah_6: exact native pivots; valid tree, animation bones and 128px UVs; empty flare geometry; exactly two LODs
+mi_28: exact native pivots; valid tree, animation bones and 128px UVs; empty flare geometry; exactly two LODs
+speedboat: exact native pivots; valid tree, animation bones and 128px UVs; empty flare geometry; exactly two LODs
+tiny_speedboat: exact native pivots; valid tree, animation bones and 128px UVs; empty flare geometry; exactly two LODs
+All assets are generated in this script; native JAR supplies contracts only; no mechanics, Java, data or source assets copied.

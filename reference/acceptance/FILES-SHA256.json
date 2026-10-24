@@ -1,0 +1,19 @@
+{
+  "drone-terminals/verification.json": "88a6e750bce1ee5cea415481933e05401ee83cd92556201d158c07a7d120bac5",
+  "drone-terminals/tested-runtime.json": "c114cf3b1b1ed5b2b0bdcedb799886c6a288c1dc27cc130b0666404a9c56058f",
+  "sbw-unification/verification.json": "d2050f21a49426727fd117b504d141e3d05285e951ee21a8183ee02f24f97c41",
+  "sbw-unification/tested-runtime.json": "597932aa3cbfacd01c16c1522042ebbdf7175506776c65af23c7e5306b00f961",
+  "sbw-unification/native-checks.json": "f6fed89c8cb80fc664d4995b7bdbd3d106e54f7ed758294cee7b208b6930fd6a",
+  "industry/\u041f\u0420\u041e\u0412\u0415\u0420\u041a\u0418.json": "159d6cc8c37a49e6f9dfad3666878879ee79074b87ba871d5fdf768772de692b",
+  "industry/verification/accepted-mods.json": "190d1a87aded056d234205af634d1edde4554eba15c46ce9941bbf38735b2b34",
+  "industry/verification/binary-audit.json": "ceddbf8f468bb248cb70b7163653e8a3eed4935536bf224e75ff359d2a38c41c",
+  "industry/verification/dedicated-two-clients.json": "ed237b255adbaf433c66fc5c278ea9330fd50ec3643bc50e579280a7568d1590",
+  "industry/verification/dedicated-actual-restart.json": "e155dbc7eac56d4d80bdbefe16f6851cd4cf3793384f9d506268ea92115315bb",
+  "industry/verification/rendered-buildings-restart.json": "fb434ace0488beaacbc61b14223bc0bf960af1e6649965c449121c5d5c730a3c",
+  "aviation-1.1.0/acceptance-summary.json": "8d4f0b0ee2386bdeca632028cbadd3eb04e8d4f6cf43fa21ff91adf9519624a1",
+  "aviation-1.1.0/test-runtime-manifest.json": "661d68b21223ceaae15a97a3ca7d8e19fef6050cabbe3e86fcd6c79087c0eccf",
+  "aviation-1.1.0/release-checksums.json": "89b0e9e14f5bcc34938faaa86a5eaef4d42998ab3478583f05bac93443a36f87",
+  "missile-effects-1.3.0/acceptance-summary.json": "8d4f0b0ee2386bdeca632028cbadd3eb04e8d4f6cf43fa21ff91adf9519624a1",
+  "missile-effects-1.3.0/test-runtime-manifest.json": "661d68b21223ceaae15a97a3ca7d8e19fef6050cabbe3e86fcd6c79087c0eccf",
+  "missile-effects-1.3.0/release-checksums.json": "4b6006b4af00dba634cc9901a064c3be7b9c0bd2b8654d5d12823c179996b785"
+}

@@ -1,0 +1,35 @@
+{
+  "kind": "local-patched",
+  "version": "1.022-frontier.1",
+  "coordinate": "dev.frontier:recruits-tacz:1.022-frontier.1",
+  "original": {
+    "filename": "recruitstacz-1.022.jar",
+    "size": 70217,
+    "hashes": {
+      "sha1": "a7c5a30b17096905d4827a3fa944932e409768c7",
+      "sha256": "c9d69054118f912c8ad7010742d40a432f2579cea71688a4ad66269c9bb2f67a",
+      "sha512": "a85216fa65242cd0a3ba3d99c83c86d1076f09e32d553046ce294ef49304bbb187b69f3310970b31d3a8c5d1356de5a5e6fedf930d12bf662b7152d410a4f808"
+    }
+  },
+  "patched": {
+    "filename": "recruits-tacz-1.022-frontier.1.jar",
+    "size": 69575,
+    "hashes": {
+      "sha1": "f93178e56aa4ebcff6f81984e2055a499f52eaf6",
+      "sha256": "2d0bc509573f927c141d7972719cf97175e04907b63e3b17dee2e6877d96b965",
+      "sha512": "1cb50e626208d9625284ebd04ba0c4c59cc8d90e813a152f8b7b401922ff93fbf3ebe277730f11007000a154d0a88cc1f3478e2ba98778b25c4df097b7247ad2"
+    }
+  },
+  "changed_entries": [
+    "META-INF/mods.toml",
+    "com/logic/recruitstacz/mixin/MixinAbstractRecruitEntity.class"
+  ],
+  "added_entries": [
+    "META-INF/LICENSE.frontier-tacz-recruits",
+    "META-INF/FRONTIER-PATCH.txt"
+  ],
+  "upstream_source_commit": "a4e8714dd28194173d8244e3a9e913b2e915c67b",
+  "source_url": "https://github.com/LogicalMaximus/TACZ-Recruits",
+  "patch_source": "src/PatchRecruitsTacz.java",
+  "runtime_status": "verified: development client11/11; production fresh11/11; production restart11/11; native N and R UI paths passed"
+}

@@ -1,0 +1,38 @@
+{
+  "allPassed": true,
+  "nativeTerminalChecks": 62,
+  "nativeScenarios": "actual desktop Geranium/Relay, pocket native Mavic, distant reconnect, REB recovery, station destruction, inventory roundtrip, native relay RF fixtures",
+  "desktopAircraft": [
+    "relay",
+    "geranium_2"
+  ],
+  "pocketAircraft": [
+    "mavic_drone_no_drop",
+    "mavic_drone_with_drop",
+    "fpv_drone"
+  ],
+  "relayRadioBudgetBlocks": 384,
+  "relayModeKey": "I",
+  "aircraftLevelKey": "F6",
+  "legacySavedBindingsIgnored": true,
+  "persistentPairing": true,
+  "distantStationBootstrap": true,
+  "deterministicRoutingChecks": 15,
+  "fixedWingFlightAssertions": 185,
+  "flightScenarios": 17,
+  "relayFlightAssertions": 336547,
+  "productionSHA256": "2f1c383c1c99fdacfd1549036330a5f91b8b39034ab73500b2ca942a70239b45",
+  "testedSmokeSHA256": "9cc4be8a4bff95afd64a4bbe6a4eb9895b6bec81943d20ef729dceffa9729aed",
+  "productionEntriesIdenticalToTested": 148,
+  "originalGeraniumAssetsUnchanged": [
+    "resources/assets/frontier_arcade_vehicles/animations/geranium_2.animation.json",
+    "resources/assets/frontier_arcade_vehicles/geo/geranium_2.geo.json",
+    "resources/assets/frontier_arcade_vehicles/models/item/geranium_2.json",
+    "resources/assets/frontier_arcade_vehicles/models/item/geranium_2_drone.json",
+    "resources/assets/frontier_arcade_vehicles/sbw/vehicles/geranium_2_drone.json",
+    "resources/assets/frontier_arcade_vehicles/textures/item/geranium_2.png",
+    "resources/data/frontier_arcade_vehicles/sbw/vehicles/geranium_2_drone.json"
+  ],
+  "otherInstalledModsUnchanged": 24,
+  "playerWorldsOpenedByTests": false
+}

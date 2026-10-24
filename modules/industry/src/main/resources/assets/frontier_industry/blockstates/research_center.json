@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=true": {
+      "model": "frontier_industry:block/research_center"
+    },
+    "lit=false": {
+      "model": "frontier_industry:block/research_center_off"
+    }
+  }
+}

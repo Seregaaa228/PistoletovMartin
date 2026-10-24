@@ -1,0 +1,13 @@
+{
+  "Item": "superbwarfare:mortar_shell",
+  "Entity": "superbwarfare:mortar_shell",
+  "HitDamage": 60,
+  "ExplosionDamage": 120,
+  "ExplosionRadius": 4,
+  "Offset": [
+    0,
+    -0.2,
+    0.0
+  ],
+  "TickCount": 2
+}

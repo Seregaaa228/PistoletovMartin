@@ -1,0 +1,77 @@
+{
+  "status": "pass",
+  "owned_resource_files": 42,
+  "evidence": "Saved-file validation against installed pinned native pivots, not an in-game test",
+  "resources": [
+    {
+      "id": "lav_25",
+      "level": 0,
+      "bones": 15,
+      "cubes": 50,
+      "triangles": 600
+    },
+    {
+      "id": "lav_25",
+      "level": 1,
+      "bones": 15,
+      "cubes": 16,
+      "triangles": 192
+    },
+    {
+      "id": "lav_ad",
+      "level": 0,
+      "bones": 15,
+      "cubes": 59,
+      "triangles": 708
+    },
+    {
+      "id": "lav_ad",
+      "level": 1,
+      "bones": 15,
+      "cubes": 17,
+      "triangles": 204
+    },
+    {
+      "id": "hpj_11",
+      "level": 0,
+      "bones": 8,
+      "cubes": 42,
+      "triangles": 504
+    },
+    {
+      "id": "hpj_11",
+      "level": 1,
+      "bones": 8,
+      "cubes": 13,
+      "triangles": 156
+    },
+    {
+      "id": "mortar",
+      "level": 0,
+      "bones": 9,
+      "cubes": 42,
+      "triangles": 504
+    },
+    {
+      "id": "mortar",
+      "level": 1,
+      "bones": 9,
+      "cubes": 13,
+      "triangles": 156
+    },
+    {
+      "id": "tow",
+      "level": 0,
+      "bones": 7,
+      "cubes": 42,
+      "triangles": 504
+    },
+    {
+      "id": "tow",
+      "level": 1,
+      "bones": 7,
+      "cubes": 14,
+      "triangles": 168
+    }
+  ]
+}

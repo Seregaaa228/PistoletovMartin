@@ -1,0 +1,14 @@
+{
+  "Animation": "frontier_aviation:animations/bedrock/vehicle/j10.animation.json",
+  "Models": [
+    {
+      "Model": "frontier_aviation:models/bedrock/vehicle/j10.geo.json",
+      "Texture": "frontier_aviation:textures/bedrock/vehicle/j10.png"
+    },
+    {
+      "Model": "frontier_aviation:models/bedrock/vehicle_lod/j10.geo.json",
+      "Texture": "frontier_aviation:textures/bedrock/vehicle/j10.png",
+      "LODDistance": 96
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "itemGroup.frontier_aviation": "Frontier · Авиация",
+  "weapon.frontier_aviation.cannon": "Авиационная пушка",
+  "item.frontier_aviation.su25": "Су-25",
+  "entity.frontier_aviation.su25": "Су-25",
+  "item.frontier_aviation.f16": "F-16",
+  "entity.frontier_aviation.f16": "F-16",
+  "item.frontier_aviation.j10": "J-10",
+  "entity.frontier_aviation.j10": "J-10"
+}

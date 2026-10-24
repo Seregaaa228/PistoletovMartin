@@ -1,0 +1,8 @@
+{
+  "ID": "frontier_arcade_vehicles:geranium_2_drone",
+  "Model": {
+    "Animation": "frontier_arcade_vehicles:animations/geranium_2.animation.json",
+    "Model": "frontier_arcade_vehicles:geo/geranium_2.geo.json",
+    "Texture": "uncomplicatedfpv:textures/entity/shahed136.png"
+  }
+}

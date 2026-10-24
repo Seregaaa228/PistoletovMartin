@@ -1,0 +1,8 @@
+{
+  "ID": "frontier_arcade_vehicles:relay_drone",
+  "Model": {
+    "Animation": "frontier_arcade_vehicles:animations/relay_plane.animation.json",
+    "Model": "frontier_arcade_vehicles:geo/relay_plane.geo.json",
+    "Texture": "frontier_arcade_vehicles:textures/entity/relay_plane.png"
+  }
+}

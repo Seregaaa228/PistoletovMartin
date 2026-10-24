@@ -1,0 +1,436 @@
+{
+  "minecraft": "1.20.1",
+  "forge": "47.4.0",
+  "java": 17,
+  "mods": [
+    {
+      "file": "architectury-9.2.14-forge.jar",
+      "sha256": "218b471d0b8a1f6cda14cfc1beb9eeb0df54304500acc6c5613d9b88ec65d9af",
+      "bytes": 580602,
+      "declaredLicense": "GNU LGPLv3",
+      "mods": [
+        {
+          "modId": "architectury",
+          "version": "9.2.14",
+          "displayName": "Architectury",
+          "authors": "shedaniel"
+        }
+      ],
+      "upstream": "https://cdn.modrinth.com/data/lhGA9TYQ/versions/1MKTLiiG/architectury-9.2.14-forge.jar",
+      "role": "third-party"
+    },
+    {
+      "file": "cloth-config-11.1.136-forge.jar",
+      "sha256": "1e895e85cf5b1e1905ef3178ec155c8badfe22a1577b92c09143a5aa1f4ce0f2",
+      "bytes": 1181413,
+      "declaredLicense": "GNU LGPLv3",
+      "mods": [
+        {
+          "modId": "cloth_config",
+          "version": "11.1.136",
+          "displayName": "Cloth Config v10 API"
+        }
+      ],
+      "upstream": "https://cdn.modrinth.com/data/9s6osm5g/versions/t8TXrZvZ/cloth-config-11.1.136-forge.jar",
+      "role": "third-party"
+    },
+    {
+      "file": "curios-forge-5.14.1+1.20.1.jar",
+      "sha256": "1e817919a35b37cf30524aaec73f0ca5130452f23f168f844854df282eb8e51f",
+      "bytes": 398066,
+      "declaredLicense": "LGPL-3.0-or-later",
+      "mods": [
+        {
+          "modId": "curios",
+          "version": "${file.jarVersion}",
+          "displayName": "Curios API",
+          "authors": "C4",
+          "displayURL": "https://www.curseforge.com/minecraft/mc-mods/curios"
+        }
+      ],
+      "upstream": "https://cdn.modrinth.com/data/vvuO3ImH/versions/IPQlZkz1/curios-forge-5.14.1%2B1.20.1.jar",
+      "role": "third-party"
+    },
+    {
+      "file": "dsm-0.9.0.jar",
+      "sha256": "e4a9ce6f27b53228e10e20ac2f18400f82d3d2ffcd36486fcaddf588a411ccc9",
+      "bytes": 29361882,
+      "declaredLicense": "All Rights Reserved",
+      "mods": [
+        {
+          "modId": "deepstrike",
+          "version": "0.9.0",
+          "displayName": "DeepStrike"
+        }
+      ],
+      "upstream": "https://edge.forgecdn.net/files/9277/746/dsm-0.9.0.jar",
+      "role": "third-party"
+    },
+    {
+      "file": "embeddium-0.3.31+mc1.20.1.jar",
+      "sha256": "eed3d1325f2acc2fd4e69bb495e5ccb91d962126ac5330f0582ebc2a3daf47fb",
+      "bytes": 1320675,
+      "declaredLicense": "LGPL-3.0-only",
+      "mods": [
+        {
+          "modId": "embeddium",
+          "version": "0.3.31+mc1.20.1",
+          "displayName": "Embeddium",
+          "authors": "embeddedt"
+        },
+        {
+          "modId": "rubidium",
+          "version": "0.7.1",
+          "displayName": "Rubidium (Embeddium)"
+        }
+      ],
+      "upstream": "https://cdn.modrinth.com/data/sk9rgfiA/versions/UTbfe5d1/embeddium-0.3.31%2Bmc1.20.1.jar",
+      "role": "third-party"
+    },
+    {
+      "file": "ferritecore-6.0.1-forge.jar",
+      "sha256": "9c2c9396a49e796d88497758caa4637d2bcbb433c318e2dd9cebcffbaf0f6c54",
+      "bytes": 123034,
+      "declaredLicense": "MIT",
+      "mods": [
+        {
+          "modId": "ferritecore",
+          "version": "${file.jarVersion}",
+          "displayName": "Ferrite Core",
+          "authors": "malte0811"
+        }
+      ],
+      "upstream": "https://cdn.modrinth.com/data/uXXizFIs/versions/DG5Fn9Sz/ferritecore-6.0.1-forge.jar",
+      "role": "third-party"
+    },
+    {
+      "file": "frontier-arcade-style-1.1.0.jar",
+      "sha256": "58990022bdfb438981a42f8827c1fefa003b0972418ad82b80f91f6a7e89c04d",
+      "bytes": 308675,
+      "declaredLicense": "MIT",
+      "mods": [
+        {
+          "modId": "frontier_ifv",
+          "version": "1.1.0",
+          "displayName": "Frontier · Единый аркадный стиль"
+        }
+      ],
+      "upstream": null,
+      "role": "custom"
+    },
+    {
+      "file": "frontier-arcade-vehicles-1.7.0.jar",
+      "sha256": "2f1c383c1c99fdacfd1549036330a5f91b8b39034ab73500b2ca942a70239b45",
+      "bytes": 282953,
+      "declaredLicense": "GPL-3.0-only",
+      "mods": [
+        {
+          "modId": "frontier_arcade_vehicles",
+          "version": "1.7.0",
+          "displayName": "Frontier Arcade Vehicles"
+        }
+      ],
+      "upstream": null,
+      "role": "custom"
+    },
+    {
+      "file": "frontier-flamingo-launch-fix-1.3.0.jar",
+      "sha256": "28ca51bde23d38c77b0d6f7d7bef4a9dd76c5e3f038ee3850945d245b7242f70",
+      "bytes": 29124,
+      "declaredLicense": "MIT",
+      "mods": [
+        {
+          "modId": "frontier_flamingo_launch_fix",
+          "version": "1.3.0",
+          "displayName": "Frontier Flamingo Launch Fix"
+        }
+      ],
+      "upstream": null,
+      "role": "custom"
+    },
+    {
+      "file": "frontier-industry-1.20.1-0.4.0.jar",
+      "sha256": "aee9da30d4acd474ba638e07a76cafee57e794804449c3e210b1f85411d45c75",
+      "bytes": 548272,
+      "declaredLicense": "MIT",
+      "mods": [
+        {
+          "modId": "frontier_industry",
+          "version": "0.4.0",
+          "displayName": "Frontier Industry",
+          "authors": "Frontier Nations contributors"
+        }
+      ],
+      "upstream": null,
+      "role": "custom"
+    },
+    {
+      "file": "frontier-light-aviation-1.1.0.jar",
+      "sha256": "c85713196801b6abcede4b8eb7dd8e06e5d6f294a83edf44fd682e41d661bad3",
+      "bytes": 92361,
+      "declaredLicense": "MIT",
+      "mods": [
+        {
+          "modId": "frontier_aviation",
+          "version": "1.1.0",
+          "displayName": "Frontier Light Aviation"
+        }
+      ],
+      "upstream": null,
+      "role": "custom"
+    },
+    {
+      "file": "frontier-nations-1.20.1-0.1.2-alpha.jar",
+      "sha256": "5fc1374d51ea7e5c931229cf6db5d3a197f6168b9e1a02624f4fb9f9d19abdee",
+      "bytes": 53877,
+      "declaredLicense": "MIT",
+      "mods": [
+        {
+          "modId": "frontier_nations",
+          "version": "0.1.2-alpha",
+          "displayName": "Frontier Nations",
+          "authors": "Frontier Nations contributors"
+        }
+      ],
+      "upstream": null,
+      "role": "custom"
+    },
+    {
+      "file": "geckolib-forge-1.20.1-4.8.4.jar",
+      "sha256": "4518779a31b6c2abb92c98b5ad17ef3d60177df68626bfc86c44de2764913c2b",
+      "bytes": 1038209,
+      "declaredLicense": "MIT",
+      "mods": [
+        {
+          "modId": "geckolib",
+          "version": "4.8.4",
+          "displayName": "GeckoLib 4",
+          "authors": "Gecko, Eliot, AzureDoom, DerToaster, Tslat, Witixin",
+          "displayURL": "http://geckolib.com/"
+        }
+      ],
+      "upstream": "https://cdn.modrinth.com/data/8BmcQJ2H/versions/aC5KMoNg/geckolib-forge-1.20.1-4.8.4.jar",
+      "role": "third-party"
+    },
+    {
+      "file": "jei-1.20.1-forge-15.56.0.205.jar",
+      "sha256": "6b251e60a4719c874da89d750af97aa6498f6f4475e3ae79cb1288c7bf0cb65c",
+      "bytes": 1778129,
+      "declaredLicense": "The MIT License (MIT)",
+      "mods": [
+        {
+          "modId": "jei",
+          "version": "15.56.0.205",
+          "displayName": "Just Enough Items",
+          "authors": "mezz",
+          "displayURL": "https://www.curseforge.com/minecraft/mc-mods/jei"
+        }
+      ],
+      "upstream": "https://cdn.modrinth.com/data/u6dRKJwZ/versions/9jqubC9n/jei-1.20.1-forge-15.56.0.205.jar",
+      "role": "third-party"
+    },
+    {
+      "file": "kotlinforforge-4.12.0-all.jar",
+      "sha256": "6a66c6a68ec09f8717cdbf06883394f0ee24d7cd826b7134a0f81839e8e720ae",
+      "bytes": 7442998,
+      "declaredLicense": "Not declared",
+      "mods": [],
+      "upstream": "https://cdn.modrinth.com/data/ordsPcFz/versions/Zsh14XeQ/kotlinforforge-4.12.0-all.jar",
+      "role": "third-party"
+    },
+    {
+      "file": "mobplayeranimator-forge-1.20.1-1.3.3-all.jar",
+      "sha256": "823554808cbca10866742470b534276910a0634cf695edc9c2cf08913b2293c4",
+      "bytes": 223397,
+      "declaredLicense": "C0-1.0",
+      "mods": [
+        {
+          "modId": "mobplayeranimator",
+          "version": "1.3.3",
+          "displayName": "Mob Player Animator",
+          "authors": "Thelnfamous1"
+        }
+      ],
+      "upstream": "https://cdn.modrinth.com/data/zkK9lPaS/versions/LW7pk4QA/mobplayeranimator-forge-1.20.1-1.3.3-all.jar",
+      "role": "third-party"
+    },
+    {
+      "file": "modernfix-forge-5.27.89+mc1.20.1.jar",
+      "sha256": "96750ec3e12b581ee7a936ce2b7c2b35251e97b6f729b2db8bc0d5c9a2dc12fa",
+      "bytes": 1010226,
+      "declaredLicense": "GNU LGPL 3.0",
+      "mods": [
+        {
+          "modId": "modernfix",
+          "version": "5.27.89+mc1.20.1",
+          "displayName": "ModernFix",
+          "authors": "embeddedt",
+          "displayURL": "https://modrinth.com/mod/modernfix"
+        }
+      ],
+      "upstream": "https://cdn.modrinth.com/data/nmDcB62a/versions/sgbtnCX5/modernfix-forge-5.27.89%2Bmc1.20.1.jar",
+      "role": "third-party"
+    },
+    {
+      "file": "player-animation-lib-forge-1.0.2-rc1+1.20.jar",
+      "sha256": "90d9965cb9efdbda29fdc5610be3914cf7008bf5c392ff34f7ab25f96a852691",
+      "bytes": 181437,
+      "declaredLicense": "MIT",
+      "mods": [
+        {
+          "modId": "playeranimator",
+          "version": "1.0.2-rc1+1.20",
+          "displayName": "Player Animator",
+          "authors": "KosmX"
+        }
+      ],
+      "upstream": "https://cdn.modrinth.com/data/gedNE4y2/versions/xe2EVE6q/player-animation-lib-forge-1.0.2-rc1%2B1.20.jar",
+      "role": "third-party"
+    },
+    {
+      "file": "recruits-1.20.1-1.15.2.jar",
+      "sha256": "4b53c1b752e886ba10985aad2df30d668971810230eb77867e07428a21d1af7f",
+      "bytes": 2811101,
+      "declaredLicense": "All rights reserved",
+      "mods": [
+        {
+          "modId": "recruits",
+          "displayName": "Villager Recruits Mod",
+          "authors": "talhanation, messire, kaiserroman",
+          "displayURL": "https://modrinth.com/mod/villager-recruits/versions"
+        }
+      ],
+      "upstream": "https://cdn.modrinth.com/data/WOg9lm4u/versions/2zXpVxK4/recruits-1.20.1-1.15.2.jar",
+      "role": "third-party"
+    },
+    {
+      "file": "recruits-tacz-1.022-frontier.1.jar",
+      "sha256": "2d0bc509573f927c141d7972719cf97175e04907b63e3b17dee2e6877d96b965",
+      "bytes": 69575,
+      "declaredLicense": "MIT",
+      "mods": [
+        {
+          "modId": "recruitstacz",
+          "version": "1.022-frontier.1",
+          "displayName": "TACZ Recruits (Frontier patch)",
+          "authors": "LogicalMaximus"
+        }
+      ],
+      "upstream": null,
+      "role": "compatibility-patch"
+    },
+    {
+      "file": "recruitsvillages-1.1.0.jar",
+      "sha256": "55a7da1802360bbc18337ad190b826a1a2292f3038c623ab09f926bb0746dda8",
+      "bytes": 600866,
+      "declaredLicense": "All Rights Reserved",
+      "mods": [
+        {
+          "modId": "recruitsvillages",
+          "version": "1.1.0",
+          "displayName": "Recruits: Living Villages",
+          "authors": "__bigd"
+        }
+      ],
+      "upstream": "https://cdn.modrinth.com/data/TLtnScVf/versions/DhD8obdv/recruitsvillages-1.1.0.jar",
+      "role": "third-party"
+    },
+    {
+      "file": "superbrecruits-1.115.jar",
+      "sha256": "09038e816c0a7249f28c51f0b80a12a9d94b78fd81e8487941233318151eab0d",
+      "bytes": 67884,
+      "declaredLicense": "MIT",
+      "mods": [
+        {
+          "modId": "superbrecruits",
+          "version": "1.115",
+          "displayName": "superbrecruits",
+          "authors": "LogicalMaximus"
+        }
+      ],
+      "upstream": "https://mediafilez.forgecdn.net/files/8284/503/superbrecruits-1.115.jar",
+      "role": "third-party"
+    },
+    {
+      "file": "superbwarfare-0.8.9.1-hotfix-mc1.20.1-993063bed-all.jar",
+      "sha256": "3aaf4c239bc0fb31f9217927a44d74071d904d1dd03c5308ca3395ecd67d86dc",
+      "bytes": 42162514,
+      "declaredLicense": "GNU General Public License v3.0",
+      "mods": [
+        {
+          "modId": "superbwarfare",
+          "version": "0.8.9.1",
+          "displayName": "Superb Warfare",
+          "authors": "Atsuishio, Roki27, Light_Quanta and other contributors"
+        }
+      ],
+      "upstream": "https://cdn.modrinth.com/data/Cd3DYqzn/versions/mHmtMuKF/superbwarfare-0.8.9.1-hotfix-mc1.20.1-993063bed-all.jar",
+      "role": "third-party"
+    },
+    {
+      "file": "tacz-1.20.1-1.1.8-hotfix2.jar",
+      "sha256": "2cbb89f44333d2eb4e825d86d789ff119b272ff75184390b55bafd4f0e7f10c2",
+      "bytes": 57472579,
+      "declaredLicense": "GPL3 / CC BY-NC-ND 4.0",
+      "mods": [
+        {
+          "modId": "tacz",
+          "version": "${file.jarVersion}",
+          "displayName": "Timeless & Classics Guns: Zero",
+          "authors": "Serene Wave Studio | Timeless Squad",
+          "displayURL": ""
+        }
+      ],
+      "upstream": "https://cdn.modrinth.com/data/SzzJttH8/versions/AzCBJlex/tacz-1.20.1-1.1.8-hotfix2.jar",
+      "role": "third-party"
+    },
+    {
+      "file": "uncomplicated-fpv-1.0.1.jar",
+      "sha256": "289f5ac93d67aaf0e008c7080758569e2d09b91c0df44065b833d49ce39c35de",
+      "bytes": 1304255,
+      "declaredLicense": "All-Rights-Reserved",
+      "mods": [
+        {
+          "modId": "uncomplicatedfpv",
+          "version": "1.0.1",
+          "displayName": "Uncomplicated fpv",
+          "authors": "lava_frai"
+        }
+      ],
+      "upstream": "https://cdn.modrinth.com/data/iS1QJ8ii/versions/hzHrH9yY/uncomplicated-fpv-1.0.1.jar",
+      "role": "third-party"
+    },
+    {
+      "file": "xaerominimap-forge-1.20.1-26.6.0.jar",
+      "sha256": "9b39cd06094d7631c8614d172d0ba8399c71c981530af417f12a7909fcb855bd",
+      "bytes": 2196194,
+      "declaredLicense": "All Rights Reserved",
+      "mods": [
+        {
+          "modId": "xaerominimap",
+          "version": "26.6.0",
+          "displayName": "Xaero's Minimap",
+          "authors": "xaero96"
+        }
+      ],
+      "upstream": "https://cdn.modrinth.com/data/1bokaNcj/versions/dB6E0CY9/xaerominimap-forge-1.20.1-26.6.0.jar",
+      "role": "third-party"
+    },
+    {
+      "file": "xaeroworldmap-forge-1.20.1-1.47.0.jar",
+      "sha256": "88c6d844163c95a94d92bc6d87d9011cc840bd6207c3099a81b113d4450a3f6b",
+      "bytes": 1429424,
+      "declaredLicense": "All Rights Reserved",
+      "mods": [
+        {
+          "modId": "xaeroworldmap",
+          "version": "1.47.0",
+          "displayName": "Xaero's World Map",
+          "authors": "xaero96"
+        }
+      ],
+      "upstream": "https://cdn.modrinth.com/data/NcUtCpym/versions/KtEupJvB/xaeroworldmap-forge-1.20.1-1.47.0.jar",
+      "role": "third-party"
+    }
+  ]
+}

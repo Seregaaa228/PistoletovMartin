@@ -1,0 +1,106 @@
+{
+  "mods": [
+    {
+      "file": "architectury-9.2.14-forge.jar",
+      "sha256": "218b471d0b8a1f6cda14cfc1beb9eeb0df54304500acc6c5613d9b88ec65d9af"
+    },
+    {
+      "file": "cloth-config-11.1.136-forge.jar",
+      "sha256": "1e895e85cf5b1e1905ef3178ec155c8badfe22a1577b92c09143a5aa1f4ce0f2"
+    },
+    {
+      "file": "curios-forge-5.14.1+1.20.1.jar",
+      "sha256": "1e817919a35b37cf30524aaec73f0ca5130452f23f168f844854df282eb8e51f"
+    },
+    {
+      "file": "dsm-0.9.0.jar",
+      "sha256": "e4a9ce6f27b53228e10e20ac2f18400f82d3d2ffcd36486fcaddf588a411ccc9"
+    },
+    {
+      "file": "embeddium-0.3.31+mc1.20.1.jar",
+      "sha256": "eed3d1325f2acc2fd4e69bb495e5ccb91d962126ac5330f0582ebc2a3daf47fb"
+    },
+    {
+      "file": "ferritecore-6.0.1-forge.jar",
+      "sha256": "9c2c9396a49e796d88497758caa4637d2bcbb433c318e2dd9cebcffbaf0f6c54"
+    },
+    {
+      "file": "frontier-flamingo-launch-fix-1.1.0.jar",
+      "sha256": "4afd14092e12dff6ae9895c27e809dc58e069592b58a50720876b2f937f5d199"
+    },
+    {
+      "file": "frontier-industry-1.20.1-0.3.1-alpha.jar",
+      "sha256": "d82f2ad8d473000ad1231849f3a793155298126d3298e3291e24e1e46f75aec1"
+    },
+    {
+      "file": "frontier-nations-1.20.1-0.1.2-alpha.jar",
+      "sha256": "5fc1374d51ea7e5c931229cf6db5d3a197f6168b9e1a02624f4fb9f9d19abdee"
+    },
+    {
+      "file": "geckolib-forge-1.20.1-4.8.4.jar",
+      "sha256": "4518779a31b6c2abb92c98b5ad17ef3d60177df68626bfc86c44de2764913c2b"
+    },
+    {
+      "file": "jei-1.20.1-forge-15.56.0.205.jar",
+      "sha256": "6b251e60a4719c874da89d750af97aa6498f6f4475e3ae79cb1288c7bf0cb65c"
+    },
+    {
+      "file": "kotlinforforge-4.12.0-all.jar",
+      "sha256": "6a66c6a68ec09f8717cdbf06883394f0ee24d7cd826b7134a0f81839e8e720ae"
+    },
+    {
+      "file": "mobplayeranimator-forge-1.20.1-1.3.3-all.jar",
+      "sha256": "823554808cbca10866742470b534276910a0634cf695edc9c2cf08913b2293c4"
+    },
+    {
+      "file": "modernfix-forge-5.27.89+mc1.20.1.jar",
+      "sha256": "96750ec3e12b581ee7a936ce2b7c2b35251e97b6f729b2db8bc0d5c9a2dc12fa"
+    },
+    {
+      "file": "player-animation-lib-forge-1.0.2-rc1+1.20.jar",
+      "sha256": "90d9965cb9efdbda29fdc5610be3914cf7008bf5c392ff34f7ab25f96a852691"
+    },
+    {
+      "file": "recruits-1.20.1-1.15.2.jar",
+      "sha256": "4b53c1b752e886ba10985aad2df30d668971810230eb77867e07428a21d1af7f"
+    },
+    {
+      "file": "recruits-tacz-1.022-frontier.1.jar",
+      "sha256": "2d0bc509573f927c141d7972719cf97175e04907b63e3b17dee2e6877d96b965"
+    },
+    {
+      "file": "recruitsvillages-1.1.0.jar",
+      "sha256": "55a7da1802360bbc18337ad190b826a1a2292f3038c623ab09f926bb0746dda8"
+    },
+    {
+      "file": "superbrecruits-1.115.jar",
+      "sha256": "09038e816c0a7249f28c51f0b80a12a9d94b78fd81e8487941233318151eab0d"
+    },
+    {
+      "file": "superbwarfare-0.8.9.1-hotfix-mc1.20.1-993063bed-all.jar",
+      "sha256": "3aaf4c239bc0fb31f9217927a44d74071d904d1dd03c5308ca3395ecd67d86dc"
+    },
+    {
+      "file": "tacz-1.20.1-1.1.8-hotfix2.jar",
+      "sha256": "2cbb89f44333d2eb4e825d86d789ff119b272ff75184390b55bafd4f0e7f10c2"
+    },
+    {
+      "file": "uncomplicated-fpv-1.0.1.jar",
+      "sha256": "289f5ac93d67aaf0e008c7080758569e2d09b91c0df44065b833d49ce39c35de"
+    },
+    {
+      "file": "xaerominimap-forge-1.20.1-26.6.0.jar",
+      "sha256": "9b39cd06094d7631c8614d172d0ba8399c71c981530af417f12a7909fcb855bd"
+    },
+    {
+      "file": "xaeroworldmap-forge-1.20.1-1.47.0.jar",
+      "sha256": "88c6d844163c95a94d92bc6d87d9011cc840bd6207c3099a81b113d4450a3f6b"
+    },
+    {
+      "file": "frontier-arcade-vehicles-1.7.0-smoke.jar",
+      "sha256": "9cc4be8a4bff95afd64a4bbe6a4eb9895b6bec81943d20ef729dceffa9729aed"
+    }
+  ],
+  "libraries_checked": 81,
+  "identity": "Dev isolated offline testing; no accountfiles"
+}

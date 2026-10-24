@@ -1,0 +1,12 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { name = 'MinecraftForge'; url = 'https://maven.minecraftforge.net/' }
+    }
+}
+
+rootProject.name = 'Frontier-Nations'
+['arcade', 'nations', 'industry', 'style', 'aviation', 'missile-fix'].each { module ->
+    include module
+    project(":${module}").projectDir = file("modules/${module}")
+}

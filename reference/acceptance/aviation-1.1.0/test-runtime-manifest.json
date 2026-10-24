@@ -1,0 +1,174 @@
+{
+  "minecraft": "1.20.1",
+  "forge": "47.4.0",
+  "java": "/home/chpoka/.minecraft/runtime/frontier-java17/bin/java",
+  "gameDirs": [
+    "/home/chpoka/Documents/Codex/2026-10-24/flamingo-launch-fix/work/aviation/update-1.1/tests/acceptance-f/server",
+    "/home/chpoka/Documents/Codex/2026-10-24/flamingo-launch-fix/work/aviation/update-1.1/tests/acceptance-f/AviationPilot",
+    "/home/chpoka/Documents/Codex/2026-10-24/flamingo-launch-fix/work/aviation/update-1.1/tests/acceptance-f/AviationObserver"
+  ],
+  "identities": [
+    "AviationPilot",
+    "AviationObserver"
+  ],
+  "offlineOnly": true,
+  "serverBind": "127.0.0.1",
+  "serverPort": 55369,
+  "accountFilesRead": false,
+  "installedInputJarCount": 27,
+  "unchangedJarCount": 25,
+  "replacedOriginals": [
+    {
+      "file": "frontier-flamingo-launch-fix-1.2.0.jar",
+      "sha256": "3efadfd3a44561eecfbaf942395b953958b266a88e676715017effaf9cb3621b"
+    },
+    {
+      "file": "frontier-light-aviation-1.0.0.jar",
+      "sha256": "8ee18f13b17c64353b100f37d7116967106bae13aad6042e3d6ec8f7a3a49c94"
+    }
+  ],
+  "mods": [
+    {
+      "file": "architectury-9.2.14-forge.jar",
+      "sha256": "218b471d0b8a1f6cda14cfc1beb9eeb0df54304500acc6c5613d9b88ec65d9af",
+      "role": "original"
+    },
+    {
+      "file": "cloth-config-11.1.136-forge.jar",
+      "sha256": "1e895e85cf5b1e1905ef3178ec155c8badfe22a1577b92c09143a5aa1f4ce0f2",
+      "role": "original"
+    },
+    {
+      "file": "curios-forge-5.14.1+1.20.1.jar",
+      "sha256": "1e817919a35b37cf30524aaec73f0ca5130452f23f168f844854df282eb8e51f",
+      "role": "original"
+    },
+    {
+      "file": "dsm-0.9.0.jar",
+      "sha256": "e4a9ce6f27b53228e10e20ac2f18400f82d3d2ffcd36486fcaddf588a411ccc9",
+      "role": "original"
+    },
+    {
+      "file": "embeddium-0.3.31+mc1.20.1.jar",
+      "sha256": "eed3d1325f2acc2fd4e69bb495e5ccb91d962126ac5330f0582ebc2a3daf47fb",
+      "role": "original"
+    },
+    {
+      "file": "ferritecore-6.0.1-forge.jar",
+      "sha256": "9c2c9396a49e796d88497758caa4637d2bcbb433c318e2dd9cebcffbaf0f6c54",
+      "role": "original"
+    },
+    {
+      "file": "frontier-arcade-vehicles-1.7.0.jar",
+      "sha256": "2f1c383c1c99fdacfd1549036330a5f91b8b39034ab73500b2ca942a70239b45",
+      "role": "original"
+    },
+    {
+      "file": "frontier-industry-1.20.1-0.3.1-alpha.jar",
+      "sha256": "d82f2ad8d473000ad1231849f3a793155298126d3298e3291e24e1e46f75aec1",
+      "role": "original"
+    },
+    {
+      "file": "frontier-lowpoly-ifv-1.0.0.jar",
+      "sha256": "b157aeef1c088ac94581e54e62b8859a6c3259b4ae21f9c6bc689e8e9c5a7c9d",
+      "role": "original"
+    },
+    {
+      "file": "frontier-nations-1.20.1-0.1.2-alpha.jar",
+      "sha256": "5fc1374d51ea7e5c931229cf6db5d3a197f6168b9e1a02624f4fb9f9d19abdee",
+      "role": "original"
+    },
+    {
+      "file": "geckolib-forge-1.20.1-4.8.4.jar",
+      "sha256": "4518779a31b6c2abb92c98b5ad17ef3d60177df68626bfc86c44de2764913c2b",
+      "role": "original"
+    },
+    {
+      "file": "jei-1.20.1-forge-15.56.0.205.jar",
+      "sha256": "6b251e60a4719c874da89d750af97aa6498f6f4475e3ae79cb1288c7bf0cb65c",
+      "role": "original"
+    },
+    {
+      "file": "kotlinforforge-4.12.0-all.jar",
+      "sha256": "6a66c6a68ec09f8717cdbf06883394f0ee24d7cd826b7134a0f81839e8e720ae",
+      "role": "original"
+    },
+    {
+      "file": "mobplayeranimator-forge-1.20.1-1.3.3-all.jar",
+      "sha256": "823554808cbca10866742470b534276910a0634cf695edc9c2cf08913b2293c4",
+      "role": "original"
+    },
+    {
+      "file": "modernfix-forge-5.27.89+mc1.20.1.jar",
+      "sha256": "96750ec3e12b581ee7a936ce2b7c2b35251e97b6f729b2db8bc0d5c9a2dc12fa",
+      "role": "original"
+    },
+    {
+      "file": "player-animation-lib-forge-1.0.2-rc1+1.20.jar",
+      "sha256": "90d9965cb9efdbda29fdc5610be3914cf7008bf5c392ff34f7ab25f96a852691",
+      "role": "original"
+    },
+    {
+      "file": "recruits-1.20.1-1.15.2.jar",
+      "sha256": "4b53c1b752e886ba10985aad2df30d668971810230eb77867e07428a21d1af7f",
+      "role": "original"
+    },
+    {
+      "file": "recruits-tacz-1.022-frontier.1.jar",
+      "sha256": "2d0bc509573f927c141d7972719cf97175e04907b63e3b17dee2e6877d96b965",
+      "role": "original"
+    },
+    {
+      "file": "recruitsvillages-1.1.0.jar",
+      "sha256": "55a7da1802360bbc18337ad190b826a1a2292f3038c623ab09f926bb0746dda8",
+      "role": "original"
+    },
+    {
+      "file": "superbrecruits-1.115.jar",
+      "sha256": "09038e816c0a7249f28c51f0b80a12a9d94b78fd81e8487941233318151eab0d",
+      "role": "original"
+    },
+    {
+      "file": "superbwarfare-0.8.9.1-hotfix-mc1.20.1-993063bed-all.jar",
+      "sha256": "3aaf4c239bc0fb31f9217927a44d74071d904d1dd03c5308ca3395ecd67d86dc",
+      "role": "original"
+    },
+    {
+      "file": "tacz-1.20.1-1.1.8-hotfix2.jar",
+      "sha256": "2cbb89f44333d2eb4e825d86d789ff119b272ff75184390b55bafd4f0e7f10c2",
+      "role": "original"
+    },
+    {
+      "file": "uncomplicated-fpv-1.0.1.jar",
+      "sha256": "289f5ac93d67aaf0e008c7080758569e2d09b91c0df44065b833d49ce39c35de",
+      "role": "original"
+    },
+    {
+      "file": "xaerominimap-forge-1.20.1-26.6.0.jar",
+      "sha256": "9b39cd06094d7631c8614d172d0ba8399c71c981530af417f12a7909fcb855bd",
+      "role": "original"
+    },
+    {
+      "file": "xaeroworldmap-forge-1.20.1-1.47.0.jar",
+      "sha256": "88c6d844163c95a94d92bc6d87d9011cc840bd6207c3099a81b113d4450a3f6b",
+      "role": "original"
+    },
+    {
+      "file": "frontier-flamingo-launch-fix-1.3.0.jar",
+      "sha256": "28ca51bde23d38c77b0d6f7d7bef4a9dd76c5e3f038ee3850945d245b7242f70",
+      "role": "candidate-fix"
+    },
+    {
+      "file": "frontier-light-aviation-1.1.0.jar",
+      "sha256": "c85713196801b6abcede4b8eb7dd8e06e5d6f294a83edf44fd682e41d661bad3",
+      "role": "addon"
+    },
+    {
+      "file": "frontier-aviation-test.jar",
+      "sha256": "b777ee841ee788d3f224bff3be121da07a396afba642272a30bd28052c3016a9",
+      "role": "test-helper"
+    }
+  ],
+  "negativeRegistrationRun": false,
+  "addonVersion": "1.1.0"
+}

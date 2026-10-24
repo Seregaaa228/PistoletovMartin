@@ -1,0 +1,43 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.missile.idle": {
+      "loop": true,
+      "bones": {
+        "flare": {
+          "scale": 0
+        }
+      }
+    },
+    "animation.missile.fire": {
+      "loop": "hold_on_last_frame",
+      "animation_length": 0.24,
+      "bones": {
+        "flare": {
+          "scale": {
+            "0.000": [
+              0,
+              0,
+              0
+            ],
+            "0.008": [
+              4,
+              4,
+              4
+            ],
+            "0.045": [
+              5.5,
+              5.5,
+              5.5
+            ],
+            "0.075": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    }
+  }
+}

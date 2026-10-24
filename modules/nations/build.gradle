@@ -1,0 +1,5 @@
+version = '0.1.2-alpha'
+base { archivesName = 'frontier-nations-1.20.1' }
+tasks.named('jar', Jar).configure {
+    from('LICENSE.txt') { into 'META-INF'; rename { 'LICENSE.frontier-nations' } }
+}
