@@ -16,6 +16,8 @@ import net.minecraft.world.level.block.state.BlockState;
 public final class Blueprint {
     public static final int LEGACY_VERSION = 1, CURRENT_VERSION = 3;
     private static final Map<SiteType, Map<BlockPos, BlockState>> CURRENT = new EnumMap<>(SiteType.class);
+    private static final Map<SiteType, Map<BlockPos, BlockState>> CRITICAL_V2 = new EnumMap<>(SiteType.class);
+    private static final Map<SiteType, Map<BlockPos, BlockState>> CRITICAL_V3 = new EnumMap<>(SiteType.class);
     private Blueprint() {}
     public static int savedVersion(int value) { return value == 2 || value == 3 ? value : LEGACY_VERSION; }
     public static BlueprintBounds bounds(SiteType type) { return bounds(type, CURRENT_VERSION); }
@@ -54,16 +56,26 @@ public final class Blueprint {
     }
     /** Destroying highlighted turbine or transformer cores breaks a new site's power circuit. */
     public static Map<BlockPos, BlockState> criticalBlocks(SiteType type, BlockPos origin, int version) {
-        if (version == LEGACY_VERSION) return Map.of();
+        if (version == LEGACY_VERSION || type.isConsumer()) return Map.of();
+        Map<SiteType, Map<BlockPos, BlockState>> cache = version >= 3 ? CRITICAL_V3 : CRITICAL_V2;
+        Map<BlockPos, BlockState> relative = cache.computeIfAbsent(type, key -> criticalRelative(key, version));
+        Map<BlockPos, BlockState> result = new LinkedHashMap<>(relative.size());
+        relative.forEach((pos, state) -> result.put(origin.offset(pos), state));
+        return result;
+    }
+
+    private static Map<BlockPos, BlockState> criticalRelative(SiteType type, int version) {
         List<BlockPos> local = switch (type) {
             case POWER_STATION -> List.of(new BlockPos(-6, 2, -1), new BlockPos(-2, 2, -1));
             case SUBSTATION -> List.of(new BlockPos(-2, 2, 0), new BlockPos(2, 2, 0));
             default -> List.of();
         };
-        Map<BlockPos, BlockState> relative = version>=3 ? blocks(type,BlockPos.ZERO,version) : CURRENT.computeIfAbsent(type, Blueprint::designed);
-        Map<BlockPos, BlockState> result = new LinkedHashMap<>();
-        for (BlockPos pos : local) result.put(origin.offset(pos), relative.get(pos));
-        return result;
+        // Resolve the exact existing architecture once per version/type, retaining
+        // only the two relative critical states rather than rebuilding it each tick.
+        Map<BlockPos, BlockState> blueprint = version>=3 ? blocks(type,BlockPos.ZERO,version) : CURRENT.computeIfAbsent(type, Blueprint::designed);
+        Map<BlockPos, BlockState> result = new LinkedHashMap<>(local.size());
+        for (BlockPos pos : local) result.put(pos, blueprint.get(pos));
+        return Collections.unmodifiableMap(result);
     }
     private static Map<BlockPos, BlockState> designed(SiteType type) {
         Layout b = new Layout(); BlueprintBounds f = bounds(type);

@@ -1,0 +1,12 @@
+{
+  "project": "Jade 🔍",
+  "version": "11.13.3+forge",
+  "source": "https://github.com/Snownee/Jade",
+  "projectUrl": "https://modrinth.com/mod/jade",
+  "license": {
+    "id": "CC-BY-NC-SA-4.0",
+    "name": "Creative Commons Attribution Non Commercial Share Alike 4.0 International",
+    "url": null
+  },
+  "notice": "Third-party library. Original license declarations are preserved in the unchanged dependency JAR."
+}

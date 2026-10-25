@@ -1,0 +1,12 @@
+{
+  "project": "Patchouli",
+  "version": "1.20.1-84.1-forge",
+  "source": "https://github.com/VazkiiMods/Patchouli/",
+  "projectUrl": "https://modrinth.com/mod/patchouli",
+  "license": {
+    "id": "CC-BY-NC-SA-3.0",
+    "name": "Creative Commons Attribution Non Commercial Share Alike 3.0 Unported",
+    "url": null
+  },
+  "notice": "Third-party library. Original license declarations are preserved in the unchanged dependency JAR."
+}

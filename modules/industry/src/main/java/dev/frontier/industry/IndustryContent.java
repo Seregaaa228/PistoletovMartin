@@ -15,6 +15,9 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -35,6 +38,7 @@ public final class IndustryContent {
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, IndustryMod.ID);
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, IndustryMod.ID);
     public static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, IndustryMod.ID);
+    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, IndustryMod.ID);
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, IndustryMod.ID);
     private static final EnumMap<SiteType, RegistryObject<Block>> CONTROLLERS = new EnumMap<>(SiteType.class);
     private static final EnumMap<SiteType, RegistryObject<Item>> DEPLOYERS = new EnumMap<>(SiteType.class);
@@ -52,13 +56,18 @@ public final class IndustryContent {
         STRUCTURE.put("roof_stairs", BLOCKS.register("structure_roof_stairs", () -> new StairBlock(
             () -> structure("roof").defaultBlockState(), BlockBehaviour.Properties.of().strength(2f, 5f).noLootTable())));
         for(String name:dev.frontier.industry.architecture.IndustrialDetailBlock.PARTS)
-            DETAILS.put(name,BLOCKS.register("detail_"+name,()->new dev.frontier.industry.architecture.IndustrialDetailBlock(name)));
+            DETAILS.put(name,BLOCKS.register("detail_"+name,()->name.equals("press")
+                ? new dev.frontier.industry.repair.PressWorkstationBlock()
+                : new dev.frontier.industry.architecture.IndustrialDetailBlock(name)));
         for (SiteType type : SiteType.values()) {
             CONTROLLERS.put(type, BLOCKS.register(type.path(), () -> new Controller(type)));
             DEPLOYERS.put(type, ITEMS.register(type.path() + "_deployer", () -> new SiteDeployer(type)));
         }
     }
     public static final RegistryObject<Item> TABLET = ITEMS.register("dispatch_tablet", Tablet::new);
+    public static final RegistryObject<BlockEntityType<dev.frontier.industry.energy.ControllerBlockEntity>> CONTROLLER_ENTITY = BLOCK_ENTITIES.register("industry_controller", () ->
+        BlockEntityType.Builder.of(dev.frontier.industry.energy.ControllerBlockEntity::new,
+            CONTROLLERS.values().stream().map(RegistryObject::get).toArray(Block[]::new)).build(null));
     public static final RegistryObject<Item> REPAIR_KIT = ITEMS.register("repair_kit", RepairKit::new);
     public static final RegistryObject<EntityType<WorkerEntity>> WORKER = ENTITIES.register("worker", () ->
         EntityType.Builder.of(WorkerEntity::new, MobCategory.CREATURE).sized(.6f, 1.95f)
@@ -87,14 +96,15 @@ public final class IndustryContent {
     }
     public static Block structure(String id) { return STRUCTURE.get(id).get(); }
     public static void register(IEventBus bus) {
-        BLOCKS.register(bus); ITEMS.register(bus); ENTITIES.register(bus); TABS.register(bus);
+        BLOCKS.register(bus); ITEMS.register(bus); ENTITIES.register(bus); TABS.register(bus); BLOCK_ENTITIES.register(bus);
         IndustryMenus.TYPES.register(bus);
         bus.addListener((EntityAttributeCreationEvent e) -> e.put(WORKER.get(), WorkerEntity.attributes().build()));
     }
 
-    private static final class Controller extends Block {
+    public static final class Controller extends Block implements EntityBlock {
         Controller(SiteType type) { super(BlockBehaviour.Properties.of().strength(2f,5f).sound(SoundType.METAL).noLootTable().noOcclusion().lightLevel(s->s.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT)?7:0));registerDefaultState(stateDefinition.any().setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT,false)); }
         @Override protected void createBlockStateDefinition(net.minecraft.world.level.block.state.StateDefinition.Builder<Block,BlockState> builder){builder.add(net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT);}
+        @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new dev.frontier.industry.energy.ControllerBlockEntity(pos, state); }
         @Override public net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState s,net.minecraft.world.level.BlockGetter l,BlockPos p,net.minecraft.world.phys.shapes.CollisionContext c){return Block.box(3,0,3,13,16,13);}
         @Override public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player,
                                                 InteractionHand hand, BlockHitResult hit) {

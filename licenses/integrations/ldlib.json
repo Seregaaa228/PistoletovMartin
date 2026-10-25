@@ -1,0 +1,12 @@
+{
+  "project": "LDLib",
+  "version": "mc1.20.1-1.0.52.a-forge",
+  "source": "https://github.com/Low-Drag-MC/LDLib-Architectury",
+  "projectUrl": "https://modrinth.com/mod/ldlib",
+  "license": {
+    "id": "LGPL-3.0-only",
+    "name": "GNU Lesser General Public License v3.0 only",
+    "url": null
+  },
+  "notice": "Third-party library. Original license declarations are preserved in the unchanged dependency JAR."
+}

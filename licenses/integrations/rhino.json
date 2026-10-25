@@ -1,0 +1,12 @@
+{
+  "project": "Rhino",
+  "version": "2001.2.3-build.10+forge",
+  "source": "https://github.com/KubeJS-Mods/Rhino",
+  "projectUrl": "https://modrinth.com/mod/rhino",
+  "license": {
+    "id": "MPL-2.0",
+    "name": "Mozilla Public License 2.0",
+    "url": null
+  },
+  "notice": "Third-party library. Original license declarations are preserved in the unchanged dependency JAR."
+}

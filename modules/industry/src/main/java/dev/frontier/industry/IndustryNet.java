@@ -23,7 +23,7 @@ public final class IndustryNet {
     private static final String VERSION = "3";
     private static final java.util.Map<UUID,Integer> LAST_ACTION=new java.util.HashMap<>(),LAST_REFRESH=new java.util.HashMap<>();
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(new ResourceLocation(IndustryMod.ID, "industry"), () -> VERSION, VERSION::equals, VERSION::equals);
-    private static final Set<String> ACTIONS = Set.of("refresh", "order", "hire", "assign", "unassign", "dismiss", "repair", "collect", "fuel", "cancel", "staff", "repair_staff", "supply", "construction_staff", "construction_cancel", "research_start", "research_staff", "research_supply");
+    private static final Set<String> ACTIONS = Set.of("refresh", "order", "hire", "assign", "unassign", "dismiss", "repair", "repair_cancel", "collect", "fuel", "cancel", "staff", "repair_staff", "supply", "construction_staff", "construction_cancel", "research_start", "research_staff", "research_supply");
     public static void init() {
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.server.ServerStoppedEvent e)->{LAST_ACTION.clear();LAST_REFRESH.clear();});
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e)->{LAST_ACTION.remove(e.getEntity().getUUID());LAST_REFRESH.remove(e.getEntity().getUUID());});

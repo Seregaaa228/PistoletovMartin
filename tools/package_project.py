@@ -2,9 +2,10 @@
 """Export the portable team handoff, including pinned binaries but excluding caches."""
 from pathlib import Path
 import argparse,hashlib,json,os,subprocess,sys,zipfile
+from integration_libraries import verify_libraries
 
 ROOT=Path(__file__).resolve().parents[1]
-SKIP_DIRS={'.git','.gradle','.idea','__pycache__','build','vendor','node_modules'}
+SKIP_DIRS={'.git','.gradle','.idea','__pycache__','build','vendor','node_modules','integration-libraries'}
 SKIP_NAMES={'launcher_accounts.json','launcher_profiles.json','accounts.json','servers.dat','servers.dat_old'}
 
 def main():
@@ -17,7 +18,10 @@ def main():
     target.parent.mkdir(parents=True,exist_ok=True)
     hashes={};sources=[]
     for directory,subdirs,names in os.walk(ROOT):
-        subdirs[:]=sorted(n for n in subdirs if n not in SKIP_DIRS)
+        if 'test-profile.json' in names:
+            subdirs[:]=[]
+            continue
+        subdirs[:]=sorted(n for n in subdirs if n not in SKIP_DIRS and not n.startswith('run-') and n!='run' and n!='.superpowers')
         base=Path(directory)
         for name in sorted(names):
             p=base/name;relative=p.relative_to(ROOT)
@@ -25,6 +29,9 @@ def main():
             if relative.parts[0]=='instance'and any(x in {'saves','logs','crash-reports','screenshots','XaeroWaypoints','XaeroWorldMap'}for x in relative.parts):continue
             if p.is_symlink():raise RuntimeError('Symlink cannot be exported: '+str(relative))
             sources.append((p,relative.as_posix()))
+    # Ship only verified dependency bytes, never the Gradle/Maven caches beside them.
+    for library in verify_libraries(ROOT):
+        sources.append((ROOT/'vendor/integration'/library['file'],'integration-libraries/'+library['file']))
     temporary=target.with_name('.'+target.name+'.writing')
     try:
         with zipfile.ZipFile(temporary,'x',zipfile.ZIP_DEFLATED,compresslevel=6)as archive:

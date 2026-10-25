@@ -1,0 +1,26 @@
+# SDD ledger — plan: docs/superpowers/plans/2026-10-25-pis-1-integrations.md
+
+- 2026-10-25: пользователь явно выбрал «Подготовить план и сразу перейти к реализации» и работу с субагентами.
+- Прочитаны AGENTS.md, README.md, BUILD-RU.md, CONTRIBUTING.md, ARCHITECTURE-RU.md, все PIS-2…PIS-8.
+- Ветка codex/pis-1-library-integrations создана. Исходные изменения пользователя: .gitignore, modules/style/art/su24/.
+- Ruling: работать в текущем проекте, без worktree — явное указание пользователя/AGENTS; отдельная ветка сохраняет обзор изменений.
+- Ruling: дополнительные библиотеки — отдельный integration lock/profile до игровой приёмки; не менять baseline lock для обхода ошибок.
+- Ruling: использовать прежний worker ID и FactoryMenu/пакеты — сохраняет миры, custody и server guards.
+- Начальная tools/verify_project.py не прошла: отсутствует binary snapshot. Официальный release скачан, SHA256 проверен; восстановление в процессе.
+- Разведка: energy_jade (PIS-8/7), repair_animation (PIS-3/4), ldlib_ui (PIS-2). Координатор: зависимости, каталог/KubeJS, справка, интеграция/проверки.
+- План самопроверен по spec: все семь подзадач и общая приёмка имеют владельца; общие файлы/секции согласованы.
+- Восстановлены3360 исключённых бинарных/ресурсных входов; release SHA256 04b707b90f8b2799349b49b047ab226200e861e1c16fba1a4391aba523f2158e. Baseline verify PASS.
+- Реализация PIS-2…PIS-8 написана, три исполнителя завершили свои участки. Независимые review обменены между исполнителями.
+- Полная сборка шести модулей+отдельного integrationTestJar PASS. Pure Java:10042+12+57+6+9=10126 PASS; Python6 PASS; resource links24 PASS.
+- Исправлены найденные review ошибки: exact Maven версии Jade/Patchouli; дополнительные исполняемые scripts; произвольные runtime dirs/duplicate dependencies в export; destination traversal; native architecture filtering.
+- Тестовый launcher использует только vendor/runtime и project run-* profiles. Исправлено имя inherited client JAR для Forge ignoreList.
+- Три native test suite перенесены в отдельный integrationtests package: отдельные Java modules Forge не разрешают split packages.
+- Первый клиент успешно загрузил все моды; fresh-world driver ожидал TitleScreen из-за pack metadata warning отдельного helper. Добавлен pack.mcmeta; диагностированное предупреждение закрыто в тестовом окне.
+- PIS-1 переведена In Progress, комментарий10002 содержит распределение и границы подтверждённых проверок. Final review отдельного агента ещё идёт.
+- Игровая приёмка/скриншоты/реальный ремонт/benchmark/restart ещё не подтверждены. Dedicated runtime установлен, принятие EULA ожидает явного ответа пользователя.
+- Независимый final review: исправлены полная сборка blueprint на каждом tick и ID шаблона длиннее существующего packet limit128. Повторная полная сборка52tasks PASS.
+- Fresh run8022b3a7-9505-423d-a757-0b60569f1484 (v2): native Forge suites88/88 PASS. UI/gameplay fixture FAIL до catalog: guide@2 timeout. Диагностика bytecode выявила test-only прямой Screen.mouseClicked вместо MouseHandler activeButton; производственный UI не менялся. Дополнительно fixture getChunk не удерживал чанки станции. Оба test-only сценария исправлены, нужен новый fresh run.
+- KubeJS client_scripts/startup_scripts имеют README в Git, чтобы библиотека не создавала незафиксированные example.js при первом запуске; verified against pinned ScriptManager bytecode.
+- Final catalog review: real reload/cost/output/restart receipt не имеют блокирующих замечаний; сохранение ticks/FE проверяется как metadata снимка, фактический отдельный энергетический баланс catalog scenario не измеряется.
+- V5: все30UI screenshot stages выполнены реальным MouseHandler, search E guard/order server confirmation/paid progress проверены. Visual reviewer прочитал30UI+2world кадра; hover bounds fix PASS на2/3/Auto. Найдены и исправлены literal%-formatting LDLib, длинное имя Patchouli и missing press lang key.
+- V5: реальный двух-NPC ремонт1800sharedticks/onekit/NBT1799, grid break и отдельный factory damage прошли; actual KubeJS A→B→cleanup21checks PASS. Benchmark приостановился на PauseScreen, поэтому не принят; test window штатно закрыт/сохранён. V6 driver auto-closes benchmark pause + перезапускает warmup/samples текущей фазы, добавлены actual client Jade ray+wire checks.

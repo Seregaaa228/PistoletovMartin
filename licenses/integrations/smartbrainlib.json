@@ -1,0 +1,12 @@
+{
+  "project": "SmartBrainLib",
+  "version": "1.15",
+  "source": "https://github.com/Tslat/SmartBrainLib",
+  "projectUrl": "https://modrinth.com/mod/smartbrainlib",
+  "license": {
+    "id": "MPL-2.0",
+    "name": "Mozilla Public License 2.0",
+    "url": null
+  },
+  "notice": "Third-party library. Original license declarations are preserved in the unchanged dependency JAR."
+}

@@ -1,0 +1,14 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+[[mods]]
+modId="frontier_integration_checks"
+version="1"
+displayName="Frontier PIS-1 isolated integration checks"
+description="Opt-in helper for fresh test profiles only; excluded from release artifacts."
+[[dependencies.frontier_integration_checks]]
+modId="frontier_industry"
+mandatory=true
+versionRange="[0.4.0]"
+ordering="AFTER"
+side="BOTH"

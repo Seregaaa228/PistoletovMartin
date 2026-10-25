@@ -1,0 +1,12 @@
+{
+  "project": "KubeJS",
+  "version": "2001.6.5-build.26+forge",
+  "source": "https://github.com/KubeJS-Mods/KubeJS",
+  "projectUrl": "https://modrinth.com/mod/kubejs",
+  "license": {
+    "id": "LGPL-3.0-only",
+    "name": "GNU Lesser General Public License v3.0 only",
+    "url": null
+  },
+  "notice": "Third-party library. Original license declarations are preserved in the unchanged dependency JAR."
+}

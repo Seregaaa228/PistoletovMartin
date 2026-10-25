@@ -51,6 +51,15 @@ Forge47.4.0. Для копии исходной принятой сборки д
 аккаунты лаунчера, пользовательские миры, сохранённые серверы, личные карты и
 рабочие журналы игры.
 
+## Интеграции PIS-1
+
+В ветке PIS-1 разрабатываются интеграции LDLib, SmartBrainLib, GeckoLib4,
+KubeJS, Patchouli, Jade и Forge Energy. Дополнительные библиотеки закреплены
+отдельно в `integration-libraries.lock.json`; исходный принятый профиль
+сохраняется для сравнения. Подготовка и отдельный тестовый запуск описаны
+в [BUILD-RU.md](BUILD-RU.md#интеграции-pis-1), порядок работ —
+в [плане PIS-1](docs/superpowers/plans/2026-10-25-pis-1-integrations.md).
+
 ## Важное ограничение исходников Industry
 
 В архиве Industry Java-файлы `NativeCombatEvents` и `ReadyWeapons` были старее
