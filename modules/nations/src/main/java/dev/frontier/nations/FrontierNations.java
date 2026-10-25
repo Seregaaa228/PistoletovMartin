@@ -11,6 +11,7 @@ import com.tacz.guns.api.item.builder.AmmoItemBuilder;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.entities.BowmanEntity;
+import dev.frontier.nations.flag.FlagNet;
 import dev.frontier.nations.map.PoliticalMapBridge;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
@@ -60,6 +61,7 @@ public final class FrontierNations {
         MinecraftForge.EVENT_BUS.addListener(this::commands);
         MinecraftForge.EVENT_BUS.addListener(this::login);
         PoliticalMapBridge.init();
+        FlagNet.init();
         LOG.info("Frontier Nations compatibility loaded; original factions/claims remain authoritative");
     }
     private void started(ServerStartedEvent event) {
@@ -167,7 +169,7 @@ public final class FrontierNations {
     }
     private void login(PlayerEvent.PlayerLoggedInEvent event) {
         if(event.getEntity() instanceof ServerPlayer player) {
-            player.sendSystemMessage(Component.literal("Frontier Nations: N — политическая карта, M — карта мира. /frontier help — подсказка."));
+            player.sendSystemMessage(Component.literal("Frontier Nations: M — карта мира со странами, T — слой территорий. /frontier help — подсказка."));
         }
     }
     private void commands(RegisterCommandsEvent event) {
@@ -195,7 +197,7 @@ public final class FrontierNations {
             })));
     }
     private static int help(net.minecraft.commands.CommandSourceStack source) {
-        source.sendSuccess(()->Component.literal("N — политическая карта; M — Xaero; /rvguide — руководство государств; /rvfind — найти поселение; /rvjoin — вступить в поселение; /rvvillage — управление; /rvrelations — дипломатия (творческий режим); /frontier doctor — проверка; /frontier kit — тестовое снаряжение (нужны читы/OP)."),false);return 1;
+        source.sendSuccess(()->Component.literal("M — карта Xaero со странами; T — слой территорий; «Мой флаг» — на карте (M), меняет лидер страны; /rvguide — руководство государств; /rvfind — найти поселение; /rvjoin — вступить в поселение; /rvvillage — управление; /rvrelations — дипломатия (творческий режим); /frontier doctor — проверка; /frontier kit — тестовое снаряжение (нужны читы/OP)."),false);return 1;
     }
     private static void give(ServerPlayer player,ItemStack stack){if(!stack.isEmpty()&&!player.getInventory().add(stack))player.drop(stack,false);}
 }
