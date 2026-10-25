@@ -1,6 +1,7 @@
 # Build/dependency caches and generated vendor Maven artifacts
 .gradle/
 **/build/
+modules/*/bin/
 vendor/
 run/
 run-*/

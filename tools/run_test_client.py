@@ -16,6 +16,7 @@ from pathlib import Path
 import platform
 import re
 import subprocess
+import tempfile
 import urllib.request
 import uuid
 import zipfile
@@ -73,6 +74,22 @@ def metadata() -> tuple[dict, dict]:
     return json.loads(vanilla_path.read_text()), json.loads(forge_path.read_text())
 
 
+def publish_native(path: Path, data: bytes) -> None:
+    # Another client may have this inode mapped as executable code. Never
+    # truncate it: keep identical files, atomically replace changed cache files.
+    if path.is_file() and path.read_bytes() == data:
+        return
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=path.parent, prefix=path.name + '.', suffix='.tmp', delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(data)
+        temporary.replace(path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+
 def prepare(vanilla: dict, forge: dict) -> list[Path]:
     # Forge replaces some libraries by group/artifact/classifier, preserving exact versions.
     merged = {}
@@ -118,7 +135,7 @@ def prepare(vanilla: dict, forge: dict) -> list[Path]:
         with zipfile.ZipFile(path) as archive:
             for name in archive.namelist():
                 if name.endswith(('.so', '.dll', '.dylib')):
-                    (natives / Path(name).name).write_bytes(archive.read(name))
+                    publish_native(natives / Path(name).name, archive.read(name))
     print(f'Prepared {len(paths)} exact runtime libraries and {len(jobs) - len(paths)} assets.', flush=True)
     return paths
 

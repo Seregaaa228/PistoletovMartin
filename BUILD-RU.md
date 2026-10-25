@@ -101,6 +101,29 @@ MC Pilot 0.20.2: `python3 tools/mct.py --cli-version`. Установка, за�
 
 Детали контракта: `docs/INDUSTRY-ENERGY-JADE-RU.md`,
 `docs/ui/LDLIB-RU.md`, `instance/kubejs/README-RU.md`.
+Текущее состояние проверки: [PIS-1](docs/testing/PIS-1-2026-10-25.md).
+
+Для проверки выделенного сервера нужны три отдельных свежих профиля с
+`--test-helper` и одинаковыми пересобранными модулями: `run-server`, `run-owner`,
+`run-foreign`. Точный Forge 47.4.0 server runtime устанавливается внутрь
+`run-server` через закреплённый установщик с `--installServer run-server`.
+Владелец принимает EULA для этого профиля. В его `server.properties` указать
+`server-ip=127.0.0.1`, свободный порт и `online-mode=false` для локальных тестовых
+имён. Затем в отдельных терминалах:
+
+```sh
+python3 tools/run_test_server.py run-server --dedicated-acceptance
+python3 tools/run_test_client.py run-owner --server 127.0.0.1 --port 25565 --username Pis1Owner
+python3 tools/run_test_client.py run-foreign --server 127.0.0.1 --port 25565 --username Pis1Foreign
+python3 tools/run_dedicated_observations.py run-server run-owner run-foreign
+```
+
+В командах клиентов заменить порт на выбранный. Helper требует ровно два
+настоящих loopback-подключения с разными UUID, совпадающие runId профилей и
+пустой промышленный ledger. Bridge передаёт этапы обоим клиентам и ждёт их
+фактические подтверждения. Результаты и кадры остаются внутри тестовых профилей;
+в Git их не добавлять. Успех сборки или отдельного сценария не завершает игровую
+приёмку и проверку стабильности.
 
 | Модуль | Результат в `modules/<модуль>/build/libs/` |
 |---|---|
