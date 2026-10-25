@@ -110,6 +110,7 @@ public final class IndustryContent {
         private final SiteType type;
         SiteDeployer(SiteType type) { super(new Properties().stacksTo(1)); this.type = type; }
         @Override public InteractionResult useOn(UseOnContext ctx) {
+            if (!dev.frontier.industry.construction.ConstructionAccess.canBuild(ctx.getPlayer())) return InteractionResult.FAIL;
             if (ctx.getPlayer() instanceof ServerPlayer player) {
                 UUID id = IndustryEngine.place(player, type, ctx.getClickedPos().relative(ctx.getClickedFace()));
                 if (id == null) return InteractionResult.FAIL;

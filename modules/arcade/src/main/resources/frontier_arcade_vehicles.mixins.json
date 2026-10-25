@@ -4,6 +4,8 @@
   "package": "dev.frontier.arcade.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "FpvServerImpact",
+    "DroneExplosionBlocks",
     "TankAmmoGuard",
     "TankNpcSafety",
     "SbwRecruitCompatibility",

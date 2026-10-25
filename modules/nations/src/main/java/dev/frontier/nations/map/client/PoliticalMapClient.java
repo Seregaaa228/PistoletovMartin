@@ -1,16 +1,13 @@
 package dev.frontier.nations.map.client;
 
-import net.minecraft.client.Minecraft;
+import dev.frontier.nations.map.xaero.CountryMapClient;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 /**
- * Legacy self-contained political map entry point.
- *
- * @deprecated Debug/fallback path only. The primary UI is the Xaero overlay
- * ({@code XaeroCountryLayer}): M opens Xaero's map with the country layer, T
- * toggles it. N no longer opens this screen. Kept so smoke/debug builds can
- * still reach the Recruits projection without Xaero installed.
+ * Compatibility entry point for callers of the retired political map.
+ * @deprecated All map entry points now use Xaero. Border editing starts in the PDA.
  */
 @Deprecated
 public final class PoliticalMapClient {
@@ -30,11 +27,9 @@ public final class PoliticalMapClient {
         // builds need a fallback binding again.
     }
 
-    /** Fallback/debug opener for the retired standalone screen. */
+    public static boolean isLegacyMap(Screen screen){return screen instanceof PoliticalMapScreen;}
+    /** Preserve the old API while opening the same Xaero viewer as other entry points. */
     public static void openFallback() {
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player != null && minecraft.level != null && minecraft.screen == null) {
-            minecraft.setScreen(new PoliticalMapScreen());
-        }
+        CountryMapClient.openViewer();
     }
 }

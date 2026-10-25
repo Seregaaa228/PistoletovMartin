@@ -62,6 +62,9 @@ public final class FrontierNations {
         MinecraftForge.EVENT_BUS.addListener(this::login);
         PoliticalMapBridge.init();
         FlagNet.init();
+        dev.frontier.nations.map.border.BorderNet.init();
+        dev.frontier.nations.map.border.CountryAppearanceLifecycle.init();
+        dev.frontier.nations.compat.RecruitsSchedulerLifecycle.init();
         LOG.info("Frontier Nations compatibility loaded; original factions/claims remain authoritative");
     }
     private void started(ServerStartedEvent event) {
@@ -169,7 +172,7 @@ public final class FrontierNations {
     }
     private void login(PlayerEvent.PlayerLoggedInEvent event) {
         if(event.getEntity() instanceof ServerPlayer player) {
-            player.sendSystemMessage(Component.literal("Frontier Nations: M — карта мира со странами, T — слой территорий. /frontier help — подсказка."));
+            player.sendSystemMessage(Component.literal("Frontier Nations: M — карта Xaero со странами; контуры меняются в КПК → Страна → Границы на карте. /frontier help — подсказка."));
         }
     }
     private void commands(RegisterCommandsEvent event) {
@@ -197,7 +200,7 @@ public final class FrontierNations {
             })));
     }
     private static int help(net.minecraft.commands.CommandSourceStack source) {
-        source.sendSuccess(()->Component.literal("M — карта Xaero со странами; T — слой территорий; «Мой флаг» — на карте (M), меняет лидер страны; /rvguide — руководство государств; /rvfind — найти поселение; /rvjoin — вступить в поселение; /rvvillage — управление; /rvrelations — дипломатия (творческий режим); /frontier doctor — проверка; /frontier kit — тестовое снаряжение (нужны читы/OP)."),false);return 1;
+        source.sendSuccess(()->Component.literal("M — просмотр карты Xaero; КПК → Страна → Границы на карте — редактор контура для лидера; «Мой флаг» — на карте (M), меняет лидер страны; /rvguide — руководство государств; /rvfind — найти поселение; /rvjoin — вступить в поселение; /rvvillage — управление; /rvrelations — дипломатия (творческий режим); /frontier doctor — проверка; /frontier kit — тестовое снаряжение (нужны читы/OP)."),false);return 1;
     }
     private static void give(ServerPlayer player,ItemStack stack){if(!stack.isEmpty()&&!player.getInventory().add(stack))player.drop(stack,false);}
 }

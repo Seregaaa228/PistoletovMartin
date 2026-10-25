@@ -60,15 +60,13 @@ public final class FlagDefinition {
     }
 
     public static FlagDefinition decode(FriendlyByteBuf buffer) {
-        if (buffer == null || buffer.readableBytes() < 1 + FlagCodec.PACKED_BYTES) return null;
-        if (buffer.readByte() != FlagCodec.FORMAT_VERSION) return null;
+        if (buffer == null || buffer.readableBytes() < 1 + FlagCodec.PACKED_BYTES)
+            throw new io.netty.handler.codec.DecoderException("Truncated flag payload");
+        if (buffer.readByte() != FlagCodec.FORMAT_VERSION)
+            throw new io.netty.handler.codec.DecoderException("Unsupported flag format");
         byte[] packed = new byte[FlagCodec.PACKED_BYTES];
         buffer.readBytes(packed);
-        try {
-            return new FlagDefinition(FlagCodec.unpack(packed));
-        } catch (IllegalArgumentException invalid) {
-            return null;
-        }
+        return new FlagDefinition(FlagCodec.unpack(packed));
     }
 
     @Override

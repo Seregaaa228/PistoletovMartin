@@ -21,9 +21,8 @@ public final class FlagCache {
     public static synchronized void apply(@Nullable Map<String, FlagDefinition> flags) {
         if (flags == null) return;
         for (Map.Entry<String, FlagDefinition> entry : flags.entrySet()) {
-            if (entry.getKey() == null || entry.getKey().isBlank() || entry.getValue() == null) continue;
-            FLAGS.put(entry.getKey(), entry.getValue());
-            if (FLAGS.size() > NationFlags.MAX_ENTRIES) break;
+            if (entry.getKey() == null || entry.getKey().isBlank() || entry.getKey().length()>NationFlags.MAX_ID_LENGTH || entry.getValue() == null) continue;
+            if(FLAGS.containsKey(entry.getKey())||FLAGS.size()<NationFlags.MAX_ENTRIES)FLAGS.put(entry.getKey(), entry.getValue());
         }
     }
 

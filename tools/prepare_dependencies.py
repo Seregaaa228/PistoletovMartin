@@ -89,6 +89,16 @@ def prepare(mods: Path) -> dict:
         if len(nested) != 1:
             raise ValueError('Expected exactly one bundled MAE model-animation API')
         publish(artifacts, 'sbw-mae.jar', inner.read(nested[0]), f'simplebedrockmodel!/{nested[0]}')
+    # GuiMap inherits XaeroLib's ScreenBase. Use the exact bundled API only
+    # for compilation; Forge owns its existing JarJar runtime copy.
+    xaero_map = 'xaeroworldmap-forge-1.20.1-1.47.0.jar'
+    with zipfile.ZipFile(mods / xaero_map) as outer:
+        nested = [n for n in outer.namelist() if n.startswith('META-INF/jarjar/xaerolib-')
+                  and n.endswith('.jar')]
+        if len(nested) != 1:
+            raise ValueError('Expected exactly one pinned bundled XaeroLib API')
+        publish(artifacts, 'xaero-bundled-lib.jar', outer.read(nested[0]),
+                f'{xaero_map}!/{nested[0]}')
     overlay = io.BytesIO()
     with zipfile.ZipFile(overlay, 'w', zipfile.ZIP_DEFLATED) as archive:
         for name in ('NativeCombatEvents', 'ReadyWeapons'):

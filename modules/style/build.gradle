@@ -5,3 +5,9 @@ base { archivesName = 'frontier-arcade-style' }
 tasks.named('jar', Jar).configure {
     from('LICENSE') { into 'META-INF'; rename { 'LICENSE.frontier-style' } }
 }
+tasks.register('wreckEffectTimelineTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.ifv.client.WreckEffectTimelineTest'
+}
+tasks.named('check').configure { dependsOn 'wreckEffectTimelineTest' }

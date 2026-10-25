@@ -5,6 +5,7 @@ import com.atsuishio.superbwarfare.tools.CustomExplosion;
 import com.atsuishio.superbwarfare.tools.ParticleTool;
 import dev.frontier.arcade.relay.RelayNetwork;
 import dev.frontier.arcade.control.ControlSessions;
+import dev.frontier.arcade.combat.DroneSweep;
 import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
@@ -19,12 +20,9 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.joml.Vector3f;
 import ru.lavafrai.uncomplicatedfpv.entity.AddonDroneEntity;
 
@@ -182,12 +180,8 @@ public final class GeraniumEntity extends AddonDroneEntity {
         if (isLaunched() && flight().flightTicks() >= 20) airborne = true;
         Vec3 nose = nosePosition(1);
         if (airborne && lastNose != null && lastNose.distanceToSqr(nose) > .0004) {
-            var hit = level().clip(new ClipContext(lastNose, nose, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-            Vec3 end = hit.getType() == HitResult.Type.BLOCK ? hit.getLocation() : nose;
-            var entityHit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(level(), this, lastNose, end,
-                new net.minecraft.world.phys.AABB(lastNose, end).inflate(.25), this::impactTarget);
-            if (entityHit != null) { detonate(entityHit.getLocation()); return; }
-            if (hit.getType() == HitResult.Type.BLOCK) { detonate(hit.getLocation()); return; }
+            var hit = DroneSweep.trace(this, lastNose, nose, this::impactTarget);
+            if (hit != null) { detonate(hit.getLocation()); return; }
         }
         if (airborne && (horizontalCollision || (verticalCollision && onGround()))) { detonate(nose); return; }
         lastNose = nose;

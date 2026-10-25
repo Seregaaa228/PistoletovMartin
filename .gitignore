@@ -1,6 +1,8 @@
 # Build/dependency caches and generated vendor Maven artifacts
 .gradle/
 **/build/
+modules/*/bin/
+modules/*/logs/
 vendor/
 run/
 run-*/
@@ -33,3 +35,9 @@ instance/xaero/
 # Keep required checked-in compatibility bytes and wrapper.
 *.class
 !modules/industry/preserved-combat/**/*.class
+
+# Local agent plans and tool state
+.superpowers/
+docs/superpowers/
+.serena/
+.playwright-mcp/

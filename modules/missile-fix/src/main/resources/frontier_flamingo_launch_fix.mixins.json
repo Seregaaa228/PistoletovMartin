@@ -5,6 +5,15 @@
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "NativeLauncherPolicy",
+    "KnownMissileTerrain",
+    "DirectMissileImpact",
+    "MissileExplosionRecipients",
+    "NativeMissileBlastOwner",
+    "NativeMissileVehicleOwnerGuard",
+    "NativeVehicleMissileRecipient",
+    "PreciseMissileEntityContact",
+    "LazyMissileTerrainMesh",
+    "DeferredMissileTerrainContact",
     "GraphitePhysicalBlast",
     "VanillaServerEffects"
   ],

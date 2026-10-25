@@ -5,3 +5,10 @@ tasks.named('jar', Jar).configure {
     manifest.attributes 'MixinConfigs': 'frontier_arcade_vehicles.mixins.json'
     from('LICENSE.txt') { into 'META-INF'; rename { 'LICENSE.frontier-arcade' } }
 }
+
+tasks.register('warheadRulesTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.arcade.combat.WarheadRulesTest'
+}
+tasks.named('check').configure { dependsOn 'warheadRulesTest' }

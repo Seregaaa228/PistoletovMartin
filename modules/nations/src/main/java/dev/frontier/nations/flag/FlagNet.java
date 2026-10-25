@@ -1,6 +1,8 @@
 package dev.frontier.nations.flag;
 
 import dev.frontier.nations.FrontierNations;
+import dev.frontier.nations.network.WriteRateLimit;
+import io.netty.handler.codec.DecoderException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,6 +16,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
@@ -28,11 +31,13 @@ import net.minecraftforge.network.simple.SimpleChannel;
  */
 public final class FlagNet {
     /** Protocol version advertised to both sides. */
-    public static final String PROTOCOL = "1";
+    // v2 gives an empty FlagSync the explicit meaning "clear the client cache".
+    public static final String PROTOCOL = "2";
 
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(FrontierNations.ID, "flags"), () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
     private static boolean registered;
+    private static final WriteRateLimit WRITES=new WriteRateLimit(500_000_000L);
 
     private FlagNet() {}
 
@@ -44,6 +49,8 @@ public final class FlagNet {
         CHANNEL.registerMessage(1, FlagSync.class, FlagSync::encode, FlagSync::decode, FlagSync::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         MinecraftForge.EVENT_BUS.addListener(FlagNet::onLogin);
+        MinecraftForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e)->WRITES.remove(e.getEntity().getUUID()));
+        MinecraftForge.EVENT_BUS.addListener((ServerStoppedEvent e)->WRITES.clear());
     }
 
     public static void sendToServer(String factionId, FlagDefinition flag) {
@@ -51,7 +58,15 @@ public final class FlagNet {
     }
 
     public static void sendSync(ServerPlayer player, Map<String, FlagDefinition> flags) {
-        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new FlagSync(flags));
+        // Zero entries is an authoritative reset; the following snapshot repopulates the cache.
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new FlagSync(Map.of()));
+        if(flags!=null&&!flags.isEmpty())CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new FlagSync(flags));
+    }
+
+    public static void removeFaction(net.minecraft.server.MinecraftServer server,String faction){
+        NationFlags flags=NationFlags.get(server);if(flags.flag(faction)==null)return;
+        flags.set(faction,null);Map<String,FlagDefinition> snapshot=flags.snapshot();
+        for(ServerPlayer player:server.getPlayerList().getPlayers())sendSync(player,snapshot);
     }
 
     public static void broadcastUpdate(String factionId, FlagDefinition flag) {
@@ -83,7 +98,12 @@ public final class FlagNet {
             NetworkEvent.Context ctx = context.get();
             ctx.enqueueWork(() -> {
                 ServerPlayer sender = ctx.getSender();
-                if (sender == null || sender.serverLevel() == null) return;
+                if (!FlagAuthority.isConnected(sender)) return;
+                var limit=WRITES.check(sender.getUUID());
+                if(limit!=WriteRateLimit.Decision.ALLOW){
+                    if(limit==WriteRateLimit.Decision.WARN)deny(sender,"Флаг: подождите полсекунды перед следующим сохранением.");
+                    return;
+                }
                 // The sender names no authority: the faction must come from native membership
                 // and the write must come from the native team leader UUID.
                 String own = FlagAuthority.ownFactionId(sender);
@@ -96,7 +116,10 @@ public final class FlagNet {
                     return;
                 }
                 NationFlags flags = NationFlags.get(sender.serverLevel());
-                if (flags.set(own, message.flag)) broadcastUpdate(own, message.flag);
+                FlagDefinition previous=flags.flag(own);
+                if (!flags.set(own, message.flag)){deny(sender,"Флаг: достигнут лимит флагов сервера.");return;}
+                if(!message.flag.equals(previous))broadcastUpdate(own, message.flag);
+                else CHANNEL.send(PacketDistributor.PLAYER.with(()->sender),new FlagSync(Map.of(own,message.flag)));
             });
             ctx.setPacketHandled(true);
         }
@@ -110,25 +133,25 @@ public final class FlagNet {
     public record FlagSync(Map<String, FlagDefinition> flags) {
         static void encode(FlagSync message, FriendlyByteBuf buffer) {
             Map<String, FlagDefinition> flags = message.flags == null ? Map.of() : message.flags;
-            List<Map.Entry<String, FlagDefinition>> entries = new ArrayList<>(flags.entrySet());
-            buffer.writeVarInt(Math.min(entries.size(), NationFlags.MAX_ENTRIES));
-            int written = 0;
+            List<Map.Entry<String, FlagDefinition>> entries = new ArrayList<>();
+            for(var entry:flags.entrySet())if(entry.getKey()!=null&&!entry.getKey().isBlank()&&entry.getKey().length()<=NationFlags.MAX_ID_LENGTH&&entry.getValue()!=null)entries.add(entry);
+            if(entries.size()>NationFlags.MAX_ENTRIES)throw new IllegalArgumentException("Too many flags");
+            buffer.writeVarInt(entries.size());
             for (Map.Entry<String, FlagDefinition> entry : entries) {
-                if (written >= NationFlags.MAX_ENTRIES) break;
-                if (entry.getKey() == null || entry.getValue() == null) continue;
                 buffer.writeUtf(entry.getKey(), NationFlags.MAX_ID_LENGTH + 1);
                 entry.getValue().encode(buffer);
-                written++;
             }
         }
 
         static FlagSync decode(FriendlyByteBuf buffer) {
-            int count = Math.min(buffer.readVarInt(), NationFlags.MAX_ENTRIES);
+            int count = buffer.readVarInt();
+            if(count<0||count>NationFlags.MAX_ENTRIES)throw new DecoderException("Invalid flag count");
             Map<String, FlagDefinition> flags = new LinkedHashMap<>();
             for (int index = 0; index < count; index++) {
                 String factionId = buffer.readUtf(NationFlags.MAX_ID_LENGTH + 1);
                 FlagDefinition flag = FlagDefinition.decode(buffer);
-                if (!factionId.isBlank() && flag != null) flags.putIfAbsent(factionId, flag);
+                if(factionId.isBlank()||factionId.length()>NationFlags.MAX_ID_LENGTH||flags.putIfAbsent(factionId,flag)!=null)
+                    throw new DecoderException("Invalid or duplicate flag faction ID");
             }
             return new FlagSync(Map.copyOf(flags));
         }
@@ -136,7 +159,7 @@ public final class FlagNet {
         static void handle(FlagSync message, Supplier<NetworkEvent.Context> context) {
             NetworkEvent.Context ctx = context.get();
             ctx.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                    () -> () -> FlagCache.apply(message.flags)));
+                    () -> () -> {if(!dev.frontier.nations.network.ClientPacketGuard.current(ctx))return;if(message.flags.isEmpty())FlagCache.replace(Map.of());else FlagCache.apply(message.flags);}));
             ctx.setPacketHandled(true);
         }
     }

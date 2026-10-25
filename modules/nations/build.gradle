@@ -3,3 +3,52 @@ base { archivesName = 'frontier-nations-1.20.1' }
 tasks.named('jar', Jar).configure {
     from('LICENSE.txt') { into 'META-INF'; rename { 'LICENSE.frontier-nations' } }
 }
+
+tasks.named('jar', Jar).configure {
+    manifest.attributes('MixinConfigs': 'frontier_nations_client.mixins.json')
+}
+tasks.register('geometryTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.nations.map.GeometryTest'
+}
+tasks.named('check').configure { dependsOn 'geometryTest' }
+tasks.register('borderStorageTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.nations.map.border.BorderStorageTest'
+}
+tasks.named('check').configure { dependsOn 'borderStorageTest' }
+
+tasks.register('mapAcceptanceJar', Jar) {
+    dependsOn testClasses
+    archiveFileName = 'frontier-map-checks.jar'
+    destinationDirectory = layout.buildDirectory.dir('acceptance')
+    from(sourceSets.test.output) { include 'dev/frontier/nations/acceptance/**' }
+    from 'src/acceptance/resources'
+    finalizedBy 'reobfMapAcceptanceJar'
+}
+reobf { mapAcceptanceJar {} }
+
+configurations.testCompileOnly.extendsFrom(configurations.compileOnly)
+dependencies { testCompileOnly project(':industry') }
+tasks.register('flagStorageMigrationTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.nations.flag.FlagStorageMigrationTest'
+}
+tasks.named('check').configure { dependsOn 'flagStorageMigrationTest' }
+
+tasks.register('mapStateTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.nations.map.xaero.MapStateTest'
+}
+tasks.named('check').configure { dependsOn 'mapStateTest' }
+
+tasks.register('recruitsSchedulerLifecycleTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.nations.compat.RecruitsSchedulerLifecycleTest'
+}
+tasks.named('check').configure { dependsOn 'recruitsSchedulerLifecycleTest' }

@@ -4,7 +4,6 @@ import com.talhanation.recruits.FactionEvents;
 import com.talhanation.recruits.world.RecruitsFaction;
 import com.talhanation.recruits.world.RecruitsFactionManager;
 import java.util.UUID;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import javax.annotation.Nullable;
 
@@ -15,6 +14,11 @@ import javax.annotation.Nullable;
  */
 public final class FlagAuthority {
     private FlagAuthority() {}
+
+    /** Ignore queued work from a disconnected player, including an older connection with the same UUID. */
+    public static boolean isConnected(ServerPlayer player){
+        return player!=null&&player.server.getPlayerList().getPlayer(player.getUUID())==player;
+    }
 
     /** Server-side leader test for C2S packets. */
     public static boolean isLeader(ServerPlayer player, String factionId) {
@@ -41,11 +45,9 @@ public final class FlagAuthority {
     public static String ownFactionId(ServerPlayer player) {
         RecruitsFactionManager manager = FactionEvents.recruitsFactionManager;
         if (manager == null || player == null) return null;
-        ServerLevel level = player.serverLevel();
-        for (RecruitsFaction faction : manager.getFactions()) {
-            if (faction == null || faction.getStringID() == null) continue;
-            if (manager.getPlayersInTeam(faction.getStringID(), level).contains(player)) return faction.getStringID();
-        }
-        return null;
+        // Matches RecruitsFactionManager.broadcastOwnFactionToPlayer in pinned Recruits 1.15.2.
+        if (player.getTeam() == null) return null;
+        String id = player.getTeam().getName();
+        return manager.getFactionByStringID(id) == null ? null : id;
     }
 }

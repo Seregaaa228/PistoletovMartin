@@ -5,3 +5,24 @@ base { archivesName = 'frontier-light-aviation' }
 tasks.named('processResources', ProcessResources).configure {
     exclude 'assets/frontier_aviation/models/bedrock/vehicle/*_lod.geo.json'
 }
+tasks.register('aircraftImpactRulesTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.aviation.impact.AircraftImpactRulesTest'
+}
+tasks.register('cannonImpactRulesTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.aviation.CannonImpactRulesTest'
+}
+tasks.register('sweptAircraftBoxTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.aviation.impact.SweptAircraftBoxTest'
+}
+tasks.register('sweptAircraftMotionTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.aviation.impact.SweptAircraftMotionTest'
+}
+tasks.named('check').configure { dependsOn 'aircraftImpactRulesTest', 'cannonImpactRulesTest', 'sweptAircraftBoxTest', 'sweptAircraftMotionTest' }

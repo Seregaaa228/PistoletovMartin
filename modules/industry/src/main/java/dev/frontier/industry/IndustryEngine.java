@@ -120,7 +120,7 @@ public final class IndustryEngine {
     }
 
     public static UUID place(ServerPlayer player, SiteType type, BlockPos origin) {
-        if (player == null || type == null || origin == null || !player.isAlive() || player.isSpectator()) return null;
+        if (!dev.frontier.industry.construction.ConstructionAccess.canBuild(player) || type == null || origin == null) return null;
         ServerLevel level = player.serverLevel();
         IndustryData data = IndustryData.get(level.getServer());
         if (data.sites.size() >= 2048 || data.sites.values().stream().filter(s -> s.owner.equals(player.getUUID())).count() >= 64) {

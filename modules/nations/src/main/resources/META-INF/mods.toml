@@ -45,3 +45,11 @@ mandatory=false
 versionRange="[0,)"
 ordering="AFTER"
 side="BOTH"
+
+# The camera bridge targets the exact shipped API; dedicated servers do not need client maps.
+[[dependencies.frontier_nations]]
+modId="xaeroworldmap"
+mandatory=true
+versionRange="[1.47.0]"
+ordering="AFTER"
+side="CLIENT"

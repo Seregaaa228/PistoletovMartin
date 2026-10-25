@@ -6,6 +6,8 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -19,6 +21,8 @@ public final class LightAviation {
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, ID);
 
     public LightAviation() {
+        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, AircraftCannon.SPEC,
+                "frontier-aircraft-combat-server.toml");
         AircraftProfile.values();
         TABS.register("aircraft", () -> CreativeModeTab.builder()
                 .title(Component.translatable("itemGroup.frontier_aviation"))

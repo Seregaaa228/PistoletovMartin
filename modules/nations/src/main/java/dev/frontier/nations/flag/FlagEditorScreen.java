@@ -3,6 +3,8 @@ package dev.frontier.nations.flag;
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.world.RecruitsFaction;
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -17,10 +19,10 @@ import org.lwjgl.glfw.GLFW;
  */
 public final class FlagEditorScreen extends Screen {
     private static final int CANVAS = 16;
-    private static final int BACKGROUND = 0xFF17232B;
-    private static final int PANEL = 0xFF202E36;
-    private static final int TEXT = 0xFFE9E8D8;
-    private static final int MUTED = 0xFFA6B5BC;
+    private static final int BACKGROUND = 0xFF171B20;
+    private static final int PANEL = 0xFF242C34;
+    private static final int TEXT = 0xFFE7EBEF;
+    private static final int MUTED = 0xFFAAB4BE;
 
     private final Screen parent;
     private final String factionId;
@@ -35,6 +37,11 @@ public final class FlagEditorScreen extends Screen {
     private int presetPrimary = 14;
     private int presetSecondary = 0;
     private int presetAccent = 11;
+    private final List<Button> editButtons=new ArrayList<>();
+    private Button closeButton;
+    private FlagDefinition awaiting;
+    private long sentAt;
+    private String status="";
 
     public FlagEditorScreen(Screen parent, String factionId, String factionName, boolean canEdit) {
         super(Component.literal("Флаг страны"));
@@ -61,46 +68,73 @@ public final class FlagEditorScreen extends Screen {
 
     @Override
     protected void init() {
-        cell = Math.max(10, Math.min(20, (height - 190) / CANVAS));
+        editButtons.clear();
+        int sideWidth = canEdit ? 120 : 0;
+        int heightCell = Math.max(3, (height - 98) / 17);
+        int widthCell = Math.max(3, (width - sideWidth - 40) / CANVAS);
+        cell = Math.min(16, Math.min(heightCell, widthCell));
         int canvasPixels = cell * CANVAS;
-        originX = Math.max(12, width / 2 - canvasPixels - 120);
-        originY = Math.max(48, 70);
+        int totalWidth = canvasPixels + (canEdit ? sideWidth + 16 : 0);
+        originX = Math.max(8, (width - totalWidth) / 2);
+        originY = 50;
         if (canEdit) {
-            addRenderableWidget(Button.builder(Component.literal("Триколор"), b -> applyPreset(FlagPreset.HORIZONTAL_TRICOLOR))
-                    .bounds(originX + canvasPixels + 16, originY, 148, 20).build());
-            addRenderableWidget(Button.builder(Component.literal("Крест"), b -> applyPreset(FlagPreset.NORDIC_CROSS))
-                    .bounds(originX + canvasPixels + 16, originY + 24, 148, 20).build());
-            addRenderableWidget(Button.builder(Component.literal("Круг / солнце"), b -> applyPreset(FlagPreset.SUN_DISC))
-                    .bounds(originX + canvasPixels + 16, originY + 48, 148, 20).build());
-            addRenderableWidget(Button.builder(Component.literal("Диагональ"), b -> applyPreset(FlagPreset.DIAGONAL))
-                    .bounds(originX + canvasPixels + 16, originY + 72, 148, 20).build());
-            addRenderableWidget(Button.builder(Component.literal("Шеврон"), b -> applyPreset(FlagPreset.CHEVRON))
-                    .bounds(originX + canvasPixels + 16, originY + 96, 148, 20).build());
-            addRenderableWidget(Button.builder(Component.literal("Сохранить"), b -> save())
-                    .bounds(width / 2 - 158, height - 30, 150, 20).build());
+            FlagPreset[] presets = {FlagPreset.HORIZONTAL_TRICOLOR, FlagPreset.NORDIC_CROSS,
+                    FlagPreset.SUN_DISC, FlagPreset.DIAGONAL, FlagPreset.CHEVRON};
+            String[] labels = {"Триколор", "Крест", "Круг / солнце", "Диагональ", "Шеврон"};
+            for (int index = 0; index < presets.length; index++) {
+                FlagPreset value = presets[index];
+                editButtons.add(addRenderableWidget(Button.builder(Component.literal(labels[index]), b -> applyPreset(value))
+                        .bounds(originX + canvasPixels + 16, originY + index * 20, sideWidth, 16).build()));
+            }
+            editButtons.add(addRenderableWidget(Button.builder(Component.literal("Сохранить"), b -> save())
+                    .bounds(width / 2 - 124, height - 26, 120, 20).build()));
         }
-        addRenderableWidget(Button.builder(Component.literal(canEdit ? "Отмена" : "Закрыть"), b -> onClose())
-                .bounds(width / 2 + 8, height - 30, 150, 20).build());
+        closeButton=addRenderableWidget(Button.builder(Component.literal(canEdit ? "Отмена" : "Закрыть"), b -> onClose())
+                .bounds(canEdit ? width / 2 + 4 : width / 2 - 60, height - 26, 120, 20).build());
+        updateButtons();
+    }
+
+    private boolean hasAuthority(){
+        var own=ClientManager.ownFaction;
+        return canEdit&&own!=null&&factionId!=null&&factionId.equals(own.getStringID())&&FlagLeadership.isLocalLeader(own);
+    }
+    private boolean editable(){return awaiting==null&&hasAuthority();}
+    private void updateButtons(){
+        for(Button button:editButtons)button.active=editable();
+        if(closeButton!=null)closeButton.setMessage(Component.literal(awaiting!=null?"← Карта":canEdit?"Отмена":"Закрыть"));
+    }
+    @Override public void tick(){
+        if(awaiting!=null){
+            if(awaiting.equals(FlagCache.flag(factionId))){onClose();return;}
+            if(!hasAuthority()){awaiting=null;status="Права изменились. Рисунок не отправляется повторно";}
+            else if(System.nanoTime()-sentAt>10_000_000_000L){awaiting=null;status="Сервер не подтвердил флаг. Рисунок сохранён в редакторе";}
+        }
+        updateButtons();
     }
 
     private void applyPreset(FlagPreset next) {
+        if(!editable())return;
         preset = next;
         byte[] built = FlagPresets.build(next, presetPrimary, presetSecondary, presetAccent).pixels();
         System.arraycopy(built, 0, pixels, 0, FlagCodec.PIXELS);
     }
 
     private void save() {
-        if (!canEdit || factionId == null) return;
-        FlagNet.sendToServer(factionId, new FlagDefinition(Arrays.copyOf(pixels, pixels.length)));
-        onClose();
+        if (!editable()) return;
+        FlagDefinition proposed=new FlagDefinition(Arrays.copyOf(pixels,pixels.length));
+        if(proposed.equals(FlagCache.flag(factionId))){onClose();return;}
+        awaiting=proposed;sentAt=System.nanoTime();status="Флаг отправлен. Выход не отменяет сохранение";updateButtons();
+        try{FlagNet.sendToServer(factionId,proposed);}
+        catch(RuntimeException unavailable){awaiting=null;status="Не удалось отправить флаг. Рисунок остаётся в редакторе";updateButtons();}
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         graphics.fill(0, 0, width, height, BACKGROUND);
         graphics.drawString(font, "Флаг: " + factionName, 12, 12, TEXT, false);
-        graphics.drawString(font, canEdit ? "ЛКМ — рисовать, ПКМ — ластик (цвет 0)"
+        graphics.drawString(font, hasAuthority() ? "ЛКМ — рисовать, ПКМ — ластик (цвет 0)"
                 : "Только просмотр: флаг меняет лидер страны", 12, 26, MUTED, false);
+        if(!status.isEmpty())graphics.drawString(font,font.plainSubstrByWidth(status,width-24),12,37,MUTED,false);
         int canvasPixels = cell * CANVAS;
         graphics.fill(originX - 2, originY - 2, originX + canvasPixels + 2, originY + canvasPixels + 2, 0xFF0D1419);
         for (int y = 0; y < CANVAS; y++) {
@@ -139,7 +173,7 @@ public final class FlagEditorScreen extends Screen {
         int canvasPixels = cell * CANVAS;
         int paletteSize = canvasPixels / 16;
         int paletteY = originY + canvasPixels + 10;
-        if (canEdit && mouseX >= originX && mouseX < originX + canvasPixels && mouseY >= paletteY && mouseY < paletteY + paletteSize) {
+        if (editable() && mouseX >= originX && mouseX < originX + canvasPixels && mouseY >= paletteY && mouseY < paletteY + paletteSize) {
             int picked = (int) ((mouseX - originX) / Math.max(1, paletteSize));
             if (picked >= 0 && picked < 16) {
                 selected = picked;
@@ -151,7 +185,7 @@ public final class FlagEditorScreen extends Screen {
         if (mouseX >= originX && mouseX < originX + canvasPixels && mouseY >= originY && mouseY < originY + canvasPixels) {
             int x = (int) ((mouseX - originX) / cell);
             int y = (int) ((mouseY - originY) / cell);
-            if (x >= 0 && x < CANVAS && y >= 0 && y < CANVAS && canEdit) {
+            if (x >= 0 && x < CANVAS && y >= 0 && y < CANVAS && editable()) {
                 if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) pixels[y * CANVAS + x] = (byte) selected;
                 else if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) pixels[y * CANVAS + x] = 0;
                 else return false;
@@ -164,7 +198,7 @@ public final class FlagEditorScreen extends Screen {
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
         int canvasPixels = cell * CANVAS;
-        if (canEdit && mouseX >= originX && mouseX < originX + canvasPixels && mouseY >= originY && mouseY < originY + canvasPixels
+        if (editable() && mouseX >= originX && mouseX < originX + canvasPixels && mouseY >= originY && mouseY < originY + canvasPixels
                 && (button == GLFW.GLFW_MOUSE_BUTTON_LEFT || button == GLFW.GLFW_MOUSE_BUTTON_RIGHT)) {
             int x = (int) ((mouseX - originX) / cell);
             int y = (int) ((mouseY - originY) / cell);
@@ -179,9 +213,7 @@ public final class FlagEditorScreen extends Screen {
     @Override
     public void onClose() {
         if (minecraft != null) {
-            if (parent instanceof PoliticalMapScreen) minecraft.setScreen(parent);
-            else minecraft.setScreen((Screen) null);
-            if (minecraft.screen == null && parent != null) minecraft.setScreen(parent);
+            minecraft.setScreen(parent);
         }
     }
 

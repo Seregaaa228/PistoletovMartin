@@ -23,13 +23,25 @@ public final class NationFlags extends SavedData {
     static final int MAX_ID_LENGTH = 128;
 
     private final Map<String, FlagDefinition> flags = new LinkedHashMap<>();
+    private boolean dimensionsMerged;
 
     public static NationFlags get(MinecraftServer server) {
         return get(server.overworld());
     }
 
     public static NationFlags get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(NationFlags::load, NationFlags::new, KEY);
+        ServerLevel overworld = level.getServer().overworld();
+        NationFlags canonical = overworld.getDataStorage().computeIfAbsent(NationFlags::load, NationFlags::new, KEY);
+        if (!canonical.dimensionsMerged) {
+            for (ServerLevel dimension : level.getServer().getAllLevels()) {
+                if (dimension == overworld) continue;
+                NationFlags legacy = dimension.getDataStorage().get(NationFlags::load, KEY);
+                if (legacy != null) canonical.mergeLegacy(legacy);
+            }
+            canonical.dimensionsMerged = true;
+            canonical.setDirty();
+        }
+        return canonical;
     }
 
     @Nullable
@@ -39,6 +51,10 @@ public final class NationFlags extends SavedData {
 
     public synchronized Map<String, FlagDefinition> snapshot() {
         return Collections.unmodifiableMap(new LinkedHashMap<>(flags));
+    }
+    /** Only called after the native manager has completed loading all factions. */
+    public synchronized void retainFactions(java.util.Set<String> ids) {
+        if (flags.keySet().removeIf(id -> !ids.contains(id))) setDirty();
     }
 
     /** Stores or replaces a flag; {@code null} clears the entry for a disbanded faction. */
@@ -65,6 +81,7 @@ public final class NationFlags extends SavedData {
             FlagDefinition flag = FlagDefinition.fromNbt(entry.getCompound("Flag"));
             if (flag != null) data.flags.putIfAbsent(faction, flag);
         }
+        data.dimensionsMerged = root.getBoolean("DimensionsMerged");
         return data;
     }
 
@@ -79,8 +96,16 @@ public final class NationFlags extends SavedData {
             entries.add(stored);
         }
         root.put("Flags", entries);
+        root.putBoolean("DimensionsMerged", dimensionsMerged);
         root.putInt(FlagDefinition.NBT_VERSION, FlagCodec.FORMAT_VERSION);
         return root;
+    }
+
+    /** One-time import keeps existing canonical flags and leaves old files recoverable. */
+    synchronized void mergeLegacy(NationFlags legacy) {
+        for (Map.Entry<String, FlagDefinition> entry : legacy.snapshot().entrySet()) {
+            if (!flags.containsKey(entry.getKey())) set(entry.getKey(), entry.getValue());
+        }
     }
 
     private static boolean validId(String factionId) {

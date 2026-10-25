@@ -6,6 +6,8 @@
   "mixins": [
     "FreshAircraftDeployment",
     "AuthorizeAircraftCannon",
+    "ControlledAircraftCannon",
+    "AircraftBodyImpact",
     "HumanRecruitDamage",
     "PlayerTeamDamage",
     "HumanWeaponSeeking",
@@ -17,7 +19,8 @@
     "ManualIronDomeLaunch"
   ],
   "client": [
-    "SkipNativeAircraftLights"
+    "SkipNativeAircraftLights",
+    "AircraftMapIdentity"
   ],
   "injectors": {
     "defaultRequire": 1

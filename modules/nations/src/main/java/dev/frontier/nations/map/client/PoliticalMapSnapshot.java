@@ -109,6 +109,16 @@ public final class PoliticalMapSnapshot {
                     | (sameOwner(cells, cell.x, cell.z - 1, cell.claim.owner) ? 0 : 4)
                     | (sameOwner(cells, cell.x, cell.z + 1, cell.claim.owner) ? 0 : 8);
         }
+        if (ClientManager.factions != null) {
+            for (RecruitsFaction faction : ClientManager.factions) {
+                if (faction == null || faction.getStringID() == null || faction.getStringID().isBlank()) continue;
+                CountryBuilder country = countries.computeIfAbsent(faction.getStringID(), CountryBuilder::new);
+                // Claims can retain an older faction snapshot after rename/color changes.
+                country.name = faction.getTeamDisplayName();
+                if (country.name == null || country.name.isBlank()) country.name = country.id;
+                country.color = 0xFF000000 | dev.frontier.nations.flag.TabFlags.color(faction);
+            }
+        }
         List<Country> ordered = new ArrayList<>();
         for (CountryBuilder country : countries.values()) {
             ordered.add(new Country(country.id, country.name, country.color, country.chunks,
