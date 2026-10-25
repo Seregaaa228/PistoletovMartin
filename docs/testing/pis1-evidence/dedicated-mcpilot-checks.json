@@ -1,0 +1,58 @@
+{
+  "tool": "mc-pilot",
+  "cliVersion": "0.20.2",
+  "clientModVersion": "0.10.1",
+  "clientModSha256": "c4fbd56e3b3e1edfd41752228c8742303291dfe04ab673f57d27ccf627268e8f",
+  "transport": "loopback WebSocket into the actual Forge clients",
+  "passed": true,
+  "clients": {
+    "owner": {
+      "profileRunId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "status": {
+        "passed": true,
+        "requestId": "38f70290-0510-46be-9714-11abbaf8046a",
+        "inWorld": true,
+        "screenCategory": "game",
+        "dimension": "minecraft:overworld",
+        "gameMode": "creative"
+      },
+      "screenshot": {
+        "passed": true,
+        "requestId": "d8f315fb-b335-46d3-823a-46eb5fd9a28c",
+        "file": "mcpilot-owner.png",
+        "width": 640,
+        "height": 360,
+        "gui": false,
+        "sha256": "19cc655cd4044c74b0d0cf42b3a2fc8008de423a37c6ea37890c9329b4b1320d"
+      },
+      "sourceReceipts": {
+        "final-owner-status.json": "649ba4702b6f0e3bd7c8bc3d440af7d5d61c2d5a77b31997c1c6d885c589a453",
+        "final-owner-screenshot.json": "0adcb58c62fe687112c5547b34cb383517539afd7afd26c78566f0d2f6138c0d"
+      }
+    },
+    "foreign": {
+      "profileRunId": "03cd4f52-622b-4823-8c0d-298c6d353308",
+      "status": {
+        "passed": true,
+        "requestId": "90382a65-67dc-40e8-8fc4-eb6ac5dc433b",
+        "inWorld": true,
+        "screenCategory": "game",
+        "dimension": "minecraft:overworld",
+        "gameMode": "creative"
+      },
+      "screenshot": {
+        "passed": true,
+        "requestId": "df668baf-fd49-4f92-a0aa-e2650235e979",
+        "file": "mcpilot-foreign.png",
+        "width": 640,
+        "height": 360,
+        "gui": false,
+        "sha256": "091a3dcde08e19e680f78e9425b7e2930aee7258a9511c713825708273d978eb"
+      },
+      "sourceReceipts": {
+        "final-foreign-status.json": "e9ff93af50334b6171dd3bdbda08c206408b3cf9f150462127bd8e01144e22c5",
+        "final-foreign-screenshot.json": "d8cadb8bfb54659e8c3283b8ef419d0268919024d23b02fee2cabe652b2153c1"
+      }
+    }
+  }
+}

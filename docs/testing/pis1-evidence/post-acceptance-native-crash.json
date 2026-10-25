@@ -1,0 +1,22 @@
+{
+  "profileRunId": "03cd4f52-622b-4823-8c0d-298c6d353308",
+  "occurredAt": "2026-10-25T12:18:09Z",
+  "phase": "idle rendering after completed dedicated V9 and MC Pilot checks",
+  "elapsedSeconds": 676.138822,
+  "signal": "SIGSEGV",
+  "thread": "Render thread",
+  "java": "Temurin 17.0.21+9",
+  "topJavaFrames": [
+    "org.lwjgl.system.JNI.invokeD(long)",
+    "dev.engine_room.flywheel.backend.engine.uniform.FrameUniforms.writeTime",
+    "dev.engine_room.flywheel.backend.engine.uniform.FrameUniforms.update",
+    "dev.engine_room.flywheel.backend.engine.EngineImpl.render"
+  ],
+  "flywheelVersion": "1.0.5",
+  "nativeStackAvailable": false,
+  "causeEstablished": false,
+  "mcPilotCausalityEstablished": false,
+  "previousAcceptanceResultsPreserved": true,
+  "longRunningClientStabilityAccepted": false,
+  "localCrashReportSha256": "ed926f44e73c1b5c0ece621f4a658eb1e17367b3368acb757eff53eb44388e53"
+}

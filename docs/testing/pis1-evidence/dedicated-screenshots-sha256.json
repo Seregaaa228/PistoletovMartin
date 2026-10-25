@@ -1,0 +1,217 @@
+{
+  "note": "All actual game PNG hashes; representative frames are committed. Images are copied unchanged.",
+  "screenshots": [
+    {
+      "role": "owner",
+      "runId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "sourceFile": "mcpilot-owner.png",
+      "sha256": "19cc655cd4044c74b0d0cf42b3a2fc8008de423a37c6ea37890c9329b4b1320d"
+    },
+    {
+      "role": "owner",
+      "runId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "sourceFile": "pis1-drone-book-controllers-2-df53e6cd.png",
+      "sha256": "549fee8ee1d3ea1f405a583ff8c919aad37680c857fc4502d3661b7a59fe33e6",
+      "publishedFile": "dedicated-screenshots/pis1-drone-book-controllers-2-df53e6cd.png"
+    },
+    {
+      "role": "owner",
+      "runId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "sourceFile": "pis1-drone-book-controllers-3-c1847a46.png",
+      "sha256": "cb558c338ff03c77c3d3be4b9e86e9440062e4ce61a0597d2d539d7ea84d7ae9",
+      "publishedFile": "dedicated-screenshots/pis1-drone-book-controllers-3-c1847a46.png"
+    },
+    {
+      "role": "owner",
+      "runId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "sourceFile": "pis1-drone-book-flight-2-27026bc0.png",
+      "sha256": "1c1a86538abf0e4ca7249d477f4cfd4e7dcfd4814a2aff1451083a555ed3e9bd",
+      "publishedFile": "dedicated-screenshots/pis1-drone-book-flight-2-27026bc0.png"
+    },
+    {
+      "role": "owner",
+      "runId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "sourceFile": "pis1-drone-book-flight-3-45c15ede.png",
+      "sha256": "03f1ef0210b2eac24a496424a0fb22d9c611dd7d40cb3499fd3a8f5a6b094b79",
+      "publishedFile": "dedicated-screenshots/pis1-drone-book-flight-3-45c15ede.png"
+    },
+    {
+      "role": "owner",
+      "runId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "sourceFile": "pis1-drone-fly-8c9576c4.png",
+      "sha256": "52a3dd037ae130d65ac3a457473a0986a27cbaad7033fad2e15d3614c86ad77e",
+      "publishedFile": "dedicated-screenshots/pis1-drone-fly-8c9576c4.png"
+    },
+    {
+      "role": "owner",
+      "runId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "sourceFile": "pis1-network-6191d1ed-7dd8-4507-ab63-624891f33b32-owner-1-jade-powered.png",
+      "sha256": "9078b642401c0f0217219329f361595d585008063ee3f772163874fd1634c21e",
+      "publishedFile": "dedicated-screenshots/owner-jade-powered.png"
+    },
+    {
+      "role": "owner",
+      "runId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "sourceFile": "pis1-network-6191d1ed-7dd8-4507-ab63-624891f33b32-owner-10-press-working.png",
+      "sha256": "c8bbc27b3d38859c66a48e31bf473f70519f5cb8b1b0841a486f45cc5fa388ca",
+      "publishedFile": "dedicated-screenshots/owner-press-working.png"
+    },
+    {
+      "role": "owner",
+      "runId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "sourceFile": "pis1-network-6191d1ed-7dd8-4507-ab63-624891f33b32-owner-11-press-grid-cut.png",
+      "sha256": "43d54fceb3c72ef103b4f8e75300272cc862c4c4de9b59ea9a7f53e7655b8fdd",
+      "publishedFile": "dedicated-screenshots/owner-press-grid-cut.png"
+    },
+    {
+      "role": "owner",
+      "runId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "sourceFile": "pis1-network-6191d1ed-7dd8-4507-ab63-624891f33b32-owner-12-press-restored.png",
+      "sha256": "6eb169150eeaa1c25eaea054d2b829877c02922ca83a47d9ca07595bb89437bb"
+    },
+    {
+      "role": "owner",
+      "runId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "sourceFile": "pis1-network-6191d1ed-7dd8-4507-ab63-624891f33b32-owner-13-press-reconnect.png",
+      "sha256": "ea9953d9604ecfa688b0d4f37e704a1f42d63d085da6bf02369bcefe7477e009"
+    },
+    {
+      "role": "owner",
+      "runId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "sourceFile": "pis1-network-6191d1ed-7dd8-4507-ab63-624891f33b32-owner-2-jade-cut.png",
+      "sha256": "bef74bb07c39b255189eed0b7592887780569e0a8c94a8a702462562fd2652d4",
+      "publishedFile": "dedicated-screenshots/owner-jade-cut.png"
+    },
+    {
+      "role": "owner",
+      "runId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "sourceFile": "pis1-network-6191d1ed-7dd8-4507-ab63-624891f33b32-owner-3-jade-restored.png",
+      "sha256": "1719465b4cc5baba40167728adb999097d1ea594fb4dc42f6f720064cf15f466"
+    },
+    {
+      "role": "owner",
+      "runId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "sourceFile": "pis1-network-6191d1ed-7dd8-4507-ab63-624891f33b32-owner-4-repair-unreachable.png",
+      "sha256": "4a71822b361a15ba77d7b98fd27bbeb96687fd0dc3d80767b70e74b9e03f30e3"
+    },
+    {
+      "role": "owner",
+      "runId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "sourceFile": "pis1-network-6191d1ed-7dd8-4507-ab63-624891f33b32-owner-5-repair-working.png",
+      "sha256": "c8b42c33296f567d1bf6516458fd69bc5737e5516f962f4f15c13eee6fa9b5df",
+      "publishedFile": "dedicated-screenshots/owner-repair-working.png"
+    },
+    {
+      "role": "owner",
+      "runId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "sourceFile": "pis1-network-6191d1ed-7dd8-4507-ab63-624891f33b32-owner-6-repair-death-paused.png",
+      "sha256": "ab9de61c6d1bbf913df862906e3b988378d886aa88d1d6ff68db588ba7125532"
+    },
+    {
+      "role": "owner",
+      "runId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "sourceFile": "pis1-network-6191d1ed-7dd8-4507-ab63-624891f33b32-owner-7-repair-chunk-resumed.png",
+      "sha256": "ae2b165edd2d2cb301ad38d1bdd3858b99794ee5e0641447874b46755e365eae",
+      "publishedFile": "dedicated-screenshots/owner-repair-chunk-resumed.png"
+    },
+    {
+      "role": "owner",
+      "runId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "sourceFile": "pis1-network-6191d1ed-7dd8-4507-ab63-624891f33b32-owner-8-repair-reconnect.png",
+      "sha256": "6cc37a88d94b290f0b75fe4344707ac9d1657a307913b07b5557bb4ab113aa59"
+    },
+    {
+      "role": "owner",
+      "runId": "6191d1ed-7dd8-4507-ab63-624891f33b32",
+      "sourceFile": "pis1-network-6191d1ed-7dd8-4507-ab63-624891f33b32-owner-9-repair-complete-idle.png",
+      "sha256": "c104b8876c8e015f0475671c238f29a9ac085cfdf928dd4e80f33565fa3b177d"
+    },
+    {
+      "role": "foreign",
+      "runId": "03cd4f52-622b-4823-8c0d-298c6d353308",
+      "sourceFile": "mcpilot-foreign.png",
+      "sha256": "091a3dcde08e19e680f78e9425b7e2930aee7258a9511c713825708273d978eb"
+    },
+    {
+      "role": "foreign",
+      "runId": "03cd4f52-622b-4823-8c0d-298c6d353308",
+      "sourceFile": "pis1-network-03cd4f52-622b-4823-8c0d-298c6d353308-foreign-1-jade-powered.png",
+      "sha256": "bf4585190288854c27c18e92c1d99601932df658de0f47a03cd957964aa95f0e"
+    },
+    {
+      "role": "foreign",
+      "runId": "03cd4f52-622b-4823-8c0d-298c6d353308",
+      "sourceFile": "pis1-network-03cd4f52-622b-4823-8c0d-298c6d353308-foreign-10-repair-reconnect.png",
+      "sha256": "52ec4eae091d809e255641a55ceb30c0236a6ba3f705d1f12316420cb4655b10",
+      "publishedFile": "dedicated-screenshots/foreign-repair-reconnect.png"
+    },
+    {
+      "role": "foreign",
+      "runId": "03cd4f52-622b-4823-8c0d-298c6d353308",
+      "sourceFile": "pis1-network-03cd4f52-622b-4823-8c0d-298c6d353308-foreign-11-repair-complete-idle.png",
+      "sha256": "31d4cfc17c81abc311732b5034b967e23cbbd4ae75891e41be87af5d28cb3187"
+    },
+    {
+      "role": "foreign",
+      "runId": "03cd4f52-622b-4823-8c0d-298c6d353308",
+      "sourceFile": "pis1-network-03cd4f52-622b-4823-8c0d-298c6d353308-foreign-12-press-working.png",
+      "sha256": "9acec89d9d39d8ae2f81f441bfe9e67fcf108e7d7b5de191d3f7af732d5f0d9b"
+    },
+    {
+      "role": "foreign",
+      "runId": "03cd4f52-622b-4823-8c0d-298c6d353308",
+      "sourceFile": "pis1-network-03cd4f52-622b-4823-8c0d-298c6d353308-foreign-13-press-grid-cut.png",
+      "sha256": "a26fb0706dd991c60d804c62f946c1f2413d2f8b18a504b66a474a2ce9d0197d"
+    },
+    {
+      "role": "foreign",
+      "runId": "03cd4f52-622b-4823-8c0d-298c6d353308",
+      "sourceFile": "pis1-network-03cd4f52-622b-4823-8c0d-298c6d353308-foreign-14-press-restored.png",
+      "sha256": "5e5049eb649437b91333814cd8f2db8082bbee44089bc2ed5db8a5898bd73057"
+    },
+    {
+      "role": "foreign",
+      "runId": "03cd4f52-622b-4823-8c0d-298c6d353308",
+      "sourceFile": "pis1-network-03cd4f52-622b-4823-8c0d-298c6d353308-foreign-17-press-reconnect.png",
+      "sha256": "38c9c77bd295005076804c93e82d51f5ce31d28a99b768f1150ca944d04ec62c",
+      "publishedFile": "dedicated-screenshots/foreign-press-reconnect.png"
+    },
+    {
+      "role": "foreign",
+      "runId": "03cd4f52-622b-4823-8c0d-298c6d353308",
+      "sourceFile": "pis1-network-03cd4f52-622b-4823-8c0d-298c6d353308-foreign-2-jade-cut.png",
+      "sha256": "0b72ff68f6f3f9c6a0798c200413711839d8b32e56b84b8d7a21c408c6fdb743"
+    },
+    {
+      "role": "foreign",
+      "runId": "03cd4f52-622b-4823-8c0d-298c6d353308",
+      "sourceFile": "pis1-network-03cd4f52-622b-4823-8c0d-298c6d353308-foreign-3-jade-restored.png",
+      "sha256": "7451941e996e06265b43f038ef0a0662f8e6c084542d4509eeb2385b9a6abcfe",
+      "publishedFile": "dedicated-screenshots/foreign-jade-restored.png"
+    },
+    {
+      "role": "foreign",
+      "runId": "03cd4f52-622b-4823-8c0d-298c6d353308",
+      "sourceFile": "pis1-network-03cd4f52-622b-4823-8c0d-298c6d353308-foreign-4-repair-unreachable.png",
+      "sha256": "0c917e7d002ecd38c59c9ae1909b183e768d9fad4b87534fb681aa0eb09ebf1a"
+    },
+    {
+      "role": "foreign",
+      "runId": "03cd4f52-622b-4823-8c0d-298c6d353308",
+      "sourceFile": "pis1-network-03cd4f52-622b-4823-8c0d-298c6d353308-foreign-5-repair-working.png",
+      "sha256": "dc6542733388b6e8dc9863c44eb98bd2273e655bf9fe40bb437285f8474ed677"
+    },
+    {
+      "role": "foreign",
+      "runId": "03cd4f52-622b-4823-8c0d-298c6d353308",
+      "sourceFile": "pis1-network-03cd4f52-622b-4823-8c0d-298c6d353308-foreign-6-repair-death-paused.png",
+      "sha256": "ff173054db73ce5e63b9750b199f274512b06f0bed22c92af94927af22579b08"
+    },
+    {
+      "role": "foreign",
+      "runId": "03cd4f52-622b-4823-8c0d-298c6d353308",
+      "sourceFile": "pis1-network-03cd4f52-622b-4823-8c0d-298c6d353308-foreign-7-repair-chunk-resumed.png",
+      "sha256": "9884ef6f68536102ddd34ec17da171ab48f62ce31d8ed323e5470eaa323f855b"
+    }
+  ]
+}

@@ -22,12 +22,15 @@ public final class WorkstationAnimations {
             };
             for (int n = 0; n < offsets.length; n += 2) {
                 BlockPos pos = site.origin.offset(offsets[n], 1, offsets[n + 1]);
-                if (!level.hasChunkAt(pos) || !level.getBlockState(pos).is(IndustryContent.detail("press"))) continue;
-                BlockEntity existing = level.getBlockEntity(pos);
+                // Level.getBlockState/getBlockEntity create an UNKNOWN chunk ticket.
+                // Cosmetic updates must never keep a departing site's chunks loaded.
+                var chunk = level.getChunkSource().getChunkNow(pos.getX() >> 4, pos.getZ() >> 4);
+                if (chunk == null || !chunk.getBlockState(pos).is(IndustryContent.detail("press"))) continue;
+                BlockEntity existing = chunk.getBlockEntity(pos);
                 if (existing == null) {
-                    existing = new PressWorkstationEntity(pos, level.getBlockState(pos));
-                    level.setBlockEntity(existing);
-                    existing.setChanged();
+                    existing = new PressWorkstationEntity(pos, chunk.getBlockState(pos));
+                    chunk.addAndRegisterBlockEntity(existing);
+                    chunk.setUnsaved(true);
                 }
                 if (existing instanceof PressWorkstationEntity press) press.setOperating(site.operating && site.loaded && site.functional());
             }

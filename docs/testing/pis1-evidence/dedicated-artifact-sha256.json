@@ -1,0 +1,67 @@
+{
+  "modules": {
+    "frontier-arcade-style-1.1.0.jar": "50c8b714548a34e7b522b2e6ca241379121fe6a4d5a16d7907d0c364f73462ef",
+    "frontier-arcade-vehicles-1.7.0.jar": "2725a5db00d70b6126b8b95beeaefaebca27f7851e8e4389f2e9f92d83ab86ec",
+    "frontier-flamingo-launch-fix-1.3.0.jar": "651d94055f9999cf5b4dd73d65bc67409ed307ea3f6b01d409a9c8d094845b30",
+    "frontier-industry-1.20.1-0.4.0.jar": "06d345470d23a833704a98517e9a803c93fa426a82de66e974e737b005989147",
+    "frontier-light-aviation-1.1.0.jar": "1b4a074324909da2a85254c58c741fb4408872b62c38778829f2f1794951ea1c",
+    "frontier-nations-1.20.1-0.1.2-alpha.jar": "22fd1f14e860fe0dddf509c7485acfee3e6d49e234132cfaf7fb723b10219ada"
+  },
+  "helper": {
+    "frontier-integration-checks-pis-1.jar": "5b64e7e5d50eacc14c14ddf4c5ddf9ac17efeccd14a3dc3888c88ec172112d39"
+  },
+  "testTools": {
+    "mct-client-mod-forge-1.20.1-v0.20.2.jar": {
+      "sha256": "c4fbd56e3b3e1edfd41752228c8742303291dfe04ab673f57d27ccf627268e8f",
+      "cliVersion": "0.20.2",
+      "clientModVersion": "0.10.1",
+      "release": "https://github.com/kzheart/mc-pilot/releases/tag/v0.20.2",
+      "npmIntegrity": "sha512-A4+r/f07LChPk9kv/1BYdk5fpsGFlFJArWifGhmqfUw/zFDIVQua6TvSzeKQJEtj13SA5wJxZwghd8emXVdr0Q==",
+      "scope": "optional client QA only; never in accepted/release profile"
+    }
+  },
+  "industryRuntimeClassesIdenticalToBenchmark": false,
+  "industryClassCount": 149,
+  "unchangedIndustryRuntimeClassesSinceBenchmark": 148,
+  "industryClassMapSha256": "73284187a48b11827a3e48201d39b6b8128ae6e59f0f043d79d6375ee163a66a",
+  "comparisonSource": "vendor/pis1-before-dedicated-class-hashes.json",
+  "comparisonSourceSha256": "0eadbfa6c45ca6913e079053325dd6e553a86776da1483b575f1a3a58a605459",
+  "changedIndustryRuntimeClassesSinceBenchmark": [
+    {
+      "entry": "dev/frontier/industry/repair/WorkstationAnimations.class",
+      "beforeSha256": "94a47ab10ad6dcb4e7ceb0c9cc6e008a8c0c6e3104189d22a6c91896deadf9c1",
+      "currentSha256": "c9444edaea110dbfd54a34d7cf07fdf4cbf9cd13206364a8131d60ce08c9e322"
+    }
+  ],
+  "validation": {
+    "dedicatedReport": "dedicated-checks-v9.json",
+    "nativeReport": "dedicated-native-checks-v9.json",
+    "dedicatedRunId": "18c2a27d-ac4c-48f1-8373-5abd66e7fe61",
+    "finalArtifactBenchmarkPerformed": false
+  },
+  "note": "The modules/helper hashes above identify the actual dedicated V9 artifacts. finalResourceArtifact identifies the later Patchouli separator-only JAR; all 149 runtime classes match V9. WorkstationAnimations.class still differs from the earlier benchmark. No benchmark is claimed for the final resource JAR.",
+  "finalResourceArtifact": {
+    "file": "frontier-industry-1.20.1-0.4.0.jar",
+    "sha256": "e594bf61fcd8cd502dfa47fef03f4f5f46874972583d646edca9fb4bb0640171",
+    "profileRunId": "36a3168e-ae49-46f1-b995-eba0df5d5b6b",
+    "profileManifestSha256": "49495f1af9d9c73fdccc172a955594c9cf6ed35a2dd3d9e8433a2dbf939eedf3",
+    "runtimeClassesIdenticalToDedicatedV9": true,
+    "runtimeClassCount": 149,
+    "dedicatedV9ClassHashesSource": "vendor/pis1-v9-class-hashes.json",
+    "dedicatedV9ClassHashesSourceSha256": "0f85950c392f8bd3ca2fa237ccd27b842cc4682d79640caa9ab35fbcbcaeea97",
+    "changedJarEntriesSinceDedicatedV9": [
+      {
+        "entry": "assets/frontier_industry/patchouli_books/field_guide/en_us/entries/flight.json",
+        "v9Sha256": "588c9dddaaa745a2e24830d41807441c1fa10c9d58eac2cfdb4ed1baed9cf910",
+        "finalSha256": "7931eb9eb814bd354175d2494b2005105ade2430c2cbb89b5a0c300df642c124"
+      },
+      {
+        "entry": "assets/frontier_industry/patchouli_books/field_guide/ru_ru/entries/flight.json",
+        "v9Sha256": "588c9dddaaa745a2e24830d41807441c1fa10c9d58eac2cfdb4ed1baed9cf910",
+        "finalSha256": "7931eb9eb814bd354175d2494b2005105ade2430c2cbb89b5a0c300df642c124"
+      }
+    ],
+    "changeScope": "Only spaces around slash separators between adjacent Patchouli keybinding macros in the two flight.json resources.",
+    "benchmarkPerformed": false
+  }
+}

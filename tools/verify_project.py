@@ -27,12 +27,18 @@ def verify_profile(profile):
     if helpers:
         built=ROOT/'modules/industry/build/integration-tests'/allowed_helper
         require(built.is_file()and helpers[allowed_helper]==sha(built),'Test helper differs from current build')
+    test_tools=manifest.get('testTools',{})
+    if test_tools:
+        pinned_tools={entry['file']:entry['sha256']for entry in json.loads((ROOT/'test-tools.lock.json').read_text())['tools']}
+        require(not manifest['baselineOnly'],'Baseline must not contain optional QA tools')
+        require(all(name in pinned_tools and digest==pinned_tools[name] and actual.get(name)==digest
+                    for name,digest in test_tools.items()),'Unknown or changed optional QA tool')
     if manifest['baselineOnly']:
         require(actual=={**baseline,**helpers},'Baseline test profile changed')
         require(not manifest.get('integrationLibraries'),'Baseline contains integration additions')
     else:
         extra={entry['file']:entry['sha256']for entry in libraries(ROOT)}
-        require(set(actual)==set(baseline)|set(extra)|set(helpers),'Unexpected/missing profile JARs')
+        require(set(actual)==set(baseline)|set(extra)|set(helpers)|set(test_tools),'Unexpected/missing profile JARs')
         for name,digest in {**baseline,**extra}.items():
             if not name.startswith('frontier-'):
                 require(actual[name]==digest,'Changed pinned profile dependency: '+name)

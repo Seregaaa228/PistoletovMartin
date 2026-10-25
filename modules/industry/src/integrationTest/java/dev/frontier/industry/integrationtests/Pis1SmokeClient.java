@@ -37,6 +37,7 @@ public final class Pis1SmokeClient {
         if (initialized) return;
         initialized = true;
         MinecraftForge.EVENT_BUS.addListener(Pis1SmokeClient::tick);
+        if (Boolean.getBoolean("frontier.pis1Smoke") && !System.getProperty("frontier.pis1Server", "").isBlank()) Pis1DroneWalkthroughClient.init();
     }
     private static void tick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !Boolean.getBoolean("frontier.pis1Smoke") || stopped) return;
@@ -49,6 +50,9 @@ public final class Pis1SmokeClient {
                 launching = true; launch(mc); return;
             }
             if (Boolean.getBoolean("frontier.pis1Stop")) { stopped = true; mc.stop(); return; }
+            // Dedicated commands must remain available while disconnected, and
+            // must never fall through into the integrated-world stage driver.
+            if (!System.getProperty("frontier.pis1Server", "").isBlank()) { Pis1NetworkObserver.tick(mc); return; }
             if (failed || mc.player == null || mc.level == null || mc.getOverlay() != null) return;
             if (Boolean.getBoolean("frontier.pis1BenchmarkActive") && !benchmarkConfigured) {
                 benchmarkConfigured = true;
@@ -121,19 +125,28 @@ public final class Pis1SmokeClient {
             if (stageTicks > 600 && !stage.equals(System.getProperty("frontier.pis1UiDone", ""))) fail("UI did not finish requested stage " + stage);
         } catch (Exception error) { fail(error.toString()); error.printStackTrace(); }
     }
-    private static void launch(Minecraft mc) throws Exception {
+    static Path matchingProfile(Minecraft mc) throws Exception {
         String runId = System.getProperty("frontier.pis1RunId", "");
         if (!runId.matches("[A-Za-z0-9_-]{8,64}")) throw new IllegalStateException("Missing or invalid PIS1 runId");
         Path directory = mc.gameDirectory.toPath().toAbsolutePath().normalize();
         var profile = JsonParser.parseString(Files.readString(directory.resolve("test-profile.json"))).getAsJsonObject();
         if (!profile.has("worldsCopied") || profile.get("worldsCopied").getAsBoolean()
                 || !runId.equals(profile.get("runId").getAsString())) throw new IllegalStateException("Refusing a non-matching test profile");
+        return directory;
+    }
+    static void connectNetwork(Minecraft mc) throws Exception {
+        matchingProfile(mc);
+        ServerAddress address = loopbackServer(System.getProperty("frontier.pis1Server", "").strip());
+        String host = address.getHost();
+        String endpoint = (host.contains(":") ? "[" + host + "]" : host) + ":" + address.getPort();
+        ConnectScreen.startConnecting(mc.screen, mc, address, new ServerData("PIS1 local test", endpoint, false), false);
+    }
+    private static void launch(Minecraft mc) throws Exception {
+        Path directory = matchingProfile(mc);
+        String runId = System.getProperty("frontier.pis1RunId", "");
         String server = System.getProperty("frontier.pis1Server", "").strip();
         if (!server.isEmpty()) {
-            ServerAddress address = loopbackServer(server);
-            String host = address.getHost();
-            String endpoint = (host.contains(":") ? "[" + host + "]" : host) + ":" + address.getPort();
-            ConnectScreen.startConnecting(mc.screen, mc, address, new ServerData("PIS1 local test", endpoint, false), false);
+            connectNetwork(mc);
             return; // Network mode must never inspect or create a local save.
         }
         String folder = "Pis1-Test-" + runId;
@@ -150,7 +163,7 @@ public final class Pis1SmokeClient {
         }
     }
     /** Literal loopback only; localhost is canonicalized before Minecraft can perform DNS/SRV lookup. */
-    private static ServerAddress loopbackServer(String server) {
+    static ServerAddress loopbackServer(String server) {
         int separator = server.lastIndexOf(':');
         if (separator < 1) throw new IllegalArgumentException("PIS1 server must include a loopback host and port");
         String host = server.substring(0, separator), portText = server.substring(separator + 1);
@@ -172,9 +185,42 @@ public final class Pis1SmokeClient {
         }
         return new ServerAddress(host, port);
     }
+    static void beginNetworkUi() throws ReflectiveOperationException { UiDriver.beginNetworkUi(); }
+    static com.google.gson.JsonObject networkUi(Minecraft mc, String kind, int ticks) throws ReflectiveOperationException {
+        return UiDriver.networkUi(mc, kind, ticks);
+    }
     /** Never loaded for baseline worlds/benchmarks: baseline has no LDLib or new Industry UI classes. */
     private static final class UiDriver {
         private static boolean literalChecked;
+        private static Object previousNetworkState;
+        private static boolean networkSelected;
+        private static void beginNetworkUi() throws ReflectiveOperationException {
+            var field = OperationsScreen.class.getDeclaredField("state"); field.setAccessible(true);
+            previousNetworkState = field.get(null); networkSelected = false;
+        }
+        private static com.google.gson.JsonObject networkUi(Minecraft mc, String kind, int ticks) throws ReflectiveOperationException {
+            if (ticks == 1) OperationsScreen.open();
+            var stateField = OperationsScreen.class.getDeclaredField("state"); stateField.setAccessible(true);
+            var state = (com.google.gson.JsonObject)stateField.get(null);
+            // A new server response is required, including after reconnect.
+            if (state == previousNetworkState) return null;
+            if (!networkSelected && ticks >= 8 && mc.screen instanceof OperationsScreen) {
+                click(mc, kind.equals("guide") ? "Справочник" : "Производство"); networkSelected = true;
+            }
+            if (!networkSelected) return null;
+            if (kind.equals("guide")) {
+                if (mc.screen == null || !mc.screen.getClass().getName().startsWith("vazkii.patchouli.")) return null;
+            } else {
+                if (!(mc.screen instanceof OperationsScreen)) return null;
+                var tab = OperationsScreen.class.getDeclaredField("tab"); tab.setAccessible(true);
+                if (tab.getInt(mc.screen) != 2) return null;
+            }
+            var evidence = new com.google.gson.JsonObject();
+            evidence.addProperty("freshOperationsResponse", true);
+            evidence.addProperty("actualScreen", mc.screen.getClass().getName());
+            evidence.add("operationsState", state.deepCopy());
+            return evidence;
+        }
         private static boolean observeJade(Minecraft mc) {
             mc.player.setPos(Double.parseDouble(System.getProperty("frontier.pis1JadeCameraX")),
                 Double.parseDouble(System.getProperty("frontier.pis1JadeCameraY")),

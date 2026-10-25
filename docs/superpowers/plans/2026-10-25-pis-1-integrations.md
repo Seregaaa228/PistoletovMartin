@@ -69,7 +69,7 @@
 - [x] Реализовать SmartBrainOwner для существующего worker и repair roles без изменения других ролей/найма/custody.
 - [x] Реализовать sensor и явные idle/moving/repairing/no_path/unloaded/target_missing/cancelled состояния, bounded scans.
 - [x] Сохранять назначение и авторитетный progress; revalidate owner/dimension/alive/role/target перед repair.
-- [ ] Проверить restart/chunk unload/death/unreachable/два работника, время1800ticks и ровно одно завершение.
+- [x] Проверить restart/chunk unload/death/unreachable/два работника, время1800ticks и ровно одно завершение (V6 restart и V9 dedicated lifecycle).
 
 ### Task 4: GeckoLib ремонтник и detail_press
 
@@ -80,7 +80,7 @@
 - [x] Добавить idle/walk/repair контроллеры worker и operate/stop detail_press с GeckoLib4.8.4.
 - [x] Сохранить старые block/entity IDs, ресурсы техники и модельные системы SBW.
 - [x] Хранить редактируемые исходники, проверить пути JSON/текстур/анимаций.
-- [ ] Проверить dedicated classloading, остановку при потере энергии, второго клиента и нагрузку.
+- [x] Проверить собственные dedicated render-class guards, остановку при потере энергии и второго клиента в V9; приложить сравнение нагрузки V6 с явной оговоркой, что оно предшествует последнему исправлению выгрузки чанков.
 
 ### Task 5: LDLib UI
 
@@ -90,7 +90,7 @@
 
 - [x] Собрать reusable LDLib WidgetGroup/buttons/textfields/progress в существующем container screen.
 - [x] Добавить КПК Страна/Армия/Производство/Ремонт и Справочник, понятные причины/подписи, не назначать B/R.
-- [ ] Проверить server rejection, reopen/reconnect, GUI Scale2/3/Auto, длинные строки/списки.
+- [x] Проверить server rejection, повторное открытие, GUI Scale2/3/Auto, длинные строки/списки; отдельные сетевые наблюдения после reconnect подтверждены V9.
 - [x] Сохранить инструкцию редактирования и снимки основных состояний.
 
 ### Task 6: KubeJS и безопасный производственный каталог
@@ -101,7 +101,7 @@
 
 - [x] Создать валидируемый reload adapter без произвольного reflection/API scripts.
 - [x] Добавить снимок paid output/ticks/FE/title; существующие Recipe/Quantity/Progress/Reserved/Paid поля сохраняются. Snapshot снимается при успешной оплате; старые reserved orders восстанавливаются из built-in catalog.
-- [ ] Тестировать malformed/empty/free/wrong factory/duplicate ID/unknown item; reject invalid entries с диагностикой.
+- [x] Проверить native validation стоимости/чисел/factory/unknown item/NBT/ID limits и отказ с диагностикой; реальная A→B замена того же ID проверена через KubeJS reload.
 - [x] Добавить рабочие recipes/tags/template примеры; документировать /reload и restart, изменение шаблона при paid заказе.
 
 ### Task 7: Jade
@@ -112,7 +112,7 @@
 
 - [x] Реализовать русскую подсказку сети/завода/ремонта с единым state.
 - [x] Закрыть fallback и ограничить частоту/объём обновлений.
-- [ ] Проверить own/foreign/two clients, restart/chunk load и согласованность с КПК.
+- [x] Проверить own/foreign/two clients, restart/chunk load и согласованность с КПК (V6 restart и V9: фактические клиентские payload/PNG, 13 этапов и два reconnect).
 
 ### Task 8: Patchouli
 
@@ -122,7 +122,7 @@
 
 - [x] Создать категории/пошаговые страницы всех перечисленных тем, item images/схемы из реальных ресурсов.
 - [x] Подключить кнопку КПК к Patchouli API только на клиенте; keybind выводить через соответствующие key mapping.
-- [ ] Сверить книгу с окончательными UI/состояниями; проверить ссылки/предметы/ресурсы и GUI scales.
+- [x] Сверить книгу с окончательными UI/состояниями; проверить ссылки/предметы/ресурсы и GUI scales. V9 отдельно подтверждает актуальные controllers/flight при Scale2/3 и реальный операторский полёт Mavic; novice usability study не проводилась.
 
 ### Task 9: Общая проверка и передача
 

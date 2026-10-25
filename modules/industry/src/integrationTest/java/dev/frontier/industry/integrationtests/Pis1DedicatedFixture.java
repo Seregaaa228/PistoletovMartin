@@ -1,6 +1,7 @@
 package dev.frontier.industry.integrationtests;
 
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import dev.frontier.industry.IndustryContent;
 import dev.frontier.industry.IndustryEngine;
@@ -16,7 +17,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Instant;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import net.minecraft.core.BlockPos;
@@ -28,6 +31,8 @@ import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -45,6 +50,8 @@ import snownee.jade.impl.BlockAccessorImpl;
 public final class Pis1DedicatedFixture {
     private static final Map<String, Boolean> CHECKS = new LinkedHashMap<>();
     private static final JsonObject REPORT = new JsonObject();
+    private static final JsonArray WIRE_CASES = new JsonArray();
+    private static final Set<Long> HELD_CHUNKS = new LinkedHashSet<>();
     private static boolean initialized, begun, done;
     private static int ticks, phase;
     private static ServerPlayer owner, foreign;
@@ -52,6 +59,8 @@ public final class Pis1DedicatedFixture {
     private static Site station, distribution, factory;
     private static BlockPos target, damaged;
     private static BlockState savedGrid;
+    private static UUID ownerId, foreignId;
+    private static DedicatedLifecycleFixture lifecycle;
 
     private Pis1DedicatedFixture() {}
     public static void init() {
@@ -74,10 +83,19 @@ public final class Pis1DedicatedFixture {
                 if (owner == null || foreign == null) return;
                 if (server.getPlayerList().getPlayerCount() != 2 || !loopback(owner) || !loopback(foreign))
                     throw new IllegalStateException("Only the two named loopback clients may participate");
+                ownerId = owner.getUUID(); foreignId = foreign.getUUID();
                 setup(server); begun = true; return;
             }
-            if (!loopback(owner) || !loopback(foreign) || !owner.connection.connection.isConnected() || !foreign.connection.connection.isConnected())
-                throw new IllegalStateException("Both real local clients must remain connected");
+            refreshPlayers(server);
+            if (lifecycle != null) {
+                lifecycle.tick(owner, foreign);
+                if (lifecycle.done()) {
+                    REPORT.add("lifecycle", lifecycle.report());
+                    CHECKS.putAll(lifecycle.checks());
+                    finish();
+                }
+                return;
+            }
             if (++ticks % 20 != 0) return; // Jade's ten-tick per-player cache expires between cases.
             runCase(server, phase++);
         } catch (Exception | LinkageError error) {
@@ -101,6 +119,34 @@ public final class Pis1DedicatedFixture {
         return player != null && player.connection.connection.getRemoteAddress() instanceof InetSocketAddress address
             && address.getAddress() != null && address.getAddress().isLoopbackAddress();
     }
+    private static void refreshPlayers(DedicatedServer server) {
+        if (!authorized(server)) throw new IllegalStateException("Dedicated guard no longer matches the isolated profile");
+        for (ServerPlayer participant : server.getPlayerList().getPlayers())
+            if ((!participant.getUUID().equals(ownerId) && !participant.getUUID().equals(foreignId)) || !loopback(participant))
+                throw new IllegalStateException("Unexpected player or non-loopback connection");
+        ServerPlayer currentOwner = server.getPlayerList().getPlayer(ownerId);
+        ServerPlayer currentForeign = server.getPlayerList().getPlayer(foreignId);
+        if (currentOwner == null || !currentOwner.connection.connection.isConnected())
+            throw new IllegalStateException("Owner disconnected outside the permitted foreign reconnect");
+        if (currentOwner != owner || server.getPlayerList().getPlayerCount() > 2)
+            throw new IllegalStateException("Owner reconnects and additional connections are outside this fixture protocol");
+        if (currentForeign == null || !currentForeign.connection.connection.isConnected()) {
+            if (lifecycle == null || !lifecycle.allowsForeignReconnect())
+                throw new IllegalStateException("Foreign disconnected outside a reconnect stage");
+            currentForeign = null;
+        }
+        if (!currentOwner.getGameProfile().getName().equals(REPORT.get("ownerName").getAsString())
+            || currentForeign != null && !currentForeign.getGameProfile().getName().equals(REPORT.get("foreignName").getAsString()))
+            throw new IllegalStateException("Reconnect names must retain the original UUID identity");
+        owner = currentOwner;
+        if (currentForeign != null && currentForeign != foreign) {
+            if (lifecycle == null || !lifecycle.allowsForeignReconnect())
+                throw new IllegalStateException("Foreign connection changed outside a reconnect stage");
+            currentForeign.setGameMode(GameType.CREATIVE); currentForeign.setNoGravity(true);
+            lifecycle.placeObserver(currentForeign);
+        }
+        foreign = currentForeign;
+    }
     private static void setup(MinecraftServer server) {
         level = server.overworld();
         IndustryData data = IndustryData.get(server);
@@ -108,6 +154,7 @@ public final class Pis1DedicatedFixture {
         owner.setGameMode(GameType.CREATIVE); foreign.setGameMode(GameType.CREATIVE);
         owner.setNoGravity(true); foreign.setNoGravity(true);
         station = site(data, SiteType.POWER_STATION, new BlockPos(8192, 180, 8192));
+        station.inventory.setStackInSlot(0, new ItemStack(Items.COAL, 64));
         distribution = site(data, SiteType.SUBSTATION, new BlockPos(8232, 180, 8192));
         factory = site(data, SiteType.EQUIPMENT_FACTORY, new BlockPos(8272, 180, 8192));
         station.energy = 10000; distribution.upstream = station.id; factory.upstream = distribution.id; factory.energy = 1234;
@@ -118,6 +165,7 @@ public final class Pis1DedicatedFixture {
         REPORT.addProperty("runId", System.getProperty("frontier.pis1RunId"));
         REPORT.addProperty("startedAt", Instant.now().toString());
         REPORT.addProperty("actualDistinctNetworkPlayers", !owner.getUUID().equals(foreign.getUUID()));
+        REPORT.addProperty("setupFuelCoal", 64);
         REPORT.addProperty("ownerName", owner.getGameProfile().getName());
         REPORT.addProperty("foreignName", foreign.getGameProfile().getName());
         REPORT.addProperty("requestPath", "Jade11.13.3 toNetwork -> handleRequest -> full registered server provider stack");
@@ -128,7 +176,11 @@ public final class Pis1DedicatedFixture {
     private static Site site(IndustryData data, SiteType type, BlockPos origin) {
         var bounds = Blueprint.bounds(type, 3);
         for (int x = (origin.getX() + bounds.minX()) >> 4; x <= (origin.getX() + bounds.maxX()) >> 4; x++)
-            for (int z = (origin.getZ() + bounds.minZ()) >> 4; z <= (origin.getZ() + bounds.maxZ()) >> 4; z++) level.getChunk(x, z);
+            for (int z = (origin.getZ() + bounds.minZ()) >> 4; z <= (origin.getZ() + bounds.maxZ()) >> 4; z++) {
+                long key = ChunkPos.asLong(x, z);
+                if (!level.getForcedChunks().contains(key)) { level.setChunkForced(x, z, true); HELD_CHUNKS.add(key); }
+                level.getChunk(x, z);
+            }
         var blocks = Blueprint.blocks(type, origin, 3);
         if (blocks.keySet().stream().anyMatch(pos -> !level.getBlockState(pos).isAir())) throw new IllegalStateException("Dedicated test arena is occupied");
         Site site = new Site(data, UUID.randomUUID(), owner.getUUID(), type, level.dimension().location(), origin);
@@ -141,6 +193,10 @@ public final class Pis1DedicatedFixture {
         player.teleportTo(level, target.getX() + .5, target.getY(), target.getZ() + 3.0, 180, 24);
     }
     private static void runCase(MinecraftServer server, int step) {
+        JsonObject diagnostic = new JsonObject();
+        diagnostic.addProperty("case", step); diagnostic.addProperty("tick", server.getTickCount());
+        diagnostic.add("station", diagnosticState(station)); diagnostic.add("substation", diagnosticState(distribution));
+        diagnostic.add("factory", diagnosticState(factory)); WIRE_CASES.add(diagnostic);
         switch (step) {
             case 0 -> {
                 near(owner); near(foreign);
@@ -203,7 +259,8 @@ public final class Pis1DedicatedFixture {
                 check("restored network state reaches owner Jade payload", own != null && own.getCompound(IndustryJadeProvider.DATA_KEY).getBoolean("powered"));
                 check("foreign player remains protected after repair", privateEmpty(wire(foreign, target)));
                 check("two network players retained distinct actual UUIDs", !owner.getUUID().equals(foreign.getUUID()));
-                finish();
+                lifecycle = new DedicatedLifecycleFixture((DedicatedServer) server, level, station, distribution, factory, owner, foreign, HELD_CHUNKS);
+                HELD_CHUNKS.clear();
             }
             default -> throw new IllegalStateException("Unknown dedicated test phase");
         }
@@ -219,6 +276,11 @@ public final class Pis1DedicatedFixture {
             accessor.toNetwork(buffer);
             AtomicReference<CompoundTag> result = new AtomicReference<>();
             BlockAccessorImpl.handleRequest(buffer, viewer, Runnable::run, tag -> result.set(tag.copy()));
+            if (!WIRE_CASES.isEmpty()) {
+                JsonObject diagnostic = WIRE_CASES.get(WIRE_CASES.size() - 1).getAsJsonObject();
+                diagnostic.addProperty(viewer.getUUID().equals(ownerId) ? "ownerWireSnbt" : "foreignWireSnbt",
+                    result.get() == null ? "NO_RESPONSE" : result.get().toString());
+            }
             return result.get();
         } finally { buffer.release(); }
     }
@@ -229,15 +291,35 @@ public final class Pis1DedicatedFixture {
         CHECKS.put(name, passed);
         if (!passed) System.err.println("PIS1_DEDICATED_CHECK_FAIL " + name);
     }
+    private static JsonObject diagnosticState(Site site) {
+        JsonObject state = new JsonObject();
+        state.addProperty("loaded", site.loaded); state.addProperty("chunksActuallyLoaded", IndustryEngine.loaded(level, site));
+        state.addProperty("functional", site.functional()); state.addProperty("powered", site.powered);
+        state.addProperty("energy", site.energy); state.addProperty("matching", site.matching); state.addProperty("total", site.total);
+        state.addProperty("machineryIntact", site.machineryIntact); state.addProperty("status", site.status);
+        state.addProperty("network", dev.frontier.industry.energy.IndustryEnergy.network(IndustryData.get(level.getServer()), site).name());
+        return state;
+    }
     private static void finish() {
         if (done) return;
         done = true;
+        for (long key : HELD_CHUNKS) { ChunkPos chunk = new ChunkPos(key); level.setChunkForced(chunk.x, chunk.z, false); }
+        HELD_CHUNKS.clear();
+        if (lifecycle != null) {
+            lifecycle.cleanup();
+            REPORT.add("lifecycle", lifecycle.report());
+            CHECKS.putAll(lifecycle.checks());
+        }
         REPORT.addProperty("runId", System.getProperty("frontier.pis1RunId"));
         REPORT.addProperty("completedAt", Instant.now().toString());
         REPORT.addProperty("serverChecksPassed", !CHECKS.isEmpty() && CHECKS.values().stream().allMatch(Boolean::booleanValue));
-        REPORT.addProperty("acceptanceStatus", "pending client overlay screenshots and independent client observation");
+        boolean passed = !CHECKS.isEmpty() && CHECKS.values().stream().allMatch(Boolean::booleanValue);
+        REPORT.addProperty("passed", passed && lifecycle != null && lifecycle.done());
+        REPORT.addProperty("acceptanceStatus", passed && lifecycle != null && lifecycle.done()
+            ? "server lifecycle and both client observations passed" : "failed or incomplete; inspect checks and lifecycle evidence");
         var gson = new GsonBuilder().setPrettyPrinting().create();
         REPORT.add("checks", gson.toJsonTree(CHECKS));
+        REPORT.add("wireCases", WIRE_CASES);
         try {
             var output = FMLPaths.GAMEDIR.get().resolve("pis1-dedicated-checks.json");
             Files.writeString(output, gson.toJson(REPORT) + "\n", StandardCharsets.UTF_8);

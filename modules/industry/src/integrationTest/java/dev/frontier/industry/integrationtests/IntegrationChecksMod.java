@@ -32,6 +32,7 @@ public final class IntegrationChecksMod {
         MinecraftForge.EVENT_BUS.addListener(this::serverStarted);
         Pis1WorldFixture.init();
         Pis1DedicatedFixture.init();
+        Pis1DroneWalkthroughFixture.init();
         DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> Pis1SmokeClient::init);
     }
 
