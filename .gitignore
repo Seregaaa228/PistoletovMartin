@@ -35,6 +35,8 @@ instance/xaero/
 *.class
 !modules/industry/preserved-combat/**/*.class
 
-# Local tool state (Serena project config, Playwright MCP snapshots)
+# Local agent plans, reports, and tool state
+.superpowers/
+docs/superpowers/
 .serena/
 .playwright-mcp/

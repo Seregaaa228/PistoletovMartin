@@ -55,7 +55,7 @@ public final class FactoryScreen extends AbstractContainerScreen<IndustryMenus.F
         viewport = UiViewport.fit(width, height, imageWidth, imageHeight);
         widgets = new LdlibWidgetHost(width, height);
         readView(); rebuild();
-        send("refresh", "", 0);
+        send("refresh", IndustryClient.catalogHash(menu.site), 0);
     }
     private void rebuild() {
         if(constructing()&&page!=STORAGE)page=CONSTRUCTION;
@@ -169,7 +169,7 @@ public final class FactoryScreen extends AbstractContainerScreen<IndustryMenus.F
     private void order() { if (!ui.selected().isBlank() && produce != null && produce.isActive()) { send("order", ui.selected(), ui.quantity()); widgets.clearFocus(); } }
     @Override protected void containerTick() {
         super.containerTick(); readView(); widgets.tick();
-        if (++refreshTicks % 20 == 0) send("refresh", "", 0);
+        if (++refreshTicks % 20 == 0) send("refresh", IndustryClient.catalogHash(menu.site), 0);
         if (supply != null) supply.enabled(!ui.selected().isBlank(), "Сначала выбери изделие в производстве.");
         if (produce != null) {
             Product item = selected();

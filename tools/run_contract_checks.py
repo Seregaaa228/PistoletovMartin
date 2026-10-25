@@ -16,6 +16,8 @@ def main():
         ('client/ui/UiPage.java', 'client/ui/UiPageTest.java'),
         ('client/ui/TooltipBounds.java', 'client/ui/TooltipBoundsTest.java'),
         ('client/FactoryUiState.java', 'client/FactoryUiStateTest.java'),
+        ('CatalogChunks.java', 'CatalogChunksTest.java'),
+        ('CatalogChunks.java', 'client/CatalogChunkAssembly.java', 'client/CatalogChunkAssemblyTest.java'),
     ]
     output = ROOT / 'build/contract-checks'
     output.mkdir(parents=True, exist_ok=True)

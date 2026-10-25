@@ -20,7 +20,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 public final class IndustryNet {
-    private static final String VERSION = "3";
+    private static final String VERSION = "4";
     private static final java.util.Map<UUID,Integer> LAST_ACTION=new java.util.HashMap<>(),LAST_REFRESH=new java.util.HashMap<>();
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(new ResourceLocation(IndustryMod.ID, "industry"), () -> VERSION, VERSION::equals, VERSION::equals);
     private static final Set<String> ACTIONS = Set.of("refresh", "order", "hire", "assign", "unassign", "dismiss", "repair", "repair_cancel", "collect", "fuel", "cancel", "staff", "repair_staff", "supply", "construction_staff", "construction_cancel", "research_start", "research_staff", "research_supply");
@@ -31,7 +31,8 @@ public final class IndustryNet {
         CHANNEL.registerMessage(1, View.class, View::encode, View::decode, View::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
     public static void request(UUID site, String action, String arg, int value) { CHANNEL.sendToServer(new Action(site, action, arg, value)); }
-    public static void sendView(ServerPlayer p, UUID site) {
+    public static void sendView(ServerPlayer p, UUID site) { sendView(p, site, "", ""); }
+    private static void sendView(ServerPlayer p, UUID site, String action, String arg) {
         if (!IndustryEngine.owns(p, site)) return;
         JsonObject v = IndustryEngine.snapshot(p, site);
         JsonArray recipes = new JsonArray();
@@ -74,8 +75,28 @@ public final class IndustryNet {
             JsonArray cost = new JsonArray(); for (ItemStack stack : r.cost()) cost.add(stack.getCount() + " " + stack.getHoverName().getString()); row.add("cost", cost);
             recipes.add(row);
         }
-        v.add("catalog", recipes);
-        CHANNEL.send(PacketDistributor.PLAYER.with(() -> p), new View(site, v.toString()));
+        String catalogHash = CatalogChunks.sha256(recipes.toString());
+        v.addProperty("catalogHash", catalogHash);
+        JsonObject base = v.deepCopy();
+        JsonObject emptyCatalog = base.deepCopy();
+        emptyCatalog.add("catalog", new JsonArray());
+        CatalogChunks.requireJsonBytes(base.toString(), 262144);
+        if (action.equals("refresh") && CatalogChunks.hasMatchingHash(arg, catalogHash)) {
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> p), new View(site, base.toString(), 0, 1));
+            return;
+        }
+        int emptyCatalogBytes = CatalogChunks.requireJsonBytes(emptyCatalog.toString(), 262144);
+        java.util.List<String> rows = new java.util.ArrayList<>();
+        for (var recipe : recipes) rows.add(recipe.toString());
+        var ranges = CatalogChunks.partition(rows, emptyCatalogBytes, 262144);
+        for (int part = 0; part < ranges.size(); part++) {
+            CatalogChunks.Range range = ranges.get(part);
+            JsonObject chunk = v.deepCopy();
+            JsonArray catalog = new JsonArray();
+            for (int index = range.from(); index < range.to(); index++) catalog.add(recipes.get(index));
+            chunk.add("catalog", catalog);
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> p), new View(site, chunk.toString(), part, ranges.size()));
+        }
     }
     public record Action(UUID site, String action, String arg, int value) {
         static void encode(Action p, FriendlyByteBuf b) { b.writeUUID(p.site); b.writeUtf(p.action, 64); b.writeUtf(p.arg, 128); b.writeVarInt(p.value); }
@@ -97,16 +118,19 @@ public final class IndustryNet {
                     }
                 }
                 if (!p.action.equals("refresh")) IndustryEngine.action(player, p.site, p.action, arg, p.value);
-                sendView(player, p.site);
+                sendView(player, p.site, p.action, p.arg);
             }); ctx.setPacketHandled(true);
         }
     }
-    public record View(UUID site, String json) {
-        static void encode(View p, FriendlyByteBuf b) { b.writeUUID(p.site); b.writeUtf(p.json, 524288); }
-        static View decode(FriendlyByteBuf b) { return new View(b.readUUID(), b.readUtf(524288)); }
+    public record View(UUID site, String json, int part, int totalParts) {
+        public View {
+            if (totalParts < 1 || totalParts > 512 || part < 0 || part >= totalParts) throw new IllegalArgumentException("Invalid catalog chunk index");
+        }
+        static void encode(View p, FriendlyByteBuf b) { b.writeUUID(p.site); b.writeUtf(p.json, 524288); b.writeVarInt(p.part); b.writeVarInt(p.totalParts); }
+        static View decode(FriendlyByteBuf b) { return new View(b.readUUID(), b.readUtf(524288), b.readVarInt(), b.readVarInt()); }
         static void handle(View p, Supplier<NetworkEvent.Context> supplier) {
             var ctx = supplier.get(); ctx.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
-                dev.frontier.industry.client.IndustryClient.view(p.site, JsonParser.parseString(p.json).getAsJsonObject())));
+                dev.frontier.industry.client.IndustryClient.view(p.site, JsonParser.parseString(p.json).getAsJsonObject(), p.part, p.totalParts)));
             ctx.setPacketHandled(true);
         }
     }
