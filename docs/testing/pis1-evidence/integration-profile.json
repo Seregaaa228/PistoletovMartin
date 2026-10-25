@@ -1,0 +1,59 @@
+{
+  "runId": "7e1ca37b-1195-4b96-abc0-09e84a2dfcda",
+  "baselineOnly": false,
+  "worldsCopied": false,
+  "mods": {
+    "Jade-1.20.1-Forge-11.13.3.jar": "a632c77975e5aedff6322b0072f8b0db3f5d4bf914df6bdcc87d1aea4d5f55f4",
+    "Patchouli-1.20.1-84.1-FORGE.jar": "9cc38ebb5e29b350222e337b7a5a2ba238c802230a89434ce00e90ee3026d056",
+    "SmartBrainLib-forge-1.20.1-1.15.jar": "dc1f5497e1a175397fa10ea84170d8311c71b592976128700fb008139dde55d4",
+    "architectury-9.2.14-forge.jar": "218b471d0b8a1f6cda14cfc1beb9eeb0df54304500acc6c5613d9b88ec65d9af",
+    "cloth-config-11.1.136-forge.jar": "1e895e85cf5b1e1905ef3178ec155c8badfe22a1577b92c09143a5aa1f4ce0f2",
+    "curios-forge-5.14.1+1.20.1.jar": "1e817919a35b37cf30524aaec73f0ca5130452f23f168f844854df282eb8e51f",
+    "dsm-0.9.0.jar": "e4a9ce6f27b53228e10e20ac2f18400f82d3d2ffcd36486fcaddf588a411ccc9",
+    "embeddium-0.3.31+mc1.20.1.jar": "eed3d1325f2acc2fd4e69bb495e5ccb91d962126ac5330f0582ebc2a3daf47fb",
+    "ferritecore-6.0.1-forge.jar": "9c2c9396a49e796d88497758caa4637d2bcbb433c318e2dd9cebcffbaf0f6c54",
+    "frontier-arcade-style-1.1.0.jar": "50c8b714548a34e7b522b2e6ca241379121fe6a4d5a16d7907d0c364f73462ef",
+    "frontier-arcade-vehicles-1.7.0.jar": "2725a5db00d70b6126b8b95beeaefaebca27f7851e8e4389f2e9f92d83ab86ec",
+    "frontier-flamingo-launch-fix-1.3.0.jar": "651d94055f9999cf5b4dd73d65bc67409ed307ea3f6b01d409a9c8d094845b30",
+    "frontier-industry-1.20.1-0.4.0.jar": "9d6eeb6c6c07d66e0c0f9062f2f8576c18430f7b1967ca84c25bb492a30bc20b",
+    "frontier-integration-checks-pis-1.jar": "3d1b769df3ef3cb41127b641efbcfdab99b79e3a5f93f166757e6617d229b8c3",
+    "frontier-light-aviation-1.1.0.jar": "1b4a074324909da2a85254c58c741fb4408872b62c38778829f2f1794951ea1c",
+    "frontier-nations-1.20.1-0.1.2-alpha.jar": "22fd1f14e860fe0dddf509c7485acfee3e6d49e234132cfaf7fb723b10219ada",
+    "geckolib-forge-1.20.1-4.8.4.jar": "4518779a31b6c2abb92c98b5ad17ef3d60177df68626bfc86c44de2764913c2b",
+    "jei-1.20.1-forge-15.56.0.205.jar": "6b251e60a4719c874da89d750af97aa6498f6f4475e3ae79cb1288c7bf0cb65c",
+    "kotlinforforge-4.12.0-all.jar": "6a66c6a68ec09f8717cdbf06883394f0ee24d7cd826b7134a0f81839e8e720ae",
+    "kubejs-forge-2001.6.5-build.26.jar": "1769312192fbf9d72f45054ba61130523bfb471b5f480a4bff8c210ec09400bb",
+    "ldlib-forge-1.20.1-1.0.52.a.jar": "a9b0827d264e0d15f90482de0d4783a28fc2dad9dfb477f344dc5e959168838d",
+    "mobplayeranimator-forge-1.20.1-1.3.3-all.jar": "823554808cbca10866742470b534276910a0634cf695edc9c2cf08913b2293c4",
+    "modernfix-forge-5.27.89+mc1.20.1.jar": "96750ec3e12b581ee7a936ce2b7c2b35251e97b6f729b2db8bc0d5c9a2dc12fa",
+    "player-animation-lib-forge-1.0.2-rc1+1.20.jar": "90d9965cb9efdbda29fdc5610be3914cf7008bf5c392ff34f7ab25f96a852691",
+    "recruits-1.20.1-1.15.2.jar": "4b53c1b752e886ba10985aad2df30d668971810230eb77867e07428a21d1af7f",
+    "recruits-tacz-1.022-frontier.1.jar": "2d0bc509573f927c141d7972719cf97175e04907b63e3b17dee2e6877d96b965",
+    "recruitsvillages-1.1.0.jar": "55a7da1802360bbc18337ad190b826a1a2292f3038c623ab09f926bb0746dda8",
+    "rhino-forge-2001.2.3-build.10.jar": "fed2211429301bf043864183cab9ab8e92d4cc4dbb9e488ce6c75217c54584a6",
+    "superbrecruits-1.115.jar": "09038e816c0a7249f28c51f0b80a12a9d94b78fd81e8487941233318151eab0d",
+    "superbwarfare-0.8.9.1-hotfix-mc1.20.1-993063bed-all.jar": "3aaf4c239bc0fb31f9217927a44d74071d904d1dd03c5308ca3395ecd67d86dc",
+    "tacz-1.20.1-1.1.8-hotfix2.jar": "2cbb89f44333d2eb4e825d86d789ff119b272ff75184390b55bafd4f0e7f10c2",
+    "uncomplicated-fpv-1.0.1.jar": "289f5ac93d67aaf0e008c7080758569e2d09b91c0df44065b833d49ce39c35de",
+    "xaerominimap-forge-1.20.1-26.6.0.jar": "9b39cd06094d7631c8614d172d0ba8399c71c981530af417f12a7909fcb855bd",
+    "xaeroworldmap-forge-1.20.1-1.47.0.jar": "88c6d844163c95a94d92bc6d87d9011cc840bd6207c3099a81b113d4450a3f6b"
+  },
+  "integrationLibraries": [
+    "ldlib-forge-1.20.1-1.0.52.a.jar",
+    "SmartBrainLib-forge-1.20.1-1.15.jar",
+    "Jade-1.20.1-Forge-11.13.3.jar",
+    "kubejs-forge-2001.6.5-build.26.jar",
+    "rhino-forge-2001.2.3-build.10.jar",
+    "Patchouli-1.20.1-84.1-FORGE.jar"
+  ],
+  "testHelpers": {
+    "frontier-integration-checks-pis-1.jar": "3d1b769df3ef3cb41127b641efbcfdab99b79e3a5f93f166757e6617d229b8c3"
+  },
+  "scripts": {
+    "kubejs/README-RU.md": "84648bf654ab54ada9cd9d7dbdcf73c3eaa32a251fd257e6aa0509152ee77c0a",
+    "kubejs/client_scripts/README-RU.md": "9304f1cd3b349c0e9c0ba789939c8ebfd73d8ee54758f44aa8a519139a0749c7",
+    "kubejs/server_scripts/frontier_recipes.js": "02a70c6fdd86a958e8a9be53d33f99e5ade93b7c45567a19bd940bf0f1edecd1",
+    "kubejs/startup_scripts/README-RU.md": "fe594fdc607fdae916975afc99ba99d8b3f3a5521c5493f0e5aef6a1f3bbdc39"
+  },
+  "description": "Fresh local game directory; configure a launcher to use it. No game launched."
+}

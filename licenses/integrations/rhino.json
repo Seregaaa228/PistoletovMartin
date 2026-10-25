@@ -8,5 +8,37 @@
     "name": "Mozilla Public License 2.0",
     "url": null
   },
-  "notice": "Third-party library. Original license declarations are preserved in the unchanged dependency JAR."
+  "notice": "Third-party library. Original license declarations remain in the unchanged pinned JAR; upstream license texts and provenance are stored separately here.",
+  "attributionPreservation": {
+    "checkedAt": "2026-10-25",
+    "modrinthVersionId": "uNALdylI",
+    "modrinthVersionMetadataUrl": "https://api.modrinth.com/v2/version/uNALdylI",
+    "modrinthProjectMetadataUrl": "https://api.modrinth.com/v2/project/sk9knFPE",
+    "modrinthPublished": "2025-02-12T21:26:49.669723Z",
+    "pinnedFileSha512VerifiedAgainstVersionMetadata": true,
+    "licenseIdMatchesModrinthProjectMetadata": true,
+    "upstreamRepository": "KubeJS-Mods/Rhino",
+    "sourceRef": "afe5010920b6fb3403803341a5931160e84d8940",
+    "sourceRefBasis": "2001 branch latest commit at pinned publication time; exact CI build-to-commit mapping unverified",
+    "exactReleaseSourceMappingVerified": false,
+    "files": [
+      {
+        "file": "rhino/LICENSE",
+        "sourceUrl": "https://raw.githubusercontent.com/KubeJS-Mods/Rhino/afe5010920b6fb3403803341a5931160e84d8940/LICENSE",
+        "sourceRef": "afe5010920b6fb3403803341a5931160e84d8940",
+        "gitBlobSha": "a612ad9813b006ce81d1ee438dd784da99a54007",
+        "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+        "bytes": 16725
+      }
+    ],
+    "limitation": "No exact version tag exists. Preserved license from the official historical 2001 source commit existing at the pinned release date; exact CI build-number mapping has not been independently established. This is not a replacement from a newer branch.",
+    "observedUpstreamTextLicense": "MPL-2.0",
+    "observedUpstreamTextMatchesModrinthLicenseId": true,
+    "sourceVersionEvidence": {
+      "file": "rhino/source-version-evidence.txt",
+      "sourceUrl": "https://raw.githubusercontent.com/KubeJS-Mods/Rhino/afe5010920b6fb3403803341a5931160e84d8940/gradle.properties",
+      "sha256": "22236ad1142dc133287dde64650450365c072474edf676fd37f115fd72419437",
+      "description": "Derived excerpt: upstream gradle.properties lines containing version/build, fetched from the same immutable commit; not a license text."
+    }
+  }
 }

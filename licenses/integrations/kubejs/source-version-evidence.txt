@@ -1,0 +1,15 @@
+https://raw.githubusercontent.com/KubeJS-Mods/KubeJS/ba142541dcc1d230383f4a55e38dd92ff10d1029/gradle.properties
+
+mod_version=2001.6.5
+minecraft_version=1.20.1
+rhino_version=2001.2.2-build.17
+min_rhino_version=2001.2.2-build.1
+architectury_version=9.1.12
+fabric_loader_version=0.15.0
+fabric_api_version=0.91.0+1.20.1
+rei_version=12.0.674
+#rei_comp_version=9.0.16
+forge_version=47.1.81
+#forge_bookshelf_version=11.0.3
+#forge_gamestages_version=7.+
+jei_version=15.2.0.27

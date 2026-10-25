@@ -8,5 +8,37 @@
     "name": "Mozilla Public License 2.0",
     "url": null
   },
-  "notice": "Third-party library. Original license declarations are preserved in the unchanged dependency JAR."
+  "notice": "Third-party library. Original license declarations remain in the unchanged pinned JAR; upstream license texts and provenance are stored separately here.",
+  "attributionPreservation": {
+    "checkedAt": "2026-10-25",
+    "modrinthVersionId": "YkeJNm33",
+    "modrinthVersionMetadataUrl": "https://api.modrinth.com/v2/version/YkeJNm33",
+    "modrinthProjectMetadataUrl": "https://api.modrinth.com/v2/project/PuyPazRT",
+    "modrinthPublished": "2024-08-23T04:22:55.344970Z",
+    "pinnedFileSha512VerifiedAgainstVersionMetadata": true,
+    "licenseIdMatchesModrinthProjectMetadata": true,
+    "upstreamRepository": "Tslat/SmartBrainLib",
+    "sourceRef": "cec6c7835b5bf24d65196c58cfdc4b1158a1a9f1",
+    "sourceRefBasis": "release commit Port 1.15 changes",
+    "exactReleaseSourceMappingVerified": true,
+    "files": [
+      {
+        "file": "smartbrainlib/LICENSE",
+        "sourceUrl": "https://raw.githubusercontent.com/Tslat/SmartBrainLib/cec6c7835b5bf24d65196c58cfdc4b1158a1a9f1/LICENSE",
+        "sourceRef": "cec6c7835b5bf24d65196c58cfdc4b1158a1a9f1",
+        "gitBlobSha": "a612ad9813b006ce81d1ee438dd784da99a54007",
+        "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+        "bytes": 16725
+      }
+    ],
+    "limitation": null,
+    "observedUpstreamTextLicense": "MPL-2.0",
+    "observedUpstreamTextMatchesModrinthLicenseId": true,
+    "sourceVersionEvidence": {
+      "file": "smartbrainlib/source-version-evidence.txt",
+      "sourceUrl": "https://raw.githubusercontent.com/Tslat/SmartBrainLib/cec6c7835b5bf24d65196c58cfdc4b1158a1a9f1/gradle.properties",
+      "sha256": "d9b05733c0713b6da5bcb1f8b7fc74c06d75df9af013c6ff19e21685f808e2ab",
+      "description": "Derived excerpt: upstream gradle.properties lines containing version/build, fetched from the same immutable commit; not a license text."
+    }
+  }
 }

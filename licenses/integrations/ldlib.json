@@ -8,5 +8,38 @@
     "name": "GNU Lesser General Public License v3.0 only",
     "url": null
   },
-  "notice": "Third-party library. Original license declarations are preserved in the unchanged dependency JAR."
+  "notice": "Third-party library. Original license declarations remain in the unchanged pinned JAR; upstream license texts and provenance are stored separately here.",
+  "attributionPreservation": {
+    "checkedAt": "2026-10-25",
+    "modrinthVersionId": "YSOP0G6O",
+    "modrinthVersionMetadataUrl": "https://api.modrinth.com/v2/version/YSOP0G6O",
+    "modrinthProjectMetadataUrl": "https://api.modrinth.com/v2/project/B1CBVXHX",
+    "modrinthPublished": "2026-09-07T14:39:24.039563Z",
+    "pinnedFileSha512VerifiedAgainstVersionMetadata": true,
+    "licenseIdMatchesModrinthProjectMetadata": true,
+    "upstreamRepository": "Low-Drag-MC/LDLib-Architectury",
+    "sourceRef": "1d4e4390ae58d16038845c651e122185c29f334b",
+    "sourceRefBasis": "release commit v1.0.52.a",
+    "exactReleaseSourceMappingVerified": true,
+    "files": [
+      {
+        "file": "ldlib/LICENSE",
+        "sourceUrl": "https://raw.githubusercontent.com/Low-Drag-MC/LDLib-Architectury/1d4e4390ae58d16038845c651e122185c29f334b/LICENSE",
+        "sourceRef": "1d4e4390ae58d16038845c651e122185c29f334b",
+        "gitBlobSha": "4f276ce737d9e2a6d57cb5319d76e21f12e3f3ae",
+        "sha256": "fdfa87e04c2ce5c64a5edfc39aa874a6b04d795fa863089780969342ea8c8534",
+        "bytes": 34897
+      }
+    ],
+    "limitation": null,
+    "observedUpstreamTextLicense": "GPL-3.0-only",
+    "observedUpstreamTextMatchesModrinthLicenseId": false,
+    "sourceVersionEvidence": {
+      "file": "ldlib/source-version-evidence.txt",
+      "sourceUrl": "https://raw.githubusercontent.com/Low-Drag-MC/LDLib-Architectury/1d4e4390ae58d16038845c651e122185c29f334b/gradle.properties",
+      "sha256": "55a1fa8bfb36b8fd5e12c95e5aab8a049b323db65dc5a4be7e97f1e25ca2f196",
+      "description": "Derived excerpt: upstream gradle.properties lines containing version/build, fetched from the same immutable commit; not a license text."
+    },
+    "declarationDiscrepancy": "Modrinth project metadata declares LGPL-3.0-only, but the official v1.0.52.a source commit root LICENSE is the GNU General Public License v3. The original upstream bytes and metadata declaration are both preserved, without resolving or replacing either."
+  }
 }

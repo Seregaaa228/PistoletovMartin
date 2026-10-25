@@ -5,7 +5,7 @@ import argparse,hashlib,json,os,subprocess,sys,zipfile
 from integration_libraries import verify_libraries
 
 ROOT=Path(__file__).resolve().parents[1]
-SKIP_DIRS={'.git','.gradle','.idea','__pycache__','build','vendor','node_modules','integration-libraries'}
+SKIP_DIRS={'.git','.gradle','.idea','.serena','.playwright-mcp','__pycache__','build','vendor','node_modules','integration-libraries'}
 SKIP_NAMES={'launcher_accounts.json','launcher_profiles.json','accounts.json','servers.dat','servers.dat_old'}
 
 def main():

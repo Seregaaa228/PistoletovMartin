@@ -96,6 +96,9 @@ class IntegrationInputsTest(unittest.TestCase):
             (profile / 'saves/temporary-world').mkdir(parents=True)
             (profile / 'test-profile.json').write_text('{}')
             (profile / 'saves/temporary-world/level.dat').write_bytes(b'world must stay local')
+            for cache in ('.serena', '.playwright-mcp'):
+                (root / cache).mkdir()
+                (root / cache / 'local-state.txt').write_text('local tool state must stay local')
             output = parent / 'handoff.zip'
             with patch.object(package_project, 'ROOT', root), patch('sys.argv', ['package_project', str(output)]), \
                     patch.object(package_project.subprocess, 'run'), contextlib.redirect_stdout(io.StringIO()):
@@ -105,6 +108,7 @@ class IntegrationInputsTest(unittest.TestCase):
             self.assertEqual(len(names), len(set(names)))
             self.assertEqual(names.count('project/integration-libraries/example.jar'), 1)
             self.assertFalse(any('/profiles/' in name for name in names))
+            self.assertFalse(any('/.serena/' in name or '/.playwright-mcp/' in name for name in names))
 
 
 if __name__ == '__main__':
