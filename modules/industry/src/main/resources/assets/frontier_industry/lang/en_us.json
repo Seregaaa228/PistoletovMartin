@@ -3,6 +3,7 @@
   "item.frontier_industry.dispatch_tablet": "PDA · Field HQ",
   "item.frontier_industry.repair_kit": "Ремонтный набор",
   "entity.frontier_industry.worker": "Рабочий",
+  "block.frontier_industry.detail_press": "Заводской пресс",
   "block.frontier_industry.power_station": "Электростанция",
   "item.frontier_industry.power_station_deployer": "Комплект: Электростанция",
   "block.frontier_industry.substation": "Подстанция",

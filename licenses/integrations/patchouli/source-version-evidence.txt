@@ -1,0 +1,4 @@
+https://raw.githubusercontent.com/VazkiiMods/Patchouli/4bde361ba2f15d12a983a668baa389811a639f20/gradle.properties
+
+mc_version=1.20.1
+build_number=84.1

@@ -76,7 +76,8 @@ public final class Research {
             if(!site.functional()||!site.powered||site.energy<16){site.status="Исследование: пауза — нет питания или центр повреждён";continue;}
             if(IndustryEngine.crew(server,industrial,site,"scientist").isEmpty()){site.status="Исследование: нужен живой учёный рядом";continue;}
             if(!advanced.add(key)){site.status="Исследование выполняет другой центр страны";continue;}
-            site.energy-=16;c.centre=site.id;c.progress=ResearchRules.advance(c.progress,c.total,true);data.setDirty();industrial.setDirty();
+            if(!dev.frontier.industry.energy.IndustryEnergy.consume(industrial,site,16))continue;
+            c.centre=site.id;c.progress=ResearchRules.advance(c.progress,c.total,true);data.setDirty();
             var t=Technology.byId(c.active);site.status="Исследование: "+t.title+" · "+100*c.progress/Math.max(1,c.total)+"%";
             if(c.progress>=c.total){c.completed.add(c.active);c.active="";c.progress=0;c.total=0;c.centre=null;data.setDirty();site.status="Технология изучена: "+t.title;}
         }

@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.frontier.industry.mixin.compat",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "LDLibDedicatedBindingsMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

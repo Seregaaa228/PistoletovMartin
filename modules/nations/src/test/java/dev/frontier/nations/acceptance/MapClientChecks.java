@@ -129,10 +129,41 @@ final class MapClientChecks {
     }
     private static boolean visibleButton(Minecraft mc,String text){return mc.screen.children().stream().anyMatch(c->c instanceof AbstractWidget w&&w.visible&&w.getMessage().getString().equals(text));}
     private static void button(Minecraft mc,String text){
+        if(mc.screen instanceof OperationsScreen){
+            try{
+                var hostField=OperationsScreen.class.getDeclaredField("widgets");hostField.setAccessible(true);
+                var viewportField=OperationsScreen.class.getDeclaredField("viewport");viewportField.setAccessible(true);
+                var host=(dev.frontier.industry.client.ui.LdlibWidgetHost)hostField.get(mc.screen);
+                var viewport=(dev.frontier.industry.client.ui.UiViewport)viewportField.get(mc.screen);
+                var widget=host.find(text);
+                if(widget!=null&&widget.isVisible()){
+                    if(widget.isActive())pdaClick(mc,viewport.screenX(widget.getPositionX()+widget.getSizeWidth()*.5),
+                        viewport.screenY(widget.getPositionY()+widget.getSizeHeight()*.5));
+                    return;
+                }
+            }catch(ReflectiveOperationException failure){throw new IllegalStateException("PDA fixture widget access failed",failure);}
+        }
         for(var child:mc.screen.children())if(child instanceof Button b&&b.visible&&b.getMessage().getString().equals(text)){
             if(b.active)click(b.getX()+b.getWidth()/2.0,b.getY()+b.getHeight()/2.0,0);return;
         }
         throw new AssertionError("Missing button: "+text);
+    }
+    private static void pdaClick(Minecraft mc,double x,double y)throws ReflectiveOperationException{
+        // Pinned LDLib ClickData reads MouseHandler.activeButton, so direct
+        // Screen events cannot represent a real click. Use the vanilla callbacks.
+        var window=mc.getWindow();
+        var move=mouseCallback("onMove","m_91561_",long.class,double.class,double.class);
+        var press=mouseCallback("onPress","m_91530_",long.class,int.class,int.class,int.class);
+        move.invoke(mc.mouseHandler,window.getWindow(),x*window.getScreenWidth()/mc.screen.width,
+            y*window.getScreenHeight()/mc.screen.height);
+        press.invoke(mc.mouseHandler,window.getWindow(),0,GLFW.GLFW_PRESS,0);
+        press.invoke(mc.mouseHandler,window.getWindow(),0,GLFW.GLFW_RELEASE,0);
+    }
+    private static java.lang.reflect.Method mouseCallback(String development,String runtime,Class<?>... arguments)throws NoSuchMethodException{
+        java.lang.reflect.Method method;
+        try{method=net.minecraft.client.MouseHandler.class.getDeclaredMethod(runtime,arguments);}
+        catch(NoSuchMethodException dev){method=net.minecraft.client.MouseHandler.class.getDeclaredMethod(development,arguments);}
+        method.setAccessible(true);return method;
     }
     private static boolean preparePdaEditor(Minecraft mc){
         if(pdaPhase==0){

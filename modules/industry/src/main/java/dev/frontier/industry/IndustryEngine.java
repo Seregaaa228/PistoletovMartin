@@ -14,6 +14,8 @@ import dev.frontier.industry.engine.IndustryData.Order;
 import dev.frontier.industry.engine.IndustryData.Site;
 import dev.frontier.industry.engine.IndustryData.Worker;
 import dev.frontier.industry.engine.IndustryRules;
+import dev.frontier.industry.engine.IndustryState;
+import dev.frontier.industry.energy.IndustryEnergy;
 import dev.frontier.industry.engine.StockTransactions;
 import dev.frontier.industry.engine.NativeRecruitCustody;
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -47,6 +50,7 @@ public final class IndustryEngine {
     private static final String OWNER = "frontierIndustryOwner", ROLE = "frontierIndustryRole", SITE = "frontierIndustrySite";
     private static final String SOURCE = "frontierIndustrySource", TRANSFERRED = "frontierIndustryTransferredTo", RETURNED = "frontierIndustryReturnedFrom";
     private static final Map<UUID, RepairSession> REPAIRS = new HashMap<>();
+    private static final Map<ServerPlayer, String> ACTION_MESSAGES = new java.util.WeakHashMap<>();
     private IndustryEngine() {}
 
     public static void tick(MinecraftServer server) {
@@ -58,11 +62,16 @@ public final class IndustryEngine {
             boolean wasLoaded = site.loaded;
             site.loaded = level != null && loaded(level, site);
             site.powered = false;
+            site.operating = false;
             site.liveProduction = 0;
             if (!site.loaded) { site.status = "Чанки выгружены — пауза"; continue; }
             if(site.constructing) continue;
             site.controller = level.getBlockState(Blueprint.controller(site.type, site.origin, site.blueprintVersion)).is(IndustryContent.controller(site.type));
             if (!wasLoaded || server.getTickCount() % 20 == 0) poll(level, site);
+            // Critical power cores are cheap to check every tick; a destroyed core cannot
+            // feed a cached, apparently healthy circuit for the next twenty ticks.
+            site.machineryIntact = IndustryEnergy.criticalIntact(level, site);
+            ensureControllerEntity(level, site);
             site.liveProduction = crew(server, data, site, "production").size();
             if (!site.functional()) site.status = !site.controller ? "Контроллер разрушен" : !site.machineryIntact ? "Повреждено силовое оборудование — нужен ремонт" : "Повреждено: требуется 75% целостности";
             else site.status = "Ожидание";
@@ -72,7 +81,7 @@ public final class IndustryEngine {
                 site.burn = 1600; data.setDirty();
             }
             if (site.burn > 0 && site.energy <= IndustryRules.BUFFER - IndustryRules.GENERATION) {
-                site.energy += IndustryRules.GENERATION; site.burn--; data.setDirty();
+                IndustryEnergy.receive(data, site, IndustryRules.GENERATION, false); site.burn--; data.setDirty();
             }
             site.powered = site.energy > 0;
             site.status = site.burn > 0 ? "Генерация 128 FE/т" : site.energy > 0 ? "Резерв энергии" : "Нет угля / древесного угля";
@@ -82,7 +91,7 @@ public final class IndustryEngine {
             Site source = upstream(data, site, SiteType.POWER_STATION);
             if (source != null && source.functional()) moveEnergy(data, source, site, IndustryRules.GENERATION);
             site.powered = source != null && source.functional() && site.energy > 0;
-            site.status = site.powered ? "Распределение энергии" : "Нет действующей электростанции";
+            site.status = site.powered ? "Распределение энергии" : IndustryEnergy.network(data, site).reason();
         }
         for (Site site : data.sites.values()) if (site.type.isConsumer() && site.functional()) {
             Site substation = upstream(data, site, SiteType.SUBSTATION);
@@ -93,16 +102,17 @@ public final class IndustryEngine {
                 site.powered=path&&site.energy>=16;site.status=site.powered?"Центр готов к исследованиям":"Центру нужно электричество";continue;
             }
             Order current = site.orders.peek();
-            IndustryCatalog.Recipe currentRecipe = current == null ? null : exactRecipe(current.recipe, site.type);
+            IndustryCatalog.Recipe currentRecipe = productionRecipe(current, site.type);
             // An idle or jammed factory must not hoard a whole battery before its neighbours get a turn.
             if (path && currentRecipe != null && site.liveProduction > 0 && current.progress < currentRecipe.ticks()
                 && StockTransactions.outputFits(site.inventory, currentRecipe.output()))
                 moveEnergy(data, substation, site, Math.max(0, currentRecipe.fePerTick() - site.energy));
             site.powered = path && (site.energy > 0 || substation.energy > 0 || plant.energy > 0 || plant.burn > 0);
-            if (!path) { site.status = "Нет линии станция → подстанция → завод"; continue; }
+            if (!path) { site.status = IndustryEnergy.network(data, site).reason(); continue; }
             production(server, data, site);
         }
         Research.tick(server);
+        dev.frontier.industry.repair.WorkstationAnimations.sync(server);
         if(server.getTickCount()%20==0)for(Site site:data.sites.values())if(site.loaded&&!site.constructing){
             var l=level(server,site);var pos=Blueprint.controller(site.type,site.origin,site.blueprintVersion);var state=l.getBlockState(pos);
             var lit=net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT;
@@ -167,6 +177,34 @@ public final class IndustryEngine {
         Site site = IndustryData.get(player.server).sites.get(id);
         return site != null && site.owner.equals(player.getUUID()) && site.dimension.equals(player.level().dimension().location());
     }
+    public static Optional<IndustryState> state(ServerPlayer player, UUID id) {
+        if (!owns(player, id)) return Optional.empty();
+        IndustryData data = IndustryData.get(player.server);
+        Site site = data.sites.get(id);
+        Order current = site.orders.peek();
+        IndustryCatalog.Recipe recipe = productionRecipe(current, site.type);
+        int progress = site.constructing ? site.constructionTicks : current == null ? 0 : current.progress;
+        int total = site.constructing ? site.constructionDuration : recipe == null ? 0 : recipe.ticks();
+        dev.frontier.industry.energy.GridConnection network = IndustryEnergy.network(data, site);
+        var repairCrew = crew(player.server, data, site,
+            site.constructing ? "builder" : site.type.isConsumer() ? "factory_repair" : "grid_repair");
+        int repairWorkers = site.constructing ? repairCrew.size() : (int) repairCrew.stream()
+            .filter(worker -> dev.frontier.industry.repair.RepairWork.ready(worker, site)).count();
+        return Optional.of(new IndustryState(site.id, site.type, site.status,
+            site.total == 0 ? 0 : Math.round(100f * site.matching / site.total), site.loaded,
+            site.functional(), site.powered, IndustryEnergy.stored(site), IndustryRules.BUFFER,
+            network.connected(), network.reason(), site.liveProduction, repairWorkers,
+            site.repairProgress, IndustryRules.REPAIR_TICKS, site.repairRequested,
+            recipe == null ? "" : recipe.title(), current == null ? 0 : current.quantity, progress, total));
+    }
+
+    public static Optional<IndustryState> stateAt(ServerPlayer player, BlockPos pos) {
+        if (player == null || pos == null || !player.isAlive() || player.isSpectator()
+            || !player.serverLevel().hasChunkAt(pos)
+            || player.distanceToSqr(pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5) > (double) IndustryRules.INTERACT_RANGE * IndustryRules.INTERACT_RANGE)
+            return Optional.empty();
+        return state(player, siteAt(player.serverLevel(), pos));
+    }
     public static ItemStackHandler inventory(ServerLevel level, UUID id) {
         if (level == null || id == null) return null;
         Site site = IndustryData.get(level.getServer()).sites.get(id);
@@ -177,12 +215,17 @@ public final class IndustryEngine {
         Site site = player == null || id == null ? null : IndustryData.get(player.server).sites.get(id);
         if (site == null || !owns(player, id)) { result.addProperty("message", "Объект недоступен"); return result; }
         result.addProperty("id", site.id.toString()); result.addProperty("type", site.type.name()); result.addProperty("title", site.type.title());
-        result.addProperty("status", site.status); result.addProperty("health", site.total == 0 ? 0 : Math.round(100f * site.matching / site.total));
-        result.addProperty("powered", site.powered); result.addProperty("workers", site.liveProduction);
-        result.addProperty("energy", site.energy); result.addProperty("loaded", site.loaded);
+        IndustryState shared = state(player, id).orElseThrow();
+        result.addProperty("status", shared.status()); result.addProperty("health", shared.health());
+        result.addProperty("powered", shared.powered()); result.addProperty("workers", shared.workers());
+        result.addProperty("energy", shared.energy()); result.addProperty("loaded", shared.loaded());
+        result.addProperty("energyCapacity", shared.energyCapacity());
+        result.addProperty("networkConnected", shared.networkConnected()); result.addProperty("networkStatus", shared.networkStatus());
         result.addProperty("blueprintVersion", site.blueprintVersion); result.addProperty("machineryIntact", site.machineryIntact);
-        result.addProperty("repairWorkers", crew(player.server, IndustryData.get(player.server), site, site.constructing?"builder":site.type.isConsumer()?"factory_repair":"grid_repair").size());
+        result.addProperty("repairWorkers", shared.repairWorkers());
         result.addProperty("fuelTicks", site.burn);
+        result.addProperty("actionMessage", ACTION_MESSAGES.getOrDefault(player, ""));
+        result.add("repairState", dev.frontier.industry.repair.RepairWork.snapshot(player.server, site));
         result.add("construction",Construction.snapshot(site));
         if(site.type==SiteType.RESEARCH_CENTER)result.add("research",Research.snapshot(player,site));
         int fuel = 0;
@@ -192,8 +235,8 @@ public final class IndustryEngine {
         }
         result.addProperty("fuel", fuel);
         Order order = site.orders.peek();
-        IndustryCatalog.Recipe recipe = order == null ? null : exactRecipe(order.recipe, site.type);
-        result.addProperty("progress", order == null ? 0 : order.progress); result.addProperty("total", recipe == null ? 0 : recipe.ticks());
+        IndustryCatalog.Recipe recipe = productionRecipe(order, site.type);
+        result.addProperty("progress", shared.progress()); result.addProperty("total", shared.total());
         result.addProperty("repairRemaining", site.repairRequested ? Math.max(0, IndustryRules.REPAIR_TICKS - site.repairProgress) : 0);
         result.addProperty("x", site.origin.getX()); result.addProperty("y", site.origin.getY()); result.addProperty("z", site.origin.getZ());
         JsonArray orders = new JsonArray();
@@ -227,7 +270,7 @@ public final class IndustryEngine {
         if(action.equals("construction_staff")){Construction.staff(player,site);return;}
         if(action.equals("construction_cancel")){Construction.cancel(player,site);return;}
         if(action.equals("research_start")||action.equals("research_staff")||action.equals("research_supply")){Research.action(player,site,action,arg);return;}
-        if(site.constructing && !java.util.Set.of("staff","repair","repair_staff","fuel","collect","assign","unassign","dismiss").contains(action)){tell(player,"Сначала заверши строительство");return;}
+        if(site.constructing && !java.util.Set.of("staff","repair","repair_cancel","repair_staff","fuel","collect","assign","unassign","dismiss").contains(action)){tell(player,"Сначала заверши строительство");return;}
         switch (action) {
             case "order" -> {
                 if (!site.type.isFactory() || value < 1 || value > 64 || site.orders.size() >= IndustryRules.MAX_QUEUE) { tell(player, "Недопустимый заказ или очередь заполнена"); return; }
@@ -251,6 +294,7 @@ public final class IndustryEngine {
                 if (!site.repairKit) supplyFromPlayer(player, site, List.of(new ItemStack(IndustryContent.REPAIR_KIT.get())), 1);
                 site.repairRequested = true; data.setDirty(); tell(player, "Ремонт заказан: нужен ремонтный рабочий нужного типа и комплект во входных слотах. Работа — 90 секунд.");
             }
+            case "repair_cancel" -> tell(player, dev.frontier.industry.repair.RepairWork.cancel(player.server, site));
             case "supply" -> {
                 IndustryCatalog.Recipe recipe = site.type.isFactory() ? exactRecipe(arg, site.type) : null;
                 if (recipe == null || value < 1 || value > 64) { tell(player, "Выбери допустимый рецепт этого завода и количество от 1 до 64"); return; }
@@ -415,6 +459,7 @@ public final class IndustryEngine {
         if (!worker.dimension.equals(level.dimension().location())) { worker.dimension = level.dimension().location(); data.setDirty(); }
         if (entity.isPassenger() || busy(entity)) return;
         if(Construction.workerTick(entity))return;
+        if(dev.frontier.industry.repair.RepairWork.repairWorker(entity))return;
         if(entity.tickCount%20!=0)return;
         Site site = worker.site == null ? null : data.sites.get(worker.site);
         if (site == null || !site.dimension.equals(worker.dimension) || !loaded(level, site)) return;
@@ -438,8 +483,11 @@ public final class IndustryEngine {
     private static void production(MinecraftServer server, IndustryData data, Site site) {
         Order order = site.orders.peek();
         if (order == null) { site.status = site.powered ? "Готов к заказам" : "Нет энергии"; return; }
-        IndustryCatalog.Recipe recipe = exactRecipe(order.recipe, site.type);
+        IndustryCatalog.Recipe recipe = productionRecipe(order, site.type);
         if (recipe == null) { site.status = "Рецепт недоступен; отмени заказ для возврата материалов"; return; }
+        if (order.reserved && order.paidRecipe(site.type) == null) {
+            order.reserve(recipe); data.setDirty();
+        }
         if (!StockTransactions.outputFits(site.inventory, recipe.output())) { site.status = "Выход заполнен — пауза без потери материалов"; return; }
         // A paid, finished unit survives output congestion/restart. Inserting it does not charge twice.
         if (order.reserved && order.progress >= recipe.ticks()) { complete(data, site, order, recipe); return; }
@@ -451,16 +499,19 @@ public final class IndustryEngine {
             List<ItemStack> costs = recipe.cost();
             if (!StockTransactions.takeInputs(site.inventory, costs)) { site.status = "Ожидание материалов во входных слотах"; return; }
             order.paid.clear(); for (ItemStack stack : costs) order.paid.add(stack.copy());
-            order.reserved = true; data.setDirty();
+            order.reserved = true; order.reserve(recipe); data.setDirty();
         }
-        site.energy -= recipe.fePerTick();
+        if (!IndustryEnergy.consume(data, site, recipe.fePerTick())) {
+            site.status = "Недостаточно FE"; return;
+        }
         order.progress = Math.min(recipe.ticks(), order.progress + Math.min(site.liveProduction, 4));
+        site.operating = true;
         site.status = "Производство: " + recipe.title(); data.setDirty();
         if (order.progress >= recipe.ticks()) complete(data, site, order, recipe);
     }
     private static void complete(IndustryData data, Site site, Order order, IndustryCatalog.Recipe recipe) {
         if (!StockTransactions.putOutputs(site.inventory, recipe.output())) { site.status = "Выход заполнен"; return; }
-        order.quantity--; order.progress = 0; order.reserved = false; order.paid.clear();
+        order.quantity--; order.progress = 0; order.clearReservation();
         if (order.quantity == 0) site.orders.removeFirst();
         data.setDirty();
     }
@@ -472,7 +523,9 @@ public final class IndustryEngine {
             site.repairKit = false; site.repairRequested = false; site.repairProgress = 0; data.setDirty(); return;
         }
         String requiredRole = site.constructing?"builder":site.type.isConsumer()?"factory_repair":"grid_repair";
-        if (crew(server, data, site, requiredRole).isEmpty()) { site.status = "Ремонт: нужен " + roleTitle(requiredRole) + " рядом"; return; }
+        List<WorkerEntity> repairers = crew(server, data, site, requiredRole);
+        if (!site.constructing) repairers = repairers.stream().filter(entity -> dev.frontier.industry.repair.RepairWork.ready(entity, site)).toList();
+        if (repairers.isEmpty()) { site.status = "Ремонт: нужен " + roleTitle(requiredRole) + " у входа объекта"; return; }
         if (!site.repairKit) {
             if (!StockTransactions.takeInputs(site.inventory, List.of(new ItemStack(IndustryContent.REPAIR_KIT.get())))) { site.status = "Ремонт: нужен комплект во входных слотах"; return; }
             site.repairKit = true; data.setDirty();
@@ -706,8 +759,24 @@ public final class IndustryEngine {
             source.type.ordinal(), target.type.ordinal(), source.origin.distSqr(target.origin)) ? source : null;
     }
     private static void moveEnergy(IndustryData data, Site source, Site target, int maximum) {
-        int transferred = IndustryRules.transfer(source.energy, target.energy, maximum);
-        if (transferred > 0) { source.energy -= transferred; target.energy += transferred; data.setDirty(); }
+        IndustryEnergy.transfer(data, source, target, maximum);
+    }
+
+    private static void ensureControllerEntity(ServerLevel level, Site site) {
+        BlockPos pos = Blueprint.controller(site.type, site.origin, site.blueprintVersion);
+        if (!site.controller || level.getBlockEntity(pos) != null) return;
+        // Old chunks contain the original controller block with no BE tag. Materialize
+        // only the stateless bridge in already loaded chunks; Site NBT is untouched.
+        level.setBlockEntity(new dev.frontier.industry.energy.ControllerBlockEntity(pos, level.getBlockState(pos)));
+    }
+    public static IndustryCatalog.Recipe productionRecipe(Order order, SiteType type) {
+        if (order == null) return null;
+        if (!order.reserved) {
+            IndustryCatalog.Recipe recipe = exactRecipe(order.recipe, type);
+            return recipe != null && IndustryCatalog.visible(recipe) ? recipe : null;
+        }
+        IndustryCatalog.Recipe paid = order.paidRecipe(type);
+        return order.hasPaidTemplate() ? paid : IndustryCatalog.legacyRecipe(order.recipe, type);
     }
     private static IndustryCatalog.Recipe exactRecipe(String id, SiteType type) {
         // Saved queue IDs must be exact, never fuzzy-resolved into a newly installed item after reload.
@@ -753,7 +822,10 @@ public final class IndustryEngine {
             && kit.hasTag() && kit.getTag().hasUUID("IndustryRepairSite") && kit.getTag().getUUID("IndustryRepairSite").equals(session.site)
             && accessible(player, session.site, IndustryRules.REPAIR_RANGE) != null;
     }
-    public static void tell(ServerPlayer player, String message) { player.displayClientMessage(Component.literal(message), false); }
+    public static void tell(ServerPlayer player, String message) {
+        ACTION_MESSAGES.put(player, message.length() <= 512 ? message : message.substring(0, 512));
+        player.displayClientMessage(Component.literal(message), false);
+    }
     private static final class RepairSession {
         final MinecraftServer server; final UUID site; final ItemStack kit; final int startTick; int lastTick, heldTicks, countTick = Integer.MIN_VALUE;
         RepairSession(MinecraftServer server, UUID site, ItemStack kit, int tick) { this.server = server; this.site = site; this.kit = kit; this.startTick = tick; this.lastTick = tick; }

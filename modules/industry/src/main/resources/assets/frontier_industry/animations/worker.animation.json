@@ -1,0 +1,158 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.worker.idle": {
+      "loop": true,
+      "animation_length": 2,
+      "bones": {
+        "head": {
+          "rotation": {
+            "0.0": [
+              0,
+              -2,
+              0
+            ],
+            "1.0": [
+              0,
+              2,
+              0
+            ],
+            "2.0": [
+              0,
+              -2,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "animation.worker.walk": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "left_leg": {
+          "rotation": {
+            "0.0": [
+              25,
+              0,
+              0
+            ],
+            "0.5": [
+              -25,
+              0,
+              0
+            ],
+            "1.0": [
+              25,
+              0,
+              0
+            ]
+          }
+        },
+        "right_leg": {
+          "rotation": {
+            "0.0": [
+              -25,
+              0,
+              0
+            ],
+            "0.5": [
+              25,
+              0,
+              0
+            ],
+            "1.0": [
+              -25,
+              0,
+              0
+            ]
+          }
+        },
+        "left_arm": {
+          "rotation": {
+            "0.0": [
+              -18,
+              0,
+              0
+            ],
+            "0.5": [
+              18,
+              0,
+              0
+            ],
+            "1.0": [
+              -18,
+              0,
+              0
+            ]
+          }
+        },
+        "right_arm": {
+          "rotation": {
+            "0.0": [
+              18,
+              0,
+              0
+            ],
+            "0.5": [
+              -18,
+              0,
+              0
+            ],
+            "1.0": [
+              18,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "animation.worker.repair": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "body": {
+          "rotation": [
+            5,
+            0,
+            0
+          ]
+        },
+        "head": {
+          "rotation": [
+            12,
+            0,
+            0
+          ]
+        },
+        "left_arm": {
+          "rotation": [
+            -58,
+            0,
+            -10
+          ]
+        },
+        "right_arm": {
+          "rotation": {
+            "0.0": [
+              -65,
+              0,
+              10
+            ],
+            "0.5": [
+              -85,
+              0,
+              10
+            ],
+            "1.0": [
+              -65,
+              0,
+              10
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "project": "Jade 🔍",
+  "version": "11.13.3+forge",
+  "source": "https://github.com/Snownee/Jade",
+  "projectUrl": "https://modrinth.com/mod/jade",
+  "license": {
+    "id": "CC-BY-NC-SA-4.0",
+    "name": "Creative Commons Attribution Non Commercial Share Alike 4.0 International",
+    "url": null
+  },
+  "notice": "Third-party library. Original license declarations remain in the unchanged pinned JAR; upstream license texts and provenance are stored separately here.",
+  "attributionPreservation": {
+    "checkedAt": "2026-10-25",
+    "modrinthVersionId": "xJQHCmWJ",
+    "modrinthVersionMetadataUrl": "https://api.modrinth.com/v2/version/xJQHCmWJ",
+    "modrinthProjectMetadataUrl": "https://api.modrinth.com/v2/project/nvQzSEkH",
+    "modrinthPublished": "2026-07-21T11:08:31.396433Z",
+    "pinnedFileSha512VerifiedAgainstVersionMetadata": true,
+    "licenseIdMatchesModrinthProjectMetadata": true,
+    "upstreamRepository": "Snownee/Jade",
+    "sourceRef": "d7a9e1d3b782f2ea4c387c66e973cc46b9768270",
+    "sourceRefBasis": "tag forge-11.13.3",
+    "exactReleaseSourceMappingVerified": true,
+    "files": [
+      {
+        "file": "jade/LICENSE.md",
+        "sourceUrl": "https://raw.githubusercontent.com/Snownee/Jade/d7a9e1d3b782f2ea4c387c66e973cc46b9768270/LICENSE.md",
+        "sourceRef": "d7a9e1d3b782f2ea4c387c66e973cc46b9768270",
+        "gitBlobSha": "887c3ab7f26ee3e02d1f47b9e0634a69abbfec79",
+        "sha256": "03d7d5b3f4b37a576d52db87542ac248e161fc47412192e9543c6a71a82b0ff3",
+        "bytes": 19120
+      }
+    ],
+    "limitation": null,
+    "observedUpstreamTextLicense": "CC-BY-NC-SA-4.0",
+    "observedUpstreamTextMatchesModrinthLicenseId": true,
+    "sourceVersionEvidence": {
+      "file": "jade/source-version-evidence.txt",
+      "sourceUrl": "https://raw.githubusercontent.com/Snownee/Jade/d7a9e1d3b782f2ea4c387c66e973cc46b9768270/gradle.properties",
+      "sha256": "459076c535fa6a4e4050d83a510984f6d7b490e23ad7a942d36c4677d8e1d020",
+      "description": "Derived excerpt: upstream gradle.properties lines containing version/build, fetched from the same immutable commit; not a license text."
+    }
+  }
+}

@@ -14,6 +14,7 @@ import json
 from pathlib import Path
 import re
 import zipfile
+from integration_libraries import verify_libraries
 
 ROOT = Path(__file__).resolve().parents[1]
 CUSTOM = {
@@ -112,6 +113,9 @@ def prepare(mods: Path) -> dict:
             archive.writestr(info, data)
     publish(artifacts, 'industry-preserved-combat.jar', overlay.getvalue(),
             'modules/industry/preserved-combat', module='industry')
+    for library in verify_libraries(ROOT):
+        path = ROOT / 'vendor/integration' / library['file']
+        publish(artifacts, library['file'], path.read_bytes(), f'vendor/integration/{library["file"]}')
     index = {'format': 'frontier-build-dependencies/1', 'minecraft': '1.20.1',
              'forge': '47.4.0', 'artifacts': artifacts}
     output = ROOT / 'vendor/dependencies.json'
