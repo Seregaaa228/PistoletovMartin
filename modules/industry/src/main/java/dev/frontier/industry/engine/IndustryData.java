@@ -1,6 +1,7 @@
 package dev.frontier.industry.engine;
 
 import dev.frontier.industry.SiteType;
+import dev.frontier.industry.IndustryCatalog;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -132,6 +133,8 @@ public final class IndustryData extends SavedData {
         public int constructionTicks, constructionDuration, constructionCursor;
         public boolean machineryIntact = true;
         public boolean loaded, controller, powered, repairRequested, repairKit;
+        /** Derived each server tick; never saved as production truth. */
+        public boolean operating;
         public Site(IndustryData data, UUID id, UUID owner, SiteType type, ResourceLocation dimension, BlockPos origin) {
             this.id = id; this.owner = owner; this.type = type; this.dimension = dimension; this.origin = origin.immutable();
             this.inventory = new ItemStackHandler(IndustryRules.SLOTS) {
@@ -148,19 +151,63 @@ public final class IndustryData extends SavedData {
         public final String recipe;
         public int quantity, progress;
         public boolean reserved;
+        private IndustryCatalog.Recipe paidRecipe;
+        private boolean invalidPaidTemplate;
         public final List<ItemStack> paid = new ArrayList<>();
         public Order(String recipe, int quantity) { this.recipe = recipe; this.quantity = clamp(quantity, 1, 64); }
+        public IndustryCatalog.Recipe paidRecipe(SiteType factory) {
+            return reserved && paidRecipe != null && paidRecipe.factory() == factory ? paidRecipe : null;
+        }
+        public boolean hasPaidTemplate() {
+            return paidRecipe != null || invalidPaidTemplate;
+        }
+        public void reserve(IndustryCatalog.Recipe template) {
+            paidRecipe = new IndustryCatalog.Recipe(template.id(), template.title(), template.factory(),
+                template.output(), paid.isEmpty() ? template.cost() : paid, template.ticks(), template.fePerTick());
+            invalidPaidTemplate = false;
+        }
+        public void clearReservation() {
+            reserved = false;
+            paid.clear();
+            paidRecipe = null;
+            invalidPaidTemplate = false;
+        }
         CompoundTag save() {
             CompoundTag tag = new CompoundTag(); tag.putString("Recipe", recipe); tag.putInt("Quantity", quantity);
             tag.putInt("Progress", progress); tag.putBoolean("Reserved", reserved);
             ListTag costs = new ListTag(); for (ItemStack stack : paid) costs.add(stack.save(new CompoundTag()));
-            tag.put("Paid", costs); return tag;
+            tag.put("Paid", costs);
+            if (invalidPaidTemplate) tag.putBoolean("InvalidPaidTemplate", true);
+            if (reserved && paidRecipe != null) {
+                CompoundTag template = new CompoundTag();
+                template.putString("Title", paidRecipe.title()); template.putString("Factory", paidRecipe.factory().name());
+                template.put("Output", paidRecipe.output().save(new CompoundTag()));
+                template.putInt("Ticks", paidRecipe.ticks()); template.putInt("FePerTick", paidRecipe.fePerTick());
+                tag.put("PaidTemplate", template);
+            }
+            return tag;
         }
         static Order load(CompoundTag tag) {
             Order order = new Order(tag.getString("Recipe"), tag.getInt("Quantity"));
             order.progress = clamp(tag.getInt("Progress"), 0, 72000); order.reserved = tag.getBoolean("Reserved");
             ListTag costs = tag.getList("Paid", Tag.TAG_COMPOUND);
             for (int n = 0; n < Math.min(costs.size(), 128); n++) { ItemStack stack = ItemStack.of(costs.getCompound(n)); if (!stack.isEmpty()) order.paid.add(stack); }
+            order.invalidPaidTemplate = tag.getBoolean("InvalidPaidTemplate");
+            if (order.reserved && tag.contains("PaidTemplate", Tag.TAG_COMPOUND)) {
+                CompoundTag template = tag.getCompound("PaidTemplate");
+                try {
+                    SiteType factory = SiteType.valueOf(template.getString("Factory"));
+                    ItemStack output = ItemStack.of(template.getCompound("Output"));
+                    int ticks = template.getInt("Ticks"), fe = template.getInt("FePerTick");
+                    if (factory.isFactory() && !output.isEmpty() && output.getCount() <= 64 && output.getCount() <= output.getMaxStackSize()
+                        && ticks > 0 && ticks <= 72000 && fe > 0 && fe <= 128 && !order.paid.isEmpty())
+                        order.paidRecipe = new IndustryCatalog.Recipe(order.recipe, template.getString("Title"),
+                            factory, output, order.paid, ticks, fe);
+                } catch (IllegalArgumentException invalid) {
+                    com.mojang.logging.LogUtils.getLogger().warn("Invalid paid production snapshot for {}", order.recipe);
+                }
+                order.invalidPaidTemplate = order.paidRecipe == null;
+            }
             return order;
         }
     }

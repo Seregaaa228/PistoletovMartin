@@ -1,0 +1,154 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.press",
+        "texture_width": 128,
+        "texture_height": 128,
+        "visible_bounds_width": 1.5,
+        "visible_bounds_height": 1.5,
+        "visible_bounds_offset": [
+          0,
+          0.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -7,
+                0,
+                -7
+              ],
+              "size": [
+                14,
+                2,
+                14
+              ],
+              "uv": [
+                0,
+                0
+              ]
+            },
+            {
+              "origin": [
+                -7,
+                2,
+                -5
+              ],
+              "size": [
+                3,
+                13,
+                10
+              ],
+              "uv": [
+                57,
+                0
+              ]
+            },
+            {
+              "origin": [
+                4,
+                2,
+                -5
+              ],
+              "size": [
+                3,
+                13,
+                10
+              ],
+              "uv": [
+                84,
+                0
+              ]
+            },
+            {
+              "origin": [
+                -7,
+                14,
+                -6
+              ],
+              "size": [
+                14,
+                2,
+                12
+              ],
+              "uv": [
+                0,
+                24
+              ]
+            },
+            {
+              "origin": [
+                -4,
+                3,
+                -5
+              ],
+              "size": [
+                8,
+                2,
+                10
+              ],
+              "uv": [
+                53,
+                24
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ram",
+          "parent": "root",
+          "pivot": [
+            0,
+            12,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -2,
+                10,
+                -2
+              ],
+              "size": [
+                4,
+                4,
+                4
+              ],
+              "uv": [
+                90,
+                24
+              ]
+            },
+            {
+              "origin": [
+                -4,
+                8,
+                -4
+              ],
+              "size": [
+                8,
+                2,
+                8
+              ],
+              "uv": [
+                0,
+                39
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

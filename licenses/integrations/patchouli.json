@@ -1,0 +1,44 @@
+{
+  "project": "Patchouli",
+  "version": "1.20.1-84.1-forge",
+  "source": "https://github.com/VazkiiMods/Patchouli/",
+  "projectUrl": "https://modrinth.com/mod/patchouli",
+  "license": {
+    "id": "CC-BY-NC-SA-3.0",
+    "name": "Creative Commons Attribution Non Commercial Share Alike 3.0 Unported",
+    "url": null
+  },
+  "notice": "Third-party library. Original license declarations remain in the unchanged pinned JAR; upstream license texts and provenance are stored separately here.",
+  "attributionPreservation": {
+    "checkedAt": "2026-10-25",
+    "modrinthVersionId": "8Qyw08ld",
+    "modrinthVersionMetadataUrl": "https://api.modrinth.com/v2/version/8Qyw08ld",
+    "modrinthProjectMetadataUrl": "https://api.modrinth.com/v2/project/nU0bVIaL",
+    "modrinthPublished": "2025-02-06T16:09:49.287555Z",
+    "pinnedFileSha512VerifiedAgainstVersionMetadata": true,
+    "licenseIdMatchesModrinthProjectMetadata": true,
+    "upstreamRepository": "VazkiiMods/Patchouli",
+    "sourceRef": "4bde361ba2f15d12a983a668baa389811a639f20",
+    "sourceRefBasis": "tag release-1.20.1-84.1",
+    "exactReleaseSourceMappingVerified": true,
+    "files": [
+      {
+        "file": "patchouli/LICENSE",
+        "sourceUrl": "https://raw.githubusercontent.com/VazkiiMods/Patchouli/4bde361ba2f15d12a983a668baa389811a639f20/LICENSE",
+        "sourceRef": "4bde361ba2f15d12a983a668baa389811a639f20",
+        "gitBlobSha": "a50eacf98c56b0224f3ffe2fc03312418fb26403",
+        "sha256": "c6648565ca4a7b22b2cd06e739dfec031313d2f5ce5f31c5c994f6aec9f3fe5e",
+        "bytes": 22305
+      }
+    ],
+    "limitation": null,
+    "observedUpstreamTextLicense": "CC-BY-NC-SA-3.0",
+    "observedUpstreamTextMatchesModrinthLicenseId": true,
+    "sourceVersionEvidence": {
+      "file": "patchouli/source-version-evidence.txt",
+      "sourceUrl": "https://raw.githubusercontent.com/VazkiiMods/Patchouli/4bde361ba2f15d12a983a668baa389811a639f20/gradle.properties",
+      "sha256": "67d70a7ffe324f3fb4fbd9f3eb34265ca6433a01dda23db75f7f94532b40e16b",
+      "description": "Derived excerpt: upstream gradle.properties lines containing version/build, fetched from the same immutable commit; not a license text."
+    }
+  }
+}

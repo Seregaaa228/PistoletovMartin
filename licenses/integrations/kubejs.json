@@ -1,0 +1,44 @@
+{
+  "project": "KubeJS",
+  "version": "2001.6.5-build.26+forge",
+  "source": "https://github.com/KubeJS-Mods/KubeJS",
+  "projectUrl": "https://modrinth.com/mod/kubejs",
+  "license": {
+    "id": "LGPL-3.0-only",
+    "name": "GNU Lesser General Public License v3.0 only",
+    "url": null
+  },
+  "notice": "Third-party library. Original license declarations remain in the unchanged pinned JAR; upstream license texts and provenance are stored separately here.",
+  "attributionPreservation": {
+    "checkedAt": "2026-10-25",
+    "modrinthVersionId": "hVR2xUSr",
+    "modrinthVersionMetadataUrl": "https://api.modrinth.com/v2/version/hVR2xUSr",
+    "modrinthProjectMetadataUrl": "https://api.modrinth.com/v2/project/umyGl7zF",
+    "modrinthPublished": "2026-05-01T10:43:18.671562Z",
+    "pinnedFileSha512VerifiedAgainstVersionMetadata": true,
+    "licenseIdMatchesModrinthProjectMetadata": true,
+    "upstreamRepository": "KubeJS-Mods/KubeJS",
+    "sourceRef": "ba142541dcc1d230383f4a55e38dd92ff10d1029",
+    "sourceRefBasis": "2001 branch latest commit at pinned publication time; exact CI build-to-commit mapping unverified",
+    "exactReleaseSourceMappingVerified": false,
+    "files": [
+      {
+        "file": "kubejs/LICENSE.txt",
+        "sourceUrl": "https://raw.githubusercontent.com/KubeJS-Mods/KubeJS/ba142541dcc1d230383f4a55e38dd92ff10d1029/LICENSE.txt",
+        "sourceRef": "ba142541dcc1d230383f4a55e38dd92ff10d1029",
+        "gitBlobSha": "153d416dc8d2d60076698ec3cbfce34d91436a03",
+        "sha256": "a5681bf9b05db14d86776930017c647ad9e6e56ff6bbcfdf21e5848288dfaf1b",
+        "bytes": 7651
+      }
+    ],
+    "limitation": "No exact version tag exists. Preserved license from the official historical 2001 source commit existing at the pinned release date; exact CI build-number mapping has not been independently established. This is not a replacement from a newer branch.",
+    "observedUpstreamTextLicense": "LGPL-3.0-only",
+    "observedUpstreamTextMatchesModrinthLicenseId": true,
+    "sourceVersionEvidence": {
+      "file": "kubejs/source-version-evidence.txt",
+      "sourceUrl": "https://raw.githubusercontent.com/KubeJS-Mods/KubeJS/ba142541dcc1d230383f4a55e38dd92ff10d1029/gradle.properties",
+      "sha256": "38ee7fe6c60eb0bf3f0c4dcffbbdd5358cd53f92dbafa3c5c2f4fe67d9efe6a4",
+      "description": "Derived excerpt: upstream gradle.properties lines containing version/build, fetched from the same immutable commit; not a license text."
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "Четыре типа заводов",
+  "icon": "frontier_industry:equipment_factory_deployer",
+  "category": "frontier_industry:industry",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "frontier_industry:drone_factory_deployer",
+      "text": "Завод дронов: доступные малые и крупные БПЛА по серверному каталогу и исследованиям. Каталог нового заказа отличается от сохранённой оплаченной очереди."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "frontier_industry:vehicle_factory_deployer",
+      "text": "Завод техники: разрешённые наземные машины и авиация. Родные контейнеры техники создаются сервером с нужными данными, пустой универсальный контейнер не заменяет готовую машину."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "frontier_industry:missile_factory_deployer",
+      "text": "Ракетный завод: доступные боеприпасы и системы ракетного каталога. Скрытые старые изделия не появляются в новых покупках."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "frontier_industry:equipment_factory_deployer",
+      "text": "Оружейный завод: снаряжение, оружие, патроны и разрешённые шаблоны KubeJS. Для первого заказа выбери доступную строку, проверь материалы и время, внеси материалы, назначь рабочего и оформи заявку."
+    }
+  ]
+}

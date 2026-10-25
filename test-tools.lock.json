@@ -1,0 +1,17 @@
+{
+  "tools": [
+    {
+      "name": "mc-pilot",
+      "scope": "optional client QA only; never in accepted/release profile",
+      "cliVersion": "0.20.2",
+      "clientModVersion": "0.10.1",
+      "file": "mct-client-mod-forge-1.20.1-v0.20.2.jar",
+      "sha256": "c4fbd56e3b3e1edfd41752228c8742303291dfe04ab673f57d27ccf627268e8f",
+      "source": "https://github.com/kzheart/mc-pilot/releases/tag/v0.20.2",
+      "download": "https://github.com/kzheart/mc-pilot/releases/download/v0.20.2/mct-client-mod-forge-1.20.1.jar",
+      "license": "MIT",
+      "npmIntegrity": "sha512-A4+r/f07LChPk9kv/1BYdk5fpsGFlFJArWifGhmqfUw/zFDIVQua6TvSzeKQJEtj13SA5wJxZwghd8emXVdr0Q==",
+      "npmPackage": "@kzheart_/mc-pilot@0.20.2"
+    }
+  ]
+}

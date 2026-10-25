@@ -71,7 +71,7 @@ public final class Operations {
         for (var site : data.sites.values().stream().filter(s -> s.owner.equals(player.getUUID()))
                 .sorted(Comparator.comparing(s -> s.type.ordinal())).limit(128).toList()) {
             JsonObject full = IndustryEngine.snapshot(player, site.id), row = new JsonObject();
-            for (String key : List.of("id", "type", "title", "status", "health", "powered", "workers", "progress", "total", "repairRemaining", "loaded", "x", "y", "z", "construction"))
+            for (String key : List.of("id", "type", "title", "status", "health", "powered", "workers", "progress", "total", "repairRemaining", "loaded", "x", "y", "z", "construction", "energy", "energyCapacity", "networkConnected", "networkStatus", "repairState"))
                 if (full.has(key)) row.add(key, full.get(key));
             if (!row.has("id")) {
                 row.addProperty("id", site.id.toString()); row.addProperty("type", site.type.name()); row.addProperty("title", site.type.title());

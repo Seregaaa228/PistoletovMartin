@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "minecraft": "1.20.1",
+  "forge": "47.4.0",
+  "java": 17,
+  "status": "candidate; game validation pending",
+  "libraries": [
+    {
+      "project": "ldlib",
+      "version": "mc1.20.1-1.0.52.a-forge",
+      "file": "ldlib-forge-1.20.1-1.0.52.a.jar",
+      "url": "https://cdn.modrinth.com/data/B1CBVXHX/versions/YSOP0G6O/ldlib-forge-1.20.1-1.0.52.a.jar",
+      "sha256": "a9b0827d264e0d15f90482de0d4783a28fc2dad9dfb477f344dc5e959168838d",
+      "sha512": "9aebc17d4406aeccc37b93b22affc7baa67ab695a3e58874860aba12db039b79f399b589ece07ad99b250a814f6a078f482e5c3b1045219c347c73e5bd7eba47",
+      "size": 3125867,
+      "modrinthVersion": "YSOP0G6O",
+      "license": "LGPL-3.0-only"
+    },
+    {
+      "project": "smartbrainlib",
+      "version": "1.15",
+      "file": "SmartBrainLib-forge-1.20.1-1.15.jar",
+      "url": "https://cdn.modrinth.com/data/PuyPazRT/versions/YkeJNm33/SmartBrainLib-forge-1.20.1-1.15.jar",
+      "sha256": "dc1f5497e1a175397fa10ea84170d8311c71b592976128700fb008139dde55d4",
+      "sha512": "51754d743b86bf89da5c15a1c2b733f4b3713bf2aa7e6bd4d920cd36bc7923f2de316903fbe0d675a37f848929508c0e418dec1ecf7e87342f547fe32e75f8f4",
+      "size": 362339,
+      "modrinthVersion": "YkeJNm33",
+      "license": "MPL-2.0"
+    },
+    {
+      "project": "jade",
+      "version": "11.13.3+forge",
+      "file": "Jade-1.20.1-Forge-11.13.3.jar",
+      "url": "https://cdn.modrinth.com/data/nvQzSEkH/versions/xJQHCmWJ/Jade-1.20.1-Forge-11.13.3.jar",
+      "sha256": "a632c77975e5aedff6322b0072f8b0db3f5d4bf914df6bdcc87d1aea4d5f55f4",
+      "sha512": "72025c4ad6d26522bafe3d5d6ac9d4702c006a868312cb34df8a7a2398a4618205839607b129c167fd176e58cb7655f08e3afbf1993925c80d4fcc559c45a037",
+      "size": 553487,
+      "modrinthVersion": "xJQHCmWJ",
+      "license": "CC-BY-NC-SA-4.0"
+    },
+    {
+      "project": "kubejs",
+      "version": "2001.6.5-build.26+forge",
+      "file": "kubejs-forge-2001.6.5-build.26.jar",
+      "url": "https://cdn.modrinth.com/data/umyGl7zF/versions/hVR2xUSr/kubejs-forge-2001.6.5-build.26.jar",
+      "sha256": "1769312192fbf9d72f45054ba61130523bfb471b5f480a4bff8c210ec09400bb",
+      "sha512": "71ef9e5eb5f3bead86b635b42ad305d075c6487e631217b281d938193dcdc5fe0ff6bae8c86dd4e069726223a66e8690c0610f736c5a62910f60fd80edd575c1",
+      "size": 1658792,
+      "modrinthVersion": "hVR2xUSr",
+      "license": "LGPL-3.0-only"
+    },
+    {
+      "project": "rhino",
+      "version": "2001.2.3-build.10+forge",
+      "file": "rhino-forge-2001.2.3-build.10.jar",
+      "url": "https://cdn.modrinth.com/data/sk9knFPE/versions/uNALdylI/rhino-forge-2001.2.3-build.10.jar",
+      "sha256": "fed2211429301bf043864183cab9ab8e92d4cc4dbb9e488ce6c75217c54584a6",
+      "sha512": "4eb6a635f3eff3baa158539bd55344421cf69b15e28f7da8bf55f370a11c071f3525063a6f81b67fbfca550ad8aaab7e6208df87f65ca6ed2851edd46f032b58",
+      "size": 1798244,
+      "modrinthVersion": "uNALdylI",
+      "license": "MPL-2.0"
+    },
+    {
+      "project": "patchouli",
+      "version": "1.20.1-84.1-forge",
+      "file": "Patchouli-1.20.1-84.1-FORGE.jar",
+      "url": "https://cdn.modrinth.com/data/nU0bVIaL/versions/8Qyw08ld/Patchouli-1.20.1-84.1-FORGE.jar",
+      "sha256": "9cc38ebb5e29b350222e337b7a5a2ba238c802230a89434ce00e90ee3026d056",
+      "sha512": "d87143ae5dc979e8d65dd35ff0916077a355c503c4a906bed0d9dbe600ff0602e5296800cbdf2260d47033f664691b54e1b18a1b9835339c4e13d69fc4251f1b",
+      "size": 642711,
+      "modrinthVersion": "8Qyw08ld",
+      "license": "CC-BY-NC-SA-3.0"
+    }
+  ]
+}

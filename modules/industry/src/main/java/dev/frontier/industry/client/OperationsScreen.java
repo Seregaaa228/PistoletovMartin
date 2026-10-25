@@ -1,6 +1,5 @@
 package dev.frontier.industry.client;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.talhanation.recruits.client.gui.faction.FactionMainScreen;
 import com.talhanation.recruits.client.gui.diplomacy.DiplomacyTeamListScreen;
@@ -13,7 +12,11 @@ import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
+import dev.frontier.industry.client.ui.IndustryWidgets;
+import dev.frontier.industry.client.ui.LdlibWidgetHost;
+import dev.frontier.industry.client.ui.UiViewport;
+import dev.frontier.industry.client.ui.UiPage;
+import com.lowdragmc.lowdraglib.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -30,25 +33,25 @@ public final class OperationsScreen extends Screen {
     private static JsonObject state = new JsonObject();
     private static boolean session;
     private static int lastTab;
-    private int tab, page, ticks, hireCount = 1, listY;
+    private int tab, page, ticks, hireCount = 1, listY, armyTab;
+    private LdlibWidgetHost widgets;
+    private UiViewport viewport;
     private int x, y, w, h, contentX, contentW;
     private String selectedSystem = "", targetX = "", targetY = "", targetZ = "";
     private int salvo = 1;
-    private EditBox missileX, missileY, missileZ;
+    private TextFieldWidget missileX, missileY, missileZ;
     private boolean cameraPage, industryKits;
     private static final java.util.Map<String, ItemStack> ITEM_ICONS = new java.util.LinkedHashMap<>();
-    private final List<Text> labels = new ArrayList<>();
     private final List<Icon> icons = new ArrayList<>();
     private static final int WHITE = 0xEAF1F4, GRAY = 0xA7BAC2, GREEN = 0x87D6B1, GOLD = 0xF2CE80;
-    private record Text(String value, int x, int y, int color, int width) {}
     private record Icon(ItemStack item, int x, int y) {}
-    public OperationsScreen() { super(Component.literal("КПК · Штаб")); tab = lastTab; }
+    public OperationsScreen() { super(Component.literal("КПК · Штаб")); tab = Math.max(0, Math.min(3, lastTab)); }
     public static void receive(JsonObject data, boolean open, boolean camera) {
         state = data;
         var mc = Minecraft.getInstance();
         if (camera && mc.screen instanceof OperationsScreen) { mc.setScreen(null); return; }
         if (open) { open(); return; }
-        if (mc.screen instanceof OperationsScreen screen && !(screen.getFocused() instanceof EditBox)) screen.rebuild();
+        if (mc.screen instanceof OperationsScreen screen && !screen.widgets.hasTextFocus()) screen.rebuild();
     }
     public static void open() {
         var mc = Minecraft.getInstance();
@@ -70,40 +73,33 @@ public final class OperationsScreen extends Screen {
         return p != null && (IndustryContent.isTablet(p.getMainHandItem()) || IndustryContent.isTablet(p.getOffhandItem()));
     }
     @Override protected void init() {
-        w = Math.min(560, width - 16); h = Math.min(342, height - 16);
-        x = (width - w) / 2; y = (height - h) / 2; contentX = x + 112; contentW = w - 126;
+        w = 560; h = 342;
+        x = (width - w) / 2; y = (height - h) / 2; contentX = x + 120; contentW = w - 134;
+        viewport = UiViewport.fit(width, height, w, h);
+        widgets = new LdlibWidgetHost(width, height);
         rebuild();
     }
     private void rebuild() {
         if (minecraft == null || font == null) return;
-        if (missileX != null) { targetX = missileX.getValue(); targetY = missileY.getValue(); targetZ = missileZ.getValue(); }
-        clearWidgets(); labels.clear(); icons.clear(); missileX = missileY = missileZ = null;
-        String[] tabs = {"Сводка", "Страна", "Бойцы", "Заводы", "ПВО и ракеты", "Техника"};
+        if (missileX != null) { targetX = missileX.getCurrentString(); targetY = missileY.getCurrentString(); targetZ = missileZ.getCurrentString(); }
+        widgets.clear(); icons.clear(); missileX = missileY = missileZ = null;
+        String[] tabs = {"Страна", "Армия", "Производство", "Ремонт"};
         for (int index = 0; index < tabs.length; index++) {
             final int target = index;
-            button(x + 10, y + 52 + index * 24, 90, tabs[index], () -> { tab = lastTab = target; page = 0; rebuild(); }).active = target != tab;
+            button(x + 10, y + 52 + index * 24, 102, tabs[index], () -> { tab = lastTab = target; page = 0; rebuild(); }).enabled(target != tab, "Открытый раздел");
         }
+        button(x + w - 122, y + 9, 88, "Справочник", IndustryGuide::open);
         button(x + w - 28, y + 9, 18, "×", this::onClose);
         label(tabs[tab], contentX, y + 52, WHITE, contentW);
         listY = y + 75;
         switch (tab) {
-            case 0 -> overview(); case 1 -> country(); case 2 -> army(); case 3 -> industry(); case 4 -> weapons(); case 5 -> vehicles();
+            case 0 -> country(); case 1 -> armySection(); case 2 -> industry(); case 3 -> repair();
         }
-    }
-    private void overview() {
-        JsonObject country = object(state, "country");
-        line("Страна: " + text(country, "name", "Без страны"), WHITE);
-        line("Армия: " + text(state, "armyCount", "0") + "  ·  Рабочие: " + text(state, "workers", "0"), WHITE);
-        var sites = rows(state, "sites");
-        long problems = sites.stream().filter(s -> number(s, "health", 100) < 75 || (text(s, "type", "").contains("FACTORY") && !bool(s, "powered"))).count();
-        line("Объектов: " + sites.size() + "  ·  Требуют внимания: " + problems, problems > 0 ? GOLD : GREEN);
-        line("Изумруды при себе: " + text(state, "emeralds", "0"), GOLD);
-        gap(8);
-        line("1. Страна — поселение, границы и дипломатия.", GRAY);
-        line("2. Бойцы — нанять, собрать отряд, дать приказ.", GRAY);
-        line("3. Заводы — выбрать изделие и запустить выпуск.", GRAY);
-        line("4. ПВО и ракеты — готовые системы из модов.", GRAY);
-        if (listY < y + h - 52) line("ПКМ КПК по воздуху всегда открывает этот штаб.", GREEN);
+        label("Объектов: " + rows(state, "sites").size(), x + 10, y + 163, GRAY, 102);
+        label("Рабочих: " + text(state, "workers", "0"), x + 10, y + 179, GRAY, 102);
+        label("Армия: " + text(state, "armyCount", "0"), x + 10, y + 195, GRAY, 102);
+        widgets.add(IndustryWidgets.text(x + 10, y + h - 24, w - 20, 22,
+            () -> text(state, "message", "Получение данных…"), GOLD));
     }
     private void country() {
         var c = object(state, "country");
@@ -117,6 +113,48 @@ public final class OperationsScreen extends Screen {
         twoButtons("Поселение", () -> send("village", "", 0), "Вступить здесь", () -> send("join", "", 0));
         twoButtons("Границы на карте", () -> minecraft.setScreen(new WorldMapScreen()), "Отношения", () -> minecraft.setScreen(new DiplomacyTeamListScreen(this, false)));
         if (listY < y + h - 50) fullButton("Руководство по государствам", () -> send("guide", "", 0));
+    }
+    private void armySection() {
+        String[] sections = {"Бойцы", "ПВО и ракеты", "Техника и БПЛА"};
+        int part = (contentW - 8) / 3;
+        for (int index = 0; index < sections.length; index++) {
+            final int target = index;
+            button(contentX + index * (part + 4), listY, part, sections[index], () -> {
+                armyTab = target; selectedSystem = ""; page = 0; rebuild();
+            }).enabled(armyTab != index, "Открытый раздел");
+        }
+        gap(26);
+        switch (armyTab) { case 0 -> army(); case 1 -> weapons(); case 2 -> vehicles(); }
+    }
+    private void repair() {
+        line("Сеть и заводы ремонтируются отдельными бригадами.", GRAY);
+        var all = rows(state, "sites").stream().filter(row -> number(row, "health", 100) < 100
+            || bool(object(row, "repairState"), "requested")).toList();
+        if (all.isEmpty()) {
+            line("Повреждённых объектов нет.", GREEN);
+            line("Ремнабор и ремонтник назначаются в управлении объектом.", GRAY);
+            return;
+        }
+        int perPage = Math.max(1, (y + h - 55 - listY) / 61);
+        for (var row : slice(all, perPage)) {
+            String id = text(row, "id", ""); var repair = object(row, "repairState");
+            label(text(row, "title", "Объект") + " · " + number(row, "health", 0) + "%", contentX, listY, WHITE, contentW - 85);
+            label(text(repair, "reason", text(row, "status", "Открой объект для ремонта")), contentX, listY + 14, GOLD, contentW - 85);
+            int progress = number(repair, "progressTicks", 0), total = number(repair, "totalTicks", 1800);
+            label("Бригада: " + number(repair, "assignedWorkers", number(row, "repairWorkers", 0)) + " · "
+                + (bool(repair, "requested") ? "Осталось: " : "Работа: ")
+                + Math.max(0, (total - progress + 19) / 20) + " с", contentX, listY + 28, GRAY, contentW - 85);
+            button(contentX + contentW - 78, listY + 3, 78, "К объекту", () -> send("open_site", id, 0))
+                .enabled(bool(row, "sameDimension") && bool(row, "loaded"), siteAccessReason(row));
+            widgets.add(IndustryWidgets.progress(contentX, listY + 44, contentW, 3, () -> total <= 0 ? 0 : progress / (double)total));
+            gap(61);
+        }
+        pager(all.size(), perPage);
+    }
+    private static String siteAccessReason(JsonObject row) {
+        return !bool(row, "sameDimension") ? "Объект в другом измерении."
+            : !bool(row, "loaded") ? "Чанки объекта выгружены. Подойди к объекту."
+            : "Управление доступно рядом с объектом, до 12 блоков.";
     }
     private void army() {
         line("Армия: " + text(state, "armyCount", "0") + "  ·  С тобой рядом: " + rows(state, "soldiers").size(), WHITE);
@@ -155,7 +193,7 @@ public final class OperationsScreen extends Screen {
             label(text(row, "title", "Объект"), contentX + 22, listY, WHITE, contentW - 103);
             label(text(row, "status", "") + " · " + text(row, "health", "0") + "%", contentX + 22, listY + 12, bool(row, "powered") ? GREEN : GOLD, contentW - 103);
             label(text(row, "x", "") + ", " + text(row, "y", "") + ", " + text(row, "z", "") + " · " + (bool(row, "sameDimension") ? text(row, "distance", "?") + " м" : "другое измерение"), contentX + 22, listY + 24, GRAY, contentW - 25);
-            button(contentX + contentW - 74, listY + 2, 74, "Управлять", () -> send("open_site", id, 0)).active = bool(row, "sameDimension") && bool(row, "loaded");
+            button(contentX + contentW - 74, listY + 2, 74, "Управлять", () -> send("open_site", id, 0)).enabled(bool(row, "sameDimension") && bool(row, "loaded"), siteAccessReason(row));
             gap(47);
         }
         pager(all.size(), perPage);
@@ -212,14 +250,15 @@ public final class OperationsScreen extends Screen {
             missileZ = coordinate(contentX + (field + 6) * 2, listY, field, targetZ); gap(22);
             button(contentX, listY, 78, "Залп: " + salvo, () -> { salvo = salvo % 3 + 1; rebuild(); });
             button(contentX + 84, listY, contentW - 84, "Запустить по координатам", () -> {
-                String coordinates = missileX.getValue() + "," + missileY.getValue() + "," + missileZ.getValue();
-                send("pvo_launch", id + "|" + coordinates, salvo); setFocused(null);
+                String coordinates = missileX.getCurrentString() + "," + missileY.getCurrentString() + "," + missileZ.getCurrentString();
+                send("pvo_launch", id + "|" + coordinates, salvo); widgets.clearFocus();
             });
         } else fullButton("Карта радаров и маршрутов", this::nativeTerminal);
     }
-    private EditBox coordinate(int bx, int by, int bw, String value) {
-        EditBox field = new EditBox(font, bx, by, bw, 18, Component.literal("Координата цели"));
-        field.setMaxLength(10); field.setFilter(s -> s.matches("-?[0-9]*")); field.setValue(value); addRenderableWidget(field); return field;
+    private TextFieldWidget coordinate(int bx, int by, int bw, String value) {
+        TextFieldWidget field = new TextFieldWidget(bx, by, bw, 18, null, null).setMaxStringLength(10);
+        field.setValidator(input -> input.matches("-?[0-9]*") ? input : field.getCurrentString());
+        field.setCurrentString(value); return widgets.add(field);
     }
     private void nativeTerminal() {
         try { Class.forName("dev.sbw.deepstrike.client.CommandTabletScreen").getMethod("open").invoke(null); }
@@ -246,31 +285,33 @@ public final class OperationsScreen extends Screen {
             }
             pager(targets.size(), perPage); return;
         }
-        var items = rows(shop, "items"); int perPage = Math.max(1, (y + h - 56 - listY) / 35);
+        var items = rows(shop, "items"); int perPage = Math.max(1, (y + h - 56 - listY) / 48);
         for (var row : slice(items, perPage)) {
             String id = text(row, "id", "");
             icons.add(new Icon(itemIcon(row), contentX, listY + 2));
             label(text(row, "name", id), contentX + 22, listY, WHITE, contentW - 110);
             label(text(row, "cost", "") + " изумр.", contentX + 22, listY + 13, GRAY, contentW - 110);
-            button(contentX + contentW - 78,listY,78,bool(row,"locked")?"Закрыто":"Купить",()->send("shop",id,1)).active=!bool(row,"locked"); gap(35);
+            if (bool(row, "locked")) label(text(row, "denial", "Технология не изучена"), contentX + 22, listY + 27, GOLD, contentW - 22);
+            button(contentX + contentW - 78,listY,78,bool(row,"locked")?"Закрыто":"Купить",()->send("shop",id,1))
+                .enabled(!bool(row,"locked"),text(row,"denial","Технология не изучена")); gap(48);
         }
         pager(items.size(), perPage);
     }
     private void pager(int count, int perPage) {
-        int pages = Math.max(1, (count + perPage - 1) / perPage); page = Math.min(page, pages - 1);
+        UiPage slice = UiPage.of(page, count, perPage); int pages = slice.pages(); page = slice.index();
         if (pages <= 1) return;
         int bottom = y + h - 48;
-        button(contentX, bottom, 28, "‹", () -> { page = Math.max(0, page - 1); rebuild(); }).active = page > 0;
+        button(contentX, bottom, 28, "‹", () -> { page = Math.max(0, page - 1); rebuild(); }).enabled(page > 0, "Первая страница");
         label((page + 1) + " / " + pages, contentX + 40, bottom + 6, GRAY, 80);
-        button(contentX + contentW - 28, bottom, 28, "›", () -> { page = Math.min(pages - 1, page + 1); rebuild(); }).active = page + 1 < pages;
+        button(contentX + contentW - 28, bottom, 28, "›", () -> { page = Math.min(pages - 1, page + 1); rebuild(); }).enabled(page + 1 < pages, "Последняя страница");
     }
     private List<JsonObject> slice(List<JsonObject> all, int size) {
-        page = Math.min(page, Math.max(0, (all.size() - 1) / size));
-        return all.subList(Math.min(all.size(), page * size), Math.min(all.size(), (page + 1) * size));
+        UiPage slice = UiPage.of(page, all.size(), size); page = slice.index();
+        return all.subList(slice.from(), slice.to());
     }
     private void send(String action, String arg, int value) { OperationsNet.request(action, arg, value); }
-    private Button button(int bx, int by, int bw, String title, Runnable action) {
-        return addRenderableWidget(Button.builder(Component.literal(title), b -> action.run()).bounds(bx, by, bw, 20).build());
+    private IndustryWidgets.ActionButton button(int bx, int by, int bw, String title, Runnable action) {
+        return widgets.add(new IndustryWidgets.ActionButton(bx, by, bw, 20, title, () -> widgets.afterInput(action)));
     }
     private void fullButton(String title, Runnable action) { button(contentX, listY, contentW, title, action); gap(25); }
     private void twoButtons(String a, Runnable first, String b, Runnable second) {
@@ -278,7 +319,9 @@ public final class OperationsScreen extends Screen {
     }
     private void line(String s, int color) { if (listY < y + h - 32) label(s, contentX, listY, color, contentW); gap(16); }
     private void gap(int amount) { listY += amount; }
-    private void label(String s, int tx, int ty, int color, int max) { labels.add(new Text(s, tx, ty, color, Math.max(10, max))); }
+    private void label(String s, int tx, int ty, int color, int max) {
+        widgets.add(IndustryWidgets.text(tx, ty - 2, Math.max(10, max), 13, () -> s, color));
+    }
     private static JsonObject object(JsonObject o, String key) { return o.has(key) && o.get(key).isJsonObject() ? o.getAsJsonObject(key) : new JsonObject(); }
     private static String text(JsonObject o, String key, String fallback) { return o.has(key) && o.get(key).isJsonPrimitive() ? o.get(key).getAsString() : fallback; }
     private static int number(JsonObject o, String key, int fallback) { try { return o.get(key).getAsInt(); } catch (Exception e) { return fallback; } }
@@ -301,26 +344,45 @@ public final class OperationsScreen extends Screen {
     }
     @Override public void tick() {
         if (!holdingPda()) { onClose(); return; }
+        widgets.tick();
         if (++ticks % 20 == 0) OperationsNet.request("refresh", "", 0);
     }
+    @Override public boolean mouseClicked(double x, double y, int button) { return widgets.mouseClicked(viewport.logicalX(x), viewport.logicalY(y), button); }
+    @Override public boolean mouseReleased(double x, double y, int button) { return widgets.mouseReleased(viewport.logicalX(x), viewport.logicalY(y), button); }
+    @Override public boolean mouseDragged(double x, double y, int button, double dx, double dy) {
+        return widgets.mouseDragged(viewport.logicalX(x), viewport.logicalY(y), button, dx / viewport.scale(), dy / viewport.scale());
+    }
+    @Override public void mouseMoved(double x, double y) { widgets.mouseMoved(viewport.logicalX(x), viewport.logicalY(y)); }
+    @Override public boolean mouseScrolled(double x, double y, double delta) { return widgets.mouseScrolled(viewport.logicalX(x), viewport.logicalY(y), delta); }
+    @Override public boolean keyPressed(int key, int scan, int modifiers) {
+        if (widgets.hasTextFocus()) {
+            if (key == 256) { widgets.clearFocus(); return true; }
+            widgets.keyPressed(key, scan, modifiers); return true;
+        }
+        return widgets.keyPressed(key, scan, modifiers) || super.keyPressed(key, scan, modifiers);
+    }
+    @Override public boolean charTyped(char value, int modifiers) { return widgets.charTyped(value, modifiers); }
+    @Override public boolean keyReleased(int key, int scan, int modifiers) { return widgets.keyReleased(key, scan, modifiers); }
+    public static void clearSession() { state = new JsonObject(); session = false; lastTab = 0; ITEM_ICONS.clear(); }
     @Override public void render(GuiGraphics graphics, int mx, int my, float partial) {
         renderBackground(graphics);
+        int lx = (int)viewport.logicalX(mx), ly = (int)viewport.logicalY(my);
+        graphics.pose().pushPose();
+        graphics.pose().translate(viewport.centerX() * (1 - viewport.scale()), viewport.centerY() * (1 - viewport.scale()), 0);
+        graphics.pose().scale((float)viewport.scale(), (float)viewport.scale(), 1);
         graphics.fill(x, y, x + w, y + h, 0xFF16272D);
         graphics.fill(x + 1, y + 1, x + w - 1, y + 40, 0xFF24434A);
-        graphics.fill(x + 106, y + 43, x + 107, y + h - 26, 0xFF38515A);
+        graphics.fill(x + 115, y + 43, x + 116, y + h - 26, 0xFF38515A);
         graphics.fill(x + 1, y + h - 25, x + w - 1, y + h - 1, 0xFF0E1D22);
         graphics.renderItem(new ItemStack(IndustryContent.preferredTablet()), x + 12, y + 12);
         graphics.drawString(font, "КПК · ПОЛЕВОЙ ШТАБ", x + 36, y + 10, WHITE, false);
-        graphics.drawString(font, text(object(state, "country"), "name", "Frontier Nations"), x + 36, y + 24, GREEN, false);
-        for (Text text : labels) graphics.drawString(font, font.plainSubstrByWidth(text.value, text.width), text.x, text.y, text.color, false);
+        graphics.drawString(font, font.plainSubstrByWidth(text(object(state, "country"), "name", "Frontier Nations"), w - 180), x + 36, y + 24, GREEN, false);
         for (Icon icon : icons) {
             graphics.renderItem(icon.item, icon.x, icon.y);
-            // SBW draws its native aircraft/container icons in Forge's item decorator.
             graphics.renderItemDecorations(font, icon.item, icon.x, icon.y);
         }
-        String message = text(state, "message", "Получение данных…");
-        graphics.drawString(font, font.plainSubstrByWidth(message, w - 20), x + 10, y + h - 16, GOLD, false);
-        super.render(graphics, mx, my, partial);
+        widgets.draw(graphics, lx, ly, partial); widgets.tooltip(graphics, lx, ly, x, y, w, h);
+        graphics.pose().popPose();
     }
     @Override public boolean isPauseScreen() { return false; }
 }

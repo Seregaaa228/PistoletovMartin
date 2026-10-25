@@ -12,10 +12,15 @@ import java.util.*;
 public final class IndustryCatalog {
     public record Recipe(String id, String title, SiteType factory, ItemStack output,
                          List<ItemStack> cost, int ticks, int fePerTick) {
+        public Recipe {
+            output = output.copy();
+            cost = cost.stream().map(ItemStack::copy).toList();
+        }
         @Override public ItemStack output() { return output.copy(); }
         @Override public List<ItemStack> cost() { return cost.stream().map(ItemStack::copy).toList(); }
     }
     private static List<Recipe> cached;
+    private static List<Recipe> builtIn = List.of();
     private static int gunCount = -1, itemCount = -1;
     public static synchronized void invalidate() { cached = null; }
     public static synchronized List<Recipe> recipes() {
@@ -41,6 +46,8 @@ public final class IndustryCatalog {
             ItemStack ammo = AmmoItemBuilder.create().setId(entry.getKey()).setCount(16).build();
             if (!ammo.isEmpty()) add(result, "ammo/" + entry.getKey(), "Патроны " + entry.getKey().getPath(), SiteType.EQUIPMENT_FACTORY, ammo);
         }
+        builtIn = List.copyOf(result.values());
+        result.putAll(dev.frontier.industry.integration.catalog.IndustryRecipeReloadListener.recipes());
         cached = List.copyOf(result.values()); gunCount = guns; itemCount = items;
         return cached;
     }
@@ -111,7 +118,12 @@ public final class IndustryCatalog {
     public static String normalize(String s) { return s.trim().toLowerCase(Locale.ROOT).replace('ё', 'е').replace("ак47", "ak47").replace("ак-47", "ak47"); }
     /** Keep legacy recipes for already-paid saved queues, while every new order uses native ready-made weapons. */
     public static boolean visible(Recipe recipe) {
-        return !legacyCombat(recipe.id());
+        return !legacyCombat(recipe.id()) && !dev.frontier.industry.integration.catalog.IndustryRecipeReloadListener.hidden(recipe.id());
+    }
+    /** Only the original complete catalog can recover a paid order written before template snapshots. */
+    public static Recipe legacyRecipe(String id, SiteType type) {
+        recipes();
+        return builtIn.stream().filter(recipe -> recipe.id().equals(id) && recipe.factory() == type).findFirst().orElse(null);
     }
     public static boolean legacyCombat(String id) {
         return net.minecraftforge.fml.ModList.get().isLoaded("deepstrike") && id.startsWith("frontier_industry:")

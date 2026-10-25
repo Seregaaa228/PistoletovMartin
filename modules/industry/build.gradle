@@ -67,3 +67,40 @@ def restoreCombat = tasks.register('restorePreservedCombat') {
 }
 tasks.matching { it.name == 'reobfJar' }.configureEach { finalizedBy restoreCombat }
 tasks.named('build').configure { dependsOn restoreCombat }
+
+// Opt-in test helper, never collected by releaseJars or copied into the accepted profile.
+sourceSets {
+    integrationTest {
+        java.srcDirs = ['src/integrationTest/java']
+        java.include 'dev/frontier/industry/integrationtests/**'
+        resources.srcDirs = ['src/integrationTest/resources']
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath + project(':arcade').sourceSets.main.output
+        runtimeClasspath += output + compileClasspath
+    }
+}
+configurations.integrationTestImplementation.extendsFrom configurations.implementation
+def integrationJar = tasks.register('integrationTestJar', Jar) {
+    archiveBaseName = 'frontier-integration-checks'
+    archiveVersion = 'pis-1'
+    from sourceSets.integrationTest.output
+    dependsOn tasks.named('integrationTestClasses')
+    destinationDirectory = layout.buildDirectory.dir('integration-tests')
+    finalizedBy 'reobfIntegrationTestJar'
+}
+reobf { integrationTestJar {} }
+// FART needs our development-name hierarchy to remap inherited Minecraft calls
+// whose bytecode owner is IndustryData/WorkerEntity rather than a vanilla class.
+def integrationApiJar = tasks.register('integrationCompileApiJar', Jar) {
+    archiveBaseName = 'frontier-integration-development-api'
+    archiveVersion = 'pis-1'
+    include '**/*.class'
+    from sourceSets.main.output
+    // Native drone walkthrough is test-only. Supply its own-module hierarchy
+    // to FART without copying Arcade classes into the runnable helper JAR.
+    from project(':arcade').sourceSets.main.output
+    destinationDirectory = layout.buildDirectory.dir('integration-api')
+}
+tasks.named('reobfIntegrationTestJar').configure {
+    dependsOn integrationApiJar
+    libraries.from(sourceSets.main.compileClasspath, integrationApiJar)
+}

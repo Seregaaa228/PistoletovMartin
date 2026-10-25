@@ -15,6 +15,7 @@ public final class IndustryMod {
         var bus = FMLJavaModLoadingContext.get().getModEventBus();
         net.minecraftforge.fml.ModLoadingContext.get().registerConfig(net.minecraftforge.fml.config.ModConfig.Type.SERVER,IndustryConfig.SPEC);
         IndustryContent.register(bus);
+        dev.frontier.industry.repair.RepairContent.register(bus);
         dev.frontier.industry.construction.GeneratedLoot.CODECS.register(bus);
         CombatContent.register(bus);
         VehicleOperations.register(bus);
@@ -24,6 +25,10 @@ public final class IndustryMod {
         CombatEvents.init();
         VehicleOperations.init();
         MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.OnDatapackSyncEvent event) -> IndustryCatalog.invalidate());
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.AddReloadListenerEvent event) ->
+            event.addListener(new dev.frontier.industry.integration.catalog.IndustryRecipeReloadListener()));
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.server.ServerStoppedEvent event) ->
+            dev.frontier.industry.integration.catalog.IndustryRecipeReloadListener.clear());
         MinecraftForge.EVENT_BUS.addListener((TickEvent.ServerTickEvent event) -> {
             if (event.phase == TickEvent.Phase.END) {
                 IndustryEngine.tick(event.getServer());
