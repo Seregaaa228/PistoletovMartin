@@ -41,11 +41,13 @@ public final class SmokeClient {
     private static boolean mapRequested;
     private static boolean mapCaptured;
     private static boolean mapFailureReported;
+    private static boolean flagCaptured;
     private static boolean nativeRequested,nativeCaptured;
     private static boolean stopped;
     private static int titleTicks;
     private static int readyTicks;
     private static int mapOpenedAt=-1;
+    private static int flagOpenedAt=-1;
     private static int nativeOpenedAt=-1;
 
     private SmokeClient() {}
@@ -96,24 +98,43 @@ public final class SmokeClient {
         }
         if(readyTicks>=310&&gameplayCaptured&&!mapRequested&&mc.screen==null) {
             mapRequested=true;
-            // Exercise the same registered N-key path as a player; no access to the
-            // package-private screen or changes to the political map implementation.
-            KeyMapping.click(InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_N));
-            LOG.info("FRONTIER_TEST: requested political map through N key");
+            // Target layout: M opens the Xaero world map with the nations layer; N is unbound.
+            // No access to the package-private screen or changes to the map implementation.
+            KeyMapping.click(InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_M));
+            LOG.info("FRONTIER_TEST: requested Xaero world map through M key");
         }
-        boolean politicalMap=mc.screen!=null&&MAP_SCREEN.equals(mc.screen.getClass().getName());
-        if(politicalMap&&mapOpenedAt<0) {
+        // Stream 1 owns the overlay: accept the legacy political screen, Xaero screens, or the
+        // Recruits world map here; the exact class name is logged for the report.
+        boolean mapOpen=mc.screen!=null&&(MAP_SCREEN.equals(mc.screen.getClass().getName())
+                ||mc.screen.getClass().getName().contains("xaero")
+                ||mc.screen.getClass().getName().contains("WorldMap"));
+        if(mapOpen&&mapOpenedAt<0) {
             mapOpenedAt=readyTicks;
-            LOG.info("FRONTIER_TEST: political map opened at observation tick {}",readyTicks);
+            LOG.info("FRONTIER_TEST: map opened at observation tick {}: {}",readyTicks,
+                    mc.screen.getClass().getName());
         }
-        if(politicalMap&&mapOpenedAt>=0&&readyTicks-mapOpenedAt>=40&&!mapCaptured) {
+        if(mapOpen&&mapOpenedAt>=0&&readyTicks-mapOpenedAt>=40&&!mapCaptured) {
             mapCaptured=true;
-            capture(mc,"frontier-smoke-political-map.png");
+            capture(mc,"frontier-smoke-xaero-nations.png");
         }
-        if(politicalMap&&mapCaptured&&readyTicks-mapOpenedAt>=60&&!nativeRequested) {
+        // Stream 2 owns the flag editor ("Мой флаг" on the map, leader only). Capture it
+        // passively whenever it appears during the observation window.
+        boolean flagEditor=mc.screen!=null&&mc.screen.getClass().getSimpleName().contains("FlagEditor");
+        if(flagEditor&&flagOpenedAt<0) {
+            flagOpenedAt=readyTicks;
+            LOG.info("FRONTIER_TEST: flag editor opened at observation tick {}: {}",readyTicks,
+                    mc.screen.getClass().getName());
+        }
+        if(flagEditor&&flagOpenedAt>=0&&readyTicks-flagOpenedAt>=40&&!flagCaptured) {
+            flagCaptured=true;capture(mc,"frontier-smoke-flag-editor.png");
+        }
+        // The R handler lives on the legacy political screen only; never send stray keys
+        // to the Xaero overlay owned by stream 1.
+        if(mapOpen&&mapCaptured&&readyTicks-mapOpenedAt>=60&&!nativeRequested
+                &&mc.screen!=null&&MAP_SCREEN.equals(mc.screen.getClass().getName())) {
             nativeRequested=true;
             mc.screen.keyPressed(GLFW.GLFW_KEY_R,0,0);
-            LOG.info("FRONTIER_TEST: requested native borders through political map R handler");
+            LOG.info("FRONTIER_TEST: requested native borders through legacy political map R handler");
         }
         boolean nativeMap=mc.screen!=null&&NATIVE_MAP_SCREEN.equals(mc.screen.getClass().getName());
         if(nativeMap&&nativeOpenedAt<0) {
@@ -128,12 +149,12 @@ public final class SmokeClient {
         }
         if(mapRequested&&mapOpenedAt<0&&readyTicks>=390&&!mapFailureReported) {
             mapFailureReported=true;
-            LOG.error("FRONTIER_TEST: political map did not open after its N-key request; screen={}",
+            LOG.error("FRONTIER_TEST: map did not open after its M-key request; screen={}",
                     mc.screen==null?"none":mc.screen.getClass().getName());
         }
         if(readyTicks>=1200) {
-            LOG.info("FRONTIER_TEST: client observation complete; gameplay={} map={} nativeEditor={} screenshotCallbacks={}",
-                    gameplayCaptured,mapCaptured,nativeCaptured,completedScreenshots.get());
+            LOG.info("FRONTIER_TEST: client observation complete; gameplay={} xaeroNationsMap={} flagEditor={} nativeEditor={} screenshotCallbacks={}",
+                    gameplayCaptured,mapCaptured,flagCaptured,nativeCaptured,completedScreenshots.get());
             stop(mc);
         }
     }

@@ -1,0 +1,13 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+[[mods]]
+modId="frontier_combat_checks"
+version="1"
+displayName="Frontier combat acceptance checks (explicit opt-in)"
+[[dependencies.frontier_combat_checks]]
+modId="frontier_industry"
+mandatory=true
+versionRange="[0.4.0,)"
+ordering="AFTER"
+side="BOTH"

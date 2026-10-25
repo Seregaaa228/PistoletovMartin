@@ -68,6 +68,33 @@ def restoreCombat = tasks.register('restorePreservedCombat') {
 tasks.matching { it.name == 'reobfJar' }.configureEach { finalizedBy restoreCombat }
 tasks.named('build').configure { dependsOn restoreCombat }
 
+tasks.register('operationsPayloadTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.industry.OperationsPayloadTest'
+}
+tasks.named('check').configure { dependsOn 'operationsPayloadTest' }
+
+// Explicit multiplayer fixtures, excluded from every production and release JAR.
+sourceSets { combatAcceptance }
+sourceSets.combatAcceptance.compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+configurations.combatAcceptanceImplementation.extendsFrom(configurations.implementation)
+configurations.combatAcceptanceCompileOnly.extendsFrom(configurations.compileOnly)
+dependencies {
+    combatAcceptanceImplementation project(':arcade')
+    combatAcceptanceImplementation project(':aviation')
+    combatAcceptanceImplementation project(':missile-fix')
+    combatAcceptanceCompileOnly project(':style')
+}
+tasks.register('combatAcceptanceJar', Jar) {
+    dependsOn combatAcceptanceClasses
+    archiveFileName = 'frontier-combat-checks.jar'
+    destinationDirectory = layout.buildDirectory.dir('acceptance')
+    from sourceSets.combatAcceptance.output
+    finalizedBy 'reobfCombatAcceptanceJar'
+}
+reobf { combatAcceptanceJar {} }
+
 // Opt-in test helper, never collected by releaseJars or copied into the accepted profile.
 sourceSets {
     integrationTest {

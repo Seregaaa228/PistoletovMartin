@@ -1,2 +1,40 @@
 version = '1.3.0'
 base { archivesName = 'frontier-flamingo-launch-fix' }
+
+// Deterministic collision/launch probes use the pinned native geometry, without a game world.
+tasks.register('nativeGeometryProbe', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.flamingofix.NativeGeometryProbe'
+}
+tasks.named('check').configure { dependsOn 'nativeGeometryProbe' }
+tasks.register('trailCadenceTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.flamingofix.TrailCadenceTest'
+}
+tasks.named('check').configure { dependsOn 'trailCadenceTest' }
+tasks.register('directImpactProfileTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.flamingofix.DirectImpactProfileTest'
+}
+tasks.named('check').configure { dependsOn 'directImpactProfileTest' }
+tasks.register('sweptMissileObbTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.flamingofix.SweptMissileObbTest'
+}
+tasks.named('check').configure { dependsOn 'sweptMissileObbTest' }
+tasks.register('deferredContactIteratorTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.flamingofix.DeferredContactIteratorTest'
+}
+tasks.named('check').configure { dependsOn 'deferredContactIteratorTest' }
+tasks.register('deferredMissileMotionTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.flamingofix.DeferredMissileMotionTest'
+}
+tasks.named('check').configure { dependsOn 'deferredMissileMotionTest' }

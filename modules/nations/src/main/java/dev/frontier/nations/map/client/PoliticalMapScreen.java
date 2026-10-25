@@ -3,6 +3,10 @@ package dev.frontier.nations.map.client;
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.client.gui.worldmap.WorldMapScreen;
 import com.talhanation.recruits.world.RecruitsClaim;
+import dev.frontier.nations.flag.FlagCache;
+import dev.frontier.nations.flag.FlagDefinition;
+import dev.frontier.nations.flag.FlagEditorScreen;
+import dev.frontier.nations.flag.FlagPalette;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -14,7 +18,13 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.UUID;
 
-/** A political overview; the original Recruits screen remains the border editor. */
+/**
+ * Legacy standalone political overview; the original Recruits screen remains the border editor.
+ *
+ * @deprecated Debug/fallback only. Players use M (Xaero map with the country
+ * layer); T toggles territories. N no longer opens this screen.
+ */
+@Deprecated
 final class PoliticalMapScreen extends Screen {
     private static final int BACKGROUND = 0xFF17232B;
     private static final int UNCLAIMED = 0xFF293F49;
@@ -55,8 +65,11 @@ final class PoliticalMapScreen extends Screen {
         addRenderableWidget(Button.builder(Component.literal("К себе"), b -> centerOnPlayer())
                 .bounds(78, height - 24, 54, 20).build());
         Button edit = addRenderableWidget(Button.builder(Component.literal("Границы [R]"), b -> openNativeEditor())
-                .bounds(width - 144, height - 24, 136, 20).build());
+                .bounds(width - 222, height - 24, 108, 20).build());
         edit.active = inOverworld();
+        Button flag = addRenderableWidget(Button.builder(Component.literal("Мой флаг"), b -> FlagEditorScreen.openFromMap(this))
+                .bounds(width - 110, height - 24, 102, 20).build());
+        flag.active = ClientManager.ownFaction != null;
         addRenderableWidget(Button.builder(Component.literal("X"), b -> onClose())
                 .bounds(width - 28, 9, 20, 20).build());
     }
@@ -153,8 +166,11 @@ final class PoliticalMapScreen extends Screen {
             if (x < 16 || x > mapRight - 8 || y < 50 || y > mapBottom - 12) continue;
             String label = font.plainSubstrByWidth(country.name(), Math.max(30, (mapRight - 8) / 2));
             int textWidth = font.width(label);
-            g.fill(x - textWidth / 2 - 3, y - 5, x + textWidth / 2 + 3, y + 6, 0xAA152027);
-            g.drawCenteredString(font, label, x, y - 3, TEXT);
+            int flagWidth = FlagCache.flag(country.id()) == null ? 0 : 14;
+            int boxLeft = x - textWidth / 2 - 3 - flagWidth;
+            g.fill(boxLeft, y - 5, x + textWidth / 2 + 3, y + 6, 0xAA152027);
+            if (flagWidth > 0) drawMiniFlag(g, country.id(), boxLeft + 3, y - 3, 1);
+            g.drawCenteredString(font, label, x + flagWidth / 2, y - 3, TEXT);
         }
     }
 
@@ -173,12 +189,13 @@ final class PoliticalMapScreen extends Screen {
     private void drawSidebar(GuiGraphics g) {
         int x = mapRight + 15;
         int available = width - x - 15;
-        g.drawString(font, "Страны", x, 50, TEXT, false);
+        ownFlagSection(g, x, available);
+        g.drawString(font, "Страны", x, 96, TEXT, false);
         int count = visibleCountries();
         for (int row = 0; row < count && row + countryScroll < snapshot.countries.size(); row++) {
             PoliticalMapSnapshot.Country country = snapshot.countries.get(row + countryScroll);
-            int y = 66 + row * 18;
-            g.fill(x, y, x + 7, y + 7, country.color());
+            int y = 112 + row * 18;
+            drawMiniFlag(g, country.id(), x, y, 1);
             drawClipped(g, country.name(), x + 12, y, available - 12, TEXT);
             drawClipped(g, "Чанков: " + country.chunks(), x + 12, y + 9, available - 12, MUTED);
         }
@@ -216,8 +233,38 @@ final class PoliticalMapScreen extends Screen {
         }
     }
 
+    private void ownFlagSection(GuiGraphics g, int x, int available) {
+        if (ClientManager.ownFaction == null) {
+            drawClipped(g, "Без страны", x, 50, available, TEXT);
+            drawClipped(g, "Вступи через /rvjoin", x, 64, available, MUTED);
+            return;
+        }
+        String id = ClientManager.ownFaction.getStringID();
+        String name = ClientManager.ownFaction.getTeamDisplayName();
+        drawClipped(g, "Мой флаг", x, 50, available, TEXT);
+        drawMiniFlag(g, id, x, 62, 2);
+        drawClipped(g, name == null || name.isBlank() ? id : name, x + 22, 62, available - 22, TEXT);
+        drawClipped(g, "Кнопка внизу карты", x + 22, 72, available - 22, MUTED);
+    }
+
+    /** Mini-flag beside each country; falls back to the claim color when no flag is synced yet. */
+    private void drawMiniFlag(GuiGraphics g, String factionId, int x, int y, int scale) {
+        FlagDefinition flag = FlagCache.flag(factionId);
+        PoliticalMapSnapshot.Country country = snapshot.country(factionId);
+        int fallback = country == null ? 0xFF808080 : country.color();
+        int size = Math.max(1, scale);
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                int color;
+                if (flag != null) color = FlagPalette.color(flag.pixel(col * 2, row * 2));
+                else color = fallback;
+                g.fill(x + col * size, y + row * size, x + (col + 1) * size, y + (row + 1) * size, color);
+            }
+        }
+    }
+
     private int visibleCountries() {
-        return Math.max(1, (mapBottom - 148) / 18);
+        return Math.max(1, (mapBottom - 194) / 18);
     }
 
     private void drawClipped(GuiGraphics g, String text, int x, int y, int maxWidth, int color) {
@@ -237,8 +284,8 @@ final class PoliticalMapScreen extends Screen {
                 return true;
             }
         }
-        if (button == 0 && mouseX > mapRight + 8 && mouseX < width - 8 && mouseY >= 64) {
-            int row = (int) ((mouseY - 64) / 18);
+        if (button == 0 && mouseX > mapRight + 8 && mouseX < width - 8 && mouseY >= 110) {
+            int row = (int) ((mouseY - 110) / 18);
             if (row < visibleCountries() && row + countryScroll < snapshot.countries.size()) {
                 var country = snapshot.countries.get(row + countryScroll);
                 centerX = country.x() + 0.5;
@@ -289,10 +336,10 @@ final class PoliticalMapScreen extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (PoliticalMapClient.matchesOpenKey(keyCode, scanCode)) { onClose(); return true; }
         if (keyCode == GLFW.GLFW_KEY_R) { openNativeEditor(); return true; }
         if (keyCode == GLFW.GLFW_KEY_F) { fitCountries(); return true; }
         if (keyCode == GLFW.GLFW_KEY_HOME) { centerOnPlayer(); return true; }
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE) { onClose(); return true; }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 

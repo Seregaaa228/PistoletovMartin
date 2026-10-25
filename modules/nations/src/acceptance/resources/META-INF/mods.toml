@@ -1,0 +1,13 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+[[mods]]
+modId="frontier_map_checks"
+version="1"
+displayName="Frontier Map acceptance checks (opt-in)"
+[[dependencies.frontier_map_checks]]
+modId="frontier_nations"
+mandatory=true
+versionRange="[0.1.2-alpha,)"
+ordering="AFTER"
+side="BOTH"

@@ -3,7 +3,6 @@ package dev.frontier.industry.client;
 import com.google.gson.JsonObject;
 import com.talhanation.recruits.client.gui.faction.FactionMainScreen;
 import com.talhanation.recruits.client.gui.diplomacy.DiplomacyTeamListScreen;
-import com.talhanation.recruits.client.gui.worldmap.WorldMapScreen;
 import dev.frontier.industry.IndustryContent;
 import dev.frontier.industry.IndustryMod;
 import dev.frontier.industry.OperationsNet;
@@ -24,6 +23,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ScreenEvent;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -47,18 +47,22 @@ public final class OperationsScreen extends Screen {
     private record Icon(ItemStack item, int x, int y) {}
     public OperationsScreen() { super(Component.literal("КПК · Штаб")); tab = Math.max(0, Math.min(3, lastTab)); }
     public static void receive(JsonObject data, boolean open, boolean camera) {
-        state = data;
+        if (data.has("transportError")) state.add("message", data.get("message"));
+        else state = data;
         var mc = Minecraft.getInstance();
         if (camera && mc.screen instanceof OperationsScreen) { mc.setScreen(null); return; }
-        if (open) { open(); return; }
+        if (open) { if (mc.screen == null || mc.screen instanceof OperationsScreen) open(); return; }
         if (mc.screen instanceof OperationsScreen screen && !screen.widgets.hasTextFocus()) screen.rebuild();
     }
     public static void open() {
         var mc = Minecraft.getInstance();
-        if (mc.player == null) return;
+        if (mc.player == null || !mc.player.isAlive() || mc.player.isSpectator() || !holdingPda()) return;
         if (mc.player.containerMenu != mc.player.inventoryMenu) mc.player.closeContainer();
         session = true; mc.setScreen(new OperationsScreen()); OperationsNet.request("refresh", "", 0);
     }
+    @SubscribeEvent public static void login(ClientPlayerNetworkEvent.LoggingIn event){resetSession();}
+    @SubscribeEvent public static void logout(ClientPlayerNetworkEvent.LoggingOut event){resetSession();}
+    private static void resetSession(){state=new JsonObject();session=false;lastTab=0;ITEM_ICONS.clear();OperationsViewBuffer.clear();}
     @SubscribeEvent public static void nativeReturn(ScreenEvent.Init.Post event) {
         var mc = Minecraft.getInstance();
         if (!session || mc.player == null || !holdingPda()) return;
@@ -111,7 +115,7 @@ public final class OperationsScreen extends Screen {
         gap(5);
         fullButton("Моя страна / создать страну", () -> minecraft.setScreen(new FactionMainScreen(minecraft.player)));
         twoButtons("Поселение", () -> send("village", "", 0), "Вступить здесь", () -> send("join", "", 0));
-        twoButtons("Границы на карте", () -> minecraft.setScreen(new WorldMapScreen()), "Отношения", () -> minecraft.setScreen(new DiplomacyTeamListScreen(this, false)));
+        twoButtons("Границы на карте", this::countryBorders, "Отношения", () -> minecraft.setScreen(new DiplomacyTeamListScreen(this, false)));
         if (listY < y + h - 50) fullButton("Руководство по государствам", () -> send("guide", "", 0));
     }
     private void armySection() {
@@ -264,6 +268,14 @@ public final class OperationsScreen extends Screen {
         try { Class.forName("dev.sbw.deepstrike.client.CommandTabletScreen").getMethod("open").invoke(null); }
         catch (ReflectiveOperationException | LinkageError unavailable) { send("defense", "terminal", 0); }
     }
+    private void countryBorders(){
+        // Nations is optional for Industry. This explicit client API avoids a circular dependency.
+        try{Class.forName("dev.frontier.nations.map.xaero.CountryMapClient").getMethod("openEditor",Screen.class).invoke(null,this);}
+        catch(ReflectiveOperationException|LinkageError unavailable){
+            com.mojang.logging.LogUtils.getLogger().error("Unable to open Xaero country editor from PDA",unavailable);
+            if(minecraft.player!=null)minecraft.player.displayClientMessage(Component.literal("Редактор границ Xaero недоступен. Проверьте Frontier Nations"),false);
+        }
+    }
     private void vehicles() {
         JsonObject shop = object(state, "shop");
         if (!bool(shop, "available")) {
@@ -363,7 +375,7 @@ public final class OperationsScreen extends Screen {
     }
     @Override public boolean charTyped(char value, int modifiers) { return widgets.charTyped(value, modifiers); }
     @Override public boolean keyReleased(int key, int scan, int modifiers) { return widgets.keyReleased(key, scan, modifiers); }
-    public static void clearSession() { state = new JsonObject(); session = false; lastTab = 0; ITEM_ICONS.clear(); }
+    public static void clearSession() { resetSession(); }
     @Override public void render(GuiGraphics graphics, int mx, int my, float partial) {
         renderBackground(graphics);
         int lx = (int)viewport.logicalX(mx), ly = (int)viewport.logicalY(my);

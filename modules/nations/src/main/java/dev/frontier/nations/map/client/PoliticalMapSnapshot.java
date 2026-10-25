@@ -17,14 +17,17 @@ import java.util.UUID;
 /**
  * Disposable rendering projection of Recruits' already synchronized client state.
  * It never creates claims, writes saved data, requests chunks, or sends packets.
+ *
+ * <p>Public so the Xaero overlay package can reuse the same projection without
+ * duplicating claim reads; the source of truth stays Recruits' ClientManager.</p>
  */
-final class PoliticalMapSnapshot {
-    static final int MAX_CHUNKS = 131_072;
-    static final int MAX_CLAIMS = 4_096;
-    final Map<Long, Cell> cells;
-    final List<Country> countries;
-    final Map<UUID, Claim> claims;
-    final boolean truncated;
+public final class PoliticalMapSnapshot {
+    public static final int MAX_CHUNKS = 131_072;
+    public static final int MAX_CLAIMS = 4_096;
+    public final Map<Long, Cell> cells;
+    public final List<Country> countries;
+    public final Map<UUID, Claim> claims;
+    public final boolean truncated;
 
     private PoliticalMapSnapshot(Map<Long, Cell> cells, List<Country> countries,
                                  Map<UUID, Claim> claims, boolean truncated) {
@@ -34,7 +37,7 @@ final class PoliticalMapSnapshot {
         this.truncated = truncated;
     }
 
-    static PoliticalMapSnapshot capture() {
+    public static PoliticalMapSnapshot capture() {
         Map<Long, Cell> cells = new LinkedHashMap<>();
         Map<UUID, Claim> claims = new HashMap<>();
         Map<String, CountryBuilder> countries = new LinkedHashMap<>();
@@ -106,6 +109,16 @@ final class PoliticalMapSnapshot {
                     | (sameOwner(cells, cell.x, cell.z - 1, cell.claim.owner) ? 0 : 4)
                     | (sameOwner(cells, cell.x, cell.z + 1, cell.claim.owner) ? 0 : 8);
         }
+        if (ClientManager.factions != null) {
+            for (RecruitsFaction faction : ClientManager.factions) {
+                if (faction == null || faction.getStringID() == null || faction.getStringID().isBlank()) continue;
+                CountryBuilder country = countries.computeIfAbsent(faction.getStringID(), CountryBuilder::new);
+                // Claims can retain an older faction snapshot after rename/color changes.
+                country.name = faction.getTeamDisplayName();
+                if (country.name == null || country.name.isBlank()) country.name = country.id;
+                country.color = 0xFF000000 | dev.frontier.nations.flag.TabFlags.color(faction);
+            }
+        }
         List<Country> ordered = new ArrayList<>();
         for (CountryBuilder country : countries.values()) {
             ordered.add(new Country(country.id, country.name, country.color, country.chunks,
@@ -120,20 +133,20 @@ final class PoliticalMapSnapshot {
         return neighbor != null && neighbor.claim.owner.equals(owner);
     }
 
-    Country country(String id) {
+    public Country country(String id) {
         for (Country country : countries) if (country.id.equals(id)) return country;
         return null;
     }
 
-    record Claim(UUID id, String owner, String name, boolean underSiege, int health) {}
-    record Country(String id, String name, int color, int chunks, int claims, int x, int z) {}
+    public record Claim(UUID id, String owner, String name, boolean underSiege, int health) {}
+    public record Country(String id, String name, int color, int chunks, int claims, int x, int z) {}
 
-    static final class Cell {
-        final int x;
-        final int z;
-        final Claim claim;
-        final int color;
-        int edges;
+    public static final class Cell {
+        public final int x;
+        public final int z;
+        public final Claim claim;
+        public final int color;
+        public int edges;
 
         Cell(int x, int z, Claim claim, int color) {
             this.x = x;

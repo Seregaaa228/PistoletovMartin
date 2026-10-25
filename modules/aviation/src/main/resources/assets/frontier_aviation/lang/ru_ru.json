@@ -1,6 +1,7 @@
 {
   "itemGroup.frontier_aviation": "Frontier · Авиация",
   "weapon.frontier_aviation.cannon": "Авиационная пушка",
+  "screen.frontier_aviation.aircraft_tablet": "%s · бортовой планшет",
   "item.frontier_aviation.su25": "Су-25",
   "entity.frontier_aviation.su25": "Су-25",
   "item.frontier_aviation.f16": "F-16",

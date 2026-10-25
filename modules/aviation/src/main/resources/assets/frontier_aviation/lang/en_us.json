@@ -1,6 +1,7 @@
 {
   "itemGroup.frontier_aviation": "Frontier · Aviation",
   "weapon.frontier_aviation.cannon": "Aircraft cannon",
+  "screen.frontier_aviation.aircraft_tablet": "%s · avionics tablet",
   "item.frontier_aviation.su25": "Su-25",
   "entity.frontier_aviation.su25": "Su-25",
   "item.frontier_aviation.f16": "F-16",

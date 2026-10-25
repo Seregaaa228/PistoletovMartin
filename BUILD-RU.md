@@ -185,3 +185,59 @@ classpath не попадают, поэтому повторных mod ID от �
 Сборка не устанавливает результаты в `.minecraft`, не заменяет закреплённые
 JAR в `instance/mods` и не обращается к пользовательским мирам. Для проверки
 изменений используйте отдельную тестовую инстанцию и переносите нужный JAR вручную.
+
+## Карта Xaero и визуальные контуры стран
+
+Управление: [XAERO-COUNTRIES-RU.md](docs/player/XAERO-COUNTRIES-RU.md).
+Сборка `:nations:build` запускает проверки геометрии, ограничений сетевых
+пакетов, NBT и миграции старых флагов. Вложенная XaeroLib извлекается только
+для компиляции из закреплённого Xaero 1.47.0; в runtime второй JAR не добавляется.
+
+Также выполняются `:nations:mapStateTest` (фоновые полосы, поздние ACK и таймауты)
+и `:nations:recruitsSchedulerLifecycleTest` (native планировщик при остановке
+dedicated-server). `:industry:operationsPayloadTest` проверяет полный большой
+Unicode-снимок КПК, wire codec и ограничения распаковки; включён в Industry check.
+Результаты игровой проверки: [MULTIPLAYER-2026-10-25.md](docs/testing/MULTIPLAYER-2026-10-25.md).
+
+`python3 tools/run_map_client.py run-xaero-polished` запускает отдельный
+подготовленный профиль из текущего проекта через `vendor/runtime` с точными
+Minecraft1.20.1/Forge47.4.0. Требуется JDK17 и ранее установленный Forge client
+runtime. Аккаунты и токены лаунчера не используются. Автоматических тестовых
+действий при обычном запуске нет.
+
+Игровые проверки отдельно собираются командой
+`python3 tools/build.py :nations:mapAcceptanceJar`. Helper находится только в
+`modules/nations/build/acceptance/frontier-map-checks.jar`; он не включается в
+Nations production JAR или в `build/team-mods`. Его нужно явно скопировать в
+свежий тестовый профиль. Запуск `tools/run_map_client.py <профиль> --acceptance`
+проверяет marker/runId. Для двух настоящих клиентов задаются `--username MapOwner`
+и `--username MapGuest --guest`, одинаковый `--port`, а владельцу —
+`--peer-report <профиль-гостя>/peer-progress.json`. Интегрированный тестовый сервер
+слушает только loopback; helper создаёт native страны/владение только в новом
+тестовом мире. `--restart` разрешает проверку сохранённого мира того же runId.
+Результаты и кадры остаются в тестовых профилях и не добавляются в Git.
+
+Для отдельного подготовленного loopback dedicated-server acceptance-владелец
+может использовать `--acceptance --dedicated --username MapOwner --port <порт>`;
+гостю по-прежнему нужны `--acceptance --guest --username MapGuest` и тот же порт.
+Этот режим не создаёт встроенный сервер и доступен только с явно установленным
+отдельным helper. Для повторного входа после перезапуска тестового сервера
+добавляется `--restart`; пользовательские миры для сценария не используются.
+
+## Боевые multiplayer проверки PIS-9 / PIS-10
+
+```sh
+GRADLE_USER_HOME="$PWD/vendor/gradle-cache" python3 tools/build.py --offline build :industry:combatAcceptanceJar
+python3 tools/verify_project.py
+python3 tools/check_combat_vehicle_bounds.py
+python3 tools/run_combat_checks.py --latency-ms 80
+```
+
+Runner требует Linux/Xvfb и ранее установленные точные Forge client/server
+runtime в `vendor`. Создаёт свежие `run-combat-*` профили, loopback dedicated
+сервер и два настоящих клиента. Задержка задаётся в каждом направлении;
+без параметра используется обычное соединение. Helper
+`modules/industry/build/acceptance/frontier-combat-checks.jar` отделён от
+production и не входит в `build/team-mods`; нужны явный opt-in и marker/runId.
+Результаты и границы проверки:
+[PIS-COMBAT-2026-10-25.md](docs/testing/PIS-COMBAT-2026-10-25.md).

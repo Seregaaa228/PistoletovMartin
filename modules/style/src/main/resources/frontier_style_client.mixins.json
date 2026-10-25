@@ -6,6 +6,10 @@
   "client": [
     "LightBudgetMixin",
     "ExplosionBudgetMixin",
+    "WreckParticleBudgetMixin",
+    "WreckTransitionMixin",
+    "WreckLightBudgetMixin",
+    "TurretWreckParticleBudgetMixin",
     "DroneLayerMixin"
   ],
   "injectors": {

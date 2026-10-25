@@ -4,6 +4,7 @@ import dev.sbw.deepstrike.game.GuidedMissileEntity;
 import dev.sbw.deepstrike.game.MissileKind;
 import dev.sbw.deepstrike.model.MissileGeometry;
 import dev.sbw.deepstrike.network.DeepStrikeNetwork;
+import dev.frontier.flamingofix.TrailCadence;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.ParticleStatus;
@@ -76,16 +77,19 @@ public final class VanillaMissileEffects {
         if(setting==ParticleStatus.DECREASED)interval*=2;
         if(setting==ParticleStatus.MINIMAL)interval*=4;
         long previous=lastTrail.getOrDefault(id,Long.MIN_VALUE);
-        if(previous!=Long.MIN_VALUE && tick-previous<interval)return;
+        int sample=TrailCadence.sample(previous,tick,interval,distance<96*96);
+        if(sample==0)return;
         if(trailParticles>=(setting==ParticleStatus.MINIMAL?8:32))return;
         if(!lastTrail.containsKey(id) && lastTrail.size()>=512)return;
         lastTrail.put(id,tick);
         Vec3 back=direction.lengthSqr()>1e-6?direction.normalize().scale(-.045):Vec3.ZERO;
+        // Spend the admitted nearby sample on its visible fullbright exhaust
+        // first; smoke cannot consume the final slot and suppress the flame.
+        if((sample&TrailCadence.FLAME)!=0)
+            particle(mc,ParticleTypes.FLAME,position,back.scale(1.5),false);
         particle(mc,boost?ParticleTypes.LARGE_SMOKE:ParticleTypes.SMOKE,position,back.add(0,.015,0),false);
         if(boost && distance<64*64)
             particle(mc,ParticleTypes.SMOKE,position.add(0,.12,0),back.add(0,.025,0),false);
-        if(tick%4==0 && distance<96*96)
-            particle(mc,ParticleTypes.FLAME,position,back.scale(1.5),false);
     }
 
     public static void puff(Vec3 position,Vec3 velocity,boolean burst) {
