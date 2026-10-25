@@ -41,3 +41,5 @@ instance/xaero/
 docs/superpowers/
 .serena/
 .playwright-mcp/
+*.log
+*.gz
