@@ -34,3 +34,7 @@ instance/xaero/
 # Keep required checked-in compatibility bytes and wrapper.
 *.class
 !modules/industry/preserved-combat/**/*.class
+
+# Local tool state (Serena project config, Playwright MCP snapshots)
+.serena/
+.playwright-mcp/
