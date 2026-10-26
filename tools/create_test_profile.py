@@ -14,7 +14,15 @@ def main():
     parser.add_argument('--baseline',action='store_true',help='Copy accepted snapshot rather than rebuilt modules')
     parser.add_argument('--integrations',action='store_true',help='Include candidate integrations (already the default for rebuilt modules)')
     parser.add_argument('--test-helper',action='store_true',help='Explicitly add the separately built opt-in PIS-1 test helper')
+    parser.add_argument('--tactical-gear',action='store_true',help='Include pinned CAPS_Awim armor (run tools/fetch_optional_mods.py first)')
     args=parser.parse_args();destination=args.destination.expanduser().resolve()
+    if args.baseline and args.tactical_gear:raise RuntimeError('--baseline must remain an exact copy; omit --baseline for optional armor')
+    optional=[]
+    if args.tactical_gear:
+        mod=json.loads((ROOT/'optional-mods.lock.json').read_text(encoding='utf-8'))['mods']['caps_awim_tactical_equipment']
+        path=ROOT/'vendor/optional-mods'/mod['file']
+        if not path.is_file() or sha(path)!=mod['sha256']:raise RuntimeError('Missing or invalid tactical armor JAR; run python tools/fetch_optional_mods.py')
+        optional=[path]
     if args.baseline and args.integrations:raise RuntimeError('Choose baseline or rebuilt integrations')
     if destination.exists():raise RuntimeError('Refusing an existing profile: '+str(destination))
     if destination==ROOT or ROOT.is_relative_to(destination)or destination.is_relative_to(ROOT/'instance'):
@@ -37,7 +45,7 @@ def main():
         helper=ROOT/'modules/industry/build/integration-tests/frontier-integration-checks-pis-1.jar'
         if not helper.is_file():raise RuntimeError('Build :industry:integrationTestJar first')
         helpers=[helper]
-    inputs=[replacements.get(name,ROOT/'instance/mods'/name)for name in lock]+additions+helpers
+    inputs=[replacements.get(name,ROOT/'instance/mods'/name)for name in lock]+additions+helpers+optional
     verify_unique_mod_ids(inputs)
     scripts=ROOT/'instance/kubejs'
     if not args.baseline and scripts.exists():
@@ -53,11 +61,13 @@ def main():
     for name,path in replacements.items():shutil.copy2(path,destination/'mods'/name)
     for path in additions:shutil.copy2(path,destination/'mods'/path.name)
     for path in helpers:shutil.copy2(path,destination/'mods'/path.name)
+    for path in optional:shutil.copy2(path,destination/'mods'/path.name)
     if not args.baseline and scripts.is_dir():shutil.copytree(scripts,destination/'kubejs')
     manifest={'runId':str(uuid.uuid4()),'baselineOnly':args.baseline,'worldsCopied':False,
               'mods':{p.name:sha(p)for p in sorted((destination/'mods').glob('*.jar'))},
               'integrationLibraries':[path.name for path in additions],
               'testHelpers':{path.name:sha(path)for path in helpers},
+              'optionalMods':{path.name:sha(path)for path in optional},
               'scripts':{path.relative_to(destination).as_posix():sha(path)for path in sorted((destination/'kubejs').rglob('*'))if path.is_file()},
               'description':'Fresh local game directory; configure a launcher to use it. No game launched.'}
     (destination/'test-profile.json').write_text(json.dumps(manifest,indent=2)+'\n')
