@@ -16,6 +16,10 @@ import net.minecraft.server.packs.repository.PackSource;
 public final class LowpolyIfv {
     public static final String ID = "frontier_ifv";
 
+    public LowpolyIfv() {
+        dev.frontier.ifv.catalog.FrontierCreativeTabs.register(net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext.get().getModEventBus());
+    }
+
     /** Keep the curated replacements together above Forge's merged mod resource pack. */
     @SubscribeEvent
     public static void addPack(AddPackFindersEvent event) {
