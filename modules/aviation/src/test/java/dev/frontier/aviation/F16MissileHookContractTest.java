@@ -7,6 +7,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.LdcInsnNode;
 
 /** Checks the exact deferred-shot lambda in the pinned SBW artifact, not runtime mixin application. */
 public final class F16MissileHookContractTest {
@@ -27,6 +28,17 @@ public final class F16MissileHookContractTest {
                 if (call.owner.equals("com/atsuishio/superbwarfare/data/gun/GunData") && call.name.equals("shoot")) shoot = true;
             }
             if (!canShoot || !shoot) throw new AssertionError("deferred missile path changed");
+            long returns = java.util.stream.StreamSupport.stream(lambda.instructions.spliterator(), false)
+                .filter(insn -> insn.getOpcode() == Opcodes.RETURN).count();
+            if (returns != 2) throw new AssertionError("deferred scope cleanup return sites changed");
+            ClassNode agm = new ClassNode();
+            try (var input = file.getInputStream(file.getJarEntry("com/atsuishio/superbwarfare/entity/projectile/Agm65Entity.class"))) {
+                new ClassReader(input).accept(agm, 0);
+            }
+            var tick = agm.methods.stream().filter(method -> method.name.equals("m_8119_") && method.desc.equals("()V")).findFirst().orElseThrow();
+            int loftConstants = 0;
+            for (var insn : tick.instructions) if (insn instanceof LdcInsnNode constant && Double.valueOf(.4).equals(constant.cst)) loftConstants++;
+            if (loftConstants != 2) throw new AssertionError("native AGM entity/point loft branches changed");
         }
         System.out.println("Pinned missile deferred-shot bytecode contract passed; runtime mixin application remains unverified");
     }

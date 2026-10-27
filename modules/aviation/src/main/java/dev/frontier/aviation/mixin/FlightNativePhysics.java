@@ -18,6 +18,10 @@ public abstract class FlightNativePhysics {
     private static void flight$aircraftEngineHEAD(VehicleEntity v, EngineInfo.Aircraft info, CallbackInfo ci) {
         FlightNativeHooks.beforePhysics(v);
     }
+    @Inject(method = "aircraftEngine(Lcom/atsuishio/superbwarfare/entity/vehicle/base/VehicleEntity;Lcom/atsuishio/superbwarfare/data/vehicle/subdata/EngineInfo$Aircraft;)V", at = @At("TAIL"), require = 1)
+    private static void flight$aircraftEngineTAIL(VehicleEntity v, EngineInfo.Aircraft info, CallbackInfo ci) {
+        NativeFlightAdapter.INSTANCE.applyAerodynamicCorrection(v);
+    }
     @Redirect(method = "aircraftEngine(Lcom/atsuishio/superbwarfare/entity/vehicle/base/VehicleEntity;Lcom/atsuishio/superbwarfare/data/vehicle/subdata/EngineInfo$Aircraft;)V", at = @At(value = "INVOKE", target = "Lcom/atsuishio/superbwarfare/entity/vehicle/base/VehicleEntity;m_146926_(F)V"), require = 5, expect = 5, allow = 5)
     private static void flight$aircraftEnginesetXRot(VehicleEntity v, float value) {
         if (NativeFlightAdapter.INSTANCE.allowAngle(v)) v.setXRot(value);

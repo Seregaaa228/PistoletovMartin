@@ -201,6 +201,8 @@ public final class FlightControlService {
     public void removeVehicle(UUID vehicleId, ReleaseReason reason) {
         thread(); Session s = sessions.get(vehicleId); if (s == null) return;
         release(s.authority.lease(), reason); nativeAccess.savePersistent(s.vehicle, s.state); sessions.remove(vehicleId); FlightNativeHooks.clear(s.vehicle);
+        if (s.vehicle instanceof com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity plane)
+            dev.frontier.aviation.api.AircraftArmament.forget(plane);
     }
     public void close() {
         if (closed) return; thread();

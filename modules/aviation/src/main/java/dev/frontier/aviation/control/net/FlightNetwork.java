@@ -2,7 +2,10 @@ package dev.frontier.aviation.control.net;
 
 import dev.frontier.aviation.control.*;
 import dev.frontier.aviation.control.server.FlightControlService;
-import dev.frontier.aviation.missile.F16MissileLauncher;
+import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity;
+import dev.frontier.aviation.aircraft.AircraftCatalog;
+import dev.frontier.aviation.api.AircraftArmament;
+import dev.frontier.aviation.weapons.WeaponKind;
 import io.netty.handler.codec.DecoderException;
 import java.util.*;
 import java.util.function.Consumer;
@@ -14,6 +17,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.*;
 import net.minecraftforge.network.simple.SimpleChannel;
+import net.minecraftforge.registries.ForgeRegistries;
 
 /** Server-authorized flight intentions. Common code never links a Minecraft client class. */
 public final class FlightNetwork {
@@ -215,12 +219,19 @@ public final class FlightNetwork {
                     try {
                         if (!live(sender)) return;
                         Entity vehicle = sender.getVehicle();
-                        if (!(vehicle instanceof F16MissileLauncher launcher)
+                        if (!(vehicle instanceof VehicleEntity aircraft)
                                 || !vehicle.getUUID().equals(packet.vehicleId)) return;
                         FlightControlService service = FlightControlService.get(sender.server);
                         FlightSnapshot current = service.snapshot(vehicle).orElse(null);
                         if (current == null || current.epoch() != packet.epoch || !service.owns(sender, vehicle)) return;
-                        launcher.aviation$fireMissiles(sender, packet.count, packet.target);
+                        var id = ForgeRegistries.ENTITY_TYPES.getKey(aircraft.getType());
+                        if (id == null) return;
+                        var mount = AircraftCatalog.find(id.toString())
+                            .flatMap(definition -> definition.weapons().nativeGun(aircraft.getGunName(0)))
+                            .filter(weapon -> weapon.kind() == WeaponKind.GUIDED_MISSILE).orElse(null);
+                        if (mount != null) AircraftArmament.fire(sender, aircraft,
+                            new ControlLease(packet.vehicleId, sender.getUUID(), packet.epoch),
+                            mount.id(), packet.count, packet.target);
                     } finally { limiter.completeTask(); }
                 });
             } catch (RuntimeException failure) { limiter.completeTask(); throw failure; }

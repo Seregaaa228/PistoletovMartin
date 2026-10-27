@@ -1,9 +1,12 @@
 package dev.frontier.aviation.client;
 
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity;
-import com.atsuishio.superbwarfare.event.ClientEventHandler;
 import com.atsuishio.superbwarfare.init.ModKeyMappings;
-import dev.frontier.aviation.AircraftProfile;
+import dev.frontier.aviation.aircraft.AircraftCatalog;
+import dev.frontier.aviation.weapons.WeaponAimResolver;
+import dev.frontier.aviation.weapons.WeaponKind;
+import dev.frontier.aviation.weapons.WeaponAimResult;
+import net.minecraftforge.registries.ForgeRegistries;
 import dev.frontier.aviation.LightAviation;
 import dev.frontier.aviation.control.FlightSnapshot;
 import dev.frontier.aviation.control.client.FlightClient;
@@ -37,8 +40,11 @@ public final class F16MissileTriggerClient {
 
     public static boolean handlesNative() {
         VehicleEntity vehicle = FlightClient.controlledEntity();
-        return vehicle != null && AircraftProfile.of(vehicle) == AircraftProfile.F16
-            && "Missile".equals(vehicle.getGunName(0));
+        if (vehicle == null) return false;
+        var id = ForgeRegistries.ENTITY_TYPES.getKey(vehicle.getType());
+        return id != null && AircraftCatalog.find(id.toString())
+            .flatMap(definition -> definition.weapons().nativeGun(vehicle.getGunName(0)))
+            .filter(mount -> mount.kind() == WeaponKind.GUIDED_MISSILE).isPresent();
     }
 
     @SubscribeEvent
@@ -84,8 +90,14 @@ public final class F16MissileTriggerClient {
             && mc.isWindowActive() && !mc.isPaused() && !FlightClient.usingDroneMonitor();
         MissileTrigger.Action action = TRIGGER.update(pressed, System.nanoTime(), eligible);
         if (eligible && action != MissileTrigger.Action.NONE) {
-            FlightNetwork.fireMissiles(snapshot, action == MissileTrigger.Action.SALVO ? 2 : 1,
-                ClientEventHandler.lockingPosVehicle);
+            var id = ForgeRegistries.ENTITY_TYPES.getKey(vehicle.getType());
+            var mount = AircraftCatalog.find(id.toString()).orElseThrow().weapons().nativeGun(vehicle.getGunName(0)).orElseThrow();
+            var gun = vehicle.getGunData(mount.nativeGun());
+            if (gun == null || mc.level == null) return;
+            var aim = WeaponAimResolver.resolve(mc.level, mc.player, vehicle.getShootPosForHud(mc.player, 1),
+                vehicle.getShootDirectionForHud(mc.player, 1), WeaponAimResolver.range(mount, gun));
+            FlightNetwork.fireMissiles(snapshot, Math.min(action == MissileTrigger.Action.SALVO ? 2 : 1, mount.maximumBurst()),
+                aim.filter(result -> result.kind() != WeaponAimResult.Kind.SPACE).map(result -> result.point()).orElse(null));
         }
     }
 }

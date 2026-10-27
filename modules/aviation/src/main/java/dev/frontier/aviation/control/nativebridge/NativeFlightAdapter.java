@@ -3,6 +3,9 @@ package dev.frontier.aviation.control.nativebridge;
 import com.atsuishio.superbwarfare.data.vehicle.subdata.EngineInfo;
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity;
 import dev.frontier.aviation.control.*;
+import dev.frontier.aviation.aircraft.AircraftCatalog;
+import dev.frontier.aviation.handling.AerodynamicModel;
+import dev.frontier.aviation.handling.HandlingProfile;
 import java.util.Map;
 import java.util.WeakHashMap;
 import net.minecraft.nbt.CompoundTag;
@@ -17,6 +20,7 @@ public final class NativeFlightAdapter implements NativeFlightAccess {
     public static final String PERSISTENT_KEY = NativeFlightPersistenceData.KEY;
     private record Applied(long tick, FlightOutput output) {}
     private final Map<Entity, Applied> applied = new WeakHashMap<>();
+    private final Map<Entity, Long> corrected = new WeakHashMap<>();
     private NativeFlightAdapter() {}
 
     @Override public boolean supports(Entity entity) {
@@ -166,6 +170,34 @@ public final class NativeFlightAdapter implements NativeFlightAccess {
             v.setDeltaMovement(motion.multiply(v.onGround() ? .8 : .92, 1, v.onGround() ? .8 : .92));
         }
     }
+    /** Apply the calibrated correction after the native aircraft force pass. */
+    public void applyAerodynamicCorrection(VehicleEntity vehicle) {
+        if (!controls(vehicle) || profile(vehicle).kind() != FlightKind.AIRCRAFT || vehicle.onGround()) return;
+        HandlingProfile handling = AircraftCatalog.find(entityId(vehicle))
+            .map(definition -> definition.handling()).orElse(HandlingProfile.NATIVE);
+        if (handling.nativeOnly()) return;
+        long tick = vehicle.level().getGameTime();
+        synchronized (applied) {
+            if (java.util.Objects.equals(corrected.get(vehicle), tick)) return;
+            corrected.put(vehicle, tick);
+        }
+        var velocity = vehicle.getDeltaMovement();
+        // Entity.getUpVector contains pitch/yaw only; the native transform also
+        // includes bank, which is essential for the body-right drag direction.
+        var up = vehicle.getTransformFromString("Vehicle", 1).transformDirection(new org.joml.Vector3d(0, 1, 0));
+        var correction = AerodynamicModel.correction(handling,
+            new AerodynamicModel.Vector(velocity.x, velocity.y, velocity.z),
+            vector(vehicle.getViewVector(1)), new AerodynamicModel.Vector(up.x, up.y, up.z), false);
+        var delta = correction.acceleration();
+        vehicle.setDeltaMovement(velocity.add(delta.x(), delta.y(), delta.z()));
+    }
+    private static String entityId(Entity entity) {
+        var id = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
+        return id == null ? "" : id.toString();
+    }
+    private static AerodynamicModel.Vector vector(net.minecraft.world.phys.Vec3 value) {
+        return new AerodynamicModel.Vector(value.x, value.y, value.z);
+    }
     public static float permittedPitch(EngineInfo info, boolean onGround, float pitch) {
         if (info instanceof EngineInfo.Tom6) return Mth.clamp(pitch, onGround ? -12 : -120, onGround ? 3 : 120);
         float limit = info instanceof EngineInfo.Aircraft aircraft ? aircraft.getClampPitch() : 120;
@@ -217,8 +249,8 @@ public final class NativeFlightAdapter implements NativeFlightAccess {
         }
     }
     public boolean controls(Entity entity) { return FlightNativeHooks.manages(entity) && output(entity) != null; }
-    public void clear(Entity entity) { synchronized (applied) { applied.remove(entity); } }
-    public void clear() { synchronized (applied) { applied.clear(); } }
+    public void clear(Entity entity) { synchronized (applied) { applied.remove(entity); corrected.remove(entity); } }
+    public void clear() { synchronized (applied) { applied.clear(); corrected.clear(); } }
     public static boolean emergency(VehicleEntity v) { return v.isWreck() || v.getHealth() <= v.getMaxHealth() * .1f; }
     public boolean allowAngle(VehicleEntity v) { return !controls(v) || v.onGround() || emergency(v) || v.getHoverMode(); }
     public boolean allowPower(VehicleEntity v, String writer) {

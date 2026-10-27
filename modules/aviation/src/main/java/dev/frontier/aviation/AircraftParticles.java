@@ -24,10 +24,10 @@ public final class AircraftParticles {
             AircraftProfile profile = AircraftProfile.of(plane);
             if (profile == null) continue;
             var transform = plane.getTransformFromString("Vehicle");
-            for (int engine = 0; engine < profile.nozzles().length; engine++) {
+            for (int engine = 0; engine < profile.nozzles().size(); engine++) {
                 if ((engine == 0 ? plane.getMainEngineHealth() : plane.getSubEngineHealth()) <= 0) continue;
-                double[] local = profile.nozzles()[engine];
-                Vector3d pos = transform.transformPosition(new Vector3d(local[0], local[1], local[2]));
+                var local = profile.nozzles().get(engine);
+                Vector3d pos = transform.transformPosition(new Vector3d(local.x(), local.y(), local.z()));
                 Vector3d drift = transform.transformDirection(new Vector3d(0, 0, -0.14));
                 var velocity = plane.getDeltaMovement();
                 mc.level.addParticle(ParticleTypes.SMOKE, pos.x, pos.y, pos.z,

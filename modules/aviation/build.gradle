@@ -28,6 +28,12 @@ tasks.register('sweptAircraftMotionTest', JavaExec) {
 tasks.named('check').configure { dependsOn 'aircraftImpactRulesTest', 'cannonImpactRulesTest', 'sweptAircraftBoxTest', 'sweptAircraftMotionTest' }
 
 def flightChecks = [
+    aircraftCatalogTest: 'dev.frontier.aviation.aircraft.AircraftCatalogTest',
+    aircraftAerodynamicModelTest: 'dev.frontier.aviation.handling.AerodynamicModelTest',
+    aircraftTerminalDestructionContractTest: 'dev.frontier.aviation.AircraftTerminalDestructionContractTest',
+    missileAimSolutionTest: 'dev.frontier.aviation.missile.MissileAimSolutionTest',
+    interceptSolverTest: 'dev.frontier.aviation.weapons.InterceptSolverTest',
+    weaponAimResolverContractTest: 'dev.frontier.aviation.weapons.WeaponAimResolverContractTest',
     f16ControlSurfacesTest: 'dev.frontier.aviation.client.F16ControlSurfacesTest',
     f16SuspensionTest: 'dev.frontier.aviation.client.F16SuspensionTest',
     f16WheelSpinTest: 'dev.frontier.aviation.client.F16WheelSpinTest',
@@ -131,6 +137,25 @@ tasks.register('flightPerformanceTestJar', Jar) {
     finalizedBy 'reobfFlightPerformanceTestJar'
 }
 reobf { flightPerformanceTestJar {} }
+
+sourceSets {
+    systemsTest {
+        java.srcDirs = ['src/systemsTest/java']
+        resources.srcDirs = ['src/systemsTest/resources']
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+}
+configurations.systemsTestImplementation.extendsFrom configurations.implementation
+tasks.register('aircraftSystemsTestJar', Jar) {
+    dependsOn tasks.named('systemsTestClasses')
+    archiveFileName = 'frontier-aircraft-systems-test.jar'
+    destinationDirectory = layout.buildDirectory.dir('flight-tests')
+    from sourceSets.systemsTest.output
+    manifest.attributes('MixinConfigs': 'frontier_aircraft_systems_test.mixins.json')
+    finalizedBy 'reobfAircraftSystemsTestJar'
+}
+reobf { aircraftSystemsTestJar {} }
 
 tasks.register('flightPredictionEvidenceDiagnosticsTest', JavaExec) {
     dependsOn testClasses

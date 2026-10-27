@@ -24,13 +24,15 @@ public final class F16MissileResourceContractTest {
         check(missile.get("RPM").getAsInt() == 60, "request cadence matches server missile cooldown");
         check(missile.get("Projectile").getAsString().equals("superbwarfare:agm_65"), "native projectile");
         check(missile.get("Magazine").getAsInt() == 2, "two missiles");
-        check(missile.get("Crosshair").getAsString().equals("@AirCraftMissile"), "native HUD");
+        check(missile.get("Crosshair").equals(cannon.get("Crosshair")), "common direct-fire reticle");
+        check(missile.get("CrosshairZooming").equals(cannon.get("Crosshair")), "common ADS reticle");
+        check(!missile.get("UseNacelleCamera").getAsBoolean(), "direct-fire camera uses the common sight axis");
         checkViewPosition(missile, "missile ADS view");
         JsonArray positions = missile.getAsJsonObject("ShootPos").getAsJsonArray("Positions");
         check(positions.toString().equals("[[3.4,2.2,0.2],[-3.4,2.2,0.2]]"), "two pylon positions");
         check(missile.getAsJsonObject("ShootPos").get("BoundUpWithAmmoAmount").getAsBoolean(), "models follow ammo");
         check(missile.getAsJsonObject("ShootPos").getAsJsonArray("Directions").toString().equals("[[0,0,1]]"),
-                "free launch follows the vehicle's forward axis");
+                "native pylon basis retained before reticle convergence");
         JsonArray ammo = missile.getAsJsonArray("AmmoType");
         check(ammo.size() == 1, "only supported block target mode");
         for (var entry : ammo) {
@@ -45,8 +47,12 @@ public final class F16MissileResourceContractTest {
                 "canopy");
         checkViewAboveCanopy(cannon, canopy, "cannon view point is above F16 canopy geometry");
         checkViewAboveCanopy(missile, canopy, "missile view point is above F16 canopy geometry");
-        check(missile.getAsJsonObject("ShootPos").getAsJsonArray("ShootPositionForHud").toString()
-                .equals("[0,2.2,0.2]"), "HUD shooting position unchanged");
+        check(missile.getAsJsonObject("ShootPos").getAsJsonArray("ShootPositionForHud")
+                .equals(cannon.getAsJsonObject("ShootPos").getAsJsonArray("Positions").get(0)), "one HUD origin");
+        check(missile.getAsJsonObject("ShootPos").getAsJsonArray("ShootDirectionForHud")
+                .equals(cannon.getAsJsonObject("ShootPos").getAsJsonArray("ShootDirectionForHud")), "one HUD direction");
+        check(cannon.getAsJsonObject("ShootPos").getAsJsonArray("ShootDirectionForHud")
+                .equals(cannon.getAsJsonObject("ShootPos").getAsJsonArray("Directions").get(0)), "HUD follows the real cannon barrel");
         String properties = Files.readString(Path.of("../../gradle.properties"));
         check(properties.contains("minecraft_version=1.20.1") && properties.contains("forge_version=47.4.0"), "platform versions");
         System.out.println("F16MissileResourceContractTest passed");
