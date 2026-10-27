@@ -6,6 +6,7 @@
   "mixins": [
     "FpvServerImpact",
     "DroneExplosionBlocks",
+    "VehicleBallisticsMixin",
     "TankAmmoGuard",
     "TankNpcSafety",
     "SbwRecruitCompatibility",
