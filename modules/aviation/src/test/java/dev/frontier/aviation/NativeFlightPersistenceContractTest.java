@@ -18,6 +18,7 @@ public final class NativeFlightPersistenceContractTest {
         corruptVersionOneFallsBackPerField();
         futureVersionRoundTrip();
         explicitStatesAndUsability();
+        repeatedSaveMatchesCanonicalWriter();
         System.out.println("Native flight persistence contracts passed");
     }
     private static void legacyRange(float idle, float max) {
@@ -94,6 +95,30 @@ public final class NativeFlightPersistenceContractTest {
         phase(EnginePhase.OFF, selected.ignition(), "legacy engine requires health and energy");
     }
     private static CompoundTag nativePower(float value) { CompoundTag tag = new CompoundTag(); tag.putFloat("Power", value); return tag; }
+    private static void repeatedSaveMatchesCanonicalWriter() throws Exception {
+        CompoundTag actual = new CompoundTag(), expected = new CompoundTag();
+        java.util.Random random = new java.util.Random(20261027L);
+        for (int tick = 0; tick < 10_000; tick++) {
+            float target = switch (tick % 19) {
+                case 0 -> -0f; case 1 -> Float.NaN; case 2 -> Float.POSITIVE_INFINITY;
+                default -> (tick % 5 == 0) ? random.nextFloat() : .75f;
+            };
+            EnginePhase phase = EnginePhase.values()[(tick / 100) % EnginePhase.values().length];
+            if (tick % 73 == 0) {
+                actual.getCompound(KEY).putString("ExtraV1", "discarded-by-canonical-writer");
+                expected.getCompound(KEY).putString("ExtraV1", "discarded-by-canonical-writer");
+            }
+            if (tick % 97 == 0) {
+                actual.getCompound(KEY).putDouble("TargetThrottle", target);
+                expected.getCompound(KEY).putDouble("TargetThrottle", target);
+            }
+            NativeFlightPersistenceData.save(actual, target, phase);
+            CompoundTag canonical = new CompoundTag();
+            canonical.putInt("Version", 1); canonical.putString("Ignition", phase.name());
+            canonical.putFloat("TargetThrottle", target); expected.put(KEY, canonical);
+            check(Arrays.equals(bytes(expected), bytes(actual)), "unchanged save must match canonical NBT at " + tick);
+        }
+    }
     private static CompoundTag versionOne(String phase, float target) {
         CompoundTag persistent = new CompoundTag(); CompoundTag data = new CompoundTag();
         data.putInt("Version", 1); data.putString("Ignition", phase); data.putFloat("TargetThrottle", target); persistent.put(KEY, data); return persistent;

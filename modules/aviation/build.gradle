@@ -41,6 +41,8 @@ def flightChecks = [
     flightSimulationScheduleTest: 'dev.frontier.aviation.control.client.FlightSimulationScheduleTest',
     flightIngressLimiterTest: 'dev.frontier.aviation.control.net.FlightIngressLimiterTest',
     flightRenderAnglesTest: 'dev.frontier.aviation.control.client.FlightRenderAnglesTest',
+    flightPredictionPerformanceTest: 'dev.frontier.aviation.control.client.FlightPredictionPerformanceTest',
+    flightBufferCodecTest: 'dev.frontier.aviation.control.net.FlightBufferCodecTest',
     flightTimingHistogramTest: 'dev.frontier.aviation.control.diagnostics.FlightTimingHistogramTest',
     f16MissileTriggerWireTest: 'dev.frontier.aviation.control.net.F16MissileTriggerWireTest',
     missileTriggerTest: 'dev.frontier.aviation.missile.MissileTriggerTest',
@@ -58,10 +60,31 @@ flightChecks.each { taskName, entryPoint ->
         dependsOn testClasses
         classpath = sourceSets.test.runtimeClasspath
         mainClass = entryPoint
+        if (taskName == 'flightPredictionPerformanceTest') args '--check-only'
         workingDir rootProject.projectDir
     }
 }
 tasks.named('check').configure { dependsOn flightChecks.keySet() }
+
+// Explicit measurement only: timing is not a flaky correctness assertion in check.
+tasks.register('flightPersistenceBenchmark', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.aviation.benchmark.FlightPersistenceBenchmark'
+    maxHeapSize = '512m'
+}
+tasks.register('flightCodecBenchmark', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.aviation.control.net.FlightCodecBenchmark'
+    maxHeapSize = '512m'
+}
+tasks.register('flightPredictionBenchmark', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.aviation.control.client.FlightPredictionPerformanceTest'
+    maxHeapSize = '512m'
+}
 
 tasks.register('f16SuspensionResourceContractTest', JavaExec) {
     dependsOn testClasses
@@ -89,6 +112,25 @@ tasks.register('flightTestJar', Jar) {
     finalizedBy 'reobfFlightTestJar'
 }
 reobf { flightTestJar {} }
+
+// Measurement helper is an opt-in separate artifact, never in releaseJars.
+sourceSets {
+    performanceTest {
+        java.srcDirs = ['src/performanceTest/java']
+        resources.srcDirs = ['src/performanceTest/resources']
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+}
+configurations.performanceTestImplementation.extendsFrom configurations.implementation
+tasks.register('flightPerformanceTestJar', Jar) {
+    dependsOn tasks.named('performanceTestClasses')
+    archiveFileName = 'frontier-flight-performance-test.jar'
+    destinationDirectory = layout.buildDirectory.dir('flight-tests')
+    from sourceSets.performanceTest.output
+    finalizedBy 'reobfFlightPerformanceTestJar'
+}
+reobf { flightPerformanceTestJar {} }
 
 tasks.register('flightPredictionEvidenceDiagnosticsTest', JavaExec) {
     dependsOn testClasses

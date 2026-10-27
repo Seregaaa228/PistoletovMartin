@@ -74,12 +74,12 @@ public final class FlightNetwork {
     }
     private static FlightWireCodec.Request read(FriendlyByteBuf buffer, FlightWireCodec.Operation expected) {
         try {
-            FlightWireCodec.Request request = FlightWireCodec.decodeRequest(buffer.readByteArray(FlightWireCodec.MAX_BYTES));
-            if (request.operation() != expected || buffer.isReadable()) throw new IllegalArgumentException("wrong packet operation/trailing bytes");
+            FlightWireCodec.Request request = FlightBufferCodec.decodeRequest(buffer);
+            if (request.operation() != expected) throw new IllegalArgumentException("wrong packet operation");
             return request;
         } catch (IllegalArgumentException failure) { throw new DecoderException("Malformed flight request", failure); }
     }
-    private static void write(FriendlyByteBuf buffer, FlightWireCodec.Request request) { buffer.writeByteArray(FlightWireCodec.encodeRequest(request)); }
+    private static void write(FriendlyByteBuf buffer, FlightWireCodec.Request request) { FlightBufferCodec.encodeRequest(buffer, request); }
     private static void handle(FlightWireCodec.Request request, Supplier<NetworkEvent.Context> source) {
         NetworkEvent.Context context = source.get();
         ServerPlayer sender = context.getSender();
@@ -145,11 +145,10 @@ public final class FlightNetwork {
         static void handle(Release packet, Supplier<NetworkEvent.Context> context) { FlightNetwork.handle(packet.request, context); }
     }
     public record Snapshot(FlightWireCodec.Reply reply) {
-        static void encode(Snapshot packet, FriendlyByteBuf buffer) { buffer.writeByteArray(FlightWireCodec.encodeReply(packet.reply)); }
+        static void encode(Snapshot packet, FriendlyByteBuf buffer) { FlightBufferCodec.encodeReply(buffer, packet.reply); }
         static Snapshot decode(FriendlyByteBuf buffer) {
             try {
-                FlightWireCodec.Reply reply = FlightWireCodec.decodeReply(buffer.readByteArray(FlightWireCodec.MAX_BYTES));
-                if (buffer.isReadable()) throw new IllegalArgumentException("trailing bytes"); return new Snapshot(reply);
+                return new Snapshot(FlightBufferCodec.decodeReply(buffer));
             } catch (IllegalArgumentException failure) { throw new DecoderException("Malformed flight snapshot", failure); }
         }
         static void handle(Snapshot packet, Supplier<NetworkEvent.Context> source) {

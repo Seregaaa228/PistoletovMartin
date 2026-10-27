@@ -26,7 +26,11 @@ public final class FlightPrediction {
         long acknowledged = telemetry.acknowledgedSequence();
         // ACK covers the completed prefix, including frames merged or superseded on the server.
         // World clocks can differ; comparing them would replay acknowledged input.
-        frames.removeIf(frame -> frame.command.sequence() <= acknowledged);
+        // Client commands are appended in sequence order. ACK is the completed
+        // prefix, so retire from the head without scanning the retained tail.
+        while (!frames.isEmpty() && frames.peekFirst().command.sequence() <= acknowledged) {
+            frames.removeFirst();
+        }
         if (FlightDiagnostics.ENABLED) FlightDiagnostics.snapshot(frames.size());
         for (Frame frame : frames) {
             state = frame.limits.constrain(FlightControlModel.step(profile, state, frame.command, frame.environment).state());
@@ -81,7 +85,14 @@ public final class FlightPrediction {
         return Math.max(-45, Math.min(45, FlightControlModel.wrapDegrees(from - to)));
     }
     public static FlightState attitude(FlightState source, float pitch, float yaw, float roll) {
-        return new FlightState(pitch, FlightControlModel.wrapDegrees(yaw), FlightControlModel.wrapDegrees(roll),
+        float wrappedYaw = FlightControlModel.wrapDegrees(yaw);
+        float wrappedRoll = FlightControlModel.wrapDegrees(roll);
+        if (Float.floatToIntBits(source.pitch()) == Float.floatToIntBits(pitch)
+            && Float.floatToIntBits(source.yaw()) == Float.floatToIntBits(wrappedYaw)
+            && Float.floatToIntBits(source.roll()) == Float.floatToIntBits(wrappedRoll)) {
+            return source;
+        }
+        return new FlightState(pitch, wrappedYaw, wrappedRoll,
             source.pitchRate(), source.yawRate(), source.rollRate(), source.targetThrottle(), source.effectivePower(),
             source.enginePhase(), source.phaseTicks(), source.spool(), source.gearDown(), source.hover(), source.throttleHoldTicks());
     }

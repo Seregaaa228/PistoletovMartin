@@ -1,0 +1,14 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+[[mods]]
+modId="frontier_flight_performance_test"
+version="1"
+displayName="Frontier isolated flight performance probe"
+description="Explicit opt-in measurements in a newly created test profile. Never shipped."
+[[dependencies.frontier_flight_performance_test]]
+modId="frontier_aviation"
+mandatory=true
+versionRange="[1.1.0]"
+ordering="AFTER"
+side="BOTH"

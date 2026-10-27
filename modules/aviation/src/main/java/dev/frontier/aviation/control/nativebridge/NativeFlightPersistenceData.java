@@ -2,6 +2,9 @@ package dev.frontier.aviation.control.nativebridge;
 
 import dev.frontier.aviation.control.EnginePhase;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.FloatTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
 /** NBT migration policy, isolated from entity/world initialization for contract checks. */
@@ -42,7 +45,20 @@ public final class NativeFlightPersistenceData {
     }
     /** An older mod never rewrites a version it cannot interpret, including on later ticks. */
     public static void save(CompoundTag persistent, float targetThrottle, EnginePhase ignition) {
-        if (unknownVersion(persistent.getCompound(KEY))) return;
+        if (persistent.get(KEY) instanceof CompoundTag previous) {
+            Tag version = previous.get("Version");
+            if (version instanceof IntTag value && value.getAsInt() != 1) return;
+            // Only update the canonical three-field v1 compound in place.
+            // Unknown versions stay intact; malformed/extended v1 is rewritten.
+            if (previous.size() == 3 && version instanceof IntTag value && value.getAsInt() == 1
+                    && previous.get("Ignition") instanceof StringTag phase
+                    && previous.get("TargetThrottle") instanceof FloatTag throttle) {
+                if (!phase.getAsString().equals(ignition.name())) previous.putString("Ignition", ignition.name());
+                if (Float.floatToIntBits(throttle.getAsFloat()) != Float.floatToIntBits(targetThrottle))
+                    previous.putFloat("TargetThrottle", targetThrottle);
+                return;
+            }
+        }
         CompoundTag data = new CompoundTag();
         data.putInt("Version", 1);
         data.putString("Ignition", ignition.name());
