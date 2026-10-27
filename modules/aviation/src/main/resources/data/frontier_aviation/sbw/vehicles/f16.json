@@ -52,7 +52,7 @@
     }
   ],
   "MouseSensitivity": 0.25,
-  "PassengerRenderScale": 0.75,
+  "PassengerRenderScale": 0.55,
   "Seats": [
     {
       "IsEnclosed": true,
@@ -102,7 +102,8 @@
       },
       "HasThermalImaging": true,
       "Weapons": [
-        "Cannon"
+        "Cannon",
+        "Missile"
       ]
     }
   ],
@@ -156,6 +157,94 @@
       "Magazine": 500,
       "AutoReload": false,
       "ReloadTypes": []
+    },
+    "Missile": {
+      "Icon": "superbwarfare:textures/overlay/vehicle/weapon/icons/agm_65.png",
+      "DefaultZoom": 1.25,
+      "UseNacelleCamera": true,
+      "DefaultFireMode": "Semi",
+      "AvailableFireModes": "Semi",
+      "Magazine": 2,
+      "EmptyReloadTime": 200,
+      "Projectile": "superbwarfare:agm_65",
+      "Name": "weapon.superbwarfare.agm_65_missile",
+      "Damage": 1100,
+      "ExplosionDamage": 180,
+      "ExplosionRadius": 12,
+      "AddShooterDeltaMovement": true,
+      "Velocity": 1.05,
+      "ProjectileLife": 3600,
+      "SeekWeaponInfo": {
+        "SeekDirection": "ClientCamera",
+        "SeekRange": 256,
+        "SeekAngle": 20,
+        "SeekTime": 10,
+        "MaxTargetHeight": 32,
+        "MinTargetSize": 0.9,
+        "OnlyLockBlock": true
+      },
+      "ProjectileDummyInfo": {
+        "Offset": [
+          0,
+          -0.65,
+          -1.85
+        ],
+        "Rotate": [
+          0,
+          0,
+          0
+        ],
+        "Scale": [
+          0.75,
+          0.75,
+          0.75
+        ]
+      },
+      "AmmoType": [
+        {
+          "Ammo": "superbwarfare:large_anti_ground_missile",
+          "ShouldUnload": false
+        }
+      ],
+      "ShootPos": {
+        "Transform": "Vehicle",
+        "ShootPositionForHud": [
+          0,
+          2.2,
+          0.2
+        ],
+        "Positions": [
+          [
+            3.4,
+            2.2,
+            0.2
+          ],
+          [
+            -3.4,
+            2.2,
+            0.2
+          ]
+        ],
+        "BoundUpWithAmmoAmount": true,
+        "ViewPosition": [
+          0,
+          2.2,
+          0.2
+        ]
+      },
+      "SoundInfo": {
+        "Fire1P": "superbwarfare:bomb_release",
+        "Fire3P": "superbwarfare:bomb_release",
+        "VehicleReload3p": "superbwarfare:bomb_reload",
+        "VehicleReloadSoundTime": 11,
+        "Change": "superbwarfare:into_missile",
+        "Locking": "superbwarfare:missile_locking",
+        "Locked": "superbwarfare:missile_locked"
+      },
+      "Crosshair": "@AirCraftMissile",
+      "CrosshairZooming": "@AirCraftNacelle",
+      "CrosshairColor": "0x66FF00",
+      "SoundRadius": 8
     }
   },
   "UpStep": 1.1,

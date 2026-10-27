@@ -5,6 +5,9 @@ import com.atsuishio.superbwarfare.client.renderer.entity.GeoVehicleRenderer;
 import com.github.mcmodderanchor.simplebedrockmodel.v2.common.model.runtime.BoneState;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import dev.frontier.aviation.client.F16SuspensionManager;
+import dev.frontier.aviation.client.F16ControlSurfaceManager;
+import dev.frontier.aviation.client.F16ControlSurfaces;
 import dev.sbw.deepstrike.client.ModelRenderer;
 import dev.sbw.deepstrike.game.MissileKind;
 import dev.sbw.deepstrike.model.ModelAssets;
@@ -32,6 +35,22 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
             bone.visible = progress < 0.999F;
             bone.rotation.rotateX((float)Math.toRadians(name.equals("gear_nose") ? -88 : 82) * fold);
         }
+        if (AircraftProfile.of(plane) == AircraftProfile.F16) {
+            F16ControlSurfaces.Axes surfaces = F16ControlSurfaceManager.surfaces(plane, partial);
+            rotateSurface(instance, "f16_aileron_left", 25 * surfaces.roll(), false);
+            rotateSurface(instance, "f16_aileron_right", -25 * surfaces.roll(), false);
+            rotateSurface(instance, "f16_elevator_left", 25 * surfaces.pitch(), false);
+            rotateSurface(instance, "f16_elevator_right", 25 * surfaces.pitch(), false);
+            rotateSurface(instance, "f16_rudder", 25 * surfaces.yaw(), true);
+            float compression = F16SuspensionManager.compression(plane, partial);
+            for (String name : GEAR) {
+                BoneState suspension = instance.getBone(name + "_suspension");
+                if (suspension != null) suspension.y = suspension.definition().bindY() + compression;
+                BoneState wheel = instance.getBone(name + "_wheel");
+                if (wheel != null) wheel.rotation.rotateX(
+                    F16SuspensionManager.wheelAngle(plane, partial, name.equals("gear_nose")));
+            }
+        }
         // Opaque low-poly canopy remains visible externally, while the local
         // first-person pilot gets a clear runway/HUD rather than its inner faces.
         BoneState canopy = instance.getBone("canopy");
@@ -40,6 +59,14 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
             canopy.visible = !(mc.player != null && mc.player.getVehicle() == plane
                     && mc.options.getCameraType().isFirstPerson());
         }
+    }
+
+    private static void rotateSurface(VehicleModelInstance instance, String name, float degrees, boolean vertical) {
+        BoneState bone = instance.getBone(name);
+        if (bone == null) return;
+        float radians = (float) Math.toRadians(degrees);
+        if (vertical) bone.rotation.rotateY(radians);
+        else bone.rotation.rotateX(radians);
     }
 
     @Override

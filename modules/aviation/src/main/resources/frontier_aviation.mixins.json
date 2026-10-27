@@ -4,6 +4,15 @@
   "package": "dev.frontier.aviation.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "FlightNativePhysics",
+    "FlightNativeEndTick",
+    "FlightNativePersistence",
+    "FlightSu24Throttle",
+    "F16MissileFire",
+    "F16MissileQueuedShot",
+    "FlightTomEngineSound",
+    "FlightServerMovementGuard",
+    "FlightServerMouseGuard",
     "FreshAircraftDeployment",
     "AuthorizeAircraftCannon",
     "ControlledAircraftCannon",
@@ -19,6 +28,15 @@
     "ManualIronDomeLaunch"
   ],
   "client": [
+    "FlightClientMouseCapture",
+    "FlightClientMousePackets",
+    "FlightClientMovementPackets",
+    "FlightClientAttitude",
+    "FlightClientKeyConflicts",
+    "FlightCuriosKeyConflict",
+    "FlightNativeHudKeys",
+    "FlightNativeHudText",
+    "FlightMouseInvoker",
     "SkipNativeAircraftLights",
     "AircraftMapIdentity"
   ],

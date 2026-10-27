@@ -26,3 +26,96 @@ tasks.register('sweptAircraftMotionTest', JavaExec) {
     mainClass = 'dev.frontier.aviation.impact.SweptAircraftMotionTest'
 }
 tasks.named('check').configure { dependsOn 'aircraftImpactRulesTest', 'cannonImpactRulesTest', 'sweptAircraftBoxTest', 'sweptAircraftMotionTest' }
+
+def flightChecks = [
+    f16ControlSurfacesTest: 'dev.frontier.aviation.client.F16ControlSurfacesTest',
+    f16SuspensionTest: 'dev.frontier.aviation.client.F16SuspensionTest',
+    f16WheelSpinTest: 'dev.frontier.aviation.client.F16WheelSpinTest',
+    flightControlModelTest: 'dev.frontier.aviation.control.FlightControlModelTest',
+    flightAuthorityTest: 'dev.frontier.aviation.control.server.FlightAuthorityTest',
+    flightPacketCodecTest: 'dev.frontier.aviation.control.net.FlightPacketCodecTest',
+    flightClientStateTest: 'dev.frontier.aviation.control.client.FlightClientStateTest',
+    flightInputStabilityTest: 'dev.frontier.aviation.control.client.FlightInputStabilityTest',
+    flightPredictionStabilityTest: 'dev.frontier.aviation.control.client.FlightPredictionStabilityTest',
+    flightPredictionEvidenceTest: 'dev.frontier.aviation.control.client.FlightPredictionEvidenceTest',
+    flightSimulationScheduleTest: 'dev.frontier.aviation.control.client.FlightSimulationScheduleTest',
+    flightIngressLimiterTest: 'dev.frontier.aviation.control.net.FlightIngressLimiterTest',
+    flightRenderAnglesTest: 'dev.frontier.aviation.control.client.FlightRenderAnglesTest',
+    nativeFlightHooksContractTest: 'dev.frontier.aviation.NativeFlightHooksContractTest',
+    nativeFlightPersistenceContractTest: 'dev.frontier.aviation.NativeFlightPersistenceContractTest',
+    nativeFlightPacketHooksContractTest: 'dev.frontier.aviation.NativeFlightPacketHooksContractTest',
+    nativeFlightBoostContractTest: 'dev.frontier.aviation.NativeFlightBoostContractTest',
+    f16MissileHookContractTest: 'dev.frontier.aviation.F16MissileHookContractTest',
+    missileTargetRulesTest: 'dev.frontier.aviation.missile.MissileTargetRulesTest',
+    nativeFlightHudHooksContractTest: 'dev.frontier.aviation.NativeFlightHudHooksContractTest',
+    nativeFlightHudTextContractTest: 'dev.frontier.aviation.NativeFlightHudTextContractTest'
+]
+flightChecks.each { taskName, entryPoint ->
+    tasks.register(taskName, JavaExec) {
+        dependsOn testClasses
+        classpath = sourceSets.test.runtimeClasspath
+        mainClass = entryPoint
+        workingDir rootProject.projectDir
+    }
+}
+tasks.named('check').configure { dependsOn flightChecks.keySet() }
+
+tasks.register('f16SuspensionResourceContractTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.aviation.client.F16SuspensionResourceContractTest'
+    workingDir project.projectDir
+}
+tasks.named('check').configure { dependsOn 'f16SuspensionResourceContractTest' }
+
+// Explicit opt-in fixture; not part of production JAR or releaseJars.
+sourceSets {
+    flightTest {
+        java.srcDirs = ['src/flightTest/java']
+        resources.srcDirs = ['src/flightTest/resources']
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+}
+configurations.flightTestImplementation.extendsFrom configurations.implementation
+tasks.register('flightTestJar', Jar) {
+    dependsOn tasks.named('flightTestClasses')
+    archiveFileName = 'frontier-flight-test.jar'
+    destinationDirectory = layout.buildDirectory.dir('flight-tests')
+    from sourceSets.flightTest.output
+    finalizedBy 'reobfFlightTestJar'
+}
+reobf { flightTestJar {} }
+
+tasks.register('flightPredictionEvidenceDiagnosticsTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.aviation.control.client.FlightPredictionEvidenceTest'
+    systemProperty 'frontier.flightDiagnostics', 'true'
+}
+tasks.named('check').configure { dependsOn 'flightPredictionEvidenceDiagnosticsTest' }
+
+['disabled', 'enabled'].each { mode ->
+    def taskName = "flightDiagnostics${mode.capitalize()}Test"
+    tasks.register(taskName, JavaExec) {
+        dependsOn testClasses
+        classpath = sourceSets.test.runtimeClasspath
+        mainClass = 'dev.frontier.aviation.control.diagnostics.FlightDiagnosticsTest'
+        if (mode == 'enabled') {
+            systemProperty 'frontier.flightDiagnostics', 'true'
+            args 'enabled'
+        }
+    }
+    tasks.named('check').configure { dependsOn taskName }
+}
+
+// The real model-baker regression test runs against the same pinned nested
+// SBW libraries used at compile time; these are never packaged into our jar.
+configurations.testImplementation.extendsFrom(configurations.compileOnly)
+
+tasks.register('f16MissileResourceContractTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.aviation.F16MissileResourceContractTest'
+}
+tasks.named('check').configure { dependsOn 'f16MissileResourceContractTest' }
