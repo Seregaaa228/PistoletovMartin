@@ -152,6 +152,11 @@
           0,
           -0.03,
           1
+        ],
+        "ViewPosition": [
+          0,
+          3.9,
+          3.8
         ]
       },
       "Magazine": 500,
@@ -162,8 +167,9 @@
       "Icon": "superbwarfare:textures/overlay/vehicle/weapon/icons/agm_65.png",
       "DefaultZoom": 1.25,
       "UseNacelleCamera": true,
-      "DefaultFireMode": "Semi",
-      "AvailableFireModes": "Semi",
+      "DefaultFireMode": "Auto",
+      "AvailableFireModes": "Auto",
+      "RPM": 60,
       "Magazine": 2,
       "EmptyReloadTime": 200,
       "Projectile": "superbwarfare:agm_65",
@@ -226,10 +232,14 @@
           ]
         ],
         "BoundUpWithAmmoAmount": true,
+        "Directions": [
+          [0, 0, 1]
+        ],
+        "ShootDirectionForHud": [0, 0, 1],
         "ViewPosition": [
           0,
-          2.2,
-          0.2
+          3.9,
+          3.8
         ]
       },
       "SoundInfo": {

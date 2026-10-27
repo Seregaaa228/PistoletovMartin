@@ -516,12 +516,27 @@ service; a client snapshot is never accepted as authority.
 
 Use a new dedicated SimpleChannel `frontier_aviation:flight_controls`, with
 exact-version acceptance combining Aviation artifact version and protocol
-revision3 (for this branch `1.1.0:flight3`). Do not renumber existing messages or
+revision4 (for this branch `1.1.0:flight4`). Do not renumber existing messages or
 modify other mod channels. Own message IDs: 0 acquire C2S, 1 command C2S,
-2 release C2S, 3 snapshot S2C. Acquire carries dimension ID, entity ID and UUID;
+2 release C2S, 3 snapshot S2C, 4 F16 missile trigger C2S. Acquire carries dimension ID, entity ID and UUID;
 command/release carries vehicle UUID and epoch (controller is packet sender).
 Snapshot carries every FlightSnapshot component including explicit roll/rates,
 targetThrottle, effectivePower, phase/spool, server tick and command ack.
+
+Message 4 adds a bounded trigger for one short click or a two-missile salvo.
+It carries vehicle UUID, lease epoch, count (1 or 2), a target-presence byte,
+and optional finite target coordinates as three doubles. Its exact payload
+size is 26 or 50 bytes. It shares the connection's ingress budget and reset
+policy with the control stream. Server ownership/epoch is checked before
+dispatch, then the F16 launcher validates seat, permissions, magazine and a
+20-tick cooldown. A supplied target retains ground-ray validation; a missing
+target permits native unguided launch along the vehicle's forward axis.
+The client emits a single action on release before 300 ms, or a single salvo
+at/after 300 ms. Continued holding cannot repeat it. Context loss cancels a
+pending press until release. A salvo needs two loaded rounds; each native shot
+revalidates its pilot and consumes one round. Lifecycle cancellation or native
+shoot-event cancellation can stop queued shots; rounds are never reserved or
+consumed by the client.
 
 The standalone codec is `control.net.FlightWireCodec`, using DataInput/DataOutput
 so tests need no Forge runtime. E fixes its exact method surface in its own files;

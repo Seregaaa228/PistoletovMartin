@@ -28,6 +28,8 @@
     "ManualIronDomeLaunch"
   ],
   "client": [
+    "F16MissileWindowActive",
+    "F16MissileTriggerInput",
     "FlightClientMouseCapture",
     "FlightClientMousePackets",
     "FlightClientMovementPackets",

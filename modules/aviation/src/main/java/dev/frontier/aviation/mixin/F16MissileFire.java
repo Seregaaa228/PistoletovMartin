@@ -3,6 +3,7 @@ package dev.frontier.aviation.mixin;
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity;
 import dev.frontier.aviation.AircraftProfile;
 import dev.frontier.aviation.missile.MissileTargetRules;
+import dev.frontier.aviation.missile.F16MissileLauncher;
 import dev.sbw.deepstrike.vehicle.Su24mEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,7 +23,7 @@ import java.util.UUID;
 
 /** Only the F-16's selected missile may bypass DSM's cannon-only override. */
 @Mixin(value = Su24mEntity.class, remap = false)
-public abstract class F16MissileFire extends VehicleEntity {
+public abstract class F16MissileFire extends VehicleEntity implements F16MissileLauncher {
     @Unique private long aviation$lastMissileTick = Long.MIN_VALUE;
     @Unique private final MissileTargetRules.AttemptLimiter aviation$attempts = new MissileTargetRules.AttemptLimiter();
 
@@ -65,16 +66,28 @@ public abstract class F16MissileFire extends VehicleEntity {
     }
 
     @Unique private void aviation$launch(LivingEntity pilot, Vec3 claimed) {
-        if (!(pilot instanceof ServerPlayer serverPilot) || level().isClientSide || !aviation$selectedMissile(pilot)
-                || !((Su24mEntity) (Object) this).canOperate(serverPilot, true)
+        if (pilot instanceof ServerPlayer serverPilot) aviation$fireMissiles(serverPilot, 1, claimed);
+    }
+
+    @Override
+    public void aviation$fireMissiles(ServerPlayer pilot, int count, Vec3 claimed) {
+        var gun = getGunData("Missile");
+        if ((count != 1 && count != 2) || level().isClientSide || !aviation$selectedMissile(pilot)
+                || !((Su24mEntity) (Object) this).canOperate(pilot, true)
+                || isRemoved() || isWreck() || gun == null || gun.ammo.get() < count
                 || !super.canShoot(pilot)) return;
         long now = level().getGameTime();
         if (aviation$lastMissileTick != Long.MIN_VALUE && now - aviation$lastMissileTick < 20) return;
         if (!aviation$attempts.allow(now)) return;
-        Vec3 target = aviation$groundTarget(pilot, claimed);
-        if (target == null) return;
+        // A native AGM can leave the pylon without a lock. Only a supplied
+        // ground target needs a ray check; null keeps the server's launch vector.
+        Vec3 target = claimed == null ? null : aviation$groundTarget(pilot, claimed);
+        if (claimed != null && target == null) return;
         aviation$lastMissileTick = now;
-        super.vehicleShoot(pilot, "Missile", null, target);
+        // Native work runs in submission order in the same tick. Each shot
+        // reads the remaining magazine to choose its pylon, revalidates the
+        // pilot and consumes its own round in GunData.shoot.
+        for (int shot = 0; shot < count; shot++) super.vehicleShoot(pilot, "Missile", null, target);
     }
 
     /** The packet point is a proposal: verify range, sector and the first server-side solid hit. */

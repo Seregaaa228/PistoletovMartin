@@ -2,6 +2,7 @@ package dev.frontier.aviation.control.net;
 
 import dev.frontier.aviation.control.*;
 import dev.frontier.aviation.control.server.FlightControlService;
+import dev.frontier.aviation.missile.F16MissileLauncher;
 import io.netty.handler.codec.DecoderException;
 import java.util.*;
 import java.util.function.Consumer;
@@ -10,12 +11,13 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.*;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 /** Server-authorized flight intentions. Common code never links a Minecraft client class. */
 public final class FlightNetwork {
-    public static final String PROTOCOL = "1.1.0:flight3";
+    public static final String PROTOCOL = "1.1.0:flight4";
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
         new ResourceLocation("frontier_aviation", "flight_controls"), () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
     private static Consumer<FlightSnapshot> clientReceiver = ignored -> {};
@@ -33,6 +35,8 @@ public final class FlightNetwork {
         CHANNEL.registerMessage(1, Command.class, Command::encode, Command::decode, Command::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
         CHANNEL.registerMessage(2, Release.class, Release::encode, Release::decode, Release::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
         CHANNEL.registerMessage(3, Snapshot.class, Snapshot::encode, Snapshot::decode, Snapshot::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(4, MissileTrigger.class, MissileTrigger::encode, MissileTrigger::decode,
+            MissileTrigger::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
     public static void installClientReceiver(Consumer<FlightSnapshot> receiver) { clientReceiver = Objects.requireNonNull(receiver); }
     public static void requestLease(Entity vehicle) {
@@ -44,6 +48,9 @@ public final class FlightNetwork {
     }
     public static void release(ControlLease lease) {
         CHANNEL.sendToServer(new Release(new FlightWireCodec.Request(FlightWireCodec.Operation.RELEASE, null, 0, lease.vehicleId(), lease.epoch(), null)));
+    }
+    public static void fireMissiles(FlightSnapshot snapshot, int count, Vec3 target) {
+        CHANNEL.sendToServer(new MissileTrigger(snapshot.vehicleId(), snapshot.epoch(), count, target));
     }
     public static void sendSnapshot(ServerPlayer receiver, FlightSnapshot snapshot) { send(receiver, ControlStatus.OK, snapshot); }
     private static void send(ServerPlayer receiver, ControlStatus status, FlightSnapshot snapshot) {
@@ -152,6 +159,72 @@ public final class FlightNetwork {
                 if (packet.reply.snapshot() != null) clientReceiver.accept(packet.reply.snapshot());
             });
             context.setPacketHandled(true);
+        }
+    }
+
+    /** Additive message 4; the original control/snapshot formats keep their IDs and encoding. */
+    public record MissileTrigger(UUID vehicleId, long epoch, int count, Vec3 target) {
+        public MissileTrigger {
+            Objects.requireNonNull(vehicleId);
+            if (epoch <= 0 || (count != 1 && count != 2) || target != null
+                    && (!Double.isFinite(target.x) || !Double.isFinite(target.y) || !Double.isFinite(target.z)))
+                throw new IllegalArgumentException("invalid missile trigger");
+        }
+        static void encode(MissileTrigger packet, FriendlyByteBuf buffer) {
+            buffer.writeUUID(packet.vehicleId); buffer.writeLong(packet.epoch); buffer.writeByte(packet.count);
+            buffer.writeBoolean(packet.target != null);
+            if (packet.target != null) {
+                buffer.writeDouble(packet.target.x); buffer.writeDouble(packet.target.y); buffer.writeDouble(packet.target.z);
+            }
+        }
+        static MissileTrigger decode(FriendlyByteBuf buffer) {
+            try {
+                if (buffer.readableBytes() != 26 && buffer.readableBytes() != 50)
+                    throw new IllegalArgumentException("missile trigger size");
+                UUID vehicle = buffer.readUUID(); long epoch = buffer.readLong(); int count = buffer.readUnsignedByte();
+                int present = buffer.readUnsignedByte();
+                if (present > 1) throw new IllegalArgumentException("target flag");
+                Vec3 target = present == 0 ? null : new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble());
+                if (buffer.isReadable()) throw new IllegalArgumentException("trailing missile bytes");
+                return new MissileTrigger(vehicle, epoch, count, target);
+            } catch (IllegalArgumentException | IndexOutOfBoundsException error) {
+                throw new DecoderException("Malformed missile trigger", error);
+            }
+        }
+        static void handle(MissileTrigger packet, Supplier<NetworkEvent.Context> source) {
+            NetworkEvent.Context context = source.get();
+            context.setPacketHandled(true);
+            ServerPlayer sender = context.getSender();
+            if (sender == null) return;
+            FlightIngressLimiter limiter = INGRESS.computeIfAbsent(sender,
+                ignored -> new FlightIngressLimiter(32, 64, 1_000_000_000L));
+            FlightIngressLimiter.Decision admission = limiter.tryAcquire(System.nanoTime());
+            if (admission == FlightIngressLimiter.Decision.DROP) return;
+            if (admission == FlightIngressLimiter.Decision.RESET) {
+                try {
+                    context.enqueueWork(() -> {
+                        try {
+                            if (live(sender)) FlightControlService.get(sender.server)
+                                .releaseController(sender.getUUID(), ReleaseReason.REQUESTED);
+                        } finally { limiter.completeReset(); }
+                    });
+                } catch (RuntimeException failure) { limiter.completeReset(); throw failure; }
+                return;
+            }
+            try {
+                context.enqueueWork(() -> {
+                    try {
+                        if (!live(sender)) return;
+                        Entity vehicle = sender.getVehicle();
+                        if (!(vehicle instanceof F16MissileLauncher launcher)
+                                || !vehicle.getUUID().equals(packet.vehicleId)) return;
+                        FlightControlService service = FlightControlService.get(sender.server);
+                        FlightSnapshot current = service.snapshot(vehicle).orElse(null);
+                        if (current == null || current.epoch() != packet.epoch || !service.owns(sender, vehicle)) return;
+                        launcher.aviation$fireMissiles(sender, packet.count, packet.target);
+                    } finally { limiter.completeTask(); }
+                });
+            } catch (RuntimeException failure) { limiter.completeTask(); throw failure; }
         }
     }
 }
