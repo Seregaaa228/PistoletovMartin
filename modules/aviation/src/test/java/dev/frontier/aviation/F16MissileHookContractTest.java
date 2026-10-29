@@ -39,6 +39,16 @@ public final class F16MissileHookContractTest {
             int loftConstants = 0;
             for (var insn : tick.instructions) if (insn instanceof LdcInsnNode constant && Double.valueOf(.4).equals(constant.cst)) loftConstants++;
             if (loftConstants != 2) throw new AssertionError("native AGM entity/point loft branches changed");
+            ClassNode wire = new ClassNode();
+            String wireOwner = "com/atsuishio/superbwarfare/entity/projectile/WireGuideMissileEntity";
+            try (var input = file.getInputStream(file.getJarEntry(wireOwner + ".class"))) {
+                new ClassReader(input).accept(wire, 0);
+            }
+            var wireTick = wire.methods.stream().filter(method -> method.name.equals("m_8119_") && method.desc.equals("()V")).findFirst().orElseThrow();
+            long trailCalls = java.util.stream.StreamSupport.stream(wireTick.instructions.spliterator(), false)
+                .filter(insn -> insn instanceof MethodInsnNode call && call.owner.equals(wireOwner)
+                    && call.name.equals("mediumTrail") && call.desc.equals("()V")).count();
+            if (trailCalls != 1) throw new AssertionError("wire guidance hook anchor changed");
         }
         System.out.println("Pinned missile deferred-shot bytecode contract passed; runtime mixin application remains unverified");
     }

@@ -4,6 +4,8 @@ import com.atsuishio.superbwarfare.data.gun.GunData;
 import com.atsuishio.superbwarfare.data.gun.GunProp;
 import com.atsuishio.superbwarfare.data.gun.ShootParameters;
 import com.atsuishio.superbwarfare.entity.projectile.Agm65Entity;
+import com.atsuishio.superbwarfare.entity.projectile.WireGuideMissileEntity;
+import com.atsuishio.superbwarfare.entity.projectile.MissileProjectile;
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity;
 import dev.frontier.aviation.LightAviation;
 import dev.frontier.aviation.aircraft.AircraftCatalog;
@@ -32,7 +34,8 @@ import net.minecraftforge.registries.ForgeRegistries;
 @Mod.EventBusSubscriber(modid = LightAviation.ID)
 public final class ManualMissileShots {
     public static final String DIRECT_AIM = "frontierAircraftDirectAim";
-    private record Ticket(UUID vehicle, UUID pilot, long epoch, String gun, Vec3 target, Vec3 ray, UUID trackedEntity, long tick) {}
+    public static final String LOCKED_WIRE = "frontierAircraftLockedWire";
+    private record Ticket(UUID vehicle, UUID pilot, long epoch, String gun, Vec3 target, Vec3 ray, UUID trackedEntity, long tick, int station) {}
     private static final class Frame {
         final Ticket ticket;
         final boolean denied;
@@ -52,9 +55,18 @@ public final class ManualMissileShots {
         long now = plane.level().getGameTime();
         var tickets = PENDING.computeIfAbsent(plane, ignored -> new ArrayDeque<>());
         while (!tickets.isEmpty() && now - tickets.peekFirst().tick() > 4) tickets.removeFirst();
-        if (count < 1 || tickets.size() + count > 16) return false;
+        if (count < 1 || count > 2 || tickets.size() + count > 16) return false;
+        int bits = plane instanceof Su24mEntity su24 && dev.frontier.aviation.ordnance.F16Loadout.supports(plane)
+            ? dev.frontier.aviation.ordnance.F16Loadout.visualBits(su24) : 0;
+        int kind = switch (gun) { case "Missile" -> 2; case "AAMissile" -> 3;
+            case "LightAAMissile" -> 4; case "MediumAGMissile" -> 5; default -> 0; };
+        int[] order = kind == 4 ? new int[]{4, 5, 2, 3, 0, 1} : new int[]{2, 3, 0, 1};
+        int[] stations = {-1, -1};
+        int matched = 0;
+        for (int station : order) if (kind != 0 && ((bits >>> (station * 3)) & 7) == kind && matched < count)
+            stations[matched++] = station;
         for (int shot = 0; shot < count; shot++) tickets.addLast(
-            new Ticket(plane.getUUID(), pilot.getUUID(), epoch, gun, target, ray, trackedEntity, now));
+            new Ticket(plane.getUUID(), pilot.getUUID(), epoch, gun, target, ray, trackedEntity, now, stations[shot]));
         return true;
     }
 
@@ -117,9 +129,41 @@ public final class ManualMissileShots {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void projectile(EntityJoinLevelEvent event) {
-        if (!(event.getLevel() instanceof ServerLevel) || !(event.getEntity() instanceof Agm65Entity missile)) return;
+        if (!(event.getLevel() instanceof ServerLevel)) return;
         var frame = FRAMES.get().peek();
         if (frame == null || frame.ticket == null || frame.parameters == null) return;
+        if (event.getEntity() instanceof MissileProjectile projectile && frame.ticket.station() >= 0) {
+            var owner = projectile.getOwner();
+            var vehicle = ((ServerLevel) event.getLevel()).getEntity(frame.ticket.vehicle());
+            if (vehicle instanceof VehicleEntity plane && owner != null
+                    && (owner.getUUID().equals(frame.ticket.pilot()) || owner.getUUID().equals(frame.ticket.vehicle()))) {
+                int station = frame.ticket.station();
+                double[] x = {2.1, -2.1, 3.4, -3.4, 5.65625, -5.65625};
+                var point = plane.getTransformFromString("Vehicle").transformPosition(new org.joml.Vector3d(
+                    x[station], station >= 4 ? 2.6 : 2.2, station >= 4 ? 1.25 : .2));
+                projectile.setPos(point.x, point.y, point.z);
+            }
+        }
+        if (event.getEntity() instanceof WireGuideMissileEntity wire
+                && frame.ticket.gun().equals("MediumAGMissile") && frame.ticket.target() != null) {
+            var owner = wire.getOwner();
+            if (owner == null || (!owner.getUUID().equals(frame.ticket.pilot())
+                    && !owner.getUUID().equals(frame.ticket.vehicle()))) return;
+            var tag = wire.getPersistentData();
+            tag.putBoolean(LOCKED_WIRE, true);
+            tag.putDouble("frontierTargetX", frame.ticket.target().x);
+            tag.putDouble("frontierTargetY", frame.ticket.target().y);
+            tag.putDouble("frontierTargetZ", frame.ticket.target().z);
+            if (frame.ticket.trackedEntity() != null) tag.putUUID("frontierTargetEntity", frame.ticket.trackedEntity());
+            MissileAimSolution.resolve(wire.position(), frame.ticket.target()).ifPresent(solution -> {
+                double speed = Math.max(frame.parameters.data.get(GunProp.VELOCITY), wire.getDeltaMovement().length());
+                if (Double.isFinite(speed) && speed > 0)
+                    wire.shoot(solution.direction().x, solution.direction().y, solution.direction().z,
+                        (float) speed, (float) frame.parameters.spread);
+            });
+            return;
+        }
+        if (!(event.getEntity() instanceof Agm65Entity missile)) return;
         var owner = missile.getOwner();
         if (owner == null || (!owner.getUUID().equals(frame.ticket.pilot())
                 && !owner.getUUID().equals(frame.ticket.vehicle()))) return;

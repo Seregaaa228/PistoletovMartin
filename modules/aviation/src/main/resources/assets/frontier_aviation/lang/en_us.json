@@ -33,5 +33,8 @@
   "flight.frontier_aviation.denied.busy": "Autopilot has control",
   "hud.frontier_aviation.no_power": "NO POWER!",
   "hud.frontier_aviation.low_power": "LOW POWER",
-  "hud.frontier_aviation.target": "TGT"
+  "hud.frontier_aviation.target": "TGT",
+  "weapon.frontier_aviation.medium_agmissile": "Medium air-to-ground missile",
+  "weapon.frontier_aviation.large_air_missile": "Large air-to-air missile",
+  "weapon.frontier_aviation.medium_air_missile": "Medium air-to-air missile"
 }

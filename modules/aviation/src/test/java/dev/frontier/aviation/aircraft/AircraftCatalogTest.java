@@ -43,7 +43,7 @@ public final class AircraftCatalogTest {
                 check(mount.minimumIntervalTicks() >= Math.ceil(1200.0 / gun.get("RPM").getAsDouble()),
                     "intent cadence cannot exceed native RPM");
                 check(mount.kind() != WeaponKind.GUIDED_MISSILE
-                    || gun.get("Projectile").getAsString().equals("superbwarfare:agm_65"), "guided launcher matches native projectile");
+                    || gun.get("Projectile").getAsString().startsWith("superbwarfare:"), "guided launcher matches native projectile");
             }
             check(Files.isRegularFile(resources.resolve("assets/frontier_aviation/sbw/vehicles/" + id + ".json")),
                 "client model definition exists");
@@ -51,6 +51,12 @@ public final class AircraftCatalogTest {
         }
         var fighter = AircraftCatalog.find("frontier_aviation:f16").orElseThrow();
         check(fighter.weapons().find("missile").orElseThrow().maximumBurst() == 2, "F16 paired trigger");
+        check(fighter.weapons().nativeGun("AAMissile").orElseThrow().id().equals("aamissile"),
+            "large AAM native name is stable");
+        check(fighter.weapons().nativeGun("LightAAMissile").orElseThrow().id().equals("light_aamissile"),
+            "medium AAM native name is stable");
+        check(fighter.weapons().find("medium_agmissile").orElseThrow().nativeGun().equals("MediumAGMissile"),
+            "medium AGM has a stable separate native slot");
         check(AircraftCatalog.find("frontier_aviation:su25").orElseThrow().weapons().find("missile").isEmpty(),
             "cannon-only model cannot acquire another model's missile");
         check(AircraftCatalog.find("test:unknown").isEmpty(), "unknown models require a definition");

@@ -130,6 +130,20 @@
             0,
             0
           ]
+        },
+        "f16_airbrake_left": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "f16_airbrake_right": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
         }
       }
     }

@@ -7,6 +7,7 @@ import java.util.UUID;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -21,6 +22,7 @@ public final class ImpactObservations {
         final long born;
         final Vec3 expected;
         Vec3 hit;
+        UUID hitEntity;
         double maximumY;
         boolean direct;
         Trace(Entity entity, UUID owner, String type) {
@@ -39,6 +41,7 @@ public final class ImpactObservations {
                 || !FreshSystemsProfile.authorized(entity.getServer())) return;
         var type = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
         if (type == null || (!type.toString().equals("superbwarfare:agm_65")
+                && !type.toString().equals("superbwarfare:wire_guide_missile")
                 && !type.toString().equals("superbwarfare:small_cannon_shell"))) return;
         var owner = projectile.getOwner();
         if (owner == null) return;
@@ -49,6 +52,11 @@ public final class ImpactObservations {
     public static void impact(Entity projectile, BlockHitResult hit) {
         Trace trace = TRACES.get(projectile.getUUID());
         if (trace != null && trace.hit == null) trace.hit = hit.getLocation();
+    }
+
+    public static void impactEntity(Entity projectile, EntityHitResult hit) {
+        Trace trace = TRACES.get(projectile.getUUID());
+        if (trace != null) trace.hitEntity = hit.getEntity().getUUID();
     }
 
     static void sample() {

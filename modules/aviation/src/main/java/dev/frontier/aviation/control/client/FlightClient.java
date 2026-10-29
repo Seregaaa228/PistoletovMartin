@@ -49,6 +49,7 @@ public final class FlightClient implements FlightNativeHooks.Callbacks {
         registered = true;
         MinecraftForge.EVENT_BUS.register(INSTANCE);
         FlightNetwork.installClientReceiver(INSTANCE::receive);
+        FlightNetwork.installPayloadReceiver(dev.frontier.aviation.client.F16PayloadVisual::receive);
         FlightControls.installClient(INSTANCE);
     }
     public static boolean isLocalPilot() { return localVehicle() != null; }
@@ -72,6 +73,20 @@ public final class FlightClient implements FlightNativeHooks.Callbacks {
     public static PilotCommand visualInput(Entity entity) {
         return entity == localVehicle() && INSTANCE.lease != null && INSTANCE.inputActive
             ? INSTANCE.commands.visualIntent() : null;
+    }
+    /** Visual brake state: local Space input when piloting, replicated telemetry otherwise. */
+    public static boolean visualAirBrake(Entity entity) {
+        if (entity == null) return false;
+        // The command buffer is populated only after the lease and prediction are
+        // ready. Read the local mapping directly so the visual signal is present
+        // immediately while piloting, including during lease acquisition.
+        if (entity == localVehicle()) return INSTANCE.inputActive && FlightKeys.BRAKE.isDown();
+        if (NATIVE.pilot(entity) == null) return false;
+        PilotCommand input = visualInput(entity);
+        if (input != null) return input.brake();
+        Tracked entry = INSTANCE.tracked.get(entity.getUUID());
+        return entry != null && entry.entity == entity && entry.snapshot != null
+            && entry.snapshot.telemetry().brake();
     }
     public static boolean hasVisualPilot(Entity entity) { return NATIVE.pilot(entity) != null; }
     /** Last client-side flight state for any tracked aircraft, including remote pilots. */

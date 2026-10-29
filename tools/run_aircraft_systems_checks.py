@@ -20,7 +20,7 @@ import time
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
-SCENARIOS = ('aim0', 'aim1', 'aim2', 'aim3', 'destruction', 'npc', 'gesture', 'gear', 'seed_wreck', 'restart_wreck')
+SCENARIOS = ('aim0', 'aim1', 'aim2', 'aim3', 'destruction', 'npc', 'air_to_air', 'ground_homing', 'moving_ground_homing', 'gesture', 'gear', 'seed_wreck', 'restart_wreck', 'visual_loadout')
 
 
 def sha(path: Path) -> str:
@@ -29,7 +29,7 @@ def sha(path: Path) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--scenarios', nargs='+', choices=SCENARIOS, default=list(SCENARIOS[:6]))
+    parser.add_argument('--scenarios', nargs='+', choices=SCENARIOS, default=list(SCENARIOS[:7]))
     parser.add_argument('--resume-profile', type=Path, help='Restart a profile created by this runner; never a user profile')
     parser.add_argument('--baseline-aviation', action='store_true', help='Use the frozen pre-change aviation JAR to seed a real old wreck')
     parser.add_argument('--reload', action='store_true', help='Complete a real datapack reload before scenarios')
@@ -191,7 +191,8 @@ def main() -> int:
         report_path = profile / 'aircraft-systems-results.json'
         for scenario in args.scenarios:
             update('running actual scenario ' + scenario)
-            for progress_file in ('aircraft-gesture-progress.json', 'aircraft-gear-progress.json', 'aircraft-gear-captured.txt'):
+            for progress_file in ('aircraft-gesture-progress.json', 'aircraft-gear-progress.json', 'aircraft-gear-captured.txt',
+                                  'aircraft-visual-progress.json', 'aircraft-visual-captured.txt', 'aircraft-visual-brake.txt', 'aircraft-render-state.json', 'aircraft-visual-client.json'):
                 (profile / progress_file).unlink(missing_ok=True)
             command('aircraft_check ' + scenario)
             performed = set()
@@ -224,13 +225,47 @@ def main() -> int:
                         call(['input', 'key', 'press', 'F5'])
                         time.sleep(1.4)
                         call(['screenshot', '--output', str(profile / 'gear-retracted.png')])
+                        (profile / 'aircraft-visual-brake.txt').write_text(manifest['runId'])
+                        call(['input', 'key', 'down', 'space'])
+                        time.sleep(1.5)
                         (profile / 'aircraft-gear-captured.txt').write_text(manifest['runId'])
-                        call(['input', 'key', 'press', 'F5']); call(['input', 'key', 'press', 'F5'])
+                visual_progress = profile / 'aircraft-visual-progress.json'
+                if scenario == 'visual_loadout' and visual_progress.exists() and 'visual' not in performed:
+                    try: progress = json.loads(visual_progress.read_text())
+                    except json.JSONDecodeError: continue
+                    if progress.get('runId') == manifest['runId'] and progress.get('stage') == 'loaded-ready':
+                        performed.add('visual')
+                        # Observer remains outside the aircraft; fixed camera
+                        # angles produce repeatable rear and side evidence.
+                        command('gamemode spectator')
+                        call(['input', 'key', 'press', 'F1'])
+                        command('tp @s 0.5 -49 -14 0 8')
+                        time.sleep(1)
+                        call(['screenshot', '--output', str(profile / 'f16-loadout-rear.png')])
+                        (profile / 'aircraft-visual-brake.txt').write_text(manifest['runId'])
+                        time.sleep(1.5)
+                        command('tp @s 0.5 -49 -14 0 8')
+                        time.sleep(.5)
+                        call(['screenshot', '--output', str(profile / 'f16-loadout-airbrake.png')])
+                        command('tp @s 15 -49 0.5 90 8')
+                        time.sleep(.7)
+                        call(['screenshot', '--output', str(profile / 'f16-loadout-side.png')])
+                        command('tp @s -5.65 -41 -7 0 45')
+                        time.sleep(.7)
+                        call(['screenshot', '--output', str(profile / 'f16-wingtip-left.png')])
+                        command('tp @s 5.65 -41 -7 0 45')
+                        time.sleep(.7)
+                        call(['screenshot', '--output', str(profile / 'f16-wingtip-right.png')])
+                        (profile / 'aircraft-visual-captured.txt').write_text(
+                            manifest['runId'] + ':rear,side,brake')
                 if report_path.is_file():
                     try:
                         report = json.loads(report_path.read_text())
                         record = report.get('scenarios', {}).get(scenario)
                         if record is not None:
+                            if scenario == 'gear':
+                                call(['input', 'key', 'up', 'space'])
+                                call(['input', 'key', 'press', 'F5']); call(['input', 'key', 'press', 'F5'])
                             result.setdefault('results', {})[scenario] = record
                             if not record.get('pass'): raise RuntimeError(scenario + ' failed: ' + json.dumps(record))
                             break
@@ -239,6 +274,9 @@ def main() -> int:
                 time.sleep(.5)
             else: raise RuntimeError('No terminal report for ' + scenario)
             call(['screenshot', '--output', str(profile / (scenario + '.png'))])
+            if scenario == 'visual_loadout':
+                command('gamemode creative')
+                call(['input', 'key', 'press', 'F1'])
         call(['input', 'key', 'press', 'ESCAPE']); call(['input', 'click', '320', '222'])
         await_screen('TitleScreen', 60)
         try: call(['input', 'click', '370', '232'])

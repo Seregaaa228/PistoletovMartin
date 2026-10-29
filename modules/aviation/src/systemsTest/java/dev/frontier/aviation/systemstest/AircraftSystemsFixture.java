@@ -54,6 +54,15 @@ public final class AircraftSystemsFixture {
                 source.sendSuccess(() -> Component.literal("Aircraft NPC scenario started"), false);
                 } catch (RuntimeException | LinkageError error) { startFailure("npc", error); }
                 return 1;
+            }))
+            .then(Commands.literal("air_to_air").executes(context -> {
+                var source = context.getSource();
+                if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
+                try {
+                    var scenario = F16AirToAirOrdnanceScenario.start(source.getPlayerOrException());
+                    begin("air_to_air", scenario::tick, scenario::result);
+                } catch (RuntimeException | LinkageError error) { startFailure("air_to_air", error); }
+                return 1;
             }));
         int[] ranges = {80, 160, 240, 160};
         float[] pitches = {0, -8, 8, 0}, banks = {0, 0, 0, 45};
@@ -82,6 +91,24 @@ public final class AircraftSystemsFixture {
                 return 1;
             }));
         }
+        command.then(Commands.literal("moving_ground_homing").executes(context -> {
+            var source = context.getSource();
+            if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
+            try {
+                var scenario = F16MovingGroundHomingScenario.start(source.getPlayerOrException());
+                begin("moving_ground_homing", scenario::tick, scenario::result);
+            } catch (RuntimeException | LinkageError error) { startFailure("moving_ground_homing", error); }
+            return 1;
+        }));
+        command.then(Commands.literal("ground_homing").executes(context -> {
+            var source = context.getSource();
+            if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
+            try {
+                var scenario = new F16GroundHomingScenario(source.getPlayerOrException());
+                begin("ground_homing", scenario::tick, scenario::result);
+            } catch (RuntimeException | LinkageError error) { startFailure("ground_homing", error); }
+            return 1;
+        }));
         command.then(Commands.literal("gesture").executes(context -> {
             var source = context.getSource();
             if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
@@ -98,6 +125,15 @@ public final class AircraftSystemsFixture {
                 var scenario = new GearScenario(source.getPlayerOrException());
                 begin("gear", scenario::tick, scenario::result);
             } catch (RuntimeException | LinkageError error) { startFailure("gear", error); }
+            return 1;
+        }));
+        command.then(Commands.literal("visual_loadout").executes(context -> {
+            var source = context.getSource();
+            if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
+            try {
+                var scenario = new F16VisualLoadoutScenario(source.getPlayerOrException());
+                begin("visual_loadout", scenario::tick, scenario::result);
+            } catch (RuntimeException | LinkageError error) { startFailure("visual_loadout", error); }
             return 1;
         }));
         event.getDispatcher().register(command);

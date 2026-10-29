@@ -12,7 +12,8 @@ public final class F16MissileResourceContractTest {
         JsonObject config = JsonParser.parseString(Files.readString(Path.of(
                 "src/main/resources/data/frontier_aviation/sbw/vehicles/f16.json"))).getAsJsonObject();
         JsonArray seatWeapons = config.getAsJsonArray("Seats").get(0).getAsJsonObject().getAsJsonArray("Weapons");
-        check(seatWeapons.toString().equals("[\"Cannon\",\"Missile\"]"), "pilot weapon order");
+        check(seatWeapons.toString().equals("[\"Cannon\",\"Missile\",\"AAMissile\",\"LightAAMissile\",\"MediumAGMissile\"]"),
+            "pilot weapon order");
         JsonObject weapons = config.getAsJsonObject("Weapons");
         JsonObject cannon = weapons.getAsJsonObject("Cannon");
         check(cannon.get("Projectile").getAsString().equals("superbwarfare:small_cannon_shell"), "cannon projectile");
@@ -53,6 +54,22 @@ public final class F16MissileResourceContractTest {
                 .equals(cannon.getAsJsonObject("ShootPos").getAsJsonArray("ShootDirectionForHud")), "one HUD direction");
         check(cannon.getAsJsonObject("ShootPos").getAsJsonArray("ShootDirectionForHud")
                 .equals(cannon.getAsJsonObject("ShootPos").getAsJsonArray("Directions").get(0)), "HUD follows the real cannon barrel");
+        checkAam(weapons.getAsJsonObject("AAMissile"), "AAMissile",
+            "superbwarfare:large_anti_air_missile", "superbwarfare:ru_9m100_missile",
+            "[[3.4,2.2,0.2],[-3.4,2.2,0.2]]");
+        checkAam(weapons.getAsJsonObject("LightAAMissile"), "LightAAMissile",
+            "superbwarfare:medium_anti_air_missile", "superbwarfare:ru_9m336_missile",
+            "[[5.65625,2.6,1.25],[-5.65625,2.6,1.25]]");
+        checkAgm(weapons.getAsJsonObject("MediumAGMissile"));
+        for (String locale : new String[]{"ru_ru", "en_us"}) {
+            JsonObject translations = JsonParser.parseString(Files.readString(Path.of(
+                "src/main/resources/assets/frontier_aviation/lang/" + locale + ".json"))).getAsJsonObject();
+            for (String name : new String[]{"AAMissile", "LightAAMissile", "MediumAGMissile"}) {
+                String key = weapons.getAsJsonObject(name).get("Name").getAsString();
+                check(translations.has(key) && !translations.get(key).getAsString().isBlank(),
+                    locale + " missing weapon translation " + key);
+            }
+        }
         String properties = Files.readString(Path.of("../../gradle.properties"));
         check(properties.contains("minecraft_version=1.20.1") && properties.contains("forge_version=47.4.0"), "platform versions");
         System.out.println("F16MissileResourceContractTest passed");
@@ -64,6 +81,43 @@ public final class F16MissileResourceContractTest {
         JsonArray view = weapon.getAsJsonObject("ShootPos").getAsJsonArray("ViewPosition");
         check(view.size() == 3 && close(view.get(0).getAsDouble(), 0)
                 && close(view.get(1).getAsDouble(), 3.9) && close(view.get(2).getAsDouble(), 3.8), message);
+    }
+    private static void checkAam(JsonObject weapon, String name, String ammoId, String projectileId,
+                                 String positions) {
+        check(weapon.get("Projectile").getAsString().equals(projectileId), name + " native projectile");
+        check(weapon.getAsJsonArray("AmmoType").get(0).getAsJsonObject().get("Ammo").getAsString().equals(ammoId),
+            name + " native ammo");
+        check(!weapon.getAsJsonArray("AmmoType").get(0).getAsJsonObject().get("ShouldUnload").getAsBoolean(),
+            name + " preserves loaded ammo on switching");
+        check(weapon.getAsJsonObject("SeekWeaponInfo").get("OnlyLockEntity").getAsBoolean()
+                && !weapon.getAsJsonObject("SeekWeaponInfo").get("OnlyLockBlock").getAsBoolean(),
+            name + " locks entities through the aircraft sight");
+        check(weapon.get("Crosshair").getAsString().equals("@AirCraftCommon")
+                && weapon.get("CrosshairZooming").getAsString().equals("@AirCraftCommon"),
+            name + " uses the aircraft reticle");
+        check(weapon.getAsJsonObject("ShootPos").getAsJsonArray("Directions").toString().equals("[[0,0,1]]"),
+            name + " launches forward");
+        check(weapon.getAsJsonObject("ShootPos").getAsJsonArray("Positions").toString().equals(positions),
+            name + " uses the assigned F-16 stations");
+    }
+    private static void checkAgm(JsonObject weapon) {
+        check(weapon.get("Projectile").getAsString().equals("superbwarfare:wire_guide_missile"),
+            "medium AGM native projectile");
+        check(weapon.getAsJsonArray("AmmoType").get(0).getAsJsonObject().get("Ammo").getAsString()
+                .equals("superbwarfare:medium_anti_ground_missile"), "medium AGM native ammo");
+        check(!weapon.getAsJsonArray("AmmoType").get(0).getAsJsonObject().get("ShouldUnload").getAsBoolean(),
+            "medium AGM preserves loaded ammo on switching");
+        JsonObject seek = weapon.getAsJsonObject("SeekWeaponInfo");
+        check(!seek.get("OnlyLockEntity").getAsBoolean() && !seek.get("OnlyLockBlock").getAsBoolean(),
+            "medium AGM accepts both target categories");
+        check(weapon.get("Crosshair").getAsString().equals("@AirCraftCommon")
+                && weapon.get("CrosshairZooming").getAsString().equals("@AirCraftCommon"),
+            "medium AGM uses the aircraft reticle");
+        JsonObject shoot = weapon.getAsJsonObject("ShootPos");
+        check(shoot.getAsJsonArray("Directions").toString().equals("[[0,0,1]]"),
+            "medium AGM launches forward");
+        check(shoot.getAsJsonArray("Positions").toString().equals("[[3.4,2.2,0.2],[-3.4,2.2,0.2]]"),
+            "medium AGM uses F-16 underwing stations");
     }
     private static JsonObject findBone(JsonObject model, String name) {
         for (var element : model.getAsJsonArray("minecraft:geometry")) {

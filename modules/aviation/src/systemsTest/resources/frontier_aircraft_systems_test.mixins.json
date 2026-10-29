@@ -3,6 +3,7 @@
   "minVersion": "0.8",
   "package": "dev.frontier.aviation.systemstest.mixin",
   "compatibilityLevel": "JAVA_17",
-  "mixins": ["NativeExplosionProbe", "MissileImpactProbe", "CannonImpactProbe"],
+  "mixins": ["NativeExplosionProbe", "MissileImpactProbe", "EntityImpactProbe", "CannonImpactProbe"],
+  "client": ["F16RenderProbe"],
   "injectors": {"defaultRequire": 1}
 }

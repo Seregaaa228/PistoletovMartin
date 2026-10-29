@@ -21,10 +21,11 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 /** Server-authorized flight intentions. Common code never links a Minecraft client class. */
 public final class FlightNetwork {
-    public static final String PROTOCOL = "1.1.0:flight4";
+    public static final String PROTOCOL = "1.1.0:flight5";
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
         new ResourceLocation("frontier_aviation", "flight_controls"), () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
     private static Consumer<FlightSnapshot> clientReceiver = ignored -> {};
+    private static Consumer<Payload> payloadReceiver = ignored -> {};
     private static boolean registered;
     // Server-owned rate windows are per connection identity and cleared by lifecycle events.
     private static final Map<UUID, Window> ACQUIRE_WINDOWS = new HashMap<>();
@@ -41,8 +42,40 @@ public final class FlightNetwork {
         CHANNEL.registerMessage(3, Snapshot.class, Snapshot::encode, Snapshot::decode, Snapshot::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(4, MissileTrigger.class, MissileTrigger::encode, MissileTrigger::decode,
             MissileTrigger::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(5, Payload.class, Payload::encode, Payload::decode,
+            Payload::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
     public static void installClientReceiver(Consumer<FlightSnapshot> receiver) { clientReceiver = Objects.requireNonNull(receiver); }
+    public static void installPayloadReceiver(Consumer<Payload> receiver) { payloadReceiver = Objects.requireNonNull(receiver); }
+    public static void sendPayload(ServerPlayer player, Entity entity, int bits) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Payload(entity.getUUID(), bits));
+    }
+    public static void broadcastPayload(Entity entity, int bits) {
+        CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), new Payload(entity.getUUID(), bits));
+    }
+
+    public record Payload(UUID entity, int bits) {
+        public Payload {
+            Objects.requireNonNull(entity);
+            if (bits < 0 || (bits >>> 18) != 0) throw new IllegalArgumentException("invalid payload");
+            for (int i = 0; i < 6; i++) if (((bits >>> (i * 3)) & 7) > 5)
+                throw new IllegalArgumentException("invalid station");
+        }
+        static void encode(Payload packet, FriendlyByteBuf buffer) { buffer.writeUUID(packet.entity); buffer.writeInt(packet.bits); }
+        static Payload decode(FriendlyByteBuf buffer) {
+            try {
+                if (buffer.readableBytes() != 20) throw new IllegalArgumentException("payload size");
+                return new Payload(buffer.readUUID(), buffer.readInt());
+            } catch (IllegalArgumentException | IndexOutOfBoundsException failure) {
+                throw new DecoderException("Malformed aircraft payload", failure);
+            }
+        }
+        static void handle(Payload packet, Supplier<NetworkEvent.Context> source) {
+            var context = source.get();
+            context.enqueueWork(() -> payloadReceiver.accept(packet));
+            context.setPacketHandled(true);
+        }
+    }
     public static void requestLease(Entity vehicle) {
         CHANNEL.sendToServer(new Acquire(new FlightWireCodec.Request(FlightWireCodec.Operation.ACQUIRE,
             vehicle.level().dimension().location().toString(), vehicle.getId(), vehicle.getUUID(), 0, null)));

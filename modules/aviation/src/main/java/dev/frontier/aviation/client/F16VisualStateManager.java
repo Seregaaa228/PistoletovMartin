@@ -25,6 +25,7 @@ public final class F16VisualStateManager {
 
     private static final class Entry {
         final F16ControlSurfaces surfaces = new F16ControlSurfaces();
+        final F16AirBrakeSmoothing airBrake = new F16AirBrakeSmoothing();
         final F16Suspension suspension = new F16Suspension();
         final F16WheelSpin wheels = new F16WheelSpin();
         long lastSeen;
@@ -36,6 +37,7 @@ public final class F16VisualStateManager {
             F16ControlSurfaces.Axes rates = flightState == null ? null
                 : new F16ControlSurfaces.Axes(flightState.rollRate(), flightState.pitchRate(), flightState.yawRate());
             surfaces.tick(input, rates, plane.getRoll(), plane.getXRot(), plane.getYRot());
+            airBrake.tick(FlightClient.visualAirBrake(plane));
 
             boolean gearDown = plane.landingGearProgress(1.0f) <= 0.001f;
             suspension.tick(plane.onGround(), gearDown, plane.getDeltaMovement().y);
@@ -80,6 +82,23 @@ public final class F16VisualStateManager {
     static float wheelAngle(Su24mEntity plane, float partialTick, boolean nose) {
         Entry entry = STATES.get(plane);
         return entry == null ? 0 : entry.wheels.angle(partialTick, nose);
+    }
+
+    static float airBrake(Su24mEntity plane, float partialTick) {
+        Entry entry = STATES.get(plane);
+        return entry == null ? 0 : entry.airBrake.at(partialTick);
+    }
+
+    /** One STATES lookup for every F16 value the renderer needs for a given frame, instead of one per value. */
+    public record RenderState(F16ControlSurfaces.Axes surfaces, float airBrake, float compression,
+                               float noseWheelAngle, float mainWheelAngle) {}
+
+    public static RenderState renderState(Su24mEntity plane, float partialTick) {
+        Entry entry = STATES.get(plane);
+        if (entry == null) return new RenderState(NEUTRAL, 0, 0, 0, 0);
+        return new RenderState(entry.surfaces.at(partialTick), entry.airBrake.at(partialTick),
+            entry.suspension.compression(partialTick),
+            entry.wheels.angle(partialTick, true), entry.wheels.angle(partialTick, false));
     }
 
     private F16VisualStateManager() {}

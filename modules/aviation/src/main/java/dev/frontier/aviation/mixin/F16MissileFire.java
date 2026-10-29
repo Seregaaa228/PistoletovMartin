@@ -133,8 +133,12 @@ public abstract class F16MissileFire extends VehicleEntity implements F16Missile
         // A clear sky ray is free fire, not a persistent point target to orbit.
         Vec3 target = aim.filter(result -> result.kind() != WeaponAimResult.Kind.SPACE)
             .map(result -> result.point()).orElse(null);
+        if (missile.nativeGun().equals("MediumAGMissile") && target == null) return false;
         UUID nativeTarget = trackedEntity != null || gun.get(GunProp.SEEK_WEAPON_INFO).getOnlyLockBlock()
             ? trackedEntity : aim.flatMap(result -> result.entity()).orElse(null);
+        // Air-to-air seekers require a live entity; a ground or empty-sky
+        // reticle must not consume a missile as if a target were locked.
+        if (gun.get(GunProp.SEEK_WEAPON_INFO).getOnlyLockEntity() && nativeTarget == null) return false;
         var snapshot = dev.frontier.aviation.control.server.FlightControlService.get(getServer()).snapshot(this).orElse(null);
         if (snapshot == null || !ManualMissileShots.reserve(this, pilot, snapshot.epoch(),
                 missile.nativeGun(), count, target, ray, nativeTarget)) return false;

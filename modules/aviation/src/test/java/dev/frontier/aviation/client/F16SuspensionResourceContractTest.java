@@ -57,6 +57,8 @@ public final class F16SuspensionResourceContractTest {
         JsonObject animations = JsonParser.parseString(Files.readString(path)).getAsJsonObject().getAsJsonObject("animations");
         JsonObject bones = animations.getAsJsonObject("animation.frontier_aviation.bind").getAsJsonObject("bones");
         for (String surface : SURFACES) check(bones.has(surface), "baker must retain " + surface);
+        for (String side : new String[]{"left", "right"})
+            check(bones.has("f16_airbrake_" + side), "baker must retain aft airbrake " + side);
         for (String gear : GEARS) {
             for (String suffix : new String[] {"", "_suspension", "_wheel"}) {
                 check(bones.has(gear + suffix), "baker must retain " + gear + suffix);
@@ -73,6 +75,8 @@ public final class F16SuspensionResourceContractTest {
         BedrockModelPOJO model = gson.fromJson(Files.readString(MODELS.resolve(folder + "/f16.geo.json")), BedrockModelPOJO.class);
         var instance = BakedBedrockModel.bake(model, BakerOptions.ofAnimationFile(file)).createInstance();
         for (String surface : SURFACES) check(instance.getBone(surface) != null, folder + " baked " + surface);
+        for (String side : new String[]{"left", "right"})
+            check(instance.getBone("f16_airbrake_" + side) != null, folder + " baked aft airbrake " + side);
         var body = instance.getBone("body");
         check(body != null, folder + " baked body");
         for (int i = 1; i <= 2; i++) {
@@ -118,7 +122,18 @@ public final class F16SuspensionResourceContractTest {
             check(parent.has("parent") && "body".equals(parent.get("parent").getAsString()), folder + " gear parent " + gear);
             check(child.has("parent") && gear.equals(child.get("parent").getAsString()), folder + " suspension parent " + gear);
             check(parent.has("pivot") && parent.getAsJsonArray("pivot").size() == 3, folder + " gear pivot " + gear);
-            check(parent.getAsJsonArray("cubes").size() == gearCubes, folder + " fixed cubes " + gear);
+            int expectedGearCubes = gearCubes + (gear.startsWith("gear_main_") ? 1 : 0);
+            check(parent.getAsJsonArray("cubes").size() == expectedGearCubes, folder + " fixed cubes " + gear);
+            if (gear.startsWith("gear_main_")) {
+                JsonArray parts = parent.getAsJsonArray("cubes");
+                JsonObject strut = parts.get(0).getAsJsonObject();
+                JsonObject brace = parts.get(parts.size() - 1).getAsJsonObject();
+                check(overlaps(brace, strut), folder + " brace meets strut " + gear);
+                boolean meetsBody = false;
+                for (JsonElement cube : byName.get("body").getAsJsonArray("cubes"))
+                    meetsBody |= overlaps(brace, cube.getAsJsonObject());
+                check(meetsBody, folder + " brace meets fuselage " + gear);
+            }
             JsonObject wheel = byName.get(gear + "_wheel");
             check(wheel != null && (gear + "_suspension").equals(wheel.get("parent").getAsString()), folder + " wheel parent " + gear);
             check(wheel.getAsJsonArray("cubes").size() == gearCubes, folder + " wheel cubes " + gear);
@@ -135,10 +150,66 @@ public final class F16SuspensionResourceContractTest {
             check(bone.has("pivot") && bone.getAsJsonArray("pivot").size() == 3, folder + " pivot " + surface);
             check(bone.has("cubes") && !bone.getAsJsonArray("cubes").isEmpty(), folder + " geometry " + surface);
         }
+        for (String side : new String[]{"left", "right"}) {
+            JsonObject brake = byName.get("f16_airbrake_" + side);
+            JsonObject rail = byName.get("f16_tip_pylon_" + side);
+            check(brake != null && rail != null, folder + " brake and wingtip " + side);
+            JsonArray brakePivot = brake.getAsJsonArray("pivot"), railPivot = rail.getAsJsonArray("pivot");
+            check(Math.abs(Math.abs(brakePivot.get(0).getAsDouble()) - 11.15) < 1e-6
+                && Math.abs(brakePivot.get(2).getAsDouble() - 70) < 1e-6, folder + " aft brake pivot " + side);
+            boolean brakeAttached = false;
+            for (JsonElement cube : byName.get("engine").getAsJsonArray("cubes"))
+                brakeAttached |= overlaps(brake.getAsJsonArray("cubes").get(0).getAsJsonObject(), cube.getAsJsonObject());
+            check(brakeAttached, folder + " aft airbrake must meet engine " + side);
+            check(Math.abs(Math.abs(railPivot.get(0).getAsDouble()) - 90.5) < 1e-6
+                && Math.abs(railPivot.get(2).getAsDouble() - 20) < 1e-6, folder + " wingtip pivot " + side);
+            JsonObject railCube = rail.getAsJsonArray("cubes").get(0).getAsJsonObject();
+            JsonArray wingCubes = byName.get(side.equals("left") ? "wing_l" : "wing_r").getAsJsonArray("cubes");
+            boolean attached = false;
+            for (JsonElement candidate : wingCubes) {
+                JsonObject wing = candidate.getAsJsonObject();
+                boolean intersects = true;
+                for (int axis = 0; axis < 3; axis++) {
+                    double a = railCube.getAsJsonArray("origin").get(axis).getAsDouble();
+                    double b = wing.getAsJsonArray("origin").get(axis).getAsDouble();
+                    intersects &= a <= b + wing.getAsJsonArray("size").get(axis).getAsDouble()
+                        && b <= a + railCube.getAsJsonArray("size").get(axis).getAsDouble();
+                }
+                attached |= intersects;
+            }
+            check(attached, folder + " wingtip rail must meet the wing " + side);
+        }
+        for (String mount : new String[]{"pylon_l", "pylon_r", "pylon_outer_1", "pylon_outer_2"}) {
+            JsonObject pylon = byName.get(mount).getAsJsonArray("cubes").get(0).getAsJsonObject();
+            String wingName = pylon.getAsJsonArray("origin").get(0).getAsDouble() > 0 ? "wing_l" : "wing_r";
+            boolean attached = false;
+            for (JsonElement element : byName.get(wingName).getAsJsonArray("cubes")) {
+                JsonObject wing = element.getAsJsonObject();
+                boolean intersects = true;
+                for (int axis = 0; axis < 3; axis++) {
+                    double a = pylon.getAsJsonArray("origin").get(axis).getAsDouble();
+                    double b = wing.getAsJsonArray("origin").get(axis).getAsDouble();
+                    intersects &= a <= b + wing.getAsJsonArray("size").get(axis).getAsDouble()
+                        && b <= a + pylon.getAsJsonArray("size").get(axis).getAsDouble();
+                }
+                attached |= intersects;
+            }
+            check(attached, folder + " underwing pylon must meet wing " + mount);
+        }
     }
 
     private static String hash(byte[] data) throws Exception {
         return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(data));
+    }
+
+    private static boolean overlaps(JsonObject a, JsonObject b) {
+        for (int axis = 0; axis < 3; axis++) {
+            double x = a.getAsJsonArray("origin").get(axis).getAsDouble();
+            double y = b.getAsJsonArray("origin").get(axis).getAsDouble();
+            if (x > y + b.getAsJsonArray("size").get(axis).getAsDouble()
+                    || y > x + a.getAsJsonArray("size").get(axis).getAsDouble()) return false;
+        }
+        return true;
     }
 
     private static void check(boolean ok, String message) {

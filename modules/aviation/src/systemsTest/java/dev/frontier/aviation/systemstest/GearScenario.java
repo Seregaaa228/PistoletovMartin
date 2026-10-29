@@ -49,11 +49,35 @@ final class GearScenario {
         } catch (java.io.IOException failure) { throw new IllegalStateException(failure); }
         boolean down = AircraftController.observe(plane).orElseThrow().telemetry().state().gearDown();
         float nativeProgress = ((dev.sbw.deepstrike.vehicle.Su24mEntity) plane).landingGearProgress(1);
+        boolean braking = AircraftController.observe(plane).orElseThrow().telemetry().brake();
+        boolean visualBrake = false;
+        boolean gearHidden = false;
+        boolean brakeOutward = false;
+        try {
+            var probe = FMLPaths.GAMEDIR.get().resolve("aircraft-visual-client.json");
+            if (Files.isRegularFile(probe)) {
+                var state = com.google.gson.JsonParser.parseString(Files.readString(probe)).getAsJsonObject();
+                visualBrake = state.get("visualBrake").getAsBoolean() && state.get("brakePose").getAsFloat() > .8f;
+            }
+            var rendered = FMLPaths.GAMEDIR.get().resolve("aircraft-render-state.json");
+            if (!Files.isRegularFile(rendered)) return false;
+            var bones = com.google.gson.JsonParser.parseString(Files.readString(rendered)).getAsJsonObject();
+            gearHidden = true;
+            for (String name : new String[]{"gear_nose", "gear_main_l", "gear_main_r"})
+                for (String suffix : new String[]{"", "_suspension", "_wheel"})
+                    gearHidden &= bones.has(name + suffix) && !bones.get(name + suffix).getAsBoolean();
+            brakeOutward = bones.has("brake_left") && bones.has("brake_right")
+                && bones.get("brake_left").getAsFloat() < -.3f && bones.get("brake_right").getAsFloat() > .3f;
+        } catch (java.io.IOException | com.google.gson.JsonParseException failure) { return false; }
         result.addProperty("gearDownAfterG", down);
         result.addProperty("nativeRetractionProgress", nativeProgress);
         result.addProperty("airborne", !plane.onGround());
+        result.addProperty("spaceBrakeTelemetry", braking);
+        result.addProperty("spaceBrakeVisual", visualBrake);
+        result.addProperty("gearBonesHidden", gearHidden);
+        result.addProperty("airbrakesOutwardPose", brakeOutward);
         result.addProperty("pass", result.get("initialGearDown").getAsBoolean() && !down
-            && nativeProgress >= .99f && !plane.onGround());
+            && nativeProgress >= .99f && !plane.onGround() && braking && visualBrake && gearHidden && brakeOutward);
         return finish(null);
     }
 
