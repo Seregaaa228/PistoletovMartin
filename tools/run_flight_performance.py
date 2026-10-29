@@ -8,7 +8,6 @@ whole-game timings include other mods and are distinct from Java microbenchmarks
 from __future__ import annotations
 
 import argparse
-import ctypes
 import hashlib
 import json
 import os
@@ -124,19 +123,12 @@ def main() -> int:
         state_path.write_text(json.dumps(clients, indent=2) + '\n')
         update('starting pinned test client')
         await_screen('TitleScreen', 180)
-        # This display contains only our own test window. Send a focus transition
-        # so Minecraft's focus flag is also active, not merely X's initial focus.
-        tree = subprocess.check_output(['xwininfo', '-display', display, '-root', '-tree'], text=True)
-        window = next(int(line.split()[0], 16) for line in tree.splitlines() if 'Minecraft*' in line)
-        x = ctypes.CDLL('libX11.so.6')
-        x.XOpenDisplay.argtypes = [ctypes.c_char_p]; x.XOpenDisplay.restype = ctypes.c_void_p
-        x.XDefaultRootWindow.argtypes = [ctypes.c_void_p]; x.XDefaultRootWindow.restype = ctypes.c_ulong
-        x.XSetInputFocus.argtypes = [ctypes.c_void_p, ctypes.c_ulong, ctypes.c_int, ctypes.c_ulong]
-        x.XSync.argtypes = [ctypes.c_void_p, ctypes.c_int]
-        connection = x.XOpenDisplay(display.encode())
-        if not connection: raise RuntimeError('isolated X display unavailable')
-        x.XSetInputFocus(connection, x.XDefaultRootWindow(connection), 1, 0); x.XSync(connection, 0)
-        time.sleep(.1); x.XSetInputFocus(connection, window, 1, 0); x.XSync(connection, 0)
+        # A bare Xvfb display has no window manager, so there is no WM_TAKE_FOCUS
+        # handshake to wait on; MC Pilot's injected input does not depend on real
+        # X11 focus here. The screen reports "open" slightly before the render
+        # thread has caught up enough to accept input, so give it a moment.
+        time.sleep(2)
+        call(['gui', 'info'])
         call(['input', 'click', '320', '148']); await_screen('CreateWorldScreen', 45)
         for xy in [(320,108),(320,108),(320,14),(240,65),(452,140),(320,107)]:
             call(['input', 'click', *map(str, xy)])

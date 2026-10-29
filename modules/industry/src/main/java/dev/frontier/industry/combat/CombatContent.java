@@ -23,15 +23,20 @@ public final class CombatContent {
     public static final RegistryObject<Item> S300_LAUNCHER = deployer("s300_launcher", LauncherEntity.Kind.S300);
     public static final RegistryObject<Item> S400_LAUNCHER = deployer("s400_launcher", LauncherEntity.Kind.S400);
     public static final RegistryObject<Item> PATRIOT_LAUNCHER = deployer("patriot_launcher", LauncherEntity.Kind.PATRIOT);
+    // Launcher doesn't move; a SAM site stays visible from the air out to the same
+    // range as SBW's own aircraft (32 chunks), with the cheap interval kept as-is.
     public static final RegistryObject<EntityType<LauncherEntity>> LAUNCHER = ENTITIES.register("combat_launcher", () ->
             EntityType.Builder.<LauncherEntity>of(LauncherEntity::new, MobCategory.MISC).sized(2.8F, 2.4F)
-                    .clientTrackingRange(12).updateInterval(3).build("frontier_industry:combat_launcher"));
+                    .clientTrackingRange(16).updateInterval(3).build("frontier_industry:combat_launcher"));
+    // Matches SBW's own projectile tracking range (64 chunks) so the server view-distance
+    // is the only limit, same as native SBW missiles; the render-distance cull is disabled
+    // separately in BallisticMissileEntity.
     public static final RegistryObject<EntityType<BallisticMissileEntity>> MISSILE = ENTITIES.register("combat_ballistic_missile", () ->
             EntityType.Builder.<BallisticMissileEntity>of(BallisticMissileEntity::new, MobCategory.MISC).sized(0.45F, 1.3F)
-                    .clientTrackingRange(16).updateInterval(1).build("frontier_industry:combat_ballistic_missile"));
+                    .clientTrackingRange(32).updateInterval(1).build("frontier_industry:combat_ballistic_missile"));
     public static final RegistryObject<EntityType<InterceptorEntity>> INTERCEPTOR = ENTITIES.register("combat_interceptor", () ->
             EntityType.Builder.<InterceptorEntity>of(InterceptorEntity::new, MobCategory.MISC).sized(0.3F, 0.7F)
-                    .clientTrackingRange(16).updateInterval(1).build("frontier_industry:combat_interceptor"));
+                    .clientTrackingRange(32).updateInterval(1).build("frontier_industry:combat_interceptor"));
     public static final TagKey<EntityType<?>> AIR_TARGETS = TagKey.create(Registries.ENTITY_TYPE,
             new ResourceLocation(MOD_ID, "combat_air_targets"));
     private static final Set<String> CATALOG_IDS = Set.of("ballistic_missile", "interceptor_ammo", "missile_launcher", "s300_launcher", "s400_launcher", "patriot_launcher");

@@ -5,3 +5,22 @@ explosion_destroy = true
 extra_explosion_effect = false
 friendly_mines = true
 explosion_penetration_ratio = 15
+
+# SBW already tracks vehicles/projectiles far beyond normal entity range and can
+# draw them with fog pushed out instead of letting them vanish at view-distance;
+# this is off by default. Enabling it is far cheaper than raising view-distance,
+# since the server already broadcasts this sync data every tick regardless.
+[sync]
+	#Set true to allow rendering synchronized entities
+	#是否允许渲染超视距同步实体
+	enable_render_synced_entities = true
+	#The maximum distance for rendering synchronized entities
+	#允许渲染超视距同步实体的最大距离
+	#Range: 1 ~ 2147483647
+	max_render_distance = 2048
+	# Kept above normal terrain height so far ground vehicles don't render floating
+	# with no terrain loaded under them; this mainly benefits aircraft at altitude.
+	#The minimum height for rendering synchronized entities
+	#允许渲染超视距同步实体的最小高度
+	#Range: 1 ~ 2147483647
+	min_render_height = 128

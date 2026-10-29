@@ -47,6 +47,9 @@ public final class BallisticMissileEntity extends Entity {
         return origin.lerp(target, progress).add(0, CombatRules.arcOffset(progress, origin.distanceTo(target)), 0);
     }
     @Override public boolean isPickable() { return false; }
+    // Vanilla's size-based distance cull (~47 blocks for this hitbox) would hide an
+    // in-flight missile well inside its tracking range; let tracking range be the only limit.
+    @Override public boolean shouldRenderAtSqrDistance(double distance) { return true; }
     @Override public Packet<ClientGamePacketListener> getAddEntityPacket() { return NetworkHooks.getEntitySpawningPacket(this); }
     @Override public void tick() {
         super.tick();
