@@ -30,7 +30,8 @@
     "NativePatriotContact",
     "LightweightPatriotBodies",
     "LightweightPatriotBursts",
-    "VanillaGuidedExhaust"
+    "VanillaGuidedExhaust",
+    "SmoothFastProjectileMotion"
   ],
   "injectors": {
     "defaultRequire": 1
