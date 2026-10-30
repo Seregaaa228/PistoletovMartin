@@ -15,7 +15,8 @@
     "LazyMissileTerrainMesh",
     "DeferredMissileTerrainContact",
     "GraphitePhysicalBlast",
-    "VanillaServerEffects"
+    "VanillaServerEffects",
+    "FarFlightPacketCadence"
   ],
   "client": [
     "VanillaContrails",
