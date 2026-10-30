@@ -36,6 +36,9 @@ public final class InterceptorEntity extends Entity {
     @Nullable public UUID targetUUID() { return target; }
     public LauncherEntity.Kind launcherKind() { return kind; }
     @Override public Packet<ClientGamePacketListener> getAddEntityPacket() { return NetworkHooks.getEntitySpawningPacket(this); }
+    // Vanilla's size-based distance cull (~28 blocks for this hitbox) would hide an
+    // interceptor well inside its own 256-block flight radius; tracking range is the only limit.
+    @Override public boolean shouldRenderAtSqrDistance(double distance) { return true; }
     @Override public void tick() {
         super.tick();
         if (level().isClientSide) { level().addParticle(ParticleTypes.END_ROD, getX(), getY(), getZ(), 0, 0, 0); return; }

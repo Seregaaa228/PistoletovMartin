@@ -17,7 +17,7 @@ public final class GeraniumContent {
     private static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, ArcadeVehicles.ID);
     private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, ArcadeVehicles.ID);
     public static final RegistryObject<EntityType<GeraniumEntity>> TYPE = ENTITIES.register(PATH, () -> EntityType.Builder
-        .<GeraniumEntity>of(GeraniumEntity::new, MobCategory.MISC).sized(1.5f, .5f).clientTrackingRange(12).updateInterval(1)
+        .<GeraniumEntity>of(GeraniumEntity::new, MobCategory.MISC).sized(1.5f, .5f).clientTrackingRange(16).updateInterval(1)
         .build(ArcadeVehicles.ID + ":" + PATH));
     public static final RegistryObject<Item> ITEM = ITEMS.register(PATH, GeraniumItem::new);
     private GeraniumContent() { }

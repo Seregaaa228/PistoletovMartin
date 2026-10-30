@@ -30,14 +30,14 @@ public final class AircraftExhaust {
                 .distanceToSqr(plane.position());
         if (distance > FIRE_DISTANCE * FIRE_DISTANCE) return;
         float power = Mth.clamp(plane.getPower(), 0, 1);
-        float scale = profile == AircraftProfile.SU25 ? 1.2F : 1.5F;
-        double[][] nozzles = profile.nozzles();
-        for (int engine = 0; engine < nozzles.length; engine++) {
+        float scale = profile.definition().model().exhaustScale();
+        var nozzles = profile.nozzles();
+        for (int engine = 0; engine < nozzles.size(); engine++) {
             if ((engine == 0 ? plane.getMainEngineHealth() : plane.getSubEngineHealth()) <= 0) continue;
-            double[] local = nozzles[engine];
+            var local = nozzles.get(engine);
             pose.pushPose();
             // SBW renderer space reverses vehicle X/Z, as with native stores.
-            pose.translate(-local[0], local[1], -local[2]);
+            pose.translate(-local.x(), local.y(), -local.z());
             pose.mulPose(Axis.YP.rotationDegrees(-90));
             pose.scale(scale, scale, scale);
             NativeAircraftEffects.render(pose, buffers, plane.tickCount + partial, power, distance);

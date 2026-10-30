@@ -1,0 +1,6 @@
+package dev.frontier.aviation.control;
+
+public enum ControlStatus {
+    OK, UNSUPPORTED, NOT_PILOT, BUSY, INVALID_LEASE, STALE_SEQUENCE,
+    INVALID_INPUT, TIMEOUT, NO_ENERGY, DAMAGED, UNSUPPORTED_MODE, RELEASED
+}
