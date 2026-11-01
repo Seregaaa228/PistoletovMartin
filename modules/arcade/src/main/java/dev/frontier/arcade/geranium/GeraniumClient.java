@@ -1,6 +1,7 @@
 package dev.frontier.arcade.geranium;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.frontier.arcade.ArcadeClientTicks;
 import dev.frontier.arcade.ArcadeVehicles;
 import dev.frontier.arcade.geranium.client.GeraniumFlightHud;
 import java.lang.reflect.Method;
@@ -35,6 +36,9 @@ public final class GeraniumClient {
     private static boolean cameraAvailable = POSITION != null;
     private static UUID playerSession;
     private static int lastView = -1;
+    private static GeraniumEntity resolvedTarget;
+    private static long resolvedTick = Long.MIN_VALUE;
+    private static Object resolvedLevel;
 
     private static final IKeyConflictContext FLIGHT_CONTEXT = new IKeyConflictContext() {
         @Override public boolean isActive() { return Minecraft.getInstance().screen == null && currentTarget() != null; }
@@ -72,6 +76,8 @@ public final class GeraniumClient {
         if (mc.player == null || mc.level == null) {
             playerSession = null;
             lastView = -1;
+            resolvedTarget = null;
+            resolvedLevel = null;
             while (STABILIZE.consumeClick()) { /* Never carry a menu click into the next flight. */ }
             return;
         }
@@ -87,8 +93,21 @@ public final class GeraniumClient {
         if (requested && mc.screen == null && target != null && target.isLaunched()) GeraniumNet.sendStabilize();
     }
 
+    /** Resolved once per client tick and shared by camera, HUD, overlays and key contexts. */
     public static GeraniumEntity currentTarget() {
         Minecraft mc = Minecraft.getInstance();
+        long tick = ArcadeClientTicks.now();
+        if (tick != resolvedTick || mc.level != resolvedLevel) {
+            resolvedTarget = resolveTarget(mc);
+            resolvedTick = tick;
+            resolvedLevel = mc.level;
+        } else if (resolvedTarget != null && (resolvedTarget.isRemoved() || mc.player == null || !mc.player.isAlive())) {
+            resolvedTarget = null;
+        }
+        return resolvedTarget;
+    }
+
+    private static GeraniumEntity resolveTarget(Minecraft mc) {
         if (mc.player == null || mc.level == null || !mc.player.isAlive()) return null;
         var held = mc.player.getMainHandItem();
         var tag = held.getTag();

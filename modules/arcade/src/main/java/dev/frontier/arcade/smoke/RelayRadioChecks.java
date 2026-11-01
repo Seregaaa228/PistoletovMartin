@@ -141,13 +141,14 @@ public final class RelayRadioChecks {
             var jammer = ModEntityTypes.REB_MINI.get().create(level);
             if (jammer == null) throw new IllegalStateException("Native REB fixture construction failed");
             jammer.setPos(first.position()); jammer.setEnabled(true); level.addFreshEntity(jammer); fixtures.add(jammer);
+            RelayNetwork.forgetUpstreamHops(level); // Same-tick RF change; play converges within the hop cache window.
             AddonDroneEntity firstJammed = target(level, player.getUUID(), origin.add(96, 0, 0), fixtures);
             check.accept("native REB fixture jams relay receiver while destination is outside its cube",
                 RebSignalInterference.INSTANCE.evaluate(first).getLossDb() > 0
                     && RebSignalInterference.INSTANCE.evaluate(firstJammed).getLossDb() == 0);
             check.accept("native REB on an intermediate receiver breaks the routed RF path",
                 DroneSignalModel.INSTANCE.evaluate(level, firstJammed, origin).getQuality() == 0);
-            jammer.setPos(firstJammed.position());
+            jammer.setPos(firstJammed.position()); RelayNetwork.forgetUpstreamHops(level);
             AddonDroneEntity finalJammed = target(level, player.getUUID(), origin.add(96, 0, 0), fixtures);
             check.accept("native REB on the final drone also breaks the routed RF path",
                 RebSignalInterference.INSTANCE.evaluate(first).getLossDb() == 0
@@ -159,6 +160,7 @@ public final class RelayRadioChecks {
                 BlockPos copy = pos.immutable(); blocks.put(copy, level.getBlockState(copy));
                 level.setBlockAndUpdate(copy, Blocks.IRON_BLOCK.defaultBlockState());
             }
+            RelayNetwork.forgetUpstreamHops(level);
             AddonDroneEntity obstructed = target(level, player.getUUID(), origin.add(96, 0, 0), fixtures);
             var blockedNativeHop = RelayNetwork.directSample(first, origin);
             check.accept("native terrain sampler detects the intermediate iron obstruction", blockedNativeHop.getObstructionLossDb() > 0);

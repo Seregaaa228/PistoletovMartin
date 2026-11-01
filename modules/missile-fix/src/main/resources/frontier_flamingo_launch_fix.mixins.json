@@ -15,7 +15,10 @@
     "LazyMissileTerrainMesh",
     "DeferredMissileTerrainContact",
     "GraphitePhysicalBlast",
-    "VanillaServerEffects"
+    "VanillaServerEffects",
+    "FarFlightPacketCadence",
+    "NativeDomeFollowUp",
+    "NativeDefenseEngagement"
   ],
   "client": [
     "VanillaContrails",
@@ -30,7 +33,8 @@
     "NativePatriotContact",
     "LightweightPatriotBodies",
     "LightweightPatriotBursts",
-    "VanillaGuidedExhaust"
+    "VanillaGuidedExhaust",
+    "SmoothFastProjectileMotion"
   ],
   "injectors": {
     "defaultRequire": 1

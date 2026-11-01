@@ -39,6 +39,111 @@
             0,
             0
           ]
+        },
+        "f16_aileron_left": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "f16_aileron_right": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "f16_elevator_left": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "f16_elevator_right": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "f16_rudder": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_nose_suspension": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_nose_wheel": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_main_l_suspension": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_main_l_wheel": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_main_r_suspension": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_main_r_wheel": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "dummy_0_1_1": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "dummy_0_1_2": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "f16_airbrake_left": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "f16_airbrake_right": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
         }
       }
     }

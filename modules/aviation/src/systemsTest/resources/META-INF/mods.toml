@@ -1,0 +1,14 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+[[mods]]
+modId="frontier_aircraft_systems_test"
+version="1"
+displayName="Frontier isolated aircraft systems checks"
+description="Explicit opt-in helper restricted to a fresh marked test profile and world."
+[[dependencies.frontier_aircraft_systems_test]]
+modId="frontier_aviation"
+mandatory=true
+versionRange="[1.1.0]"
+ordering="AFTER"
+side="BOTH"

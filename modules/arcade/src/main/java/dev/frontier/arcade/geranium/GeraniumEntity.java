@@ -28,6 +28,10 @@ import ru.lavafrai.uncomplicatedfpv.entity.AddonDroneEntity;
 
 /** Own manually flown Shahed variant; native monitor, movement packets and signal/REB model. */
 public final class GeraniumEntity extends AddonDroneEntity {
+    // GeckoLib queries these per rendered frame; resolve each resource once.
+    private static final ResourceLocation MODEL = new ResourceLocation("frontier_arcade_vehicles", "geo/geranium_2.geo.json");
+    private static final ResourceLocation TEXTURE = new ResourceLocation("uncomplicatedfpv", "textures/entity/shahed136.png");
+    private static final ResourceLocation ANIMATION = new ResourceLocation("frontier_arcade_vehicles", "animations/geranium_2.animation.json");
     public static final int BATTERY = 64000, ENERGY_PER_TICK = 8;
     public static final double MAX_RANGE = 256;
     public static final float NOSE_Y = .097f, NOSE_Z = 2.2025f;
@@ -89,9 +93,9 @@ public final class GeraniumEntity extends AddonDroneEntity {
     @Override public float getYaw(float partial) { return net.minecraft.util.Mth.rotLerp(partial, yRotO, getYRot()); }
     @Override public net.minecraft.sounds.SoundEvent getEngineSound() { return ru.lavafrai.uncomplicatedfpv.registry.ModSounds.SHAHED136_ENGINE.get(); }
     @Override public float getMaxHealth() { return 8f; }
-    @Override public ResourceLocation getModelResource() { return new ResourceLocation("frontier_arcade_vehicles", "geo/geranium_2.geo.json"); }
-    @Override public ResourceLocation getTextureResource() { return new ResourceLocation("uncomplicatedfpv", "textures/entity/shahed136.png"); }
-    @Override public ResourceLocation getAnimationResource() { return new ResourceLocation("frontier_arcade_vehicles", "animations/geranium_2.animation.json"); }
+    @Override public ResourceLocation getModelResource() { return MODEL; }
+    @Override public ResourceLocation getTextureResource() { return TEXTURE; }
+    @Override public ResourceLocation getAnimationResource() { return ANIMATION; }
     @Override public int getAmmo() { return 1; } // Built-in sealed warhead; interact never exposes an ammo-removal path.
     @Override public ItemStack getPickResult() { return new ItemStack(GeraniumContent.ITEM.get()); }
     @Override public void addAdditionalSaveData(CompoundTag tag) {

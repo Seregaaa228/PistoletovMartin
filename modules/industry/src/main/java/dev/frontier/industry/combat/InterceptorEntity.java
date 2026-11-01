@@ -36,6 +36,9 @@ public final class InterceptorEntity extends Entity {
     @Nullable public UUID targetUUID() { return target; }
     public LauncherEntity.Kind launcherKind() { return kind; }
     @Override public Packet<ClientGamePacketListener> getAddEntityPacket() { return NetworkHooks.getEntitySpawningPacket(this); }
+    // Vanilla's size-based distance cull (~28 blocks for this hitbox) would hide an
+    // interceptor well inside its own 256-block flight radius; tracking range is the only limit.
+    @Override public boolean shouldRenderAtSqrDistance(double distance) { return true; }
     @Override public void tick() {
         super.tick();
         if (level().isClientSide) { level().addParticle(ParticleTypes.END_ROD, getX(), getY(), getZ(), 0, 0, 0); return; }
@@ -45,7 +48,7 @@ public final class InterceptorEntity extends Entity {
                 || now - lastTick > 5 || now < lastTick || position().distanceToSqr(origin) > 256D * 256D) { discard(); return; }
         lastTick = now;
         Entity victim = server.getEntity(target);
-        if (victim == null || !victim.isAlive() || !server.hasChunkAt(victim.blockPosition()) || !CombatOwnership.hostile(server, owner, victim)
+        if (victim == null || !victim.isAlive() || !CombatOperations.entityTicking(server, victim.blockPosition()) || !CombatOwnership.hostileCached(server, owner, victim)
                 || (victim instanceof BallisticMissileEntity && kind != LauncherEntity.Kind.PATRIOT)) { discard(); return; }
         Vec3 aim = victim.getBoundingBox().getCenter();
         Vec3 movement = aim.subtract(position());
@@ -57,7 +60,7 @@ public final class InterceptorEntity extends Entity {
         if (obstruction.getType() != HitResult.Type.MISS) { discard(); return; }
         if (victim.getBoundingBox().inflate(1.6).contains(position()) || victim.getBoundingBox().inflate(1.6).clip(position(), next).isPresent()) {
             if (victim instanceof BallisticMissileEntity missile) missile.intercepted();
-            else victim.hurt(server.damageSources().explosion(this, server.getServer().getPlayerList().getPlayer(owner)), 48.0F);
+            else victim.hurt(server.damageSources().explosion(this, server.getServer().getPlayerList().getPlayer(owner)), warheadDamage(victim));
             Entity source = station == null ? null : server.getEntity(station);
             if (source instanceof LauncherEntity launcher && owner.equals(launcher.ownerUUID())) launcher.recordInterception();
             server.sendParticles(ParticleTypes.EXPLOSION, victim.getX(), victim.getY(), victim.getZ(), 1, 0, 0, 0, 0);
@@ -67,6 +70,17 @@ public final class InterceptorEntity extends Entity {
         setXRot((float) -Math.toDegrees(Math.atan2(movement.y, movement.horizontalDistance()))); setPos(next);
         if (elapsed % 2 == 0) server.sendParticles(ParticleTypes.SMOKE, getX(), getY(), getZ(), 2, 0.1, 0.1, 0.1, 0.01);
     }
+    /**
+     * A proximity hit on a tagged aircraft (SBW/DeepStrike vehicle, which is not a LivingEntity
+     * and exposes its own getMaxHealth) uses DeepStrike's native air-defense kill rule
+     * (AirDefenseTargets.hit: max(300, 1.1 * maxHealth)). Tagged living mobs keep the old 48.
+     */
+    static float warheadDamage(Entity victim) {
+        if (victim instanceof net.minecraft.world.entity.LivingEntity) return 48.0F;
+        if (CombatOwnership.invoke(MAX_HEALTH, victim) instanceof Float health && health > 0) return Math.max(300.0F, 1.1F * health);
+        return 48.0F;
+    }
+    private static final ClassValue<java.util.Optional<java.lang.reflect.Method>> MAX_HEALTH = CombatOwnership.publicMethod("getMaxHealth");
     @Override protected void readAdditionalSaveData(CompoundTag tag) {
         owner = CombatOwnership.parse(tag.getString("Owner")); station = CombatOwnership.parse(tag.getString("Station")); target = CombatOwnership.parse(tag.getString("Target"));
         kind = LauncherEntity.Kind.values()[Math.max(0, Math.min(3, tag.getInt("Kind")))];

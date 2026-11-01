@@ -21,6 +21,7 @@ public final class LightAviation {
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, ID);
 
     public LightAviation() {
+        FlightControls.initialize();
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, AircraftCannon.SPEC,
                 "frontier-aircraft-combat-server.toml");
         AircraftProfile.values();

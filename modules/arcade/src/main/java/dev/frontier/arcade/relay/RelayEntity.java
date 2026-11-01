@@ -31,6 +31,10 @@ import ru.lavafrai.uncomplicatedfpv.entity.AddonDroneEntity;
 
 /** Native monitor and radio receiver with independent, manually flown fixed-wing movement. */
 public final class RelayEntity extends AddonDroneEntity {
+    // GeckoLib queries these per rendered frame; resolve each resource once.
+    private static final ResourceLocation MODEL = new ResourceLocation("frontier_arcade_vehicles", "geo/relay_plane.geo.json");
+    private static final ResourceLocation TEXTURE = new ResourceLocation("frontier_arcade_vehicles", "textures/entity/relay_plane.png");
+    private static final ResourceLocation ANIMATION = new ResourceLocation("frontier_arcade_vehicles", "animations/relay_plane.animation.json");
     public static final int BATTERY = 96_000, ENERGY_PER_TICK = 4;
     public static final float NOSE_Y = .75f, NOSE_Z = 2.15f;
     private static final EntityDataAccessor<Optional<UUID>> OWNER = SynchedEntityData.defineId(RelayEntity.class, EntityDataSerializers.OPTIONAL_UUID);
@@ -122,9 +126,9 @@ public final class RelayEntity extends AddonDroneEntity {
         if (!level().isClientSide && controlAllowed() && flight().launched() && !flight().stopped()) { flight().stabilize(); syncFlight(); }
     }
     @Override public float getMaxHealth() { return 20; }
-    @Override public ResourceLocation getModelResource() { return new ResourceLocation("frontier_arcade_vehicles", "geo/relay_plane.geo.json"); }
-    @Override public ResourceLocation getTextureResource() { return new ResourceLocation("frontier_arcade_vehicles", "textures/entity/relay_plane.png"); }
-    @Override public ResourceLocation getAnimationResource() { return new ResourceLocation("frontier_arcade_vehicles", "animations/relay_plane.animation.json"); }
+    @Override public ResourceLocation getModelResource() { return MODEL; }
+    @Override public ResourceLocation getTextureResource() { return TEXTURE; }
+    @Override public ResourceLocation getAnimationResource() { return ANIMATION; }
     @Override public net.minecraft.sounds.SoundEvent getEngineSound() { return ru.lavafrai.uncomplicatedfpv.registry.ModSounds.SHAHED136_ENGINE.get(); }
     @Override public float getYaw(float partial) { return Mth.rotLerp(partial, yRotO, getYRot()); }
     @Override public ItemStack getPickResult() { return new ItemStack(RelayContent.ITEM.get()); }
