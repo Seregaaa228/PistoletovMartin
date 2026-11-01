@@ -48,7 +48,7 @@ public final class InterceptorEntity extends Entity {
                 || now - lastTick > 5 || now < lastTick || position().distanceToSqr(origin) > 256D * 256D) { discard(); return; }
         lastTick = now;
         Entity victim = server.getEntity(target);
-        if (victim == null || !victim.isAlive() || !server.hasChunkAt(victim.blockPosition()) || !CombatOwnership.hostileCached(server, owner, victim)
+        if (victim == null || !victim.isAlive() || !CombatOperations.entityTicking(server, victim.blockPosition()) || !CombatOwnership.hostileCached(server, owner, victim)
                 || (victim instanceof BallisticMissileEntity && kind != LauncherEntity.Kind.PATRIOT)) { discard(); return; }
         Vec3 aim = victim.getBoundingBox().getCenter();
         Vec3 movement = aim.subtract(position());
@@ -77,12 +77,10 @@ public final class InterceptorEntity extends Entity {
      */
     static float warheadDamage(Entity victim) {
         if (victim instanceof net.minecraft.world.entity.LivingEntity) return 48.0F;
-        try {
-            Object max = victim.getClass().getMethod("getMaxHealth").invoke(victim);
-            if (max instanceof Float health && health > 0) return Math.max(300.0F, 1.1F * health);
-        } catch (ReflectiveOperationException ignored) { }
+        if (CombatOwnership.invoke(MAX_HEALTH, victim) instanceof Float health && health > 0) return Math.max(300.0F, 1.1F * health);
         return 48.0F;
     }
+    private static final ClassValue<java.util.Optional<java.lang.reflect.Method>> MAX_HEALTH = CombatOwnership.publicMethod("getMaxHealth");
     @Override protected void readAdditionalSaveData(CompoundTag tag) {
         owner = CombatOwnership.parse(tag.getString("Owner")); station = CombatOwnership.parse(tag.getString("Station")); target = CombatOwnership.parse(tag.getString("Target"));
         kind = LauncherEntity.Kind.values()[Math.max(0, Math.min(3, tag.getInt("Kind")))];

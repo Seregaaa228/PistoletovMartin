@@ -16,9 +16,11 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.scores.Team;
 import net.minecraftforge.fml.ModList;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BooleanSupplier;
@@ -33,31 +35,51 @@ final class CombatOwnership {
     private static UUID storedOwner(CompoundTag tag, String key) {
         return tag.hasUUID(key) ? tag.getUUID(key) : parse(tag.getString(key));
     }
+    /**
+     * Public-method lookup resolved once per runtime class. An absent method is cached as empty,
+     * so hot paths (launcher scans, interceptor ticks) never re-throw NoSuchMethodException for
+     * entity types that simply lack it (e.g. SBW SwarmDroneEntity has no getLastDriverUUID).
+     */
+    static ClassValue<Optional<Method>> publicMethod(String name, Class<?>... parameters) {
+        return new ClassValue<>() {
+            @Override protected Optional<Method> computeValue(Class<?> type) {
+                try { return Optional.of(type.getMethod(name, parameters)); }
+                catch (NoSuchMethodException | SecurityException | LinkageError absent) { return Optional.empty(); }
+            }
+        };
+    }
+    /** Invokes a cached public method; null when absent or failing. */
+    static Object invoke(ClassValue<Optional<Method>> method, Object target, Object... arguments) {
+        Method found = method.get(target.getClass()).orElse(null);
+        if (found == null) return null;
+        try { return found.invoke(target, arguments); }
+        catch (ReflectiveOperationException | RuntimeException | LinkageError failure) { return null; }
+    }
+    private static final ClassValue<Optional<Method>> GUIDED_OWNER_ID = publicMethod("ownerId");
+    private static final ClassValue<Optional<Method>> RECRUIT_IS_OWNED = publicMethod("getIsOwned");
+    private static final ClassValue<Optional<Method>> RECRUIT_OWNER = publicMethod("getOwnerUUID");
+    private static final ClassValue<Optional<Method>> LAST_DRIVER = publicMethod("getLastDriverUUID");
+    /** SBW VehicleEntity.getNthEntity(int): seat-ordered occupant, seat 0 is the pilot/driver. */
+    private static final ClassValue<Optional<Method>> SEAT_OCCUPANT = publicMethod("getNthEntity", int.class);
+
     static UUID owner(Entity entity) {
         if (entity instanceof LauncherEntity station) return station.ownerUUID();
         if (entity instanceof BallisticMissileEntity missile) return missile.ownerUUID();
         if (entity instanceof InterceptorEntity interceptor) return interceptor.ownerUUID();
-        if (entity.getClass().getName().equals("dev.sbw.deepstrike.game.GuidedMissileEntity")) {
-            try { Object id = entity.getClass().getMethod("ownerId").invoke(entity); if (id instanceof UUID owner) return owner; }
-            catch (ReflectiveOperationException ignored) { return null; }
-        }
-        if (entity.getClass().getName().startsWith("dev.sbw.deepstrike.vehicle.") && entity.getPersistentData().hasUUID("DeepStrikeOwner"))
-            return entity.getPersistentData().getUUID("DeepStrikeOwner");
+        String className = entity.getClass().getName();
+        if (className.equals("dev.sbw.deepstrike.game.GuidedMissileEntity")
+                && invoke(GUIDED_OWNER_ID, entity) instanceof UUID owner) return owner;
         if (entity instanceof Player player) return player.getUUID();
         if (entity instanceof TamableAnimal animal && animal.getOwnerUUID() != null) return animal.getOwnerUUID();
         CompoundTag data = entity.getPersistentData();
         UUID marked = storedOwner(data, "frontierIndustryOwner");
         if (marked != null) return marked;
-        if (isRecruit(entity)) {
-            try {
-                if (Boolean.TRUE.equals(entity.getClass().getMethod("getIsOwned").invoke(entity)))
-                    return (UUID) entity.getClass().getMethod("getOwnerUUID").invoke(entity);
-            } catch (ReflectiveOperationException | ClassCastException ignored) { return null; }
-        }
+        if (isRecruit(entity) && Boolean.TRUE.equals(invoke(RECRUIT_IS_OWNED, entity)))
+            return invoke(RECRUIT_OWNER, entity) instanceof UUID owner ? owner : null;
         // Installed Superb Warfare aircraft remember their actual last driver; no guessed owner field.
-        if (entity.getClass().getName().startsWith("com.atsuishio.superbwarfare.")
-                || entity.getClass().getName().startsWith("ru.lavafrai.uncomplicatedfpv.")
-                || entity.getClass().getName().startsWith("dev.sbw.deepstrike.vehicle.")) {
+        if (className.startsWith("com.atsuishio.superbwarfare.")
+                || className.startsWith("ru.lavafrai.uncomplicatedfpv.")
+                || className.startsWith("dev.sbw.deepstrike.vehicle.")) {
             UUID controller = droneController(entity);
             if (controller != null) return controller;
             // Native SBW swarm drones are vanilla projectiles: their launcher/shooter is the owner.
@@ -65,18 +87,37 @@ final class CombatOwnership {
                 UUID shooter = owner(projectile.getOwner());
                 if (shooter != null) return shooter;
             }
-            try {
-                Object driver = entity.getClass().getMethod("getLastDriverUUID").invoke(entity);
-                if (driver instanceof String text) { UUID id = parse(text); if (id != null) return id; }
-            } catch (ReflectiveOperationException ignored) { }
-        }
-        for (Entity passenger : entity.getPassengers()) {
-            UUID passengerOwner = owner(passenger);
-            if (passengerOwner != null) return passengerOwner;
+            // Whoever is actually flying it decides friend-or-foe: neither SBW nor DeepStrike stops a
+            // non-owner from boarding (Su24mEntity.canOperate accepts any occupant of seats 0/1), so a
+            // stolen jet must not keep its deploy-owner's identity. Deploy-owner/last driver apply only when vacant.
+            UUID occupant = occupantOwner(entity);
+            if (occupant != null) return occupant;
+            if (className.startsWith("dev.sbw.deepstrike.vehicle.") && data.hasUUID("DeepStrikeOwner"))
+                return data.getUUID("DeepStrikeOwner");
+            if (invoke(LAST_DRIVER, entity) instanceof String text) { UUID id = parse(text); if (id != null) return id; }
+        } else {
+            UUID occupant = occupantOwner(entity);
+            if (occupant != null) return occupant;
         }
         // VehicleOperations writes UUID NBT. A parked claimed aircraft retains its owner,
         // while an actual native drone driver or mounted crew above takes precedence.
         return storedOwner(data, "frontierIndustryVehicleOwner");
+    }
+    /** Pilot first (vanilla controlling passenger, else SBW seat 0), then any other occupant with an owner. */
+    private static UUID occupantOwner(Entity vehicle) {
+        if (!vehicle.isVehicle()) return null;
+        Entity pilot = vehicle.getControllingPassenger();
+        if (pilot == null && invoke(SEAT_OCCUPANT, vehicle, 0) instanceof Entity seated && seated.getVehicle() == vehicle) pilot = seated;
+        if (pilot != null && pilot != vehicle) {
+            UUID pilotOwner = owner(pilot);
+            if (pilotOwner != null) return pilotOwner;
+        }
+        for (Entity passenger : vehicle.getPassengers()) {
+            if (passenger == pilot) continue;
+            UUID passengerOwner = owner(passenger);
+            if (passengerOwner != null) return passengerOwner;
+        }
+        return null;
     }
     private static final String SBW_DRONE = "com.atsuishio.superbwarfare.entity.vehicle.DroneEntity";
     private static EntityDataAccessor<?> droneControllerKey;
