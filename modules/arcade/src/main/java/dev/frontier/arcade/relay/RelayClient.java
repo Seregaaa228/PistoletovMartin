@@ -1,6 +1,7 @@
 package dev.frontier.arcade.relay;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.frontier.arcade.ArcadeClientTicks;
 import dev.frontier.arcade.ArcadeVehicles;
 import dev.frontier.arcade.relay.client.RelayFlightHud;
 import dev.frontier.arcade.geranium.GeraniumClient;
@@ -38,6 +39,9 @@ public final class RelayClient {
     private static UUID target;
     private static int hops;
     private static long received;
+    private static RelayEntity resolvedTarget;
+    private static long resolvedTick = Long.MIN_VALUE;
+    private static Object resolvedLevel;
 
     private static final IKeyConflictContext FLIGHT_CONTEXT = new IKeyConflictContext() {
         @Override public boolean isActive() { return Minecraft.getInstance().screen == null && currentTarget() != null; }
@@ -96,8 +100,21 @@ public final class RelayClient {
         if (level) GeraniumNet.sendRelayAction(false);
     }
 
+    /** Resolved once per client tick and shared by camera, HUD, overlays and key contexts. */
     public static RelayEntity currentTarget() {
         Minecraft mc = Minecraft.getInstance();
+        long tick = ArcadeClientTicks.now();
+        if (tick != resolvedTick || mc.level != resolvedLevel) {
+            resolvedTarget = resolveTarget(mc);
+            resolvedTick = tick;
+            resolvedLevel = mc.level;
+        } else if (resolvedTarget != null && (resolvedTarget.isRemoved() || mc.player == null || !mc.player.isAlive())) {
+            resolvedTarget = null;
+        }
+        return resolvedTarget;
+    }
+
+    private static RelayEntity resolveTarget(Minecraft mc) {
         if (mc.player == null || mc.level == null || !mc.player.isAlive()) return null;
         var held = mc.player.getMainHandItem();
         var tag = held.getTag();

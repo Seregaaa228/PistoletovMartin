@@ -27,6 +27,7 @@ import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -436,6 +437,23 @@ public final class ControlSessions {
         if (isStationLink(player.containerMenu.getCarried())) player.containerMenu.setCarried(ItemStack.EMPTY);
         if (player.containerMenu != player.inventoryMenu && isStationLink(player.inventoryMenu.getCarried())) player.inventoryMenu.setCarried(ItemStack.EMPTY);
     }
+    /**
+     * Sessionless variant of {@link #removeHidden}. Every Inventory slot (main, armour, offhand) is ticked
+     * by Inventory.tick, where StationLinkItem.inventoryTick deletes a link without a matching session
+     * token in this same player tick. Only slots that are never item-ticked are scanned here: an open
+     * container, the 2x2 crafting grid and its result, and the carried stack.
+     */
+    private static void removeStrayOutsideInventory(ServerPlayer player) {
+        if (player.containerMenu != player.inventoryMenu) {
+            for (var slot : player.containerMenu.slots) if (isStationLink(slot.getItem())) slot.set(ItemStack.EMPTY);
+            if (isStationLink(player.containerMenu.getCarried())) player.containerMenu.setCarried(ItemStack.EMPTY);
+        }
+        for (int index = InventoryMenu.RESULT_SLOT; index < InventoryMenu.CRAFT_SLOT_END; index++) {
+            var slot = player.inventoryMenu.slots.get(index);
+            if (isStationLink(slot.getItem())) slot.set(ItemStack.EMPTY);
+        }
+        if (isStationLink(player.inventoryMenu.getCarried())) player.inventoryMenu.setCarried(ItemStack.EMPTY);
+    }
     private static void restoreOriginal(ServerPlayer player) {
         if (!hasSession(player) || !player.isAlive()) return;
         CompoundTag ledger = session(player); ItemStack original = ItemStack.of(ledger.getCompound("Original"));
@@ -460,9 +478,13 @@ public final class ControlSessions {
         if (hasSession(player)) {
             if (!player.isAlive()) { session(player).putBoolean("Recovering", true); removeHidden(player); }
             else if (!stationActive(player) || !player.getMainHandItem().getOrCreateTag().getBoolean("Using")) disconnectStation(player);
-        } else removeHidden(player);
+        } else removeStrayOutsideInventory(player);
         ItemStack held = player.getMainHandItem();
-        if (isMonitor(held)) monitorTick(held, player.level(), player, player.getInventory().selected, true);
+        // Pocket/station terminals and PAIR-tagged SBW monitors already run monitorTick from their own
+        // inventoryTick later in this same player tick. Only an untagged SBW monitor needs this call:
+        // it migrates a legacy LinkedDrone pair to PAIR before the native inventoryTick can act on it.
+        if (held.getItem() == ModItems.MONITOR.get() && (held.getTag() == null || !held.getTag().hasUUID(PAIR)))
+            monitorTick(held, player.level(), player, player.getInventory().selected, true);
         UUID previous = VIEWED.get(player.getUUID());
         if (previous != null && (!isMonitor(held) || held.getTag() == null || !held.getTag().getBoolean("Using"))) {
             AddonDroneEntity drone = find(player, previous); if (drone != null && owns(player, drone)) drone.endRemoteControl(player);
