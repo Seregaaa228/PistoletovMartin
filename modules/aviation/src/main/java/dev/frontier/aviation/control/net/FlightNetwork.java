@@ -21,7 +21,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 /** Server-authorized flight intentions. Common code never links a Minecraft client class. */
 public final class FlightNetwork {
-    public static final String PROTOCOL = "1.1.0:flight5";
+    public static final String PROTOCOL = "1.1.0:flight6";
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
         new ResourceLocation("frontier_aviation", "flight_controls"), () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
     private static Consumer<FlightSnapshot> clientReceiver = ignored -> {};
@@ -88,6 +88,10 @@ public final class FlightNetwork {
     }
     public static void fireMissiles(FlightSnapshot snapshot, int count, Vec3 target) {
         CHANNEL.sendToServer(new MissileTrigger(snapshot.vehicleId(), snapshot.epoch(), count, target));
+    }
+    public static void fireMissilesAt(FlightSnapshot snapshot, int count, UUID trackedEntity) {
+        CHANNEL.sendToServer(new MissileTrigger(snapshot.vehicleId(), snapshot.epoch(), count, null,
+            Objects.requireNonNull(trackedEntity)));
     }
     public static void sendSnapshot(ServerPlayer receiver, FlightSnapshot snapshot) { send(receiver, ControlStatus.OK, snapshot); }
     private static void send(ServerPlayer receiver, ControlStatus status, FlightSnapshot snapshot) {
@@ -198,31 +202,48 @@ public final class FlightNetwork {
         }
     }
 
-    /** Additive message 4; the original control/snapshot formats keep their IDs and encoding. */
-    public record MissileTrigger(UUID vehicleId, long epoch, int count, Vec3 target) {
+    /**
+     * Additive message 4; the original control/snapshot formats keep their IDs and encoding.
+     *
+     * <p>Flag bit 0 carries a reticle point (24 bytes), bit 1 the UUID of the
+     * entity the pilot has locked (16 bytes). A tracked UUID is only a claim:
+     * the server looks the entity up itself and re-checks range, seeker sector
+     * and line of sight from its own state, so the shot no longer depends on the
+     * client's interpolated position of a fast target matching the server's.</p>
+     */
+    public record MissileTrigger(UUID vehicleId, long epoch, int count, Vec3 target, UUID trackedEntity) {
+        static final int POINT = 1, TRACKED = 2;
+        public MissileTrigger(UUID vehicleId, long epoch, int count, Vec3 target) {
+            this(vehicleId, epoch, count, target, null);
+        }
         public MissileTrigger {
             Objects.requireNonNull(vehicleId);
             if (epoch <= 0 || (count != 1 && count != 2) || target != null
-                    && (!Double.isFinite(target.x) || !Double.isFinite(target.y) || !Double.isFinite(target.z)))
+                    && (!Double.isFinite(target.x) || !Double.isFinite(target.y) || !Double.isFinite(target.z))
+                    || target != null && trackedEntity != null)
                 throw new IllegalArgumentException("invalid missile trigger");
         }
         static void encode(MissileTrigger packet, FriendlyByteBuf buffer) {
             buffer.writeUUID(packet.vehicleId); buffer.writeLong(packet.epoch); buffer.writeByte(packet.count);
-            buffer.writeBoolean(packet.target != null);
+            buffer.writeByte((packet.target != null ? POINT : 0) | (packet.trackedEntity != null ? TRACKED : 0));
             if (packet.target != null) {
                 buffer.writeDouble(packet.target.x); buffer.writeDouble(packet.target.y); buffer.writeDouble(packet.target.z);
             }
+            if (packet.trackedEntity != null) buffer.writeUUID(packet.trackedEntity);
         }
         static MissileTrigger decode(FriendlyByteBuf buffer) {
             try {
-                if (buffer.readableBytes() != 26 && buffer.readableBytes() != 50)
+                int size = buffer.readableBytes();
+                if (size != 26 && size != 50 && size != 42)
                     throw new IllegalArgumentException("missile trigger size");
                 UUID vehicle = buffer.readUUID(); long epoch = buffer.readLong(); int count = buffer.readUnsignedByte();
                 int present = buffer.readUnsignedByte();
-                if (present > 1) throw new IllegalArgumentException("target flag");
-                Vec3 target = present == 0 ? null : new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble());
+                // A point and a tracked entity are alternatives, never both.
+                if (present != 0 && present != POINT && present != TRACKED) throw new IllegalArgumentException("target flag");
+                Vec3 target = present != POINT ? null : new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble());
+                UUID tracked = present != TRACKED ? null : buffer.readUUID();
                 if (buffer.isReadable()) throw new IllegalArgumentException("trailing missile bytes");
-                return new MissileTrigger(vehicle, epoch, count, target);
+                return new MissileTrigger(vehicle, epoch, count, target, tracked);
             } catch (IllegalArgumentException | IndexOutOfBoundsException error) {
                 throw new DecoderException("Malformed missile trigger", error);
             }
@@ -262,9 +283,18 @@ public final class FlightNetwork {
                         var mount = AircraftCatalog.find(id.toString())
                             .flatMap(definition -> definition.weapons().nativeGun(aircraft.getGunName(0)))
                             .filter(weapon -> weapon.kind() == WeaponKind.GUIDED_MISSILE).orElse(null);
-                        if (mount != null) AircraftArmament.fire(sender, aircraft,
-                            new ControlLease(packet.vehicleId, sender.getUUID(), packet.epoch),
-                            mount.id(), packet.count, packet.target);
+                        if (mount == null) return;
+                        var lease = new ControlLease(packet.vehicleId, sender.getUUID(), packet.epoch);
+                        if (packet.trackedEntity == null) {
+                            AircraftArmament.fire(sender, aircraft, lease, mount.id(), packet.count, packet.target);
+                            return;
+                        }
+                        // Resolve the claim in the pilot's own level only; fireTracked and the
+                        // launcher then re-check liveness, own-aircraft exclusion, seeker
+                        // support, range, sector and line of sight against server state.
+                        Entity victim = sender.serverLevel().getEntity(packet.trackedEntity);
+                        if (victim != null) AircraftArmament.fireTracked(sender, aircraft, lease,
+                            mount.id(), packet.count, victim);
                     } finally { limiter.completeTask(); }
                 });
             } catch (RuntimeException failure) { limiter.completeTask(); throw failure; }

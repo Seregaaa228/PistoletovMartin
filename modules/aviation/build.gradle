@@ -55,6 +55,7 @@ def flightChecks = [
     flightTimingHistogramTest: 'dev.frontier.aviation.control.diagnostics.FlightTimingHistogramTest',
     f16MissileTriggerWireTest: 'dev.frontier.aviation.control.net.F16MissileTriggerWireTest',
     missileTriggerTest: 'dev.frontier.aviation.missile.MissileTriggerTest',
+    fireCadenceTest: 'dev.frontier.aviation.weapons.FireCadenceTest',
     nativeFlightHooksContractTest: 'dev.frontier.aviation.NativeFlightHooksContractTest',
     nativeFlightPersistenceContractTest: 'dev.frontier.aviation.NativeFlightPersistenceContractTest',
     nativeFlightPacketHooksContractTest: 'dev.frontier.aviation.NativeFlightPacketHooksContractTest',

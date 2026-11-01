@@ -2,6 +2,11 @@ package dev.frontier.aviation.client;
 
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity;
 import com.atsuishio.superbwarfare.init.ModKeyMappings;
+import com.atsuishio.superbwarfare.data.gun.GunData;
+import com.atsuishio.superbwarfare.data.gun.GunProp;
+import com.atsuishio.superbwarfare.event.ClientEventHandler;
+import java.util.UUID;
+import net.minecraft.world.entity.Entity;
 import dev.frontier.aviation.aircraft.AircraftCatalog;
 import dev.frontier.aviation.weapons.WeaponAimResolver;
 import dev.frontier.aviation.weapons.WeaponKind;
@@ -94,10 +99,24 @@ public final class F16MissileTriggerClient {
             var mount = AircraftCatalog.find(id.toString()).orElseThrow().weapons().nativeGun(vehicle.getGunName(0)).orElseThrow();
             var gun = vehicle.getGunData(mount.nativeGun());
             if (gun == null || mc.level == null) return;
+            int count = Math.min(action == MissileTrigger.Action.SALVO ? 2 : 1, mount.maximumBurst());
             var aim = WeaponAimResolver.resolve(mc.level, mc.player, vehicle.getShootPosForHud(mc.player, 1),
                 vehicle.getShootDirectionForHud(mc.player, 1), WeaponAimResolver.range(mount, gun));
-            FlightNetwork.fireMissiles(snapshot, Math.min(action == MissileTrigger.Action.SALVO ? 2 : 1, mount.maximumBurst()),
+            UUID tracked = trackedTarget(vehicle, gun, aim.orElse(null));
+            // An entity is sent by identity: its interpolated client position
+            // lags a fast jet by several blocks, which a point claim cannot survive.
+            if (tracked != null) FlightNetwork.fireMissilesAt(snapshot, count, tracked);
+            else FlightNetwork.fireMissiles(snapshot, count,
                 aim.filter(result -> result.kind() != WeaponAimResult.Kind.SPACE).map(result -> result.point()).orElse(null));
         }
+    }
+
+    /** SBW's own seeker lock first, else an entity directly under the reticle; never for block-only seekers. */
+    private static UUID trackedTarget(VehicleEntity vehicle, GunData gun, WeaponAimResult aim) {
+        if (gun.get(GunProp.SEEK_WEAPON_INFO).getOnlyLockBlock()) return null;
+        Entity locked = ClientEventHandler.lockingEntityVehicle;
+        if (locked != null && locked.isAlive() && !locked.isRemoved() && locked.level() == vehicle.level()
+                && locked.getRootVehicle() != vehicle.getRootVehicle()) return locked.getUUID();
+        return aim == null || aim.kind() != WeaponAimResult.Kind.ENTITY ? null : aim.entity().orElse(null);
     }
 }

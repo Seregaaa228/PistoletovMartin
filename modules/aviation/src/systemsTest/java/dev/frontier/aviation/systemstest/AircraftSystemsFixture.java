@@ -118,6 +118,24 @@ public final class AircraftSystemsFixture {
             } catch (RuntimeException | LinkageError error) { startFailure("gesture", error); }
             return 1;
         }));
+        command.then(Commands.literal("air_lock").executes(context -> {
+            var source = context.getSource();
+            if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
+            try {
+                var scenario = new AirLockScenario(source.getPlayerOrException());
+                begin("air_lock", scenario::tick, scenario::result);
+            } catch (RuntimeException | LinkageError error) { startFailure("air_lock", error); }
+            return 1;
+        }));
+        command.then(Commands.literal("cannon_cadence").executes(context -> {
+            var source = context.getSource();
+            if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
+            try {
+                var scenario = new CannonCadenceScenario(source.getPlayerOrException());
+                begin("cannon_cadence", scenario::tick, scenario::result);
+            } catch (RuntimeException | LinkageError error) { startFailure("cannon_cadence", error); }
+            return 1;
+        }));
         command.then(Commands.literal("gear").executes(context -> {
             var source = context.getSource();
             if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;

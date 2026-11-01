@@ -115,7 +115,9 @@ public abstract class F16MissileFire extends VehicleEntity implements F16Missile
         Vec3 from = getShootPosForHud(pilot, 1);
         Vec3 ray = getShootDirectionForHud(pilot, 1);
         double range = WeaponAimResolver.range(missile, gun), sector = WeaponAimResolver.sector(gun);
-        var aim = claimed == null
+        // A tracked entity is validated by identity below; its claimed point is
+        // not distance-matched, because a fast target has moved since the claim.
+        var aim = trackedEntity != null ? java.util.Optional.<WeaponAimResult>empty() : claimed == null
             ? WeaponAimResolver.resolve(level(), pilot, from, ray, range)
             : WeaponAimResolver.validateProposal(level(), pilot, from, ray, claimed, range, sector);
         if (trackedEntity != null) {
