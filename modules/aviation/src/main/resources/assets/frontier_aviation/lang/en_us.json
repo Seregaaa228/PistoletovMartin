@@ -36,5 +36,7 @@
   "hud.frontier_aviation.target": "TGT",
   "weapon.frontier_aviation.medium_agmissile": "Medium air-to-ground missile",
   "weapon.frontier_aviation.large_air_missile": "Large air-to-air missile",
-  "weapon.frontier_aviation.medium_air_missile": "Medium air-to-air missile"
+  "weapon.frontier_aviation.medium_air_missile": "Medium air-to-air missile",
+  "weapon.frontier_aviation.guided_bomb": "KAB-500 guided glide bomb",
+  "entity.frontier_aviation.kab_500": "KAB-500 glide bomb"
 }

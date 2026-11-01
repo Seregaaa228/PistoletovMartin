@@ -42,6 +42,7 @@ public final class ImpactObservations {
         var type = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
         if (type == null || (!type.toString().equals("superbwarfare:agm_65")
                 && !type.toString().equals("superbwarfare:wire_guide_missile")
+                && !type.toString().equals("frontier_aviation:kab_500")
                 && !type.toString().equals("superbwarfare:small_cannon_shell"))) return;
         var owner = projectile.getOwner();
         if (owner == null) return;

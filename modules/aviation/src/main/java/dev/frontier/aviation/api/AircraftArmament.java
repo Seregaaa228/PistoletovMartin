@@ -70,7 +70,7 @@ public final class AircraftArmament {
         var weapon = mount(aircraft, slotId).orElse(null);
         var gun = weapon == null ? null : aircraft.getGunData(weapon.nativeGun());
         if (gun == null) return Result.UNSUPPORTED_WEAPON;
-        if (weapon.kind() != WeaponKind.GUIDED_MISSILE || gun.get(GunProp.SEEK_WEAPON_INFO).getOnlyLockBlock())
+        if (!weapon.kind().guided() || gun.get(GunProp.SEEK_WEAPON_INFO).getOnlyLockBlock())
             return Result.UNSUPPORTED_TARGET;
         return fire(pilot, aircraft, lease, slotId, count, target.getBoundingBox().getCenter(), target.getUUID());
     }
@@ -87,7 +87,7 @@ public final class AircraftArmament {
                 || !cadence(aircraft, mount)) return Result.NOT_READY;
         if (target != null && !finite(target)) return Result.INVALID_TARGET;
 
-        if (mount.kind() == WeaponKind.GUIDED_MISSILE) {
+        if (mount.kind().guided()) {
             if (!(aircraft instanceof F16MissileLauncher launcher)) return Result.UNSUPPORTED_WEAPON;
             if (!launcher.aviation$fireMissiles(pilot, count, target, trackedEntity)) return Result.NOT_READY;
         } else if (mount.kind() == WeaponKind.CANNON) {

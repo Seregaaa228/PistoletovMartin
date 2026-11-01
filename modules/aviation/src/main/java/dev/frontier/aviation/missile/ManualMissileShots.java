@@ -11,7 +11,6 @@ import dev.frontier.aviation.LightAviation;
 import dev.frontier.aviation.aircraft.AircraftCatalog;
 import dev.frontier.aviation.api.AircraftController;
 import dev.frontier.aviation.control.ControlLease;
-import dev.frontier.aviation.weapons.WeaponKind;
 import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.Objects;
@@ -79,7 +78,7 @@ public final class ManualMissileShots {
         var id = ForgeRegistries.ENTITY_TYPES.getKey(plane.getType());
         boolean guided = id != null && AircraftCatalog.find(id.toString())
             .flatMap(definition -> definition.weapons().nativeGun(weapon))
-            .filter(mount -> mount.kind() == WeaponKind.GUIDED_MISSILE).isPresent();
+            .filter(mount -> mount.kind().guided()).isPresent();
         Ticket accepted = null;
         boolean denied = false;
         if (guided) {

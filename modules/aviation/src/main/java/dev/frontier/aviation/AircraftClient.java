@@ -2,6 +2,8 @@ package dev.frontier.aviation;
 
 import dev.frontier.aviation.control.client.FlightClient;
 import dev.frontier.aviation.control.client.FlightKeys;
+import dev.frontier.aviation.weapons.GuidedOrdnance;
+import com.atsuishio.superbwarfare.client.renderer.projectile.BasicProjectileRenderer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
@@ -28,5 +30,8 @@ public final class AircraftClient {
         for (AircraftProfile profile : AircraftProfile.values()) {
             event.registerEntityRenderer(profile.entity.get(), AircraftRenderer::new);
         }
+        // SBW's generic bedrock projectile renderer resolves model, texture and
+        // animation from this entity's own namespace/path.
+        event.registerEntityRenderer(GuidedOrdnance.KAB_500.get(), BasicProjectileRenderer::new);
     }
 }

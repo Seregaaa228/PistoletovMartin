@@ -11,6 +11,9 @@ public final class WeaponLoadout {
     public static final WeaponLoadout NONE = new WeaponLoadout(List.of());
     public static final WeaponMount CANNON = new WeaponMount("cannon", "Cannon", WeaponKind.CANNON, 1, 1, 256);
     public static final WeaponLoadout CANNON_ONLY = new WeaponLoadout(List.of(CANNON));
+    /** One release per trigger; the interval matches the native 20 RPM of the heavy store. */
+    public static final WeaponMount GLIDE_BOMB = new WeaponMount("glide_bomb", "GuidedBomb", WeaponKind.GLIDE_BOMB, 1, 60, 384);
+    public static final WeaponLoadout SU25 = new WeaponLoadout(List.of(CANNON, GLIDE_BOMB));
     public static final WeaponLoadout F16 = new WeaponLoadout(List.of(CANNON,
         new WeaponMount("missile", "Missile", WeaponKind.GUIDED_MISSILE, 2, 20, 256),
         new WeaponMount("aamissile", "AAMissile", WeaponKind.GUIDED_MISSILE, 2, 20, 256),

@@ -39,6 +39,9 @@ public final class CombatContent {
                     .clientTrackingRange(32).updateInterval(1).build("frontier_industry:combat_interceptor"));
     public static final TagKey<EntityType<?>> AIR_TARGETS = TagKey.create(Registries.ENTITY_TYPE,
             new ResourceLocation(MOD_ID, "combat_air_targets"));
+    /** Air targets without an engine heat plume; see CombatRules.lowIrDetected. */
+    public static final TagKey<EntityType<?>> LOW_IR_TARGETS = TagKey.create(Registries.ENTITY_TYPE,
+            new ResourceLocation(MOD_ID, "combat_low_ir_targets"));
     private static final Set<String> CATALOG_IDS = Set.of("ballistic_missile", "interceptor_ammo", "missile_launcher", "s300_launcher", "s400_launcher", "patriot_launcher");
     private CombatContent() { }
     private static RegistryObject<Item> deployer(String id, LauncherEntity.Kind kind) {

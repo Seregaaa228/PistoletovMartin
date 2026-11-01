@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "frontier_aviation:kab_500",
+      "required": false
+    }
+  ]
+}

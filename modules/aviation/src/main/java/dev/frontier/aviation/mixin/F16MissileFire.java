@@ -37,13 +37,13 @@ public abstract class F16MissileFire extends VehicleEntity implements F16Missile
         var key = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(getType());
         return key == null ? null : AircraftCatalog.find(key.toString())
                 .flatMap(definition -> definition.weapons().nativeGun(nativeGun))
-                .filter(mount -> mount.kind() == WeaponKind.GUIDED_MISSILE)
+                .filter(mount -> mount.kind().guided())
                 .orElse(null);
     }
 
     @Unique private boolean aviation$selectedMissile(LivingEntity pilot) {
         WeaponMount missile = aviation$mountForNativeGun(getGunName(0));
-        return missile != null && missile.kind() == WeaponKind.GUIDED_MISSILE && pilot != null
+        return missile != null && missile.kind().guided() && pilot != null
                 && pilot.isAlive() && isAlive() && pilot.getVehicle() == this
                 && getSeatIndex(pilot) == 0
                 && missile.nativeGun().equals(getGunName(0));
@@ -67,7 +67,7 @@ public abstract class F16MissileFire extends VehicleEntity implements F16Missile
     @Inject(method = "vehicleShoot(Lnet/minecraft/world/entity/LivingEntity;Ljava/lang/String;Lnet/minecraft/world/phys/Vec3;)V", at = @At("HEAD"), cancellable = true)
     private void aviation$missileShoot(LivingEntity pilot, String weapon, Vec3 ignored, CallbackInfo result) {
         WeaponMount missile = aviation$mountForNativeGun(weapon);
-        if (missile != null && missile.kind() == WeaponKind.GUIDED_MISSILE
+        if (missile != null && missile.kind().guided()
                 && missile.nativeGun().equals(weapon)) {
             result.cancel();
             aviation$launch(pilot, ignored);
@@ -77,7 +77,7 @@ public abstract class F16MissileFire extends VehicleEntity implements F16Missile
     @Inject(method = "vehicleShoot(Lnet/minecraft/world/entity/LivingEntity;Ljava/lang/String;Ljava/util/UUID;Lnet/minecraft/world/phys/Vec3;)V", at = @At("HEAD"), cancellable = true)
     private void aviation$missileShootTarget(LivingEntity pilot, String weapon, UUID ignoredId, Vec3 ignored, CallbackInfo result) {
         WeaponMount missile = aviation$mountForNativeGun(weapon);
-        if (missile != null && missile.kind() == WeaponKind.GUIDED_MISSILE
+        if (missile != null && missile.kind().guided()
                 && missile.nativeGun().equals(weapon)) {
             result.cancel();
             aviation$launch(pilot, ignored);
@@ -87,7 +87,7 @@ public abstract class F16MissileFire extends VehicleEntity implements F16Missile
     @Inject(method = "vehicleShoot(Lnet/minecraft/world/entity/LivingEntity;Ljava/util/UUID;Lnet/minecraft/world/phys/Vec3;)V", at = @At("HEAD"), cancellable = true)
     private void aviation$selectedMissileShoot(LivingEntity pilot, UUID ignoredId, Vec3 ignored, CallbackInfo result) {
         WeaponMount missile = aviation$mountForNativeGun(getGunName(0));
-        if (missile != null && missile.kind() == WeaponKind.GUIDED_MISSILE
+        if (missile != null && missile.kind().guided()
                 && missile.nativeGun().equals(getGunName(0))) {
             result.cancel();
             aviation$launch(pilot, ignored);
@@ -101,7 +101,7 @@ public abstract class F16MissileFire extends VehicleEntity implements F16Missile
     @Override
     public boolean aviation$fireMissiles(LivingEntity pilot, int count, Vec3 claimed, UUID trackedEntity) {
         WeaponMount missile = aviation$mountForNativeGun(getGunName(0));
-        if (missile == null || missile.kind() != WeaponKind.GUIDED_MISSILE) return false;
+        if (missile == null || !missile.kind().guided()) return false;
         var gun = getGunData(missile.nativeGun());
         if (count < 1 || count > missile.maximumBurst() || level().isClientSide
                 || !aviation$selectedMissile(pilot)
@@ -135,7 +135,10 @@ public abstract class F16MissileFire extends VehicleEntity implements F16Missile
         // A clear sky ray is free fire, not a persistent point target to orbit.
         Vec3 target = aim.filter(result -> result.kind() != WeaponAimResult.Kind.SPACE)
             .map(result -> result.point()).orElse(null);
-        if (missile.nativeGun().equals("MediumAGMissile") && target == null) return false;
+        // A glide bomb is released onto a designated point (GPS-style) and has
+        // no motor to fly an empty-sky shot; it never consumes a store unaimed.
+        if ((missile.nativeGun().equals("MediumAGMissile") || missile.kind() == WeaponKind.GLIDE_BOMB)
+                && target == null) return false;
         UUID nativeTarget = trackedEntity != null || gun.get(GunProp.SEEK_WEAPON_INFO).getOnlyLockBlock()
             ? trackedEntity : aim.flatMap(result -> result.entity()).orElse(null);
         // Air-to-air seekers require a live entity; a ground or empty-sky

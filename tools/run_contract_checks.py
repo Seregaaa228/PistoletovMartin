@@ -18,6 +18,7 @@ def main():
         ('client/FactoryUiState.java', 'client/FactoryUiStateTest.java'),
         ('CatalogChunks.java', 'CatalogChunksTest.java'),
         ('CatalogChunks.java', 'client/CatalogChunkAssembly.java', 'client/CatalogChunkAssemblyTest.java'),
+        ('combat/CombatRules.java', 'combat/CombatRulesTest.java'),
     ]
     output = ROOT / 'build/contract-checks'
     output.mkdir(parents=True, exist_ok=True)

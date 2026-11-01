@@ -5,7 +5,6 @@ import dev.frontier.aviation.control.server.FlightControlService;
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity;
 import dev.frontier.aviation.aircraft.AircraftCatalog;
 import dev.frontier.aviation.api.AircraftArmament;
-import dev.frontier.aviation.weapons.WeaponKind;
 import io.netty.handler.codec.DecoderException;
 import java.util.*;
 import java.util.function.Consumer;
@@ -282,7 +281,7 @@ public final class FlightNetwork {
                         if (id == null) return;
                         var mount = AircraftCatalog.find(id.toString())
                             .flatMap(definition -> definition.weapons().nativeGun(aircraft.getGunName(0)))
-                            .filter(weapon -> weapon.kind() == WeaponKind.GUIDED_MISSILE).orElse(null);
+                            .filter(weapon -> weapon.kind().guided()).orElse(null);
                         if (mount == null) return;
                         var lease = new ControlLease(packet.vehicleId, sender.getUUID(), packet.epoch);
                         if (packet.trackedEntity == null) {

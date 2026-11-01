@@ -20,7 +20,7 @@ import time
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
-SCENARIOS = ('aim0', 'aim1', 'aim2', 'aim3', 'destruction', 'npc', 'air_to_air', 'ground_homing', 'moving_ground_homing', 'gesture', 'gear', 'seed_wreck', 'restart_wreck', 'visual_loadout')
+SCENARIOS = ('aim0', 'aim1', 'aim2', 'aim3', 'destruction', 'npc', 'air_to_air', 'ground_homing', 'moving_ground_homing', 'gesture', 'gear', 'seed_wreck', 'restart_wreck', 'visual_loadout', 'glide_bomb')
 
 
 def sha(path: Path) -> str:
@@ -192,7 +192,8 @@ def main() -> int:
         for scenario in args.scenarios:
             update('running actual scenario ' + scenario)
             for progress_file in ('aircraft-gesture-progress.json', 'aircraft-gear-progress.json', 'aircraft-gear-captured.txt',
-                                  'aircraft-visual-progress.json', 'aircraft-visual-captured.txt', 'aircraft-visual-brake.txt', 'aircraft-render-state.json', 'aircraft-visual-client.json'):
+                                  'aircraft-visual-progress.json', 'aircraft-visual-captured.txt', 'aircraft-visual-brake.txt', 'aircraft-render-state.json', 'aircraft-visual-client.json',
+                                  'aircraft-glide-progress.json'):
                 (profile / progress_file).unlink(missing_ok=True)
             command('aircraft_check ' + scenario)
             performed = set()
@@ -229,6 +230,19 @@ def main() -> int:
                         call(['input', 'key', 'down', 'space'])
                         time.sleep(1.5)
                         (profile / 'aircraft-gear-captured.txt').write_text(manifest['runId'])
+                glide_progress = profile / 'aircraft-glide-progress.json'
+                if scenario == 'glide_bomb' and glide_progress.exists() and 'glide' not in performed:
+                    try: progress = json.loads(glide_progress.read_text())
+                    except json.JSONDecodeError: continue
+                    if progress.get('runId') == manifest['runId'] and progress.get('stage') == 'in-flight':
+                        performed.add('glide')
+                        # The fixture keeps the camera abeam the store; hide the HUD for the model.
+                        call(['input', 'key', 'press', 'F1'])
+                        time.sleep(.3)
+                        call(['screenshot', '--output', str(profile / 'glide-bomb-flight.png')])
+                        time.sleep(.6)
+                        call(['screenshot', '--output', str(profile / 'glide-bomb-flight-2.png')])
+                        call(['input', 'key', 'press', 'F1'])
                 visual_progress = profile / 'aircraft-visual-progress.json'
                 if scenario == 'visual_loadout' and visual_progress.exists() and 'visual' not in performed:
                     try: progress = json.loads(visual_progress.read_text())

@@ -21,7 +21,7 @@ public final class AircraftCatalog {
     private static final FlightProfile MI28 = new FlightProfile("mi28", FlightKind.HELICOPTER, 7, 4, 60);
     private static final Map<String, AircraftDefinition> DEFINITIONS = index(List.of(
         new AircraftDefinition("frontier_aviation:su25", ATTACK, HandlingProfile.ATTACK,
-            WeaponLoadout.CANNON_ONLY, true, new AircraftModel(8, 6.5f,
+            WeaponLoadout.SU25, true, new AircraftModel(8, 6.5f,
                 List.of(new AircraftModel.Exhaust(1.03, 2.35, -6.96),
                     new AircraftModel.Exhaust(-1.03, 2.35, -6.96)), 1.2f)),
         new AircraftDefinition("frontier_aviation:f16", FIGHTER, HandlingProfile.FIGHTER,

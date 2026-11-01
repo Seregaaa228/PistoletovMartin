@@ -103,6 +103,13 @@ tasks.register('f16SuspensionResourceContractTest', JavaExec) {
     workingDir project.projectDir
 }
 tasks.named('check').configure { dependsOn 'f16SuspensionResourceContractTest' }
+tasks.register('kabResourceContractTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.aviation.weapons.KabResourceContractTest'
+    workingDir project.projectDir
+}
+tasks.named('check').configure { dependsOn 'kabResourceContractTest' }
 
 // Explicit opt-in fixture; not part of production JAR or releaseJars.
 sourceSets {

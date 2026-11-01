@@ -9,7 +9,6 @@ import java.util.UUID;
 import net.minecraft.world.entity.Entity;
 import dev.frontier.aviation.aircraft.AircraftCatalog;
 import dev.frontier.aviation.weapons.WeaponAimResolver;
-import dev.frontier.aviation.weapons.WeaponKind;
 import dev.frontier.aviation.weapons.WeaponAimResult;
 import net.minecraftforge.registries.ForgeRegistries;
 import dev.frontier.aviation.LightAviation;
@@ -49,7 +48,7 @@ public final class F16MissileTriggerClient {
         var id = ForgeRegistries.ENTITY_TYPES.getKey(vehicle.getType());
         return id != null && AircraftCatalog.find(id.toString())
             .flatMap(definition -> definition.weapons().nativeGun(vehicle.getGunName(0)))
-            .filter(mount -> mount.kind() == WeaponKind.GUIDED_MISSILE).isPresent();
+            .filter(mount -> mount.kind().guided()).isPresent();
     }
 
     @SubscribeEvent

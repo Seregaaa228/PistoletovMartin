@@ -25,6 +25,7 @@ public final class LightAviation {
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, AircraftCannon.SPEC,
                 "frontier-aircraft-combat-server.toml");
         AircraftProfile.values();
+        dev.frontier.aviation.weapons.GuidedOrdnance.initialize();
         TABS.register("aircraft", () -> CreativeModeTab.builder()
                 .title(Component.translatable("itemGroup.frontier_aviation"))
                 .icon(() -> new ItemStack(AircraftProfile.SU25.item.get()))

@@ -109,6 +109,15 @@ public final class AircraftSystemsFixture {
             } catch (RuntimeException | LinkageError error) { startFailure("ground_homing", error); }
             return 1;
         }));
+        command.then(Commands.literal("glide_bomb").executes(context -> {
+            var source = context.getSource();
+            if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
+            try {
+                var scenario = new GlideBombScenario(source.getPlayerOrException());
+                begin("glide_bomb", scenario::tick, scenario::result);
+            } catch (RuntimeException | LinkageError error) { startFailure("glide_bomb", error); }
+            return 1;
+        }));
         command.then(Commands.literal("gesture").executes(context -> {
             var source = context.getSource();
             if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;

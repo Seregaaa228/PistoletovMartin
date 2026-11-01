@@ -36,5 +36,7 @@
   "hud.frontier_aviation.target": "ЦЕЛЬ",
   "weapon.frontier_aviation.medium_agmissile": "Средняя ракета воздух–земля",
   "weapon.frontier_aviation.large_air_missile": "Большая ракета воздух–воздух",
-  "weapon.frontier_aviation.medium_air_missile": "Средняя ракета воздух–воздух"
+  "weapon.frontier_aviation.medium_air_missile": "Средняя ракета воздух–воздух",
+  "weapon.frontier_aviation.guided_bomb": "КАБ-500 управляемая планирующая бомба",
+  "entity.frontier_aviation.kab_500": "КАБ-500"
 }

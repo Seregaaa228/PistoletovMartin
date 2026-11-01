@@ -172,7 +172,8 @@ public final class LauncherEntity extends Entity {
         Kind kind = kind();
         if (kind == Kind.BALLISTIC || !active() || tickCount % 5 != 0 || ammunition() <= 0 || !ready()) return;
         int range = defenseRange(kind);
-        List<Entity> candidates = server.getEntities(this, getBoundingBox().inflate(range), candidate -> canTarget(server, kind, range, candidate, true));
+        List<Entity> candidates = server.getEntities(this, getBoundingBox().inflate(range),
+                candidate -> canTarget(server, kind, range, candidate, true) && lowIrDetected(range, candidate));
         if (candidates.isEmpty()) return;
         // One interceptor query per scan (not one per candidate): targets our own or an allied
         // launcher's interceptor is already homing on are skipped.
@@ -204,6 +205,15 @@ public final class LauncherEntity extends Entity {
                 || !CombatOperations.entityTicking(server, candidate.blockPosition())) return false;
         return cachedRelations ? CombatOwnership.hostileCached(server, owner, candidate) : CombatOwnership.hostile(server, owner, candidate);
     }
+    /** Only low-IR types (glide bombs) are filtered: no engine heat plume to cue on. Others pass unchanged. */
+    private boolean lowIrDetected(int range, Entity candidate) {
+        if (!candidate.getType().is(CombatContent.LOW_IR_TARGETS)) return true;
+        boolean detected = CombatRules.lowIrDetected(candidate.distanceToSqr(this), range, random.nextFloat());
+        LOGGER.debug("Low-IR target {} at {} blocks: {} by {} site", candidate.getUUID(),
+                Math.round(Math.sqrt(candidate.distanceToSqr(this))), detected ? "detected" : "not detected", kind());
+        return detected;
+    }
+    private static final org.slf4j.Logger LOGGER = com.mojang.logging.LogUtils.getLogger();
     /** Targets that our own or an allied launcher's interceptor is already homing on. */
     private Set<UUID> engagedTargets(ServerLevel server, int range) {
         if (owner == null) return Set.of();

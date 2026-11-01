@@ -100,6 +100,10 @@
     {
       "id": "deepstrike:su24m",
       "required": false
+    },
+    {
+      "id": "frontier_aviation:kab_500",
+      "required": false
     }
   ]
 }

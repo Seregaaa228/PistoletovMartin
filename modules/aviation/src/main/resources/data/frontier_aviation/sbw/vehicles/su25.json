@@ -102,7 +102,8 @@
       },
       "HasThermalImaging": true,
       "Weapons": [
-        "Cannon"
+        "Cannon",
+        "GuidedBomb"
       ]
     }
   ],
@@ -156,6 +157,89 @@
       "Magazine": 500,
       "AutoReload": false,
       "ReloadTypes": []
+    },
+    "GuidedBomb": {
+      "Icon": "superbwarfare:textures/overlay/vehicle/weapon/icons/mk_82.png",
+      "DefaultZoom": 1.25,
+      "UseNacelleCamera": false,
+      "DefaultFireMode": "Auto",
+      "AvailableFireModes": "Auto",
+      "RPM": 20,
+      "Magazine": 2,
+      "EmptyReloadTime": 300,
+      "Projectile": "frontier_aviation:kab_500",
+      "Name": "weapon.frontier_aviation.guided_bomb",
+      "Damage": 600,
+      "ExplosionDamage": 260,
+      "ExplosionRadius": 16,
+      "AddShooterDeltaMovement": false,
+      "Velocity": 0.5,
+      "ProjectileLife": 1200,
+      "SeekWeaponInfo": {
+        "SeekDirection": "ClientCamera",
+        "SeekRange": 384,
+        "SeekAngle": 30,
+        "SeekTime": 10,
+        "MaxTargetHeight": 256,
+        "MinTargetSize": 0.9,
+        "OnlyLockEntity": false,
+        "OnlyLockBlock": false
+      },
+      "AmmoType": [
+        {
+          "Ammo": "superbwarfare:medium_aerial_bomb",
+          "ShouldUnload": false
+        }
+      ],
+      "ShootPos": {
+        "Transform": "Vehicle",
+        "ShootPositionForHud": [
+          0.6,
+          2.6,
+          7.8
+        ],
+        "Positions": [
+          [
+            2.2,
+            2.2,
+            0.2
+          ],
+          [
+            -2.2,
+            2.2,
+            0.2
+          ]
+        ],
+        "BoundUpWithAmmoAmount": true,
+        "Directions": [
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "ShootDirectionForHud": [
+          0,
+          -0.03,
+          1
+        ],
+        "ViewPosition": [
+          0,
+          3.535,
+          3.99
+        ]
+      },
+      "SoundInfo": {
+        "Fire1P": "superbwarfare:bomb_release",
+        "Fire3P": "superbwarfare:bomb_release",
+        "VehicleReload3p": "superbwarfare:bomb_reload",
+        "VehicleReloadSoundTime": 11,
+        "Change": "superbwarfare:into_missile"
+      },
+      "Crosshair": "@AirCraftCommon",
+      "CrosshairZooming": "@AirCraftCommon",
+      "CrosshairColor": "0x66FF00",
+      "SoundRadius": 8
     }
   },
   "UpStep": 1.1,
