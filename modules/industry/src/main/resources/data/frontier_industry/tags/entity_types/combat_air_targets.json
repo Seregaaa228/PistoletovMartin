@@ -84,6 +84,22 @@
     {
       "id": "simpleplanes:helicopter",
       "required": false
+    },
+    {
+      "id": "frontier_aviation:su25",
+      "required": false
+    },
+    {
+      "id": "frontier_aviation:f16",
+      "required": false
+    },
+    {
+      "id": "frontier_aviation:j10",
+      "required": false
+    },
+    {
+      "id": "deepstrike:su24m",
+      "required": false
     }
   ]
 }

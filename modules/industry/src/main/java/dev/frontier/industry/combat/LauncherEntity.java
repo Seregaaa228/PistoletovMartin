@@ -166,7 +166,7 @@ public final class LauncherEntity extends Entity {
         if (level().isClientSide || !(level() instanceof ServerLevel server)) return;
         if (operator != null && server.getEntity(operator) instanceof LivingEntity living && (living.getVehicle() != this || !living.isAlive())) releaseOperator();
         if (kind() == Kind.BALLISTIC || !active() || tickCount % 5 != 0 || ammunition() <= 0 || !ready()) return;
-        Entity target = server.getEntities(this, getBoundingBox().inflate(defenseRange()), this::canTarget)
+        Entity target = server.getEntities(this, getBoundingBox().inflate(defenseRange()), candidate -> canTarget(candidate, true))
                 .stream().filter(candidate -> !alreadyEngaged(server, candidate)).min(Comparator.comparingDouble(this::distanceToSqr)).orElse(null);
         if (target == null) return;
         InterceptorEntity interceptor = CombatContent.INTERCEPTOR.get().create(server);
@@ -177,17 +177,23 @@ public final class LauncherEntity extends Entity {
         if (!server.addFreshEntity(interceptor)) { restoreReservation(1); return; }
         readyAt = level().getGameTime() + (kind() == Kind.PATRIOT ? 30 : 45); shotsFired++; revision++;
     }
-    public boolean canTarget(Entity candidate) {
+    /** Exact, uncached relation check (used by status/fixtures right after diplomacy changes). */
+    public boolean canTarget(Entity candidate) { return canTarget(candidate, false); }
+    private boolean canTarget(Entity candidate, boolean cachedRelations) {
         if (!(level() instanceof ServerLevel server) || !candidate.isAlive() || !server.hasChunkAt(candidate.blockPosition())
                 || candidate.distanceToSqr(this) > (double) defenseRange() * defenseRange()) return false;
-        if (candidate instanceof BallisticMissileEntity) return kind() == Kind.PATRIOT && CombatOwnership.hostile(server, owner, candidate);
-        // S300/S400 and Patriot all handle ordinary tagged aircraft. No vanilla arrow, ground vehicle or player targeting.
-        return kind() != Kind.BALLISTIC && candidate.getType().is(CombatContent.AIR_TARGETS)
-                && !candidate.onGround() && CombatOwnership.hostile(server, owner, candidate);
+        boolean typeOk = candidate instanceof BallisticMissileEntity ? kind() == Kind.PATRIOT
+                // S300/S400 and Patriot all handle ordinary tagged aircraft. No vanilla arrow, ground vehicle or player targeting.
+                : kind() != Kind.BALLISTIC && candidate.getType().is(CombatContent.AIR_TARGETS) && !candidate.onGround();
+        if (!typeOk) return false;
+        return cachedRelations ? CombatOwnership.hostileCached(server, owner, candidate) : CombatOwnership.hostile(server, owner, candidate);
     }
+    /** Our own or an allied launcher's interceptor already homing on this target counts as engaged. */
     private boolean alreadyEngaged(ServerLevel server, Entity target) {
+        if (owner == null) return false;
         return !server.getEntitiesOfClass(InterceptorEntity.class, getBoundingBox().inflate(defenseRange()),
-                shot -> owner != null && owner.equals(shot.ownerUUID()) && target.getUUID().equals(shot.targetUUID())).isEmpty();
+                shot -> target.getUUID().equals(shot.targetUUID()) && shot.ownerUUID() != null
+                        && (owner.equals(shot.ownerUUID()) || CombatOwnership.sameTeamCached(server, owner, shot.ownerUUID()))).isEmpty();
     }
     @Override public void remove(RemovalReason reason) { if (reason.shouldDestroy() && !level().isClientSide) releaseOperator(); super.remove(reason); }
     @Override protected void readAdditionalSaveData(CompoundTag tag) {
