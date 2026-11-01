@@ -16,7 +16,9 @@
     "DeferredMissileTerrainContact",
     "GraphitePhysicalBlast",
     "VanillaServerEffects",
-    "FarFlightPacketCadence"
+    "FarFlightPacketCadence",
+    "NativeDomeFollowUp",
+    "NativeDefenseEngagement"
   ],
   "client": [
     "VanillaContrails",
