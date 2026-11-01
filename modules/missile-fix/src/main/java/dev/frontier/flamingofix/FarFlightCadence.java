@@ -10,9 +10,12 @@ package dev.frontier.flamingofix;
  * serverTick-keyed ghost timeline, which already interpolates between samples.
  */
 public final class FarFlightCadence {
-    /** One far sample every 4 ticks (5 Hz): within DeepStrike's 3-tick presentation buffer
-     *  plus one tick, and far below its 200-tick stale-flight timeout. */
-    public static final int FAR_INTERVAL = 4;
+    /** DeepStrike's FlightPresentationClock renders 3 ticks behind the newest serverTick, and its
+     *  FlightTimeline does not extrapolate: past the newest sample the ghost holds still. */
+    public static final int PRESENTATION_BUFFER = 3;
+    /** One far sample every 2 ticks: the next sample still arrives a tick before it is needed.
+     *  Above the buffer the far ghost holds for the difference every sample; at it, on any jitter. */
+    public static final int FAR_INTERVAL = 2;
     /** DeepStrike starts launch effects/acoustics only for flights first seen at age <= 16. */
     public static final int LAUNCH_AGE = 20;
     /** Never treat anyone closer than this (horizontal blocks) as far, regardless of view distance. */
@@ -25,7 +28,7 @@ public final class FarFlightCadence {
 
     /** True when every recipient must get this packet regardless of distance. */
     public static boolean unconditional(boolean alive, boolean intercepted, int flightAge) {
-        // alive=false is the terminal/removal state; intercept is a one-off event.
+        // alive=false is the terminal/removal state; intercepted stays set for the debris fall.
         return !alive || intercepted || flightAge <= LAUNCH_AGE;
     }
 

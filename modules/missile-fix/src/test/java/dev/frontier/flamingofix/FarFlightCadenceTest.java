@@ -8,6 +8,9 @@ public final class FarFlightCadenceTest {
         if (!FarFlightCadence.unconditional(true, false, 16)) throw new AssertionError("launch packet throttled");
         if (FarFlightCadence.unconditional(true, false, 200)) throw new AssertionError("cruise packet not throttled");
         checks += 4;
+        if (FarFlightCadence.FAR_INTERVAL >= FarFlightCadence.PRESENTATION_BUFFER)
+            throw new AssertionError("far interval leaves no margin in the presentation buffer");
+        checks++;
         for (int id = -7; id < 40; id++) {
             long previous = Long.MIN_VALUE; int sent = 0;
             for (long tick = 1000; tick < 1400; tick++) {
