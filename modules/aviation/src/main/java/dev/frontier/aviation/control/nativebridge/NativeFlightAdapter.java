@@ -71,7 +71,8 @@ public final class NativeFlightAdapter implements NativeFlightAccess {
             v.getRoll(), v.getXRot(), v.getSynchedPropellerRot(), v.getHoverMode(), v.getPower(),
             v.getMainEngineDamaged(), v.getMaxEnergy(), v.getEnergy()));
         var performance = AircraftCatalog.performance(entityId(v));
-        return performance.isPresent() ? withPerformance(environment, performance.get()) : environment;
+        // Without gravity (a held fixture or scripted aircraft) there is nothing to stall against.
+        return performance.isPresent() ? withPerformance(environment, performance.get(), !v.isNoGravity()) : environment;
     }
     /** Values sampled once from native state. No keyboard or previous command flags enter this boundary. */
     public record NativeReadings(long tick, float speed, float forward, boolean ground, boolean helicopter,
@@ -122,7 +123,7 @@ public final class NativeFlightAdapter implements NativeFlightAccess {
             upRamp, downRamp, cap(airMin), cap(secondaryMin), helicopter ? max : .25f, rotor, throttle.boostIncrease());
     }
     /** One of our jets on the native engine: its own power, spool, rates and stall speed. */
-    public static FlightEnvironment withPerformance(FlightEnvironment e, dev.frontier.aviation.aircraft.AircraftPerformance p) {
+    public static FlightEnvironment withPerformance(FlightEnvironment e, dev.frontier.aviation.aircraft.AircraftPerformance p, boolean canStall) {
         var c = e.caps();
         var caps = new FlightEnvironment.AxisCaps(c.pitchNegative() * p.pitchRate(), c.pitchPositive() * p.pitchRate(),
             c.yawNegative(), c.yawPositive(), c.rollNegative() * p.rollRate(), c.rollPositive() * p.rollRate());
@@ -130,7 +131,7 @@ public final class NativeFlightAdapter implements NativeFlightAccess {
             e.gearAvailable(), e.hoverAvailable(), e.nativeEmergency(), caps, e.idlePower(), p.maxPower(), p.boostPower(),
             cap(e.throttleIncrease() * p.throttleRate()), e.throttleDecrease(), e.secondaryDecrease(),
             e.throttleRampUpTicks(), e.throttleRampDownTicks(), e.airborneMinimumPower(), e.secondaryMinimumPower(),
-            e.airBrakePowerCap(), e.rotorSpool(), cap(e.boostThrottleIncrease() * p.throttleRate()), p.stallSpeed());
+            e.airBrakePowerCap(), e.rotorSpool(), cap(e.boostThrottleIncrease() * p.throttleRate()), canStall ? p.stallSpeed() : 0);
     }
     /** Capabilities are intrinsic to the native engine, never the previous tick's input flags. */
     public record ThrottleCapabilities(float normalIncrease, float boostIncrease, float boostMaximumPower) {}
