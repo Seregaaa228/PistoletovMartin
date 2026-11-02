@@ -21,7 +21,7 @@ import time
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
-SCENARIOS = ('aim0', 'aim1', 'aim2', 'aim3', 'destruction', 'npc', 'air_to_air', 'ground_homing', 'moving_ground_homing', 'gesture', 'gear', 'gear_su25', 'gear_j10', 'seed_wreck', 'restart_wreck', 'visual_loadout', 'tablet', 'tablet_f16', 'kab_envelope')
+SCENARIOS = ('aim0', 'aim1', 'aim2', 'aim3', 'destruction', 'npc', 'air_to_air', 'ground_homing', 'moving_ground_homing', 'gesture', 'gear', 'gear_su25', 'gear_j10', 'seed_wreck', 'restart_wreck', 'visual_loadout', 'tablet', 'tablet_f16', 'kab_envelope', 'deploy')
 # Su-25 tablet panel controls (GlideBombTabletPanel layout) for this runner's 1280x720
 # window at GUI scale 2. DeepStrike draws its tablet in a virtual space scaled by
 # UiViewport.scale() = min(1.2 / 2, 640 / 1000, 360 / 600) = 0.6, i.e. 1067x600; MC Pilot
