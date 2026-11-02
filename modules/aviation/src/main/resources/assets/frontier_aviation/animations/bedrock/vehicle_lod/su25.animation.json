@@ -39,6 +39,132 @@
             0,
             0
           ]
+        },
+        "windscreen": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "flap_left": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "flap_right": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "aileron_left": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "aileron_right": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "elevator_left": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "elevator_right": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "rudder": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "airbrake_left_upper": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "airbrake_left_lower": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "airbrake_right_upper": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "airbrake_right_lower": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_door_nose_l": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_door_nose_r": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_door_left_l": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_door_left_r": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_door_right_l": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_door_right_r": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
         }
       }
     }
