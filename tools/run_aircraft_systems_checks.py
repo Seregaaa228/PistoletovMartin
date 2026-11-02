@@ -245,6 +245,7 @@ def main() -> int:
                         (profile / 'aircraft-visual-brake.txt').write_text(manifest['runId'])
                         call(['input', 'key', 'down', 'space'])
                         time.sleep(1.5)
+                        call(['screenshot', '--output', str(profile / (shot + '-airbrake.png'))])
                         (profile / 'aircraft-gear-captured.txt').write_text(manifest['runId'])
                 tablet_progress = profile / 'aircraft-tablet-progress.json'
                 if scenario in ('tablet', 'tablet_f16') and tablet_progress.exists():
