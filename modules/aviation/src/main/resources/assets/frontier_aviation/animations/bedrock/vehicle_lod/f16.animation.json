@@ -144,6 +144,34 @@
             0,
             0
           ]
+        },
+        "gear_door_nose_l": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_door_nose_r": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_door_left_l": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_door_right_r": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
         }
       }
     }

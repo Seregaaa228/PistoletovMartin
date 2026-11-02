@@ -22,6 +22,15 @@ NOSE = -133.44         # pitot tip, geo Z (px): pilot eye at x 4.35 m
 LIFT = 0.59
 TIP_X = 4.95           # wingtip missile station (m), as in AircraftRenderer
 EXIT = 14.45           # nozzle exit (m)
+STAB_ROOT = 1.05       # stabilator root at the boom side (m from the centre line)
+FIN_TE_ROOT, FIN_TE_RISE = 14.0, 0.95 / 2.16    # fin TE x at the base, aft shift per metre of height
+RUDDER_CHORD = 0.58    # streamwise (m); rudder 0.2..1.8 m above the fin base
+FLAP_HINGE, WING_TE = 10.27, 10.77               # flaperon hinge line and wing TE (m aft of the pitot)
+FLAP_SPAN = (1.15, 3.30)                         # flaperon inner/outer end (m from the centre line)
+MAIN_HINGE_Y, NOSE_HINGE_Y = 36.2, 30.5          # gear retraction hinges (px)
+# closed doors: inner x, outer (hinge) x, bottom y, top (hinge) y, z0, z1  (px, +X side)
+NOSE_DOOR = (0.0, 3.2, 23.66, 24.66, -51.6, -19.2)
+MAIN_DOOR = (12.4, 23.0, 25.4, 26.05, -23.3, 16.8)
 
 
 def Z(x):
@@ -48,10 +57,13 @@ def build(lod=False):
     m = Model('f16_lod' if lod else 'f16')
     m.bone('body', None)
     m.bone('pilot_anchor', 'body', (0, 40.64, -63.84))
-    for name in ('wing_l', 'wing_r', 'tail_fin', 'stabilizer_l', 'stabilizer_r', 'canopy', 'chin_intake', 'engine'):
+    for name in ('wing_l', 'wing_r', 'tail_fin', 'stabilizer_l', 'stabilizer_r', 'chin_intake', 'engine'):
         m.bone(name)
-    main = (19.3, H(1.02), Z(9.2))
-    nose = (0.0, H(0.92), Z(5.2))
+    # one-piece canopy, rear hinge: aft bottom of the transparency on the centre line
+    m.bone('canopy', 'body', (0, H(2.40), Z(5.75)))
+    # retraction hinges high in the bays so the folded legs stay inside the airframe
+    main = (19.3, MAIN_HINGE_Y, Z(9.2))
+    nose = (0.0, NOSE_HINGE_Y, Z(5.2))
     for side, name in ((1, 'gear_main_l'), (-1, 'gear_main_r')):
         x = side * main[0]
         m.bone(name, 'body', (x, main[1], main[2]))
@@ -65,9 +77,11 @@ def build(lod=False):
     wing_y = H(1.9)
     m.bone('f16_aileron_left', 'body', (2.2 * M, wing_y, Z(10.27)))
     m.bone('f16_aileron_right', 'body', (-2.2 * M, wing_y, Z(10.27)))
-    m.bone('f16_elevator_left', 'body', (1.3 * M, H(1.85), Z(13.0)))
-    m.bone('f16_elevator_right', 'body', (-1.3 * M, H(1.85), Z(13.0)))
-    m.bone('f16_rudder', 'body', (0, H(4.0), Z(13.86)))
+    # stabilator spindle: 41 % root chord, on the stab plane where it meets the boom (x 1.05 m)
+    m.bone('f16_elevator_left', 'body', (STAB_ROOT * M, H(1.85), Z(13.0)))
+    m.bone('f16_elevator_right', 'body', (-STAB_ROOT * M, H(1.85), Z(13.0)))
+    # rudder hinge line at mid rudder height (1.0 m above the fin base)
+    m.bone('f16_rudder', 'body', (0, H(4.0), Z(FIN_TE_ROOT + FIN_TE_RISE * 1.0 - RUDDER_CHORD)))
     m.bone('dummy_0_1_1', 'body', (54.4, 35.2, -3.2))
     m.bone('dummy_0_1_2', 'body', (-54.4, 35.2, -3.2))
     m.bone('pylon_outer_1', 'body', (54.4, 35.2, -3.2))
@@ -76,6 +90,12 @@ def build(lod=False):
     m.bone('f16_airbrake_right', 'body', (-11.15, 39.0, 70.0))
     m.bone('f16_tip_pylon_left', 'body', (TIP_X * M, 43.8, 20.0))
     m.bone('f16_tip_pylon_right', 'body', (-TIP_X * M, 43.8, 20.0))
+    # gear doors, closed; '_l' hinges on its +X edge, '_r' on its -X edge (pivot on the hinge line)
+    for name, x, y in (('gear_door_nose_l', NOSE_DOOR[1], NOSE_DOOR[3]), ('gear_door_nose_r', -NOSE_DOOR[1], NOSE_DOOR[3]),
+                       ('gear_door_left_l', MAIN_DOOR[1], MAIN_DOOR[3]),
+                       ('gear_door_right_r', -MAIN_DOOR[1], MAIN_DOOR[3])):
+        z0, z1 = (NOSE_DOOR if 'nose' in name else MAIN_DOOR)[4:6]
+        m.bone(name, 'body', (x, y, (z0 + z1) / 2))
 
     # ---- fuselage (x, half-width, z bottom, z top, chamfer top, chamfer bottom; real m)
     radome = [
@@ -154,7 +174,11 @@ def build(lod=False):
     if full:
         for sx in (-1, 1):
             m.box('canopy', sx * 6.3, sx * 7.3, sill - 1.0, sill, Z(2.8), Z(5.75), 'frame')   # canopy sill rail
-        m.box('canopy', -6.0, 6.0, sill, H(2.98), Z(5.62), Z(5.78), 'frame')                 # aft bow
+    # aft bow: a frame hoop just proud of the bubble where it sinks into the dorsal fairing
+    bw, btop = 12.9, H(2.93) + 0.4
+    bh = btop - sill
+    m.section('canopy', Z(5.36), Z(5.48), 0, (sill + btop) / 2, bw, bh, min(0.42 * bw, bh * 0.62), 0.1,
+              mat='frame', skip_bottom=True, lod=full)
 
     # ---- chin intake (Block 50 'big mouth'), splitter/diverter, dark duct
     m.loft('chin_intake', [
@@ -171,22 +195,32 @@ def build(lod=False):
             m.box('chin_intake', sx * 9.0 - 0.8, sx * 9.0 + 0.8, H(0.98), H(1.12), Z(5.3), Z(6.3), 'pylon')
 
     # ---- wings: unswept TE, flaperons inboard, tip launch rails
+    # The swept panel stops at the flaperon hinge line. Behind it, the 0.5 m trailing-edge strip
+    # is the flaperon over its span and fixed boxes inboard and outboard, so nothing overlaps
+    # the moving surface and a deflected flaperon shows solid wing ahead of it.
+    hinge_z, te_z = Z(FLAP_HINGE), Z(WING_TE)
+    cut = (WING_TE - FLAP_HINGE) * M
+    flap_in, flap_out = FLAP_SPAN[0] * M, FLAP_SPAN[1] * M
     for side in (1, -1):
         bone = 'wing_l' if side > 0 else 'wing_r'
         y0, y1 = 1.00, 4.58
-        cubes = m.panel(bone, (y0 * M, Z(wing_le(y0)), wing_chord(y0) * M), (y1 * M, Z(wing_le(y1)), wing_chord(y1) * M),
+        cubes = m.panel(bone, (y0 * M, Z(wing_le(y0)), wing_chord(y0) * M - cut),
+                        (y1 * M, Z(wing_le(y1)), wing_chord(y1) * M - cut),
                         3.0, 'skin', side=side, strips=3 if full else 1, root_in=0.45 * M)
         place_panel(cubes, wing_y, 0.0, side, y0 * M)
+        te_t = 3.0 - 0.08 + (0.2 if side < 0 else 0.0)     # as thick as the panel's own TE boxes
+        m.box(bone, side * 11.0, side * flap_in, wing_y - te_t / 2, wing_y + te_t / 2, hinge_z, te_z, 'skin')
+        m.box(bone, side * flap_out, side * y1 * M, wing_y - te_t / 2, wing_y + te_t / 2, hinge_z, te_z, 'skin')
         tip = 'f16_tip_pylon_left' if side > 0 else 'f16_tip_pylon_right'
         m.box(tip, side * 72.6, side * 76.6, wing_y - 1.4, wing_y + 1.2, Z(8.3), Z(10.98), 'rail')
         m.box(tip, side * 73.8, side * 75.6, wing_y - 2.6, wing_y - 1.2, Z(8.6), Z(10.8), 'rail', lod=full)
         if full:
             m.box(bone, side * 71.0, side * 72.8, wing_y - 0.8, wing_y + 0.8, Z(9.65), Z(9.85),
                   'light_green' if side > 0 else 'light_red')
+        # flaperon: hinge on the wing mid-plane; its nose runs 1 px into the wing so a deflected
+        # surface never opens a slot at the hinge
         ail = 'f16_aileron_left' if side > 0 else 'f16_aileron_right'
-        m.box(ail, side * 1.15 * M, side * 3.30 * M, wing_y - 1.3, wing_y + 1.3, Z(10.27), Z(10.80), 'skin')
-        if full:
-            m.box(ail, side * 1.15 * M, side * 3.30 * M, wing_y - 0.9, wing_y + 0.9, Z(10.22), Z(10.29), 'hinge')
+        m.box(ail, side * flap_in, side * flap_out, wing_y - 1.3, wing_y + 1.3, hinge_z - 1.0, te_z - 0.05, 'skin')
 
     # underwing pylons (2 cubes each for pylon_outer_*); their tops stay inside the wing
     for name, x in (('pylon_l', 33.6), ('pylon_r', -33.6), ('pylon_outer_1', 54.4), ('pylon_outer_2', -54.4)):
@@ -208,26 +242,44 @@ def build(lod=False):
     m.section('engine', Z(13.7), Z(EXIT), 0, ny, 15.6, 15.6, 4.6, mat='nozzle', ends=(False, True))
     m.box('engine', -5.6, 5.6, ny - 5.6, ny + 5.6, Z(EXIT) - 0.3, Z(EXIT) + 0.02, 'nozzle_in')
 
-    # aft speed brakes beside the nozzle, hinged at the code's pivot
+    # aft speed brakes beside the nozzle, hinged at the code's pivot. The renderer swings them
+    # outward about a vertical hinge, so the moving panel sits above the stabilator plane
+    # (y > 41.2) and clears the stabilator at full travel; below it the boom end is fixed skin.
     for side in (1, -1):
         name = 'f16_airbrake_left' if side > 0 else 'f16_airbrake_right'
         x = side * 11.15
-        m.box(name, x - 0.6, x + 0.6, H(1.45), H(2.30), 69.4, 94.0, 'skin')
-        # boom end structure between the nozzle and the closed brake
+        m.box(name, x - 0.6, x + 0.6, 41.2, H(2.30), 69.4, 92.5, 'skin')
+        # boom end structure between the nozzle and the closed brake, solid behind the open panel
         m.box('engine', side * 7.4, side * 10.6, H(1.47), H(2.28), 69.4, 93.0, 'skin')
+        m.box('engine', side * 10.5, side * 11.7, H(1.47), 41.3, 69.4, 92.5, 'skin')
 
     # ---- vertical fin with rudder, ventral fins
     base = H(3.0)
-    fin = m.panel('tail_fin', (0, Z(11.4), 2.6 * M), (2.16 * M, Z(13.75), 1.2 * M), 3.0, 'skin', side=1,
+    # The swept fin panel ends RUDDER_CHORD ahead of the real TE; the TE strip behind it is the
+    # rudder (0.2..1.8 m above the base) with fixed strips below and above, all parallel to the TE.
+    rc = RUDDER_CHORD * M
+    fin = m.panel('tail_fin', (0, Z(11.4), 2.6 * M - rc), (2.16 * M, Z(13.75), 1.2 * M - rc), 3.0, 'skin', side=1,
                   strips=3 if full else 1, skip_root=False, root_in=0.38 * M)
     for c in fin:
         _upright(c, base)
-    # rudder: the aft strip of the fin, aligned with its swept trailing edge
-    te = math.atan2(14.95 - 14.0, 2.16)
-    hc, depth = 1.0, 0.55 * M
-    zte = Z(14.0 + (14.95 - 14.0) * hc / 2.16)
-    m.centered('f16_rudder', (0, base + hc * M + math.sin(te) * depth / 2, zte - math.cos(te) * depth / 2),
-               (3.2, 1.5 * M, depth), 'skin', rotation=(-math.degrees(te), 0, 0))
+    te = math.atan(FIN_TE_RISE)
+
+    def te_strip(bone, h0, h1, thick, ext=0.0, mat='skin'):
+        # box along the swept TE from h0 to h1 (m above the fin base), as deep as the rudder chord,
+        # its end faces normal to the TE; ext pushes the front face that far into the fin
+        dp = rc * math.cos(te) + ext
+        hm = (h0 + h1) / 2
+        yte, zte = base + hm * M, Z(FIN_TE_ROOT + FIN_TE_RISE * hm)
+        return m.centered(bone, (0, yte + math.sin(te) * dp / 2, zte - math.cos(te) * dp / 2),
+                          (thick, (h1 - h0) * M / math.cos(te), dp), mat, rotation=(-math.degrees(te), 0, 0))
+
+    cap = 2.16 - rc * math.cos(te) * math.sin(te) / M      # TE height where a strip's front corner meets the tip
+    te_strip('tail_fin', -0.3, 0.2, 2.92)
+    te_strip('tail_fin', 1.8, cap, 2.92)
+    te_strip('f16_rudder', 0.2, 1.8, 2.8, ext=1.2)
+    # fin cap closing the tip above the last strip, overhanging the TE a little as on the real jet
+    m.box('tail_fin', -1.46, 1.46, base + cap * M, base + 2.16 * M, Z(FIN_TE_ROOT + FIN_TE_RISE * cap - RUDDER_CHORD) - 0.5,
+          Z(FIN_TE_ROOT + FIN_TE_RISE * 2.16), 'skin')
     if full:
         m.box('tail_fin', -1.9, 1.9, H(2.40), base + 0.4, Z(11.3), Z(14.6), 'skin')        # fin base fairing
         m.box('tail_fin', -1.0, 1.0, H(4.98), H(5.10), Z(13.95), Z(14.25), 'light_white')
@@ -235,12 +287,13 @@ def build(lod=False):
         m.centered('body', (side * 0.52 * M, H(0.80), Z(11.1)), (0.8, 0.55 * M, 1.3 * M), 'skin',
                    rotation=(0, 0, -side * 14), lod=full)
 
-    # ---- all-moving stabilators (anhedral 10 deg)
+    # ---- all-moving stabilators (anhedral 10 deg). Only a short root stub is buried in the boom:
+    # the whole surface turns about the spindle and a long stub would rise out of the thin boom.
     for side in (1, -1):
         name = 'f16_elevator_left' if side > 0 else 'f16_elevator_right'
-        cubes = m.panel(name, (1.05 * M, Z(12.0), 2.42 * M), (2.79 * M, Z(13.55), 0.65 * M), 2.4, 'skin', side=side,
-                        strips=2 if full else 1, root_in=0.5 * M)
-        place_panel(cubes, H(1.85), -10.0, side, 1.05 * M)
+        cubes = m.panel(name, (STAB_ROOT * M, Z(12.0), 2.42 * M), (2.79 * M, Z(13.55), 0.65 * M), 2.4, 'skin', side=side,
+                        strips=2 if full else 1, root_in=0.15 * M)
+        place_panel(cubes, H(1.85), -10.0, side, STAB_ROOT * M)
 
     _gear(m, nose, main, full)
     return m
@@ -255,30 +308,63 @@ def _upright(c, base_y):
     c.rotation = [c.rotation[1] if c.rotation else 0.0, 0.0, 0.0]
 
 
+def _ramp(m, bone, x0, x1, za, ya, zb, yb, top, thick=1.2):
+    """Sloped underside from (za, ya) to (zb, yb), filled with steps up to `top`: the faired
+    front/rear end of a bay bulge whose upper side is buried in the wing."""
+    cx, w = (x0 + x1) / 2, abs(x1 - x0)
+    m.slab(bone, (cx, ya + thick / 2, za), (cx, yb + thick / 2, zb), w, thick, 'skin')
+    steps = max(1, int(math.ceil(abs(yb - ya) / (thick * 0.55))))
+    for i in range(steps):
+        z0, z1 = za + (zb - za) * i / steps, za + (zb - za) * (i + 1) / steps
+        y0, y1 = ya + (yb - ya) * i / steps, ya + (yb - ya) * (i + 1) / steps
+        bottom = max(y0, y1) + 0.25
+        if bottom < top:
+            m.box(bone, cx - w / 2 + 0.05, cx + w / 2 - 0.05, bottom, top, z0, z1, 'skin', skip=('down',))
+
+
+def _door(m, name, door, side, full):
+    """Closed bay door (outer skin plate + white liner hidden inside the bay when closed)."""
+    xi, xo, yb, yt, z0, z1 = door
+    m.box(name, side * xi, side * xo, yb, yt, z0, z1, 'skin')
+    if full:
+        m.box(name, side * (xi + 0.4), side * (xo - 0.4), yt, yt + 0.4, z0 + 0.4, z1 - 0.4, 'well')
+
+
 def _gear(m, nose, main, full):
+    """Gear legs hinge high in their bays: the nose leg folds 88 deg aft into the intake
+    fairing, the mains 82 deg forward into the wing-root bulges under the wing. Closed doors
+    cover both bays; behind an open door the bay roof is fixed skin."""
     nx, ny, nz = nose
     # nose: leg (fixed part) + oleo; wheel radius 0.29 m centred on the wheel pivot
-    m.box('gear_nose', -0.9, 0.9, 8.0, ny + 1.0, nz - 0.9, nz + 0.9, 'strut')
+    m.box('gear_nose', -0.9, 0.9, 8.0, ny + 0.6, nz - 0.9, nz + 0.9, 'strut')
     if full:
         m.box('gear_nose', -1.5, 1.5, 9.4, 14.0, nz - 1.5, nz + 1.5, 'strut')
     m.box('gear_nose_wheel', -1.5, 1.5, 0.0, 9.28, nz - 4.64, nz + 4.64, 'tire')
     if full:
         m.box('gear_nose_wheel', -1.7, 1.7, 3.2, 6.1, nz - 1.5, nz + 1.5, 'hub')
+    for side, door in ((1, 'gear_door_nose_l'), (-1, 'gear_door_nose_r')):
+        _door(m, door, NOSE_DOOR, side, full)
+
+    xi, xo, _, yt, dz0, dz1 = MAIN_DOOR
     for side in (1, -1):
         name = 'gear_main_l' if side > 0 else 'gear_main_r'
         x, y, z = side * main[0], main[1], main[2]
-        # strut first, brace last: the brace must touch the strut and the fuselage
-        m.box(name, x - 1.1, x + 1.1, 10.0, y, z - 1.1, z + 1.1, 'strut')
+        # strut first, brace last: the brace must touch the strut and the fuselage (bay bulge)
+        m.box(name, x - 1.1, x + 1.1, 10.0, y + 0.6, z - 1.1, z + 1.1, 'strut')
         if full:
             m.box(name, x - 1.6, x + 1.6, 12.4, 18.0, z - 1.6, z + 1.6, 'strut')
-        m.box(name, min(x, side * 12.0) - 0.6, max(x, side * 12.0) + 0.6, y - 6.0, y + 0.6, z - 0.8, z + 0.8, 'strut')
+        m.box(name, x - 0.7, x + 0.7, yt - 1.65, yt + 0.35, z - 5.0, z + 0.8, 'strut')    # drag brace
         wheel = name + '_wheel'
         m.box(wheel, x - 2.6, x + 2.6, 0.0, 11.52, z - 5.76, z + 5.76, 'tire')
         if full:
             m.box(wheel, x - 2.8, x + 2.8, 3.8, 7.7, z - 1.9, z + 1.9, 'hub')
-        m.box('body', x - 3.4, x + 3.4, y - 0.4, y + 0.4, z - 5.0, z + 14.0, 'well', lod=True)
-    if full:
-        m.box('body', -3.0, 3.0, H(0.91), H(1.0), Z(5.3), Z(6.6), 'well')
+        # wing-root bay bulge: flat underside at the door line, top buried in the wing
+        top = H(1.9) - 1.0
+        m.box('body', side * (xi - 0.2), side * (xo + 0.2), yt - 0.05, top, dz0 - 0.2, dz1 + 0.2, 'skin')
+        if full:
+            _ramp(m, 'body', side * xi, side * (xo + 0.2), dz0 - 0.2, yt - 0.05, dz0 - 8.0, top - 0.3, top)
+            _ramp(m, 'body', side * xi, side * (xo + 0.2), dz1 + 0.2, yt - 0.05, dz1 + 12.0, top - 0.3, top)
+        _door(m, 'gear_door_left_l' if side > 0 else 'gear_door_right_r', MAIN_DOOR, side, full)
 
 
 PALETTE = {

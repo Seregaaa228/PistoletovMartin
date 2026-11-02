@@ -28,7 +28,8 @@ import net.minecraft.resources.ResourceLocation;
 public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
     private static final String[] GEAR = {"gear_nose", "gear_main_l", "gear_main_r"};
     private static final String[] GEAR_CHILD_SUFFIXES = {"_suspension", "_wheel"};
-    // "_l" doors hinge on their +X edge, "_r" doors on their -X edge.
+    // "_l" doors hinge on their +X edge, "_r" doors on their -X edge. SBW bakes bones in an
+    // X-mirrored frame, so rotations about Y and Z run opposite to the geo file's axes.
     private static final String[] GEAR_DOORS = {"gear_door_nose_l", "gear_door_nose_r", "gear_door_left_l",
         "gear_door_left_r", "gear_door_right_l", "gear_door_right_r"};
     private static final String[] PAYLOAD_MODELS = {"", "", "agm_65", "ru_9m100_missile", "ru_9m336_missile", "wire_guide_missile"};
@@ -73,7 +74,7 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
         // Bay doors stand open while the gear is out and close flush once it is stowed.
         for (String name : GEAR_DOORS) {
             BoneState door = instance.getBone(name);
-            if (door != null) door.rotation.rotateZ((float) Math.toRadians(name.endsWith("_l") ? 85 : -85) * (1 - fold));
+            if (door != null) door.rotation.rotateZ((float) Math.toRadians(name.endsWith("_l") ? -85 : 85) * (1 - fold));
         }
         // One STATES lookup for all values of this frame.
         F16VisualStateManager.RenderState state = F16VisualStateManager.renderState(plane, partial);
@@ -126,7 +127,7 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
             // the F-16 and J-10 canopies lift on their rear hinge.
             float open = state.canopy();
             if (open > 0) {
-                if (profile == AircraftProfile.SU25) canopy.rotation.rotateZ((float) Math.toRadians(100 * open));
+                if (profile == AircraftProfile.SU25) canopy.rotation.rotateZ((float) Math.toRadians(-100 * open));
                 else canopy.rotation.rotateX((float) Math.toRadians(35 * open));
             }
         }
