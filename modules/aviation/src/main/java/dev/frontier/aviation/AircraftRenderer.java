@@ -87,7 +87,7 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
         rotateSurface(instance, "elevon_right", 22 * axes.pitch() - 18 * axes.roll(), false);
         rotateSurface(instance, "canard_left", -20 * axes.pitch(), false);
         rotateSurface(instance, "canard_right", -20 * axes.pitch(), false);
-        rotateSurface(instance, "rudder", 25 * axes.yaw(), true);
+        rotateRudder(instance, profile, 25 * axes.yaw());
         // Flaps follow the landing gear: down for take-off and landing, up in cruise.
         rotateSurface(instance, "flap_left", 30 * (1 - fold), false);
         rotateSurface(instance, "flap_right", 30 * (1 - fold), false);
@@ -102,7 +102,6 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
             rotateSurface(instance, "f16_aileron_right", -25 * axes.roll(), false);
             rotateSurface(instance, "f16_elevator_left", 25 * axes.pitch(), false);
             rotateSurface(instance, "f16_elevator_right", 25 * axes.pitch(), false);
-            rotateSurface(instance, "f16_rudder", 25 * axes.yaw(), true);
             rotateSurface(instance, "f16_airbrake_left", -55 * state.airBrake(), true);
             rotateSurface(instance, "f16_airbrake_right", 55 * state.airBrake(), true);
             for (String name : GEAR) {
@@ -131,6 +130,24 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
                 else canopy.rotation.rotateX((float) Math.toRadians(35 * open));
             }
         }
+    }
+
+    /** Aft lean of each rudder hinge from vertical (deg): it follows the fin's swept trailing edge. */
+    private static float rudderHingeSweep(AircraftProfile profile) {
+        if (profile == AircraftProfile.F16) return 23.74f;
+        if (profile == AircraftProfile.J10) return 18.66f;
+        return 0;   // the Su-25 rudder hangs on a vertical hinge
+    }
+
+    /**
+     * Turns the whole rudder about its own hinge line. A plain Y rotation would swing a
+     * swept rudder diagonally, with the top moving far more than the bottom.
+     */
+    public static void rotateRudder(VehicleModelInstance instance, AircraftProfile profile, float degrees) {
+        BoneState bone = instance.getBone(profile == AircraftProfile.F16 ? "f16_rudder" : "rudder");
+        if (bone == null) return;
+        double sweep = Math.toRadians(rudderHingeSweep(profile));
+        bone.rotation.rotateAxis((float) Math.toRadians(degrees), 0, (float) Math.cos(sweep), (float) Math.sin(sweep));
     }
 
     private static void rotateSurface(VehicleModelInstance instance, String name, float degrees, boolean vertical) {
