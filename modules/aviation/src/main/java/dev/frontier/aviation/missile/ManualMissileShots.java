@@ -137,7 +137,7 @@ public final class ManualMissileShots {
             if (vehicle instanceof VehicleEntity plane && owner != null
                     && (owner.getUUID().equals(frame.ticket.pilot()) || owner.getUUID().equals(frame.ticket.vehicle()))) {
                 int station = frame.ticket.station();
-                double[] x = {2.1, -2.1, 3.4, -3.4, 5.65625, -5.65625};
+                double[] x = {2.1, -2.1, 3.4, -3.4, 4.95, -4.95};
                 var point = plane.getTransformFromString("Vehicle").transformPosition(new org.joml.Vector3d(
                     x[station], station >= 4 ? 2.6 : 2.2, station >= 4 ? 1.25 : .2));
                 projectile.setPos(point.x, point.y, point.z);

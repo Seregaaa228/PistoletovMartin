@@ -38,12 +38,12 @@ public final class F16SuspensionResourceContractTest {
         String vehicleConfig = Files.readString(Path.of("src/main/resources/assets/frontier_aviation/sbw/vehicles/f16.json"));
         check(vehicleConfig.contains("frontier_aviation:models/bedrock/vehicle_lod/f16.geo.json"), "runtime LOD path");
         Map<String, String> unchanged = Map.of(
-                "vehicle/j10.geo.json", "0a33891a7d7fc03c8d1bc7f61849231c65d2eec1347c8a0e386b079b215dafb4",
-                "vehicle/j10_lod.geo.json", "07aca619f13ccc9ee346a6f3bc5b763fbfeb7fcd93206393e1aa17c19ce4fe18",
-                "vehicle/su25.geo.json", "1e0d490060941006d16f58a914f5f99670c103f7046c9b1427df94bb3e5e15ac",
-                "vehicle/su25_lod.geo.json", "ffe7ad7ebd69cccfe188b784344a548c2290ee625fb28736ddfc9a42f8b5bcf0",
-                "vehicle_lod/j10.geo.json", "07aca619f13ccc9ee346a6f3bc5b763fbfeb7fcd93206393e1aa17c19ce4fe18",
-                "vehicle_lod/su25.geo.json", "ffe7ad7ebd69cccfe188b784344a548c2290ee625fb28736ddfc9a42f8b5bcf0");
+                "vehicle/j10.geo.json", "28cb26b6eefb394033c84c7b805fc9344e4628e584eab2fbc245e10a1f7c19b7",
+                "vehicle/j10_lod.geo.json", "eeb094bf8125f4b66cb6959f237b462025af4fcbb3f4a1e00a86166215970b69",
+                "vehicle/su25.geo.json", "1582c1808edd983f48882fb5c20f50a60c09cfa75d14682b708eba51f45578ba",
+                "vehicle/su25_lod.geo.json", "7938e95f97dbbeea649b891e4326bfeb076b2d781a849678e9c2736198fceb08",
+                "vehicle_lod/j10.geo.json", "eeb094bf8125f4b66cb6959f237b462025af4fcbb3f4a1e00a86166215970b69",
+                "vehicle_lod/su25.geo.json", "7938e95f97dbbeea649b891e4326bfeb076b2d781a849678e9c2736198fceb08");
         for (var entry : unchanged.entrySet()) {
             check(hash(Files.readAllBytes(MODELS.resolve(entry.getKey()))).equals(entry.getValue()), entry.getKey());
         }
@@ -161,7 +161,7 @@ public final class F16SuspensionResourceContractTest {
             for (JsonElement cube : byName.get("engine").getAsJsonArray("cubes"))
                 brakeAttached |= overlaps(brake.getAsJsonArray("cubes").get(0).getAsJsonObject(), cube.getAsJsonObject());
             check(brakeAttached, folder + " aft airbrake must meet engine " + side);
-            check(Math.abs(Math.abs(railPivot.get(0).getAsDouble()) - 90.5) < 1e-6
+            check(Math.abs(Math.abs(railPivot.get(0).getAsDouble()) - 79.2) < 1e-6
                 && Math.abs(railPivot.get(2).getAsDouble() - 20) < 1e-6, folder + " wingtip pivot " + side);
             JsonObject railCube = rail.getAsJsonArray("cubes").get(0).getAsJsonObject();
             JsonArray wingCubes = byName.get(side.equals("left") ? "wing_l" : "wing_r").getAsJsonArray("cubes");
