@@ -33,6 +33,7 @@ public final class AircraftSystemsFixture {
         MinecraftForge.EVENT_BUS.register(this);
         if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient())
             MinecraftForge.EVENT_BUS.register(new TabletClientHook());
+            MinecraftForge.EVENT_BUS.register(new FlightTraceScenario.ClientRecorder());
     }
 
     @SubscribeEvent public void commands(RegisterCommandsEvent event) {
@@ -113,6 +114,15 @@ public final class AircraftSystemsFixture {
             } catch (RuntimeException | LinkageError error) { startFailure("ground_homing", error); }
             return 1;
         }));
+        command.then(Commands.literal("creative_tab").executes(context -> {
+            var source = context.getSource();
+            if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
+            try {
+                var scenario = new CreativeTabScenario();
+                begin("creative_tab", scenario::tick, scenario::result);
+            } catch (RuntimeException | LinkageError error) { startFailure("creative_tab", error); }
+            return 1;
+        }));
         command.then(Commands.literal("deploy").executes(context -> {
             var source = context.getSource();
             if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
@@ -181,6 +191,34 @@ public final class AircraftSystemsFixture {
                 try {
                     var scenario = new GearScenario(source.getPlayerOrException(), entry.getValue());
                     begin(entry.getKey(), scenario::tick, scenario::result);
+                } catch (RuntimeException | LinkageError error) { startFailure(entry.getKey(), error); }
+                return 1;
+            }));
+        }
+        for (var entry : java.util.Map.of("trace_su25", dev.frontier.aviation.AircraftProfile.SU25,
+                "trace_f16", dev.frontier.aviation.AircraftProfile.F16,
+                "trace_j10", dev.frontier.aviation.AircraftProfile.J10).entrySet()) {
+            command.then(Commands.literal(entry.getKey()).executes(context -> {
+                var source = context.getSource();
+                if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
+                try {
+                    var scenario = new FlightTraceScenario(source.getPlayerOrException(), entry.getValue());
+                    begin(entry.getKey(), scenario::tick, scenario::result);
+                    limit = FlightTraceScenario.TIMEOUT_TICKS;
+                } catch (RuntimeException | LinkageError error) { startFailure(entry.getKey(), error); }
+                return 1;
+            }));
+        }
+        for (var entry : java.util.Map.of("maneuver_su25", dev.frontier.aviation.AircraftProfile.SU25,
+                "maneuver_f16", dev.frontier.aviation.AircraftProfile.F16,
+                "maneuver_j10", dev.frontier.aviation.AircraftProfile.J10).entrySet()) {
+            command.then(Commands.literal(entry.getKey()).executes(context -> {
+                var source = context.getSource();
+                if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
+                try {
+                    var scenario = new ManeuverTraceScenario(source.getPlayerOrException(), entry.getValue());
+                    begin(entry.getKey(), scenario::tick, scenario::result);
+                    limit = ManeuverTraceScenario.TIMEOUT_TICKS;
                 } catch (RuntimeException | LinkageError error) { startFailure(entry.getKey(), error); }
                 return 1;
             }));

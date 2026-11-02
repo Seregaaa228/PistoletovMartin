@@ -21,7 +21,7 @@ import time
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
-SCENARIOS = ('aim0', 'aim1', 'aim2', 'aim3', 'destruction', 'npc', 'air_to_air', 'ground_homing', 'moving_ground_homing', 'gesture', 'gear', 'gear_su25', 'gear_j10', 'seed_wreck', 'restart_wreck', 'visual_loadout', 'tablet', 'tablet_f16', 'kab_envelope', 'deploy')
+SCENARIOS = ('aim0', 'aim1', 'aim2', 'aim3', 'destruction', 'npc', 'air_to_air', 'ground_homing', 'moving_ground_homing', 'gesture', 'gear', 'gear_su25', 'gear_j10', 'seed_wreck', 'restart_wreck', 'visual_loadout', 'tablet', 'tablet_f16', 'kab_envelope', 'deploy', 'creative_tab', 'trace_su25', 'trace_f16', 'trace_j10', 'maneuver_su25', 'maneuver_f16', 'maneuver_j10')
 # Su-25 tablet panel controls (GlideBombTabletPanel layout) for this runner's 1280x720
 # window at GUI scale 2. DeepStrike draws its tablet in a virtual space scaled by
 # UiViewport.scale() = min(1.2 / 2, 640 / 1000, 360 / 600) = 0.6, i.e. 1067x600; MC Pilot
@@ -227,6 +227,22 @@ def main() -> int:
                             call(['input', 'key', 'hold', 'attack', '--duration', '80'])
                         elif stage == 'pair-ready':
                             call(['input', 'key', 'hold', 'attack', '--duration', '500'])
+                trace_progress = profile / 'aircraft-trace-progress.json'
+                if scenario.startswith('trace_') and trace_progress.exists():
+                    try: progress = json.loads(trace_progress.read_text())
+                    except json.JSONDecodeError: progress = {}
+                    if progress.get('runId') == manifest['runId']:
+                        stage = progress.get('stage')
+                        if stage == 'trace-ready' and scenario + ':ready' not in performed:
+                            # Like a player: engine on, then hold throttle up for the whole trace.
+                            performed.add(scenario + ':ready')
+                            call(['input', 'key', 'up', 'w'])
+                            call(['input', 'key', 'press', 'i'])
+                            call(['input', 'key', 'down', 'w'])
+                        elif stage == 'trace-done' and scenario + ':done' not in performed:
+                            performed.add(scenario + ':done')
+                            call(['input', 'key', 'up', 'w'])
+                            trace_progress.unlink()
                 gear_progress = profile / 'aircraft-gear-progress.json'
                 if scenario.startswith('gear') and gear_progress.exists() and 'gear' not in performed:
                     try: progress = json.loads(gear_progress.read_text())

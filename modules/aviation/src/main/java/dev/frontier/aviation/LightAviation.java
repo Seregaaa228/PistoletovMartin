@@ -1,10 +1,8 @@
 package dev.frontier.aviation;
 
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
@@ -26,13 +24,9 @@ public final class LightAviation {
                 "frontier-aircraft-combat-server.toml");
         AircraftProfile.values();
         dev.frontier.aviation.weapons.GuidedOrdnance.initialize();
-        TABS.register("aircraft", () -> CreativeModeTab.builder()
-                .title(Component.translatable("itemGroup.frontier_aviation"))
-                .icon(() -> new ItemStack(AircraftProfile.SU25.item.get()))
-                .displayItems((parameters, output) -> {
-                    for (AircraftProfile profile : AircraftProfile.values()) output.accept(profile.item.get());
-                }).build());
+        TABS.register("aircraft", AircraftCreativeTab::create);
         var bus = FMLJavaModLoadingContext.get().getModEventBus();
+        bus.addListener(AircraftCreativeTab::moveOut);
         ENTITIES.register(bus);
         ITEMS.register(bus);
         TABS.register(bus);

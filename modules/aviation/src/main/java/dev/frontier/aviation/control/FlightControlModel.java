@@ -46,6 +46,7 @@ public final class FlightControlModel {
         FlightEnvironment.AxisCaps caps = environment.caps();
         float pitchRate = environment.nativeEmergency() ? 0 : rate(previous.pitchRate(), command.pitchAxis(),
             caps.pitchNegative(), caps.pitchPositive(), profile);
+        pitchRate = stall(pitchRate, previous.pitch(), helicopter, environment);
         float yawRate = environment.nativeEmergency() ? 0 : rate(previous.yawRate(), command.yawAxis(),
             caps.yawNegative(), caps.yawPositive(), profile);
         float rollRate = environment.nativeEmergency() ? 0 : rate(previous.rollRate(), command.rollAxis(),
@@ -142,6 +143,24 @@ public final class FlightControlModel {
             pitchRate, yawRate, rollRate, target, effective, phase, phaseTicks, spool, gear, hover, held);
         return new FlightOutput(state, nativePower, phase == EnginePhase.RUNNING,
             command.brake(), command.secondaryBrake(), command.boost(), status);
+    }
+
+    /** Nose-down pitch rate (degrees/tick) of a fully stalled jet at zero airspeed. */
+    static final float STALL_DROP = 2.2f;
+
+    /**
+     * Below its stall speed a jet cannot hold its nose up: the pull-up authority fades with
+     * the airspeed and the nose falls (positive pitch is nose down) until speed returns.
+     * Without this a zoom climb ends hanging vertically on thrust at ~0 km/h.
+     */
+    static float stall(float pitchRate, float pitch, boolean helicopter, FlightEnvironment environment) {
+        float stall = environment.stallSpeed();
+        if (helicopter || stall <= 0 || environment.onGround() || environment.speed() >= stall) return pitchRate;
+        float lift = environment.speed() / stall;
+        if (pitchRate < 0) pitchRate *= lift;
+        // Falls fastest nose-high; stops pushing once the nose points well down.
+        float drop = STALL_DROP * (1 - lift) * clamp((70 - pitch) / 70, 0, 1);
+        return pitchRate + drop;
     }
 
     private static float rate(float current, float axis, float negative, float positive, FlightProfile profile) {

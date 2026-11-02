@@ -14,6 +14,7 @@ import java.util.Optional;
 /** Single source for aircraft capabilities on both physical sides. No world or registry access. */
 public final class AircraftCatalog {
     private static final FlightProfile FIGHTER = new FlightProfile("fighter", FlightKind.AIRCRAFT, 4, 2, 40);
+    private static final FlightProfile AGILE_FIGHTER = new FlightProfile("agile_fighter", FlightKind.AIRCRAFT, 3, 2, 35);
     private static final FlightProfile PROPELLER = new FlightProfile("propeller", FlightKind.AIRCRAFT, 5, 3, 40);
     private static final FlightProfile ATTACK = new FlightProfile("attack", FlightKind.AIRCRAFT, 6, 3, 40);
     private static final FlightProfile AC130 = new FlightProfile("ac130", FlightKind.AIRCRAFT, 8, 4, 60);
@@ -24,7 +25,7 @@ public final class AircraftCatalog {
             WeaponLoadout.SU25, true, new AircraftModel(8, 6.5f,
                 List.of(new AircraftModel.Exhaust(0.71, 2.29, -3.51),
                     new AircraftModel.Exhaust(-0.71, 2.29, -3.51)), 1.2f)),
-        new AircraftDefinition("frontier_aviation:f16", FIGHTER, HandlingProfile.FIGHTER,
+        new AircraftDefinition("frontier_aviation:f16", AGILE_FIGHTER, HandlingProfile.FIGHTER,
             WeaponLoadout.F16, true, new AircraftModel(8, 6.5f,
                 List.of(new AircraftModel.Exhaust(0, 2.46, -6.11)), 1.5f)),
         new AircraftDefinition("frontier_aviation:j10", FIGHTER, HandlingProfile.FIGHTER,
@@ -40,6 +41,16 @@ public final class AircraftCatalog {
         nativeAircraft("superbwarfare:ah_6", AH6),
         nativeAircraft("superbwarfare:mi_28", MI28)
     ));
+    /**
+     * Our three jets fly differently: the Su-25 is a slow, heavy, forgiving attack jet;
+     * the F-16 the fastest and most agile; the J-10 between them. Top speeds at full
+     * throttle / with boost: Su-25 ~190 / ~260, J-10 ~240 / ~320, F-16 ~260 / ~340 km/h.
+     * Native aircraft keep the native engine (power 1, boost 3) and no stall.
+     */
+    private static final Map<String, AircraftPerformance> PERFORMANCE = Map.of(
+        "frontier_aviation:su25", new AircraftPerformance(0.82f, 2.0f, 0.75f, 0.8f, 0.75f, 90),
+        "frontier_aviation:j10", new AircraftPerformance(1.46f, 3.3f, 1.2f, 1.05f, 1.1f, 110),
+        "frontier_aviation:f16", new AircraftPerformance(1.8f, 3.9f, 1.4f, 1.15f, 1.35f, 115));
     private static final List<AircraftDefinition> ALL = List.copyOf(DEFINITIONS.values());
     private static final List<AircraftDefinition> MODELS = ALL.stream()
         .filter(AircraftDefinition::registersModel).toList();
@@ -52,6 +63,10 @@ public final class AircraftCatalog {
 
     public static Optional<AircraftDefinition> find(String entityTypeId) {
         return Optional.ofNullable(DEFINITIONS.get(entityTypeId));
+    }
+
+    public static Optional<AircraftPerformance> performance(String entityTypeId) {
+        return Optional.ofNullable(PERFORMANCE.get(entityTypeId));
     }
 
     public static List<AircraftDefinition> all() { return ALL; }

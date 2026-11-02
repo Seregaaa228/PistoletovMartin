@@ -11,8 +11,20 @@ public record FlightEnvironment(
     float throttleIncrease, float throttleDecrease, float secondaryDecrease,
     int throttleRampUpTicks, int throttleRampDownTicks,
     float airborneMinimumPower, float secondaryMinimumPower,
-    float airBrakePowerCap, float rotorSpool, float boostThrottleIncrease
+    float airBrakePowerCap, float rotorSpool, float boostThrottleIncrease, float stallSpeed
 ) {
+    /** Callers without a stall model (stall speed 0: the nose never drops by itself). */
+    public FlightEnvironment(long tick, float speed, boolean onGround,
+        boolean engineHealthy, boolean energyAvailable, boolean gearAvailable, boolean hoverAvailable, boolean nativeEmergency,
+        AxisCaps caps, float idlePower, float maximumPower, float boostMaximumPower,
+        float throttleIncrease, float throttleDecrease, float secondaryDecrease,
+        int throttleRampUpTicks, int throttleRampDownTicks, float airborneMinimumPower,
+        float secondaryMinimumPower, float airBrakePowerCap, float rotorSpool, float boostThrottleIncrease) {
+        this(tick, speed, onGround, engineHealthy, energyAvailable, gearAvailable, hoverAvailable, nativeEmergency,
+            caps, idlePower, maximumPower, boostMaximumPower, throttleIncrease, throttleDecrease, secondaryDecrease,
+            throttleRampUpTicks, throttleRampDownTicks, airborneMinimumPower, secondaryMinimumPower,
+            airBrakePowerCap, rotorSpool, boostThrottleIncrease, 0);
+    }
     /** Older callers describe an engine whose boost does not change its rise rate. */
     public FlightEnvironment(long tick, float speed, boolean onGround,
         boolean engineHealthy, boolean energyAvailable, boolean gearAvailable, boolean hoverAvailable, boolean nativeEmergency,
@@ -23,7 +35,7 @@ public record FlightEnvironment(
         this(tick, speed, onGround, engineHealthy, energyAvailable, gearAvailable, hoverAvailable, nativeEmergency,
             caps, idlePower, maximumPower, boostMaximumPower, throttleIncrease, throttleDecrease, secondaryDecrease,
             throttleRampUpTicks, throttleRampDownTicks, airborneMinimumPower, secondaryMinimumPower,
-            airBrakePowerCap, rotorSpool, throttleIncrease);
+            airBrakePowerCap, rotorSpool, throttleIncrease, 0);
     }
     public FlightEnvironment {
         FlightState.finite(speed, "speed");
@@ -41,9 +53,10 @@ public record FlightEnvironment(
         FlightState.finite(secondaryMinimumPower, "secondaryMinimumPower");
         FlightState.finite(airBrakePowerCap, "airBrakePowerCap");
         FlightState.unit(rotorSpool, "rotorSpool");
+        FlightState.finite(stallSpeed, "stallSpeed");
         if (speed < 0 || idlePower < 0 || maximumPower <= idlePower || boostMaximumPower < maximumPower
                 || boostThrottleIncrease < throttleIncrease || throttleIncrease < 0 || throttleDecrease < 0 || secondaryDecrease < 0
-                || airborneMinimumPower < 0 || secondaryMinimumPower < 0 || airBrakePowerCap < 0)
+                || airborneMinimumPower < 0 || secondaryMinimumPower < 0 || airBrakePowerCap < 0 || stallSpeed < 0)
             throw new IllegalArgumentException("invalid native power environment");
     }
 

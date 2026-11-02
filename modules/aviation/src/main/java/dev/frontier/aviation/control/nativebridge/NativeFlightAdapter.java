@@ -64,12 +64,14 @@ public final class NativeFlightAdapter implements NativeFlightAccess {
     @Override public FlightEnvironment sample(Entity entity, long tick) {
         VehicleEntity v = vehicle(entity);
         EngineInfo info = v.getEngineInfo();
-        return sampleNative(info, new NativeReadings(tick,
+        FlightEnvironment environment = sampleNative(info, new NativeReadings(tick,
             finite((float) v.getDeltaMovement().length(), 0),
             finite((float) v.getDeltaMovement().dot(v.getViewVector(1)), 0),
             v.onGround(), profile(entity).kind() == FlightKind.HELICOPTER, emergency(v),
             v.getRoll(), v.getXRot(), v.getSynchedPropellerRot(), v.getHoverMode(), v.getPower(),
             v.getMainEngineDamaged(), v.getMaxEnergy(), v.getEnergy()));
+        var performance = AircraftCatalog.performance(entityId(v));
+        return performance.isPresent() ? withPerformance(environment, performance.get()) : environment;
     }
     /** Values sampled once from native state. No keyboard or previous command flags enter this boundary. */
     public record NativeReadings(long tick, float speed, float forward, boolean ground, boolean helicopter,
@@ -118,6 +120,17 @@ public final class NativeFlightAdapter implements NativeFlightAccess {
         return new FlightEnvironment(tick, speed, ground, !emergency && !nativeState.mainEngineDamaged(), energy,
             gear, helicopter, emergency, caps, idle, max, boost, cap(rise), cap(fall), cap(secondary),
             upRamp, downRamp, cap(airMin), cap(secondaryMin), helicopter ? max : .25f, rotor, throttle.boostIncrease());
+    }
+    /** One of our jets on the native engine: its own power, spool, rates and stall speed. */
+    public static FlightEnvironment withPerformance(FlightEnvironment e, dev.frontier.aviation.aircraft.AircraftPerformance p) {
+        var c = e.caps();
+        var caps = new FlightEnvironment.AxisCaps(c.pitchNegative() * p.pitchRate(), c.pitchPositive() * p.pitchRate(),
+            c.yawNegative(), c.yawPositive(), c.rollNegative() * p.rollRate(), c.rollPositive() * p.rollRate());
+        return new FlightEnvironment(e.tick(), e.speed(), e.onGround(), e.engineHealthy(), e.energyAvailable(),
+            e.gearAvailable(), e.hoverAvailable(), e.nativeEmergency(), caps, e.idlePower(), p.maxPower(), p.boostPower(),
+            cap(e.throttleIncrease() * p.throttleRate()), e.throttleDecrease(), e.secondaryDecrease(),
+            e.throttleRampUpTicks(), e.throttleRampDownTicks(), e.airborneMinimumPower(), e.secondaryMinimumPower(),
+            e.airBrakePowerCap(), e.rotorSpool(), cap(e.boostThrottleIncrease() * p.throttleRate()), p.stallSpeed());
     }
     /** Capabilities are intrinsic to the native engine, never the previous tick's input flags. */
     public record ThrottleCapabilities(float normalIncrease, float boostIncrease, float boostMaximumPower) {}
