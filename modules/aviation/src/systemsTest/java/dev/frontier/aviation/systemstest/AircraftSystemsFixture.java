@@ -113,6 +113,15 @@ public final class AircraftSystemsFixture {
             } catch (RuntimeException | LinkageError error) { startFailure("ground_homing", error); }
             return 1;
         }));
+        command.then(Commands.literal("deploy").executes(context -> {
+            var source = context.getSource();
+            if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
+            try {
+                var scenario = new DeployScenario(source.getPlayerOrException());
+                begin("deploy", scenario::tick, scenario::result);
+            } catch (RuntimeException | LinkageError error) { startFailure("deploy", error); }
+            return 1;
+        }));
         command.then(Commands.literal("kab_envelope").executes(context -> {
             var source = context.getSource();
             if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
