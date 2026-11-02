@@ -59,7 +59,7 @@ public final class F16MissileResourceContractTest {
             "[[3.4,2.2,0.2],[-3.4,2.2,0.2]]");
         checkAam(weapons.getAsJsonObject("LightAAMissile"), "LightAAMissile",
             "superbwarfare:medium_anti_air_missile", "superbwarfare:ru_9m336_missile",
-            "[[5.65625,2.6,1.25],[-5.65625,2.6,1.25]]");
+            "[[4.95,2.6,1.25],[-4.95,2.6,1.25]]");
         checkAgm(weapons.getAsJsonObject("MediumAGMissile"));
         for (String locale : new String[]{"ru_ru", "en_us"}) {
             JsonObject translations = JsonParser.parseString(Files.readString(Path.of(

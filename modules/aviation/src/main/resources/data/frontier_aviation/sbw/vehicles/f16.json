@@ -361,7 +361,7 @@
       "ShootPos": {
         "Transform": "Vehicle",
         "ShootPositionForHud": [0.6, 2.6, 7.8],
-        "Positions": [[5.65625, 2.6, 1.25], [-5.65625, 2.6, 1.25]],
+        "Positions": [[4.95, 2.6, 1.25], [-4.95, 2.6, 1.25]],
         "BoundUpWithAmmoAmount": true,
         "Directions": [[0, 0, 1]],
         "ShootDirectionForHud": [0, -0.02, 1],

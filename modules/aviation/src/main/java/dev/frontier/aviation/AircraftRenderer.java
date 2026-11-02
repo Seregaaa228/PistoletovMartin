@@ -110,7 +110,7 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
         if (getCurrentModelEntry(pose, plane).isLOD()) return;
         int bits = f16 ? F16PayloadVisual.bits(plane.getUUID()) : 0;
         if (f16) {
-            double[] x = {-2.1, 2.1, -3.4, 3.4, -5.65625, 5.65625};
+            double[] x = {-2.1, 2.1, -3.4, 3.4, -4.95, 4.95};
             for (int station = 0; station < x.length; station++) {
                 int kind = (bits >>> (station * 3)) & 7;
                 if (kind < 2 || kind >= PAYLOAD_MODELS.length) continue;
