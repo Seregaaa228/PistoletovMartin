@@ -11,6 +11,7 @@ import importlib
 import os
 import sys
 
+import zfight
 from kit import Atlas, dump, geo_json
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -22,6 +23,10 @@ def build(name, out, install, render_dir, views):
     mod = importlib.import_module(name)
     full = mod.build(lod=False)
     lod = mod.build(lod=True)
+    for model in (full, lod):
+        left = zfight.resolve(model.cubes)
+        if left:
+            print('%s: %d coplanar face pairs could not be separated' % (model.identifier, len(left)))
     density = getattr(mod, 'DENSITY', 2.0)
     while True:
         atlas = Atlas(ATLAS, density)

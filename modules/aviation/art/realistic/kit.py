@@ -162,6 +162,16 @@ class Model:
                                      (top_mat or mat) if top else mat,
                                      pivot=(ccx, ccy, (z0 + z1) / 2), rotation=(0, 0, angle),
                                      skip=skip | ({'down'} if top else {'up'}), lod=lod))
+        # The 3-7 cubes of a section share their end planes; where an end is shown,
+        # step the end faces back by a hair (core 0, top/bottom 0.04, chamfers 0.08 px)
+        # so the overlapping caps do not z-fight (flicker) in game.
+        for k, c in enumerate(out):
+            inset = 0.0 if k == 0 else (0.04 if k < 3 else 0.08)
+            if ends[0]:
+                c.origin[2] += inset
+                c.size[2] -= inset
+            if ends[1]:
+                c.size[2] -= inset
         return out
 
     def loft(self, bone, stations, mat='skin', lod=True, top_mat=None, skip_bottom=False):
@@ -263,6 +273,10 @@ class Model:
         out = []
         for k, (xa, xb, cmin, d_te, _) in enumerate(depths):
             th = thick   # constant: tapered strips would leave steps on the edges
+            if side < 0:
+                # Swept root boxes of the two halves overlap inside the fuselage and
+                # can cross the centre line; keep their surfaces from being coplanar.
+                th += 0.2
             xm = (xa + xb) / 2
             for edge, sweep, t in (('le', le, th), ('te', te, th - 0.08)):
                 length = (xb - xa) / math.cos(sweep)
