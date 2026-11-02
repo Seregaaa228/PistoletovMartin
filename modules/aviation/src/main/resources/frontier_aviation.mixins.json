@@ -31,7 +31,9 @@
     "ManualPatriotDiplomacy",
     "ManualCommandCenter",
     "ManualIronDomePackets",
-    "ManualIronDomeLaunch"
+    "ManualIronDomeLaunch",
+    "GlideBombPylon",
+    "GlideBombOrdnanceRouting"
   ],
   "client": [
     "F16MissileWindowActive",
@@ -46,7 +48,8 @@
     "FlightNativeHudText",
     "FlightMouseInvoker",
     "SkipNativeAircraftLights",
-    "AircraftMapIdentity"
+    "AircraftMapIdentity",
+    "GlideBombTabletPanel"
   ],
   "injectors": {
     "defaultRequire": 1

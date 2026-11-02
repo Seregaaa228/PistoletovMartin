@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.imageio.ImageIO;
 
-/** KAB-500 model/texture/animation and native Su-25 weapon data, baked with the pinned SBW baker. */
+/** KAB-500 model/texture/animation (baked with the pinned SBW baker); tablet-only, not on the Su-25 wheel. */
 public final class KabResourceContractTest {
     private static final Path ASSETS = Path.of("src/main/resources/assets/frontier_aviation");
 
@@ -62,18 +62,14 @@ public final class KabResourceContractTest {
 
         JsonObject su25 = JsonParser.parseString(Files.readString(Path.of(
             "src/main/resources/data/frontier_aviation/sbw/vehicles/su25.json"))).getAsJsonObject();
+        // КАБ-500 is released only from the DeepStrike tablet pylons, never from the SBW weapon wheel.
         check(su25.getAsJsonArray("Seats").get(0).getAsJsonObject().getAsJsonArray("Weapons").toString()
-            .equals("[\"Cannon\",\"GuidedBomb\"]"), "pilot weapon order");
-        JsonObject bomb = su25.getAsJsonObject("Weapons").getAsJsonObject("GuidedBomb");
-        check(bomb.get("Projectile").getAsString().equals("frontier_aviation:kab_500"), "native projectile is the KAB");
-        check(bomb.get("Magazine").getAsInt() == 2, "two heavy stores");
-        check(!bomb.get("AddShooterDeltaMovement").getAsBoolean(), "KAB inherits carrier motion itself");
-        check(!bomb.getAsJsonObject("SeekWeaponInfo").get("OnlyLockBlock").getAsBoolean()
-            && !bomb.getAsJsonObject("SeekWeaponInfo").get("OnlyLockEntity").getAsBoolean(), "point primary, entity optional");
-        check(bomb.getAsJsonObject("SeekWeaponInfo").get("SeekRange").getAsInt() == 384, "standoff designation range");
+            .equals("[\"Cannon\"]"), "pilot weapon wheel has no KAB");
+        check(!su25.getAsJsonObject("Weapons").has("GuidedBomb"), "no native GuidedBomb gun");
+        check(WeaponLoadout.SU25.find("glide_bomb").isEmpty(), "no glide_bomb wheel slot");
         for (String locale : new String[]{"en_us", "ru_ru"}) {
             JsonObject lang = JsonParser.parseString(Files.readString(ASSETS.resolve("lang/" + locale + ".json"))).getAsJsonObject();
-            check(lang.has(bomb.get("Name").getAsString()) && lang.has("entity.frontier_aviation.kab_500"), locale + " names");
+            check(lang.has("entity.frontier_aviation.kab_500") && lang.has("frontier_aviation.tablet.weapon.kab_500"), locale + " names");
         }
         check(KabEntity.MAX_TURN_DEGREES < 15 && KabEntity.GRAVITY > 0, "glide bomb is less agile than SBW's missile and falls");
         System.out.println("KabResourceContractTest passed");

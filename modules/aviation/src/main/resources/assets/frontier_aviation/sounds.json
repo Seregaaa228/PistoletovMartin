@@ -1,0 +1,4 @@
+{
+  "kab_airflow": {"sounds": [{"name": "frontier_aviation:kab_airflow", "attenuation_distance": 96}]},
+  "kab_whistle": {"sounds": [{"name": "frontier_aviation:kab_whistle", "attenuation_distance": 160}]}
+}

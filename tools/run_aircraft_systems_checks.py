@@ -10,6 +10,7 @@ import argparse
 import ctypes
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shutil
@@ -20,7 +21,17 @@ import time
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
-SCENARIOS = ('aim0', 'aim1', 'aim2', 'aim3', 'destruction', 'npc', 'air_to_air', 'ground_homing', 'moving_ground_homing', 'gesture', 'gear', 'seed_wreck', 'restart_wreck', 'visual_loadout', 'glide_bomb')
+SCENARIOS = ('aim0', 'aim1', 'aim2', 'aim3', 'destruction', 'npc', 'air_to_air', 'ground_homing', 'moving_ground_homing', 'gesture', 'gear', 'seed_wreck', 'restart_wreck', 'visual_loadout', 'tablet', 'tablet_f16', 'kab_envelope')
+# Su-25 tablet panel controls (GlideBombTabletPanel layout) for this runner's 1280x720
+# window at GUI scale 2. DeepStrike draws its tablet in a virtual space scaled by
+# UiViewport.scale() = min(1.2 / 2, 640 / 1000, 360 / 600) = 0.6, i.e. 1067x600; MC Pilot
+# clicks in GUI coordinates, so every virtual point is multiplied by that scale.
+_TABLET_SCALE = 0.6
+_TABLET_X = math.ceil(640 / _TABLET_SCALE) - 326 + 12
+TABLET = {name: (round(x * _TABLET_SCALE), round(y * _TABLET_SCALE)) for name, (x, y) in {
+    'pylon1': (_TABLET_X + 151, 107), 'pylon2': (_TABLET_X + 151, 131), 'pylon2_next': (_TABLET_X + 291, 131), 'pylon1_next': (_TABLET_X + 291, 107), 'pylon2_prev': (_TABLET_X + 11, 131),
+    'load': (_TABLET_X + 74, 169), 'x': (_TABLET_X + 58, 218), 'z': (_TABLET_X + 166, 218),
+    'fire': (_TABLET_X + 151, 258)}.items()}
 
 
 def sha(path: Path) -> str:
@@ -193,11 +204,11 @@ def main() -> int:
             update('running actual scenario ' + scenario)
             for progress_file in ('aircraft-gesture-progress.json', 'aircraft-gear-progress.json', 'aircraft-gear-captured.txt',
                                   'aircraft-visual-progress.json', 'aircraft-visual-captured.txt', 'aircraft-visual-brake.txt', 'aircraft-render-state.json', 'aircraft-visual-client.json',
-                                  'aircraft-glide-progress.json'):
+                                  'aircraft-tablet-progress.json', 'aircraft-tablet-inspected.txt', 'aircraft-tablet-crater.txt'):
                 (profile / progress_file).unlink(missing_ok=True)
             command('aircraft_check ' + scenario)
             performed = set()
-            deadline = time.monotonic() + 150
+            deadline = time.monotonic() + (330 if scenario == 'kab_envelope' else 150)
             while time.monotonic() < deadline:
                 if client.poll() is not None: raise RuntimeError('Test client exited during ' + scenario)
                 gesture_progress = profile / 'aircraft-gesture-progress.json'
@@ -230,19 +241,92 @@ def main() -> int:
                         call(['input', 'key', 'down', 'space'])
                         time.sleep(1.5)
                         (profile / 'aircraft-gear-captured.txt').write_text(manifest['runId'])
-                glide_progress = profile / 'aircraft-glide-progress.json'
-                if scenario == 'glide_bomb' and glide_progress.exists() and 'glide' not in performed:
-                    try: progress = json.loads(glide_progress.read_text())
-                    except json.JSONDecodeError: continue
-                    if progress.get('runId') == manifest['runId'] and progress.get('stage') == 'in-flight':
-                        performed.add('glide')
-                        # The fixture keeps the camera abeam the store; hide the HUD for the model.
-                        call(['input', 'key', 'press', 'F1'])
-                        time.sleep(.3)
-                        call(['screenshot', '--output', str(profile / 'glide-bomb-flight.png')])
-                        time.sleep(.6)
-                        call(['screenshot', '--output', str(profile / 'glide-bomb-flight-2.png')])
-                        call(['input', 'key', 'press', 'F1'])
+                tablet_progress = profile / 'aircraft-tablet-progress.json'
+                if scenario in ('tablet', 'tablet_f16') and tablet_progress.exists():
+                    try: progress = json.loads(tablet_progress.read_text())
+                    except json.JSONDecodeError: progress = {}
+                    stage = progress.get('stage')
+                    if (progress.get('runId') == manifest['runId'] and stage in ('parked', 'inspect', 'airborne', 'chase', 'crater')
+                            and stage not in performed):
+                        performed.add(stage)
+
+                        def press(name: str, pause: float = .5):
+                            call(['input', 'click', *map(str, TABLET[name])])
+                            time.sleep(pause)
+
+                        def shot(name: str):
+                            call(['screenshot', '--output', str(profile / (scenario + '-' + name + '.png'))])
+
+                        def retype(field: str, value: float):
+                            press(field, .2)
+                            for _ in range(8):
+                                call(['input', 'key', 'press', 'BACKSPACE'])
+                            call(['input', 'type', '%.1f' % value])
+
+                        def close_tablet():
+                            # The tablet closes itself once the pilot is moved away; only
+                            # press ESC if it is still open, never into the pause menu.
+                            time.sleep(.6)
+                            if call(['gui', 'info']).get('type') == 'Su24mScreen':
+                                call(['input', 'key', 'press', 'ESCAPE'])
+                            await_screen(None, 10)
+
+                        if stage in ('parked', 'airborne'):
+                            await_screen('Su24mScreen', 40)
+                            time.sleep(1.5)
+                        if stage == 'parked':
+                            # Pylon 2 -> Storm Shadow, load it; pylon 1 КАБ-500 (F-16: КАБ-3000), load it.
+                            shot('tablet-1-open')
+                            press('pylon2_prev'); press('load', 1.2)  # Storm Shadow is the last entry
+                            press('pylon1')
+                            if scenario == 'tablet_f16':
+                                # F-16 checks the heaviest class: КАБ-500 -> 1500 -> 3000.
+                                press('pylon1_next', .4); press('pylon1_next', .4)
+                            press('load', 1.5)
+                            shot('tablet-2-loaded')
+                        elif stage == 'inspect':
+                            # Outside camera behind the parked aircraft: stores on the pylons.
+                            close_tablet()
+                            call(['input', 'key', 'press', 'F1'])
+                            time.sleep(1.5)
+                            shot('pylons-loaded')
+                            px, py, pz = progress['planeX'], progress['planeY'], progress['planeZ']
+                            for view, (dx, yaw) in {'pylons-left': (-9, -90), 'pylons-right': (9, 90)}.items():
+                                command('tp @s %.2f %.2f %.2f %d 6' % (px + dx, py + 1.2, pz - .2, yaw))
+                                time.sleep(1)
+                                shot(view)
+                            call(['input', 'key', 'press', 'F1'])
+                            (profile / 'aircraft-tablet-inspected.txt').write_text(manifest['runId'])
+                        elif stage == 'airborne':
+                            time.sleep(1)
+                            shot('tablet-3-airborne')
+                            # Storm Shadow (pylon 2) first on a point 100 m east, then the КАБ
+                            # (pylon 1) on the main point: separate craters, and the chase
+                            # camera starts as soon as the КАБ leaves the pylon.
+                            press('pylon2', .5)
+                            retype('x', progress['secondX']); retype('z', progress['targetZ'])
+                            time.sleep(1)
+                            shot('tablet-4-storm-ready')
+                            press('fire', 1.2)
+                            shot('tablet-5-storm-away')
+                            press('pylon1', .5)
+                            retype('x', progress['targetX'])
+                            time.sleep(1)
+                            shot('tablet-6-kab-ready')
+                            press('fire', .3)
+                        elif stage == 'chase':
+                            close_tablet()
+                            call(['input', 'key', 'press', 'F1'])
+                            for n in range(1, 6):
+                                time.sleep(.45)
+                                shot('kab-flight-%d' % n)
+                            call(['input', 'key', 'press', 'F1'])
+                        elif stage == 'crater':
+                            call(['input', 'key', 'press', 'F1'])
+                            time.sleep(1)
+                            shot('craters')
+                            call(['input', 'key', 'press', 'F1'])
+                            (profile / 'aircraft-tablet-crater.txt').write_text(manifest['runId'])
                 visual_progress = profile / 'aircraft-visual-progress.json'
                 if scenario == 'visual_loadout' and visual_progress.exists() and 'visual' not in performed:
                     try: progress = json.loads(visual_progress.read_text())

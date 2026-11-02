@@ -26,9 +26,13 @@ public final class AircraftSystemsFixture {
     private Supplier<JsonObject> outcome;
     private String scenarioName;
     private int ticks;
+    private int limit = 400;
 
     public AircraftSystemsFixture() {
-        if (Boolean.getBoolean("frontier.aircraftSystemsTest")) MinecraftForge.EVENT_BUS.register(this);
+        if (!Boolean.getBoolean("frontier.aircraftSystemsTest")) return;
+        MinecraftForge.EVENT_BUS.register(this);
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient())
+            MinecraftForge.EVENT_BUS.register(new TabletClientHook());
     }
 
     @SubscribeEvent public void commands(RegisterCommandsEvent event) {
@@ -109,15 +113,29 @@ public final class AircraftSystemsFixture {
             } catch (RuntimeException | LinkageError error) { startFailure("ground_homing", error); }
             return 1;
         }));
-        command.then(Commands.literal("glide_bomb").executes(context -> {
+        command.then(Commands.literal("kab_envelope").executes(context -> {
             var source = context.getSource();
             if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
             try {
-                var scenario = new GlideBombScenario(source.getPlayerOrException());
-                begin("glide_bomb", scenario::tick, scenario::result);
-            } catch (RuntimeException | LinkageError error) { startFailure("glide_bomb", error); }
+                var scenario = new KabEnvelopeScenario(source.getPlayerOrException());
+                begin("kab_envelope", scenario::tick, scenario::result);
+                limit = KabEnvelopeScenario.TIMEOUT_TICKS;
+            } catch (RuntimeException | LinkageError error) { startFailure("kab_envelope", error); }
             return 1;
         }));
+        for (var entry : java.util.Map.of("tablet", dev.frontier.aviation.AircraftProfile.SU25,
+                "tablet_f16", dev.frontier.aviation.AircraftProfile.F16).entrySet()) {
+            command.then(Commands.literal(entry.getKey()).executes(context -> {
+                var source = context.getSource();
+                if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
+                try {
+                    var scenario = new TabletStrikeScenario(source.getPlayerOrException(), entry.getValue());
+                    begin(entry.getKey(), scenario::tick, scenario::result);
+                    limit = TabletStrikeScenario.TIMEOUT_TICKS;
+                } catch (RuntimeException | LinkageError error) { startFailure(entry.getKey(), error); }
+                return 1;
+            }));
+        }
         command.then(Commands.literal("gesture").executes(context -> {
             var source = context.getSource();
             if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
@@ -171,6 +189,7 @@ public final class AircraftSystemsFixture {
         step = advance;
         outcome = report;
         ticks = 0;
+        limit = 400;
     }
 
     private void startFailure(String name, Throwable error) {
@@ -188,7 +207,7 @@ public final class AircraftSystemsFixture {
             return;
         }
         try {
-            if (++ticks > 400) finish(failure("scenario exceeded 400 server ticks"));
+            if (++ticks > limit) finish(failure("scenario exceeded " + limit + " server ticks"));
             else if (step.getAsBoolean()) finish(outcome.get());
         } catch (RuntimeException | LinkageError error) {
             LogUtils.getLogger().error("AIRCRAFT_SYSTEMS fixture failed", error);

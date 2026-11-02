@@ -8,6 +8,7 @@ import com.mojang.math.Axis;
 import dev.frontier.aviation.client.F16ControlSurfaces;
 import dev.frontier.aviation.client.F16PayloadVisual;
 import dev.frontier.aviation.client.F16VisualStateManager;
+import dev.frontier.aviation.weapons.GlideBombRackView;
 import com.atsuishio.superbwarfare.resource.model.ProjectileModelReloadListener;
 import com.github.mcmodderanchor.simplebedrockmodel.v2.common.model.baked.BakedBedrockModel;
 import com.github.mcmodderanchor.simplebedrockmodel.v2.common.model.runtime.BakedModelInstance;
@@ -37,6 +38,10 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
     // Lazily built once per kind the first time it is rendered; stations reuse the same two models per kind.
     private static final ResourceLocation[] PAYLOAD_KEYS = new ResourceLocation[PAYLOAD_MODELS.length];
     private static final ResourceLocation[] PAYLOAD_TEXTURES = new ResourceLocation[PAYLOAD_MODELS.length];
+    private static final ResourceLocation KAB_MODEL = new ResourceLocation(LightAviation.ID, "models/bedrock/projectile/kab_500.geo.json");
+    private static final ResourceLocation KAB_TEXTURE = new ResourceLocation(LightAviation.ID, "textures/bedrock/projectile/kab_500.png");
+    private static BakedBedrockModel kabBaked;
+    private static BakedModelInstance kabInstance;
 
     public AircraftRenderer(EntityRendererProvider.Context context) { super(context); }
 
@@ -141,11 +146,17 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
                 pose.popPose();
             }
         }
+        int kabMask = ((GlideBombRackView) (Object) plane).aviation$kabMask();
         for (int slot = 0; slot < 2; slot++) {
             boolean displayed = f16
                 ? ((bits >>> (slot * 3)) & 7) == 1
                 : plane.loaded(slot);
             if (!displayed) continue;
+            if ((kabMask >> slot & 1) != 0) {
+                int variant = ((GlideBombRackView) (Object) plane).aviation$kabVariant(slot);
+                renderKab(pose, buffers, light, slot == 0 ? -2.1 : 2.1, 1.0F + 0.25F * Math.max(0, variant));
+                continue;
+            }
             pose.pushPose();
             pose.translate(slot == 0 ? -2.1 : 2.1, 2.2, -0.2);
             pose.mulPose(Axis.YP.rotationDegrees(-90));
@@ -155,5 +166,31 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
                     bone -> !bone.startsWith("wing_") && !bone.startsWith("fin_"));
             pose.popPose();
         }
+    }
+
+    /** A tablet pylon holding a КАБ-500 (GlideBombPylon): the bomb's own projectile model, top at the pylon. */
+    private static void renderKab(PoseStack pose, MultiBufferSource buffers, int light, double x, float scale) {
+        BakedBedrockModel baked = ProjectileModelReloadListener.INSTANCE.getModel(KAB_MODEL);
+        if (baked == null) return;
+        if (kabBaked != baked) {
+            kabBaked = baked;
+            kabInstance = baked.createInstance();
+        }
+        // Wings stay folded on the pylon: the first frame of the KAB's release animation
+        // (animation.projectile.start), which unfolds them only after the drop.
+        for (String wing : new String[]{"wing_left", "wing_right"}) {
+            BoneState bone = kabInstance.getBone(wing);
+            if (bone == null) continue;
+            bone.reset();
+            bone.rotation.rotateY((float) Math.toRadians(wing.equals("wing_left") ? -88 : 88));
+        }
+        pose.pushPose();
+        // Body top (y 0.25) against the pylon's lower edge (y 2.2); model z -1.56..1.19, nose -Z.
+        // Heavier КАБs are drawn larger, still hanging from the pylon edge.
+        pose.translate(x, 2.2 - 0.25 * scale, -0.2 + 0.19);
+        pose.scale(scale, scale, scale);
+        kabInstance.renderToBuffer(pose, buffers, RenderType.entityCutout(KAB_TEXTURE),
+            BedrockModelRenderTypes.polyMeshCutout(KAB_TEXTURE), light, OverlayTexture.NO_OVERLAY);
+        pose.popPose();
     }
 }

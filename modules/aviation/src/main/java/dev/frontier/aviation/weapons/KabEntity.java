@@ -17,7 +17,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 
 /**
  * KAB-500-class guided glide bomb. Unpowered: it leaves the pylon with the
@@ -29,9 +33,12 @@ import net.minecraft.world.phys.Vec3;
  */
 public class KabEntity extends MissileProjectile implements BasicGeoProjectileEntity {
     /** Plain gravity of an unpowered store (blocks/tick^2); no boost phase. */
-    public static final float GRAVITY = 0.045F;
-    /** Parasitic drag per tick. */
-    public static final double DRAG = 0.99;
+    public static final float GRAVITY = 0.08F;
+    /**
+     * Parasitic drag per tick. SBW's projectile move applies none of its own, so this is
+     * the only drag: a dense 500 kg store keeps most of its speed (terminal ~27 b/t).
+     */
+    public static final double DRAG = 0.997;
     /** Ejector-rack push away from the carrier. */
     public static final double EJECTION = 0.15;
     /** Unguided fall that clears the aircraft before the fins unlock. */
@@ -44,51 +51,119 @@ public class KabEntity extends MissileProjectile implements BasicGeoProjectileEn
     public static final double MAX_OFF_AXIS_DEGREES = 75;
     /** Fraction of airspeed bled per degree of path change (induced drag of a lifting turn). */
     public static final double TURN_ENERGY_COST = 0.003;
+    /**
+     * Share of gravity the deployed glide wings carry at REFERENCE_SPEED and above. Below
+     * 1 the store still always sinks (never climbs), but trades height for range instead
+     * of falling short of a designated point a few hundred metres away.
+     */
+    public static final double WING_LIFT = 0.5;
+    /** The whistle (kab_whistle, 3.2 s) starts this many ticks before the expected impact. */
+    private static final int WHISTLE_LEAD_TICKS = 64;
 
     private static final String RELEASED = "FrontierKabReleased";
+    private static final String VARIANT = "FrontierKabVariant";
+    /** Life limit (3 min): far beyond any glide from build height, short enough to clean up strays. */
+    public static final int LIFE_TICKS = 3600;
+    /** Players this far from the impact see the fireball/smoke column and hear the boom. */
+    private static final double FAR_EFFECT_RANGE = 1024;
     private final BasicProjectileAnimationInstance<KabEntity> animation;
     private boolean released;
+    private boolean whistling;
+    private boolean flying;
+    private int variant;
 
     public KabEntity(EntityType<? extends KabEntity> type, Level level) {
         super(type, level);
-        setDamageValue(600.0F);
-        setExplosionDamageValue(260.0F);
-        setExplosionRadiusValue(16.0F);
         setDurability(1);
+        // SBW detonates every projectile at its life limit (default 400 ticks = 20 s) wherever
+        // it is; a high, long glide takes longer, so the КАБ only goes off on impact.
+        setLife(LIFE_TICKS);
+        setVariant(0);
         // Fold-out wing deployment (animation.projectile.start) plays once on release.
         animation = level.isClientSide ? new BasicProjectileAnimationInstance<>(this, false) : null;
     }
 
     @Override protected Item getDefaultItem() { return ModItems.MEDIUM_AERIAL_BOMB.get(); }
 
+    /** КАБ class (index into PylonOrdnance.KABS): sets the blast. */
+    public void setVariant(int index) {
+        variant = Mth.clamp(index, 0, PylonOrdnance.KABS.size() - 1);
+        PylonOrdnance.Kab kab = PylonOrdnance.KABS.get(variant);
+        setDamageValue(kab.hitDamage());
+        setExplosionDamageValue(kab.blastDamage());
+        setExplosionRadiusValue(kab.radius());
+    }
+
+    public int variant() { return variant; }
+
+    @Override public void causeExplode(Vec3 at) {
+        super.causeExplode(at);
+        if (level() instanceof ServerLevel server) KabImpact.broadcast(server, at, variant, FAR_EFFECT_RANGE);
+    }
+
     @Override public void tick() {
         if (!level().isClientSide && !released) release();
+        if (level().isClientSide && !flying) {
+            flying = true;
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> dev.frontier.aviation.client.KabFlySound.startAirflow(this));
+        }
+        if (level().isClientSide && !whistling && impactWithin(WHISTLE_LEAD_TICKS)) {
+            whistling = true;
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> dev.frontier.aviation.client.KabFlySound.startWhistle(this));
+        }
         super.tick();
         if (isRemoved()) return;
         setDeltaMovement(getDeltaMovement().scale(DRAG));
-        if (level() instanceof ServerLevel server && tickCount > SEPARATION_TICKS) steer(server);
+        // Both sides: the client predicts SBW fast projectiles itself (missile-fix ignores
+        // their server move packets), so without the same lift and steering it would draw
+        // the КАБ falling short of where it really flies.
+        if (tickCount > SEPARATION_TICKS) {
+            steer();
+            glide();
+        }
         alignToFlightPath();
     }
 
-    /** First server tick: inherit the carrier's motion; a bomb is dropped, not launched. */
+    /** Rough time to ground from the current sink rate, for the incoming whistle. */
+    private boolean impactWithin(int ticks) {
+        double sink = -getDeltaMovement().y;
+        if (sink <= 1.0E-3) return false;
+        int ground = level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, getBlockX(), getBlockZ());
+        return (getY() - ground) / sink <= ticks;
+    }
+
+    /** Wing lift once the wings are out; scales with airspeed and ramps in with the fins. */
+    private void glide() {
+        if (getTargetPos() == null) return;
+        Vec3 velocity = getDeltaMovement();
+        double ramp = Mth.clamp((tickCount - SEPARATION_TICKS) / 10.0, 0.0, 1.0);
+        double lift = GRAVITY * WING_LIFT * Mth.clamp(velocity.length() / REFERENCE_SPEED, 0.0, 1.0) * ramp;
+        setDeltaMovement(velocity.add(0, lift, 0));
+    }
+
+    /**
+     * First server tick: inherit the carrier's motion; a bomb is dropped, not launched.
+     * If the owner is no longer aboard (bailed out, or the tablet launch already set the
+     * carrier's velocity at spawn), keep the velocity the store was released with.
+     */
     private void release() {
         released = true;
         Entity owner = getOwner();
         Entity carrier = owner == null ? null : owner.getRootVehicle();
-        Vec3 base = carrier != null && carrier != owner ? carrier.getDeltaMovement() : Vec3.ZERO;
+        Vec3 base = carrier != null && carrier != owner ? carrierVelocity(carrier) : getDeltaMovement();
         if (!finite(base)) base = Vec3.ZERO;
         setDeltaMovement(base.add(0, -EJECTION, 0));
         alignToFlightPath();
     }
 
-    private void steer(ServerLevel server) {
+    private void steer() {
         Vec3 target = getTargetPos();
         Vec3 velocity = getDeltaMovement();
         double speed = velocity.length();
         if (target == null || speed < 1.0E-4) return; // No designation: plain ballistic fall.
         Vec3 desired = target.subtract(position());
         if (getGuideType() == 0) {
-            Entity tracked = trackedEntity(server);
+            Entity tracked = level() instanceof ServerLevel server ? trackedEntity(server) : null;
             if (tracked != null) {
                 Vec3 lead = RangeTool.calculateFiringSolution(position(), target, tracked.getDeltaMovement(), speed, 0.0);
                 if (finite(lead) && lead.lengthSqr() > 1.0E-8) desired = lead;
@@ -134,6 +209,17 @@ public class KabEntity extends MissileProjectile implements BasicGeoProjectileEn
         setXRot((float) (-Mth.atan2(v.y, v.horizontalDistance()) * Mth.RAD_TO_DEG));
     }
 
+    /**
+     * The carrier's real velocity. A piloted aircraft can be moved by position (flight
+     * control) while its server-side delta movement stays small, so take whichever is
+     * larger: the delta movement or the distance actually travelled this tick.
+     */
+    public static Vec3 carrierVelocity(Entity carrier) {
+        Vec3 moved = carrier.position().subtract(carrier.xo, carrier.yo, carrier.zo);
+        Vec3 delta = carrier.getDeltaMovement();
+        return finite(moved) && moved.lengthSqr() > delta.lengthSqr() ? moved : delta;
+    }
+
     private static boolean finite(Vec3 v) {
         return Double.isFinite(v.x) && Double.isFinite(v.y) && Double.isFinite(v.z);
     }
@@ -143,19 +229,31 @@ public class KabEntity extends MissileProjectile implements BasicGeoProjectileEn
     /** Satellite/inertial guidance: flares are not a target for it. */
     @Override public void distractedByDecoy() { }
 
-    /** No motor: a falling-store whistle instead of a rocket roar. */
+    /**
+     * Own ordnance in the air (a second КАБ, a Storm Shadow from the same pilot) is not a
+     * target: SBW's path scan would otherwise detonate the bomb on it mid-air.
+     */
+    @Override public void onHitEntity(EntityHitResult hit) {
+        if (hit.getEntity() instanceof Projectile other && other.getOwner() != null && other.getOwner() == getOwner()) return;
+        super.onHitEntity(hit);
+    }
+
+    /** No motor. SBW's own fly sound is muted: KabFlySound plays a timed incoming whistle instead. */
     @Override public SoundEvent getSound() { return ModSounds.SHELL_FLY.get(); }
-    @Override public float getVolume() { return 0.6F; }
+    @Override public float getVolume() { return 0.0F; }
     @Override public float getMaxHealth() { return 40.0F; }
 
     @Override public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putBoolean(RELEASED, released);
+        tag.putInt(VARIANT, variant);
     }
 
     @Override public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         released = tag.getBoolean(RELEASED);
+        setVariant(tag.getInt(VARIANT));
+        setLife(LIFE_TICKS); // Bombs saved with SBW's 400-tick limit.
     }
 
     @SuppressWarnings("deprecation")
