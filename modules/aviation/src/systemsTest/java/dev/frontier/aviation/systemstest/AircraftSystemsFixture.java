@@ -163,15 +163,19 @@ public final class AircraftSystemsFixture {
             } catch (RuntimeException | LinkageError error) { startFailure("cannon_cadence", error); }
             return 1;
         }));
-        command.then(Commands.literal("gear").executes(context -> {
-            var source = context.getSource();
-            if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
-            try {
-                var scenario = new GearScenario(source.getPlayerOrException());
-                begin("gear", scenario::tick, scenario::result);
-            } catch (RuntimeException | LinkageError error) { startFailure("gear", error); }
-            return 1;
-        }));
+        for (var entry : java.util.Map.of("gear", dev.frontier.aviation.AircraftProfile.F16,
+                "gear_su25", dev.frontier.aviation.AircraftProfile.SU25,
+                "gear_j10", dev.frontier.aviation.AircraftProfile.J10).entrySet()) {
+            command.then(Commands.literal(entry.getKey()).executes(context -> {
+                var source = context.getSource();
+                if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
+                try {
+                    var scenario = new GearScenario(source.getPlayerOrException(), entry.getValue());
+                    begin(entry.getKey(), scenario::tick, scenario::result);
+                } catch (RuntimeException | LinkageError error) { startFailure(entry.getKey(), error); }
+                return 1;
+            }));
+        }
         command.then(Commands.literal("visual_loadout").executes(context -> {
             var source = context.getSource();
             if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;

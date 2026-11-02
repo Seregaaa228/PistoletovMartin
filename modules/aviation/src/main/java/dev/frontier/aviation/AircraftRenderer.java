@@ -28,6 +28,9 @@ import net.minecraft.resources.ResourceLocation;
 public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
     private static final String[] GEAR = {"gear_nose", "gear_main_l", "gear_main_r"};
     private static final String[] GEAR_CHILD_SUFFIXES = {"_suspension", "_wheel"};
+    // "_l" doors hinge on their +X edge, "_r" doors on their -X edge.
+    private static final String[] GEAR_DOORS = {"gear_door_nose_l", "gear_door_nose_r", "gear_door_left_l",
+        "gear_door_left_r", "gear_door_right_l", "gear_door_right_r"};
     private static final String[] PAYLOAD_MODELS = {"", "", "agm_65", "ru_9m100_missile", "ru_9m336_missile", "wire_guide_missile"};
     // Projectile models use their exhaust as origin, not their centre. Move
     // each model back so its centre sits beneath the physical pylon.
@@ -52,6 +55,8 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
         AircraftProfile profile = AircraftProfile.of(plane);
         float progress = plane.landingGearProgress(partial);
         float fold = progress * progress * (3 - 2 * progress);
+        // The Su-25 nose leg folds forward; the F-16 and J-10 nose legs fold aft. Mains fold forward.
+        float noseFold = profile == AircraftProfile.SU25 ? 88 : -88;
         for (String name : GEAR) {
             BoneState bone = instance.getBone(name);
             if (bone == null) continue;
@@ -63,17 +68,40 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
                 BoneState child = instance.getBone(name + suffix);
                 if (child != null) child.visible = visible;
             }
-            bone.rotation.rotateX((float)Math.toRadians(name.equals("gear_nose") ? -88 : 82) * fold);
+            bone.rotation.rotateX((float)Math.toRadians(name.equals("gear_nose") ? noseFold : 82) * fold);
         }
+        // Bay doors stand open while the gear is out and close flush once it is stowed.
+        for (String name : GEAR_DOORS) {
+            BoneState door = instance.getBone(name);
+            if (door != null) door.rotation.rotateZ((float) Math.toRadians(name.endsWith("_l") ? 85 : -85) * (1 - fold));
+        }
+        // One STATES lookup for all values of this frame.
+        F16VisualStateManager.RenderState state = F16VisualStateManager.renderState(plane, partial);
+        F16ControlSurfaces.Axes axes = state.surfaces();
+        rotateSurface(instance, "aileron_left", 25 * axes.roll(), false);
+        rotateSurface(instance, "aileron_right", -25 * axes.roll(), false);
+        rotateSurface(instance, "elevator_left", 25 * axes.pitch(), false);
+        rotateSurface(instance, "elevator_right", 25 * axes.pitch(), false);
+        rotateSurface(instance, "elevon_left", 22 * axes.pitch() + 18 * axes.roll(), false);
+        rotateSurface(instance, "elevon_right", 22 * axes.pitch() - 18 * axes.roll(), false);
+        rotateSurface(instance, "canard_left", -20 * axes.pitch(), false);
+        rotateSurface(instance, "canard_right", -20 * axes.pitch(), false);
+        rotateSurface(instance, "rudder", 25 * axes.yaw(), true);
+        // Flaps follow the landing gear: down for take-off and landing, up in cruise.
+        rotateSurface(instance, "flap_left", 30 * (1 - fold), false);
+        rotateSurface(instance, "flap_right", 30 * (1 - fold), false);
+        rotateSurface(instance, "airbrake_left_upper", -50 * state.airBrake(), false);
+        rotateSurface(instance, "airbrake_left_lower", 50 * state.airBrake(), false);
+        rotateSurface(instance, "airbrake_right_upper", -50 * state.airBrake(), false);
+        rotateSurface(instance, "airbrake_right_lower", 50 * state.airBrake(), false);
+        rotateSurface(instance, "airbrake_left", -50 * state.airBrake(), true);
+        rotateSurface(instance, "airbrake_right", 50 * state.airBrake(), true);
         if (profile == AircraftProfile.F16) {
-            // One STATES lookup for all five F16 values instead of six separate ones.
-            F16VisualStateManager.RenderState state = F16VisualStateManager.renderState(plane, partial);
-            F16ControlSurfaces.Axes surfaces = state.surfaces();
-            rotateSurface(instance, "f16_aileron_left", 25 * surfaces.roll(), false);
-            rotateSurface(instance, "f16_aileron_right", -25 * surfaces.roll(), false);
-            rotateSurface(instance, "f16_elevator_left", 25 * surfaces.pitch(), false);
-            rotateSurface(instance, "f16_elevator_right", 25 * surfaces.pitch(), false);
-            rotateSurface(instance, "f16_rudder", 25 * surfaces.yaw(), true);
+            rotateSurface(instance, "f16_aileron_left", 25 * axes.roll(), false);
+            rotateSurface(instance, "f16_aileron_right", -25 * axes.roll(), false);
+            rotateSurface(instance, "f16_elevator_left", 25 * axes.pitch(), false);
+            rotateSurface(instance, "f16_elevator_right", 25 * axes.pitch(), false);
+            rotateSurface(instance, "f16_rudder", 25 * axes.yaw(), true);
             rotateSurface(instance, "f16_airbrake_left", -55 * state.airBrake(), true);
             rotateSurface(instance, "f16_airbrake_right", 55 * state.airBrake(), true);
             for (String name : GEAR) {
@@ -86,11 +114,21 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
         }
         // Opaque low-poly canopy remains visible externally, while the local
         // first-person pilot gets a clear runway/HUD rather than its inner faces.
+        Minecraft mc = Minecraft.getInstance();
+        boolean cockpitView = mc.player != null && mc.player.getVehicle() == plane
+                && mc.options.getCameraType().isFirstPerson();
+        BoneState windscreen = instance.getBone("windscreen");
+        if (windscreen != null) windscreen.visible = !cockpitView;
         BoneState canopy = instance.getBone("canopy");
         if (canopy != null) {
-            Minecraft mc = Minecraft.getInstance();
-            canopy.visible = !(mc.player != null && mc.player.getVehicle() == plane
-                    && mc.options.getCameraType().isFirstPerson());
+            canopy.visible = !cockpitView;
+            // Parked with an empty cockpit: the Su-25 canopy swings open to the right,
+            // the F-16 and J-10 canopies lift on their rear hinge.
+            float open = state.canopy();
+            if (open > 0) {
+                if (profile == AircraftProfile.SU25) canopy.rotation.rotateZ((float) Math.toRadians(100 * open));
+                else canopy.rotation.rotateX((float) Math.toRadians(35 * open));
+            }
         }
     }
 

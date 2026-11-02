@@ -21,7 +21,7 @@ import time
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
-SCENARIOS = ('aim0', 'aim1', 'aim2', 'aim3', 'destruction', 'npc', 'air_to_air', 'ground_homing', 'moving_ground_homing', 'gesture', 'gear', 'seed_wreck', 'restart_wreck', 'visual_loadout', 'tablet', 'tablet_f16', 'kab_envelope')
+SCENARIOS = ('aim0', 'aim1', 'aim2', 'aim3', 'destruction', 'npc', 'air_to_air', 'ground_homing', 'moving_ground_homing', 'gesture', 'gear', 'gear_su25', 'gear_j10', 'seed_wreck', 'restart_wreck', 'visual_loadout', 'tablet', 'tablet_f16', 'kab_envelope')
 # Su-25 tablet panel controls (GlideBombTabletPanel layout) for this runner's 1280x720
 # window at GUI scale 2. DeepStrike draws its tablet in a virtual space scaled by
 # UiViewport.scale() = min(1.2 / 2, 640 / 1000, 360 / 600) = 0.6, i.e. 1067x600; MC Pilot
@@ -228,15 +228,20 @@ def main() -> int:
                         elif stage == 'pair-ready':
                             call(['input', 'key', 'hold', 'attack', '--duration', '500'])
                 gear_progress = profile / 'aircraft-gear-progress.json'
-                if scenario == 'gear' and gear_progress.exists() and 'gear' not in performed:
+                if scenario.startswith('gear') and gear_progress.exists() and 'gear' not in performed:
                     try: progress = json.loads(gear_progress.read_text())
                     except json.JSONDecodeError: continue
                     if progress.get('runId') == manifest['runId']:
                         performed.add('gear')
-                        call(['input', 'key', 'press', 'g'])
+                        shot = 'gear' if scenario == 'gear' else scenario.replace('_', '-')
                         call(['input', 'key', 'press', 'F5'])
-                        time.sleep(1.4)
-                        call(['screenshot', '--output', str(profile / 'gear-retracted.png')])
+                        time.sleep(.8)
+                        call(['screenshot', '--output', str(profile / (shot + '-extended.png'))])
+                        call(['input', 'key', 'press', 'g'])
+                        time.sleep(.45)
+                        call(['screenshot', '--output', str(profile / (shot + '-moving.png'))])
+                        time.sleep(1.0)
+                        call(['screenshot', '--output', str(profile / (shot + '-retracted.png'))])
                         (profile / 'aircraft-visual-brake.txt').write_text(manifest['runId'])
                         call(['input', 'key', 'down', 'space'])
                         time.sleep(1.5)
@@ -361,7 +366,7 @@ def main() -> int:
                         report = json.loads(report_path.read_text())
                         record = report.get('scenarios', {}).get(scenario)
                         if record is not None:
-                            if scenario == 'gear':
+                            if scenario.startswith('gear'):
                                 call(['input', 'key', 'up', 'space'])
                                 call(['input', 'key', 'press', 'F5']); call(['input', 'key', 'press', 'F5'])
                             result.setdefault('results', {})[scenario] = record

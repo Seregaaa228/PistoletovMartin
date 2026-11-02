@@ -34,6 +34,7 @@ public final class F16VisualStateManager {
         final F16AirBrakeSmoothing airBrake = new F16AirBrakeSmoothing();
         final F16Suspension suspension = new F16Suspension();
         final F16WheelSpin wheels = new F16WheelSpin();
+        final F16AirBrakeSmoothing canopy = new F16AirBrakeSmoothing(0.12f);
         void update(Su24mEntity plane) {
             PilotCommand command = FlightClient.visualInput(plane);
             FlightState flightState = FlightClient.hasVisualPilot(plane) ? FlightClient.visualState(plane) : null;
@@ -50,13 +51,15 @@ public final class F16VisualStateManager {
             double travel = -(plane.getX() - plane.xo) * Math.sin(yaw)
                     + (plane.getZ() - plane.zo) * Math.cos(yaw);
             wheels.tick(plane.onGround(), gearDown, travel);
+            // Visual only: the canopy stands open on the ground while nobody sits in the cockpit.
+            canopy.tick(plane.onGround() && gearDown && plane.getFirstPassenger() == null);
         }
     }
 
     @SubscribeEvent
     public static void join(EntityJoinLevelEvent event) {
         if (!event.getLevel().isClientSide()) return;
-        if (event.getEntity() instanceof Su24mEntity plane && AircraftProfile.of(plane) == AircraftProfile.F16)
+        if (event.getEntity() instanceof Su24mEntity plane && AircraftProfile.of(plane) != null)
             STATES.putIfAbsent(plane, new Entry());
     }
 
@@ -109,14 +112,15 @@ public final class F16VisualStateManager {
 
     /** One STATES lookup for every F16 value the renderer needs for a given frame, instead of one per value. */
     public record RenderState(F16ControlSurfaces.Axes surfaces, float airBrake, float compression,
-                               float noseWheelAngle, float mainWheelAngle) {}
+                               float noseWheelAngle, float mainWheelAngle, float canopy) {}
 
     public static RenderState renderState(Su24mEntity plane, float partialTick) {
         Entry entry = STATES.get(plane);
-        if (entry == null) return new RenderState(NEUTRAL, 0, 0, 0, 0);
+        if (entry == null) return new RenderState(NEUTRAL, 0, 0, 0, 0, 0);
         return new RenderState(entry.surfaces.at(partialTick), entry.airBrake.at(partialTick),
             entry.suspension.compression(partialTick),
-            entry.wheels.angle(partialTick, true), entry.wheels.angle(partialTick, false));
+            entry.wheels.angle(partialTick, true), entry.wheels.angle(partialTick, false),
+            entry.canopy.at(partialTick));
     }
 
     private F16VisualStateManager() {}

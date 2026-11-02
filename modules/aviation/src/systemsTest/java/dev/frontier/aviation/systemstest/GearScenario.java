@@ -12,16 +12,19 @@ import net.minecraftforge.fml.loading.FMLPaths;
 /** Actual G key while airborne; native animation progress plus a client screenshot. */
 final class GearScenario {
     private final ServerPlayer pilot;
+    private final AircraftProfile profile;
     private final VehicleEntity plane;
     private final ControlLease lease;
     private final JsonObject result = new JsonObject();
     private int ticks;
 
-    GearScenario(ServerPlayer pilot) {
+    GearScenario(ServerPlayer pilot, AircraftProfile profile) {
         this.pilot = pilot;
+        this.profile = profile;
         if (pilot.isPassenger()) throw new IllegalStateException("gear fixture needs a free player");
-        plane = AircraftProfile.F16.entity.get().create(pilot.level());
-        if (plane == null) throw new IllegalStateException("F16 creation failed");
+        plane = profile.entity.get().create(pilot.level());
+        if (plane == null) throw new IllegalStateException(profile.id + " creation failed");
+        result.addProperty("aircraft", profile.id);
         plane.moveTo(pilot.getX(), pilot.level().getMaxBuildHeight() - 64, pilot.getZ(), 0, 0);
         plane.setEnergy(plane.getMaxEnergy());
         if (!pilot.serverLevel().addFreshEntity(plane) || !pilot.startRiding(plane, true))
@@ -76,8 +79,11 @@ final class GearScenario {
         result.addProperty("spaceBrakeVisual", visualBrake);
         result.addProperty("gearBonesHidden", gearHidden);
         result.addProperty("airbrakesOutwardPose", brakeOutward);
-        result.addProperty("pass", result.get("initialGearDown").getAsBoolean() && !down
-            && nativeProgress >= .99f && !plane.onGround() && braking && visualBrake && gearHidden && brakeOutward);
+        // The F-16 also proves its aft air brakes; every aircraft must stow and hide its gear in flight.
+        boolean stowed = result.get("initialGearDown").getAsBoolean() && !down
+            && nativeProgress >= .99f && !plane.onGround() && gearHidden;
+        result.addProperty("pass", profile == AircraftProfile.F16
+            ? stowed && braking && visualBrake && brakeOutward : stowed);
         return finish(null);
     }
 
