@@ -18,6 +18,7 @@ public final class FlightControls {
         if (initialized) return;
         initialized = true;
         FlightNetwork.register();
+        dev.frontier.aviation.weapons.CannonNetwork.register();
         FlightControlEvents.register();
         FlightNativeHooks.install(new FlightNativeHooks.Callbacks() {
             @Override public long simulationTick(Entity vehicle) {

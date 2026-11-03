@@ -123,6 +123,19 @@ public final class AircraftSystemsFixture {
             } catch (RuntimeException | LinkageError error) { startFailure("creative_tab", error); }
             return 1;
         }));
+        for (var entry : java.util.Map.of("cannon_range", false, "cannon_range_unloaded", true).entrySet()) {
+            command.then(Commands.literal(entry.getKey()).executes(context -> {
+                var source = context.getSource();
+                if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
+                try {
+                    // 240: loaded but outside the simulation distance; 360: beyond the view distance.
+                    var scenario = new CannonRangeScenario(source.getPlayerOrException(), entry.getValue() ? 360 : 240, entry.getValue());
+                    begin(entry.getKey(), scenario::tick, scenario::result);
+                    limit = 900;
+                } catch (RuntimeException | LinkageError error) { startFailure(entry.getKey(), error); }
+                return 1;
+            }));
+        }
         command.then(Commands.literal("deploy").executes(context -> {
             var source = context.getSource();
             if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;

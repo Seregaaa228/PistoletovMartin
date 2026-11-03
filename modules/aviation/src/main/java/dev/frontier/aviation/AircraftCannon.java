@@ -48,20 +48,28 @@ public final class AircraftCannon {
         int broken;
     }
 
-    @SubscribeEvent public static void spawned(EntityJoinLevelEvent event) {
-        if (!(event.getLevel() instanceof ServerLevel) || !(event.getEntity() instanceof SmallCannonShellEntity shell) || !ENABLED.get()) return;
+    // After ordinary listeners: the shell is taken over and its join cancelled.
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOW)
+    public static void spawned(EntityJoinLevelEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel) || !(event.getEntity() instanceof SmallCannonShellEntity shell)) return;
         Entity owner = shell.getOwner();
         Entity vehicle = owner instanceof Su24mEntity ? owner : owner == null ? null : owner.getVehicle();
         if (!(vehicle instanceof Su24mEntity plane)) return;
         // Include native Su-24 and the three registered variants; no handheld/ground cannon changes.
         if (AircraftProfile.of(plane) == null && !net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(plane.getType()).toString().equals("deepstrike:su24m")) return;
-        shell.getPersistentData().putBoolean(MARK, true);
-        ServerPlayer pilot = owner instanceof ServerPlayer player ? player
-                : plane.getFirstPassenger() instanceof ServerPlayer player ? player : null;
-        if (pilot != null) shell.getPersistentData().putUUID(OWNER, pilot.getUUID());
-        // Native contact and blast both destroy terrain otherwise, and the native
-        // direct-block path also depends on the cosmetic extra-explosion toggle.
-        shell.setExplosionDestroy(false);
+        if (ENABLED.get()) {
+            shell.getPersistentData().putBoolean(MARK, true);
+            ServerPlayer pilot = owner instanceof ServerPlayer player ? player
+                    : plane.getFirstPassenger() instanceof ServerPlayer player ? player : null;
+            if (pilot != null) shell.getPersistentData().putUUID(OWNER, pilot.getUUID());
+            // Native contact and blast both destroy terrain otherwise, and the native
+            // direct-block path also depends on the cosmetic extra-explosion toggle.
+            shell.setExplosionDestroy(false);
+        }
+        // Flown by the server instead of as an entity, so it reaches beyond the
+        // simulation distance (CannonShells); the entity never joins the world.
+        dev.frontier.aviation.weapons.CannonShells.launch((ServerLevel) event.getLevel(), shell, plane);
+        event.setCanceled(true);
     }
 
     /** False suppresses a repeated callback for an already resolved aircraft shell. */

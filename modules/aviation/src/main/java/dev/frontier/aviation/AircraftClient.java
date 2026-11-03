@@ -22,6 +22,7 @@ public final class AircraftClient {
     public static void clientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             FlightClient.register();
+            dev.frontier.aviation.client.CannonTracers.register();
         });
     }
 

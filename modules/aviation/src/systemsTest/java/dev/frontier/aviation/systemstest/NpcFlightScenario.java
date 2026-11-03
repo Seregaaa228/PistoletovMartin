@@ -59,13 +59,21 @@ final class NpcFlightScenario {
     boolean tick() {
         if (done) return true;
         ticks++;
-        if (plane.isRemoved() || plane.getHealth() <= 0 || !pilot.isAlive()) return fail("NPC aircraft died before checks finished");
+        if (plane.isRemoved() || plane.getHealth() <= 0 || !pilot.isAlive()) {
+            var cause = ((net.minecraft.world.entity.Entity) plane).level().getServer() == null ? null : plane.getLastDamageSource();
+            result.addProperty("deathY", Math.round(plane.getY()));
+            result.addProperty("deathCause", cause == null ? "none" : cause.getMsgId() + " by " + cause.getEntity());
+            return fail("NPC aircraft died before checks finished");
+        }
         // Move only the disposable observing players to keep ordinary chunk
         // tracking active. No player is mounted and no aircraft motion is set.
         if (ticks % 10 == 1) for (var observer : level.players())
             observer.teleportTo(plane.getX() + 12, plane.getY() + 12, plane.getZ() - 12);
         float roll = ticks >= 55 && ticks < 65 ? .5f : ticks >= 65 && ticks < 75 ? -.5f : 0;
-        var command = new PilotCommand(ticks, 0, 0, roll, ticks < 80 ? 1 : 0,
+        // The NPC holds the horizon like a pilot: started slow in mid-air, a jet stalls
+        // nose-down and would dive into the ground with the stick left alone.
+        float pitch = Math.max(-1, Math.min(1, -plane.getXRot() / 20f));
+        var command = new PilotCommand(ticks, pitch, 0, roll, ticks < 80 ? 1 : 0,
             false, false, false, ticks == 1 ? ModeRequest.ENABLE : ModeRequest.KEEP,
             ticks == 45 ? ModeRequest.DISABLE : ModeRequest.KEEP, ModeRequest.KEEP);
         ControlStatus status = AircraftController.submit(pilot, lease, command);
