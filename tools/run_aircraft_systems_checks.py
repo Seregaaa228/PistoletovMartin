@@ -44,6 +44,8 @@ def main() -> int:
     parser.add_argument('--resume-profile', type=Path, help='Restart a profile created by this runner; never a user profile')
     parser.add_argument('--baseline-aviation', action='store_true', help='Use the frozen pre-change aviation JAR to seed a real old wreck')
     parser.add_argument('--reload', action='store_true', help='Complete a real datapack reload before scenarios')
+    parser.add_argument('--extra-mods', type=Path, nargs='+', default=[],
+                        help='Extra project-local mod JARs for this run only (e.g. candidate performance mods)')
     args = parser.parse_args()
     helper = ROOT / 'modules/aviation/build/flight-tests/frontier-aircraft-systems-test.jar'
     artifact = ROOT / 'build/team-mods/frontier-light-aviation-1.1.0.jar'
@@ -78,6 +80,11 @@ def main() -> int:
     elif args.resume_profile:
         shutil.copy2(artifact, profile / 'mods' / artifact.name)
     shutil.copy2(helper, profile / 'mods' / helper.name)
+    for extra in args.extra_mods:
+        extra = extra.resolve()
+        if not extra.is_relative_to(ROOT) or extra.suffix != '.jar' or not extra.is_file():
+            raise ValueError('Extra mods must be project-local JAR files: ' + str(extra))
+        shutil.copy2(extra, profile / 'mods' / extra.name)
     shutil.copy2(pilot, profile / 'mods' / tool['file'])
     manifest = json.loads((profile / 'test-profile.json').read_text())
     if manifest.get('worldsCopied') is not False:
