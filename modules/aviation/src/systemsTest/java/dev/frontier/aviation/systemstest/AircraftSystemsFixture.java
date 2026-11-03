@@ -157,6 +157,26 @@ public final class AircraftSystemsFixture {
             } catch (RuntimeException | LinkageError error) { startFailure("observer_roll", error); }
             return 1;
         }));
+        command.then(Commands.literal("cockpit_views").executes(context -> {
+            var source = context.getSource();
+            if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
+            try {
+                var scenario = new CockpitViewScenario(source.getPlayerOrException());
+                begin("cockpit_views", scenario::tick, scenario::result);
+                limit = CockpitViewScenario.TIMEOUT_TICKS;
+            } catch (RuntimeException | LinkageError error) { startFailure("cockpit_views", error); }
+            return 1;
+        }));
+        command.then(Commands.literal("net_flight").executes(context -> {
+            var source = context.getSource();
+            if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
+            try {
+                var scenario = new NetFlightScenario(source.getPlayerOrException());
+                begin("net_flight", scenario::tick, scenario::result);
+                limit = NetFlightScenario.TIMEOUT_TICKS;
+            } catch (RuntimeException | LinkageError error) { startFailure("net_flight", error); }
+            return 1;
+        }));
         command.then(Commands.literal("deploy").executes(context -> {
             var source = context.getSource();
             if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
