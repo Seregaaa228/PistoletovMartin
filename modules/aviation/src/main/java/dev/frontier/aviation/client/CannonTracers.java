@@ -26,7 +26,9 @@ import org.joml.Matrix4f;
 public final class CannonTracers {
     /** Tracers burn out after ~3 s in the air, like real tracer composition. */
     private static final int MAX_TICKS = 60, MAX_TRACERS = 384;
-    private static final double MAX_DRAW_DISTANCE = 768, MAX_LENGTH = 9, WIDTH = .09;
+    private static final double MAX_DRAW_DISTANCE = 768, MAX_LENGTH = 14, WIDTH = .1, NEAR_CLIP = 6;
+    /** Width grows with distance so a far tracer stays a 2-3 pixel line. */
+    private static final double WIDTH_PER_BLOCK = .0035;
     private static final List<Flight> FLIGHTS = new ArrayList<>();
 
     private static final class Flight {
@@ -83,7 +85,8 @@ public final class CannonTracers {
         float partial = event.getPartialTick();
         PoseStack pose = event.getPoseStack();
         var buffers = Minecraft.getInstance().renderBuffers().bufferSource();
-        VertexConsumer out = buffers.getBuffer(RenderType.lightning());
+        // Plain translucent, not additive: an additive streak washes out to white on a bright sky.
+        VertexConsumer out = buffers.getBuffer(RenderType.debugQuads());
         Matrix4f matrix = pose.last().pose();
         for (Flight f : FLIGHTS) {
             Vec3 head = f.previous.lerp(f.position, partial);
@@ -93,22 +96,29 @@ public final class CannonTracers {
             if (length < 1.0E-4) continue;
             Vec3 dir = back.scale(1 / length);
             Vec3 tail = head.subtract(dir.scale(Math.min(MAX_LENGTH, length)));
+            // Not right at the eye: a round leaving the pilot's own gun otherwise smears across the view.
+            if (head.distanceToSqr(camera) < NEAR_CLIP * NEAR_CLIP) continue;
+            if (tail.distanceToSqr(camera) < NEAR_CLIP * NEAR_CLIP) tail = camera.add(head.subtract(camera).normalize().scale(NEAR_CLIP));
             Vec3 toCamera = camera.subtract(head);
             Vec3 side = dir.cross(toCamera);
             if (side.lengthSqr() < 1.0E-8) continue;
-            // Constant apparent width: a far tracer is still a visible line.
-            double width = WIDTH * Math.max(1, Math.sqrt(toCamera.length()) / 4);
+            double width = Math.max(WIDTH, toCamera.length() * WIDTH_PER_BLOCK);
             side = side.normalize().scale(width);
             quad(out, matrix, head.subtract(camera), tail.subtract(camera), side);
         }
-        buffers.endBatch(RenderType.lightning());
+        buffers.endBatch(RenderType.debugQuads());
     }
 
-    /** Bright yellow-white head fading to an orange tail. */
+    /** Bright yellow head fading to a translucent orange tail; the render type draws both sides. */
     private static void quad(VertexConsumer out, Matrix4f m, Vec3 head, Vec3 tail, Vec3 side) {
-        out.vertex(m, (float) (head.x - side.x), (float) (head.y - side.y), (float) (head.z - side.z)).color(1f, .95f, .6f, 1f).endVertex();
-        out.vertex(m, (float) (head.x + side.x), (float) (head.y + side.y), (float) (head.z + side.z)).color(1f, .95f, .6f, 1f).endVertex();
-        out.vertex(m, (float) (tail.x + side.x), (float) (tail.y + side.y), (float) (tail.z + side.z)).color(1f, .45f, .1f, 0f).endVertex();
-        out.vertex(m, (float) (tail.x - side.x), (float) (tail.y - side.y), (float) (tail.z - side.z)).color(1f, .45f, .1f, 0f).endVertex();
+        corner(out, m, head.subtract(side), true);
+        corner(out, m, head.add(side), true);
+        corner(out, m, tail.add(side), false);
+        corner(out, m, tail.subtract(side), false);
+    }
+
+    private static void corner(VertexConsumer out, Matrix4f m, Vec3 p, boolean head) {
+        if (head) out.vertex(m, (float) p.x, (float) p.y, (float) p.z).color(1f, .9f, .35f, 1f).endVertex();
+        else out.vertex(m, (float) p.x, (float) p.y, (float) p.z).color(1f, .45f, .05f, .25f).endVertex();
     }
 }

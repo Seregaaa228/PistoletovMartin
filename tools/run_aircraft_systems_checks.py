@@ -227,6 +227,17 @@ def main() -> int:
                             call(['input', 'key', 'hold', 'attack', '--duration', '80'])
                         elif stage == 'pair-ready':
                             call(['input', 'key', 'hold', 'attack', '--duration', '500'])
+                fps_progress = profile / 'aircraft-fps-progress.json'
+                if scenario == 'fire_fps' and fps_progress.exists() and 'fps-shot' not in performed:
+                    try: progress = json.loads(fps_progress.read_text())
+                    except json.JSONDecodeError: progress = {}
+                    if progress.get('runId') == manifest['runId'] and progress.get('stage') == 'fps-firing':
+                        performed.add('fps-shot')
+                        call(['screenshot', '--output', str(profile / 'fire-fps-tracers.png')])
+                        call(['input', 'key', 'press', 'F5'])
+                        time.sleep(.5)
+                        call(['screenshot', '--output', str(profile / 'fire-fps-tracers-outside.png')])
+                        call(['input', 'key', 'press', 'F5']); call(['input', 'key', 'press', 'F5'])
                 trace_progress = profile / 'aircraft-trace-progress.json'
                 if scenario.startswith('trace_') and trace_progress.exists():
                     try: progress = json.loads(trace_progress.read_text())

@@ -57,6 +57,7 @@ final class FireFpsScenario {
         if (ticks == SETTLE + QUIET) FrameRecorder.start("firing");
         if (ticks > SETTLE + QUIET && ticks <= SETTLE + QUIET + FIRING) {
             firingServer.add(last);
+            if (ticks == SETTLE + QUIET + 60) progress("fps-firing");
             var shot = AircraftArmament.fire(pilot, plane, lease, "cannon", 1, null);
             if (shot == AircraftArmament.Result.QUEUED) fired++;
             ((VehicleEntity) plane).getGunData("Cannon").ammo.set(500);
@@ -88,6 +89,15 @@ final class FireFpsScenario {
         pilot.stopRiding();
         ((Entity) plane).discard();
         return true;
+    }
+
+    /** Lets the runner take a screenshot mid-burst (tracers in view). */
+    private static void progress(String stage) {
+        var progress = new JsonObject();
+        progress.addProperty("runId", System.getProperty("frontier.aircraftSystemsRunId"));
+        progress.addProperty("stage", stage);
+        try { java.nio.file.Files.writeString(net.minecraftforge.fml.loading.FMLPaths.GAMEDIR.get().resolve("aircraft-fps-progress.json"), progress.toString()); }
+        catch (java.io.IOException failure) { throw new IllegalStateException(failure); }
     }
 
     JsonObject result() { return result; }

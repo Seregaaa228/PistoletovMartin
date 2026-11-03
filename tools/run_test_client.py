@@ -162,6 +162,9 @@ def main() -> int:
     parser.add_argument('--username', default='Pis1Tester')
     parser.add_argument('--benchmark-only', action='store_true')
     parser.add_argument('--skip-benchmark', action='store_true', help='Debug gameplay/screens first, omitting the lengthy timing phases')
+    parser.add_argument('--memory', default='3G', help='Java heap, e.g. 12G for a play session with Distant Horizons')
+    parser.add_argument('--gpu', choices=('default', 'nvidia'), default='default',
+                        help='nvidia: render on the discrete NVIDIA GPU of a PRIME (hybrid graphics) laptop')
     args = parser.parse_args()
     profile = args.profile.resolve()
     if not profile.is_relative_to(ROOT) or profile.is_relative_to(ROOT / 'instance'):
@@ -191,7 +194,12 @@ def main() -> int:
                   '-Dfrontier.pis1SkipBenchmark=' + str(args.skip_benchmark).lower()]
     if args.server:
         properties.append('-Dfrontier.pis1Server=' + args.server + ':' + str(args.port))
-    command = ['java', '-Xmx3G', '-Xms512M', *properties,
+    if not re.fullmatch(r'[1-9][0-9]?G', args.memory):
+        raise ValueError('Use a heap such as 3G or 12G')
+    # G1 tuned for short pauses: a large heap must not trade smoothness for throughput.
+    tuning = [] if args.memory == '3G' else ['-XX:+UseG1GC', '-XX:MaxGCPauseMillis=40', '-XX:+ParallelRefProcEnabled',
+                                             '-XX:G1NewSizePercent=30', '-XX:G1ReservePercent=15', '-XX:+AlwaysPreTouch']
+    command = ['java', '-Xmx' + args.memory, '-Xms' + ('512M' if args.memory == '3G' else '4G'), *tuning, *properties,
                *expand(vanilla['arguments']['jvm'] + forge['arguments']['jvm'], values),
                forge['mainClass'], *expand(vanilla['arguments']['game'] + forge['arguments']['game'], values),
                '--width', '1280', '--height', '720']
@@ -200,8 +208,13 @@ def main() -> int:
             raise ValueError('Only a local isolated test server is supported')
         # The helper performs ConnectScreen from the guarded title-screen path.
         # Vanilla 1.20.1 silently ignores the removed --server/--port options.
+    environment = dict(os.environ)
+    if args.gpu == 'nvidia':
+        # NVIDIA PRIME render offload: the game draws on the discrete GPU, not the iGPU.
+        environment.update({'__NV_PRIME_RENDER_OFFLOAD': '1', '__GLX_VENDOR_LIBRARY_NAME': 'nvidia',
+                            '__VK_LAYER_NV_optimus': 'NVIDIA_only'})
     print('Launching isolated offline test client: ' + profile.name, flush=True)
-    return subprocess.run(command, cwd=profile, check=False).returncode
+    return subprocess.run(command, cwd=profile, check=False, env=environment).returncode
 
 
 if __name__ == '__main__':
