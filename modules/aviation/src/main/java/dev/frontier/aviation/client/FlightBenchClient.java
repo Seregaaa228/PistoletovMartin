@@ -26,8 +26,12 @@ public final class FlightBenchClient {
     public static final boolean ENABLED = FlightFramePerformance.BENCH;
     private static final int JOIN_WAIT = 100, SETTLE = 200, MEASURE = Integer.getInteger("frontier.flightBenchTicks", 1800);
     private static final int[] ROUTE = route();
+    /** Hold mode: wait this many seconds at the route start without flying (e.g. to let a LOD mod build). */
+    private static final int HOLD_TICKS = Integer.getInteger("frontier.flightBenchHold", 0) * 20;
+    /** Screenshots at one and two thirds of the measured window. */
+    private static final boolean SHOTS = Boolean.getBoolean("frontier.flightBenchShots");
 
-    private static int joinedTicks, flightTicks, doneTicks = -1;
+    private static int joinedTicks, flightTicks, holdTicks, doneTicks = -1;
 
     private FlightBenchClient() {}
 
@@ -68,6 +72,16 @@ public final class FlightBenchClient {
             }
             return;
         }
+        if (HOLD_TICKS > 0) {
+            if (++joinedTicks == JOIN_WAIT) minecraft.player.connection.sendCommand(
+                "frontier_bench hold " + ROUTE[0] + " " + ROUTE[1] + " " + ROUTE[2]);
+            if (joinedTicks > JOIN_WAIT && ++holdTicks == HOLD_TICKS) {
+                write(minecraft, "{\"route\":\"" + System.getProperty("frontier.flightBench") + "\",\"heldSeconds\":"
+                    + HOLD_TICKS / 20 + ",\"loadedChunks\":" + minecraft.level.getChunkSource().getLoadedChunksCount() + "}");
+                doneTicks = 0;
+            }
+            return;
+        }
         if (FlightClient.controlledEntity() == null) {
             if (++joinedTicks == JOIN_WAIT) minecraft.player.connection.sendCommand(
                 "frontier_bench start " + ROUTE[0] + " " + ROUTE[1] + " " + ROUTE[2] + " " + ROUTE[3]);
@@ -78,6 +92,10 @@ public final class FlightBenchClient {
             FlightFramePerformance.benchReset();
             minecraft.player.connection.sendCommand("frontier_bench measure");
         }
+        if (SHOTS && (flightTicks == SETTLE + MEASURE / 3 || flightTicks == SETTLE + 2 * MEASURE / 3)) {
+            net.minecraft.client.Screenshot.grab(minecraft.gameDirectory, "bench-" + flightTicks + ".png",
+                minecraft.getMainRenderTarget(), message -> { });
+        }
         if (flightTicks == SETTLE + MEASURE) {
             minecraft.player.connection.sendCommand("frontier_bench finish");
             var plane = FlightClient.controlledEntity();
@@ -86,14 +104,18 @@ public final class FlightBenchClient {
                 + ",\"endY\":" + Math.round(plane.getY()) + ",\"endZ\":" + Math.round(plane.getZ())
                 + ",\"loadedChunks\":" + minecraft.level.getChunkSource().getLoadedChunksCount()
                 + ",\"frames\":" + FlightFramePerformance.benchSummary() + "}";
-            System.out.println("[flight-bench] " + result);
-            try {
-                Files.writeString(minecraft.gameDirectory.toPath().resolve("flight-bench-result.json"), result + "\n",
-                    StandardCharsets.UTF_8);
-            } catch (java.io.IOException failure) {
-                System.out.println("[flight-bench] result not written: " + failure);
-            }
+            write(minecraft, result);
             doneTicks = 0;
+        }
+    }
+
+    private static void write(Minecraft minecraft, String result) {
+        System.out.println("[flight-bench] " + result);
+        try {
+            Files.writeString(minecraft.gameDirectory.toPath().resolve("flight-bench-result.json"), result + "\n",
+                StandardCharsets.UTF_8);
+        } catch (java.io.IOException failure) {
+            System.out.println("[flight-bench] result not written: " + failure);
         }
     }
 }

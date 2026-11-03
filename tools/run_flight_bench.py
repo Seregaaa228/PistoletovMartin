@@ -59,6 +59,11 @@ def main() -> int:
     parser.add_argument('--measure-ticks', type=int, default=1800, help='Measured window after a 10 s settle')
     parser.add_argument('--world-template', type=Path, default=DEFAULT_TEMPLATE)
     parser.add_argument('--play-profile', type=Path, default=ROOT / 'play-tablet')
+    parser.add_argument('--hold', type=int, default=0,
+                        help='Instead of flying, park at the route start this many seconds (e.g. to build LODs)')
+    parser.add_argument('--shots', action='store_true', help='Take two screenshots during the measured window')
+    parser.add_argument('--save-world', type=Path,
+                        help='Singleplayer: keep the world after the run at this new path (e.g. a LOD-baked template)')
     parser.add_argument('--client-extra-mods', type=Path, nargs='+', default=[],
                         help='Project-local JARs added to the bench client (e.g. a far-terrain LOD mod)')
     parser.add_argument('--client-remove-mods', nargs='+', default=[],
@@ -105,7 +110,11 @@ def main() -> int:
               'clientRemovedMods': args.client_remove_mods, 'commit': commit + ('+dirty' if dirty else ''), 'startedAt': time.strftime('%F %T')}
     client_cmd = ['python3', 'tools/run_test_client.py', str(profile), '--skip-benchmark', '--gpu', 'nvidia',
                   '--memory', '12G', '--flight-bench=' + args.route,
-                  '--flight-bench-ticks', str(args.measure_ticks)]
+                  '--flight-bench-ticks', str(args.measure_ticks), '--flight-bench-hold', str(args.hold)]
+    if args.shots:
+        client_cmd.append('--flight-bench-shots')
+    if args.save_world and (args.mode != 'singleplayer' or args.save_world.exists()):
+        raise ValueError('--save-world needs singleplayer and a new path')
     server = None
     world_copy = None
     added_server_mods = []
@@ -153,7 +162,7 @@ def main() -> int:
                                   stdout=(profile / 'client-console.log').open('w'), stderr=subprocess.STDOUT,
                                   start_new_session=True)
         result_path = profile / 'flight-bench-result.json'
-        deadline = time.monotonic() + 240 + args.measure_ticks / 20
+        deadline = time.monotonic() + 240 + (args.hold or args.measure_ticks / 20)
         while not result_path.exists():
             if client.poll() is not None:
                 raise RuntimeError('Client exited without a result; see ' + str(profile / 'logs/latest.log'))
@@ -183,6 +192,9 @@ def main() -> int:
             link.symlink_to(record['serverWorldBefore'])
         for added in added_server_mods:
             added.unlink(missing_ok=True)
+        if args.save_world and world_copy is not None and world_copy.exists() and 'client' in record:
+            shutil.move(str(world_copy), str(args.save_world))
+            record['savedWorld'] = str(args.save_world)
         if world_copy is not None and world_copy.exists():
             shutil.rmtree(world_copy)
     BENCH.mkdir(parents=True, exist_ok=True)

@@ -170,6 +170,8 @@ def main() -> int:
     parser.add_argument('--flight-bench', metavar='X,Y,Z,YAW',
                         help='Fly the opt-in flight benchmark from this point; the client quits when done')
     parser.add_argument('--flight-bench-ticks', type=int, default=1800, help='Measured window of the flight benchmark')
+    parser.add_argument('--flight-bench-hold', type=int, default=0, help='Hold at the route start this many seconds instead')
+    parser.add_argument('--flight-bench-shots', action='store_true', help='Screenshots during the measured window')
     parser.add_argument('--task-budget-ab', action='store_true',
                         help='Log flight frame times with the client task budget switched on/off every 10 s')
     args = parser.parse_args()
@@ -204,6 +206,8 @@ def main() -> int:
             raise ValueError('Use --flight-bench x,y,z,yaw')
         properties.append('-Dfrontier.flightBench=' + args.flight_bench)
         properties.append('-Dfrontier.flightBenchTicks=' + str(args.flight_bench_ticks))
+        properties.append('-Dfrontier.flightBenchHold=' + str(args.flight_bench_hold))
+        properties.append('-Dfrontier.flightBenchShots=' + str(args.flight_bench_shots).lower())
     if args.task_budget_ab:
         properties += ['-Dfrontier.flightPerformance=true', '-Dfrontier.taskBudgetAB=true']
     if args.server:

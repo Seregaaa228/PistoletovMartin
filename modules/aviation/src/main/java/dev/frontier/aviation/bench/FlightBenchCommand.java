@@ -39,6 +39,11 @@ public final class FlightBenchCommand {
         event.getDispatcher().register(Commands.literal("frontier_bench")
             .requires(FlightBenchCommand::allowed)
             .then(Commands.literal("start").then(point))
+            .then(Commands.literal("hold").then(Commands.argument("x", IntegerArgumentType.integer())
+                .then(Commands.argument("y", IntegerArgumentType.integer(-64, 400))
+                    .then(Commands.argument("z", IntegerArgumentType.integer()).executes(context -> hold(context.getSource(),
+                        IntegerArgumentType.getInteger(context, "x"), IntegerArgumentType.getInteger(context, "y"),
+                        IntegerArgumentType.getInteger(context, "z")))))))
             .then(Commands.literal("measure").executes(context -> {
                 FlightPerformanceEvents.reset();
                 return 1;
@@ -52,6 +57,14 @@ public final class FlightBenchCommand {
     private static boolean allowed(CommandSourceStack source) {
         if (source.hasPermission(2)) return true;
         return source.getPlayer() != null && source.getServer().isSingleplayerOwner(source.getPlayer().getGameProfile());
+    }
+
+    /** Parks the caller as a spectator at a point, e.g. while a LOD mod builds around it. */
+    private static int hold(CommandSourceStack source, int x, int y, int z) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        player.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
+        player.teleportTo(player.serverLevel(), x + .5, y, z + .5, 0, 0);
+        return 1;
     }
 
     private static int start(CommandSourceStack source, int x, int y, int z, float yaw) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
