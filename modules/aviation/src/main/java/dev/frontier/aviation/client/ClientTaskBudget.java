@@ -17,6 +17,8 @@ public final class ClientTaskBudget {
     /** Queue length at which the budget is dropped and everything runs (vanilla behaviour). */
     static final int CATCH_UP_BACKLOG = 1024;
     public static final long UNLIMITED = Long.MAX_VALUE;
+    /** Off with -Dfrontier.clientTaskBudget=false; FlightFramePerformance flips it for A/B runs. */
+    public static volatile boolean enabled = !"false".equals(System.getProperty("frontier.clientTaskBudget"));
 
     private int backloggedFrames;
 

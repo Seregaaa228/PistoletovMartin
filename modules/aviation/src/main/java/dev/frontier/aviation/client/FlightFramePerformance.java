@@ -16,11 +16,18 @@ import net.minecraftforge.fml.common.Mod;
 public final class FlightFramePerformance {
     public static final boolean ENABLED = Boolean.getBoolean("frontier.flightPerformance");
 
+    /** Flips the client task budget every 10 s and keeps a histogram for each half. */
+    private static final boolean BUDGET_AB = ENABLED && Boolean.getBoolean("frontier.taskBudgetAB");
+    private static final long AB_PERIOD_NANOS = 10_000_000_000L, HITCH_33 = 33_000_000L, HITCH_50 = 50_000_000L;
+
     private static final FlightTimingHistogram FRAME_INTERVAL =
             ENABLED ? new FlightTimingHistogram() : null;
+    private static final FlightTimingHistogram[] BY_BUDGET =
+            BUDGET_AB ? new FlightTimingHistogram[] {new FlightTimingHistogram(), new FlightTimingHistogram()} : null;
+    private static final long[] HITCHES_33 = new long[2], HITCHES_50 = new long[2];
     private static ClientLevel measuredLevel;
     private static long previousFrameAt;
-    private static boolean hasPreviousFrame;
+    private static boolean hasPreviousFrame, previousBudget;
 
     private FlightFramePerformance() {}
 
@@ -44,8 +51,18 @@ public final class FlightFramePerformance {
 
         long now = System.nanoTime();
         if (hasPreviousFrame) {
-            FRAME_INTERVAL.record(Math.max(0, now - previousFrameAt));
+            long interval = Math.max(0, now - previousFrameAt);
+            FRAME_INTERVAL.record(interval);
+            if (BUDGET_AB) {
+                // The interval belongs to the mode the previous frame ran its tasks in.
+                int mode = previousBudget ? 1 : 0;
+                BY_BUDGET[mode].record(interval);
+                if (interval >= HITCH_33) HITCHES_33[mode]++;
+                if (interval >= HITCH_50) HITCHES_50[mode]++;
+            }
         }
+        if (BUDGET_AB) ClientTaskBudget.enabled = (now / AB_PERIOD_NANOS & 1) == 0;
+        previousBudget = ClientTaskBudget.enabled;
         previousFrameAt = now;
         hasPreviousFrame = true;
     }
@@ -69,5 +86,18 @@ public final class FlightFramePerformance {
                 + " p95Upper=" + FRAME_INTERVAL.percentileUpperBound(95)
                 + " p99Upper=" + FRAME_INTERVAL.percentileUpperBound(99));
         FRAME_INTERVAL.reset();
+        if (!BUDGET_AB) return;
+        for (int mode = 0; mode < 2; mode++) {
+            FlightTimingHistogram histogram = BY_BUDGET[mode];
+            System.out.println("[flight-performance] metric=frameInterval taskBudget=" + (mode == 1)
+                    + " unit=ns samples=" + histogram.count() + " sum=" + histogram.sumNanos()
+                    + " max=" + histogram.maxNanos()
+                    + " p50Upper=" + histogram.percentileUpperBound(50)
+                    + " p99Upper=" + histogram.percentileUpperBound(99)
+                    + " p999Upper=" + histogram.percentileUpperBound(99.9)
+                    + " over33ms=" + HITCHES_33[mode] + " over50ms=" + HITCHES_50[mode]);
+            histogram.reset();
+            HITCHES_33[mode] = HITCHES_50[mode] = 0;
+        }
     }
 }

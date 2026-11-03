@@ -21,7 +21,8 @@ public abstract class ClientTaskBudgetHook {
     @Redirect(method = "m_91383_(Z)V", remap = false, require = 1,
             at = @At(value = "INVOKE", remap = false, target = "Lnet/minecraft/client/Minecraft;m_18699_()V"))
     private void aviation$runTasksWithinBudget(Minecraft minecraft) {
-        if (minecraft.level == null || minecraft.player == null || minecraft.screen instanceof ReceivingLevelScreen) {
+        if (!ClientTaskBudget.enabled || minecraft.level == null || minecraft.player == null
+                || minecraft.screen instanceof ReceivingLevelScreen) {
             while (minecraft.pollTask()) { }
             return;
         }

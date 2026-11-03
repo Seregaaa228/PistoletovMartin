@@ -165,6 +165,8 @@ def main() -> int:
     parser.add_argument('--memory', default='3G', help='Java heap, e.g. 12G for a play session with Distant Horizons')
     parser.add_argument('--gpu', choices=('default', 'nvidia'), default='default',
                         help='nvidia: render on the discrete NVIDIA GPU of a PRIME (hybrid graphics) laptop')
+    parser.add_argument('--task-budget-ab', action='store_true',
+                        help='Log flight frame times with the client task budget switched on/off every 10 s')
     args = parser.parse_args()
     profile = args.profile.resolve()
     if not profile.is_relative_to(ROOT) or profile.is_relative_to(ROOT / 'instance'):
@@ -192,6 +194,8 @@ def main() -> int:
                   '-Dfrontier.pis1Restart=' + str(args.restart).lower(),
                   '-Dfrontier.pis1BenchmarkOnly=' + str(args.benchmark_only).lower(),
                   '-Dfrontier.pis1SkipBenchmark=' + str(args.skip_benchmark).lower()]
+    if args.task_budget_ab:
+        properties += ['-Dfrontier.flightPerformance=true', '-Dfrontier.taskBudgetAB=true']
     if args.server:
         properties.append('-Dfrontier.pis1Server=' + args.server + ':' + str(args.port))
     if not re.fullmatch(r'[1-9][0-9]?G', args.memory):
