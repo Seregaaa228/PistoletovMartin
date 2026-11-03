@@ -197,7 +197,7 @@ def main() -> int:
     if not re.fullmatch(r'[1-9][0-9]?G', args.memory):
         raise ValueError('Use a heap such as 3G or 12G')
     # G1 tuned for short pauses: a large heap must not trade smoothness for throughput.
-    tuning = [] if args.memory == '3G' else ['-XX:+UseG1GC', '-XX:MaxGCPauseMillis=40', '-XX:+ParallelRefProcEnabled',
+    tuning = [] if args.memory == '3G' else ['-XX:+UseG1GC', '-XX:MaxGCPauseMillis=40', '-XX:+ParallelRefProcEnabled', '-XX:+UnlockExperimentalVMOptions',
                                              '-XX:G1NewSizePercent=30', '-XX:G1ReservePercent=15', '-XX:+AlwaysPreTouch']
     command = ['java', '-Xmx' + args.memory, '-Xms' + ('512M' if args.memory == '3G' else '4G'), *tuning, *properties,
                *expand(vanilla['arguments']['jvm'] + forge['arguments']['jvm'], values),
