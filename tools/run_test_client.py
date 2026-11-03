@@ -196,9 +196,9 @@ def main() -> int:
         properties.append('-Dfrontier.pis1Server=' + args.server + ':' + str(args.port))
     if not re.fullmatch(r'[1-9][0-9]?G', args.memory):
         raise ValueError('Use a heap such as 3G or 12G')
-    # G1 tuned for short pauses: a large heap must not trade smoothness for throughput.
-    tuning = [] if args.memory == '3G' else ['-XX:+UseG1GC', '-XX:MaxGCPauseMillis=40', '-XX:+ParallelRefProcEnabled', '-XX:+UnlockExperimentalVMOptions',
-                                             '-XX:G1NewSizePercent=30', '-XX:G1ReservePercent=15', '-XX:+AlwaysPreTouch']
+    # A concurrent collector for a large play heap (Distant Horizons warns that G1 stutters;
+    # ZGC's generational mode needs Java 21, Shenandoah is in Java 17).
+    tuning = [] if args.memory == '3G' else ['-XX:+UseShenandoahGC', '-XX:+AlwaysPreTouch', '-XX:+DisableExplicitGC']
     command = ['java', '-Xmx' + args.memory, '-Xms' + ('512M' if args.memory == '3G' else '4G'), *tuning, *properties,
                *expand(vanilla['arguments']['jvm'] + forge['arguments']['jvm'], values),
                forge['mainClass'], *expand(vanilla['arguments']['game'] + forge['arguments']['game'], values),
