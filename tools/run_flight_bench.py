@@ -59,6 +59,10 @@ def main() -> int:
     parser.add_argument('--measure-ticks', type=int, default=1800, help='Measured window after a 10 s settle')
     parser.add_argument('--world-template', type=Path, default=DEFAULT_TEMPLATE)
     parser.add_argument('--play-profile', type=Path, default=ROOT / 'play-tablet')
+    parser.add_argument('--client-extra-mods', type=Path, nargs='+', default=[],
+                        help='Project-local JARs added to the bench client (e.g. a far-terrain LOD mod)')
+    parser.add_argument('--client-remove-mods', nargs='+', default=[],
+                        help='File-name prefixes of play-profile mods left out of the bench client')
     parser.add_argument('--server-extra-mods', type=Path, nargs='+', default=[],
                         help='Server mode: project-local JARs added to the test server for this run only')
     args = parser.parse_args()
@@ -76,7 +80,13 @@ def main() -> int:
     for jar in (profile / 'mods').glob('*.jar'):
         jar.unlink()
     for jar in (play / 'mods').glob('*.jar'):
-        shutil.copy2(jar, profile / 'mods' / jar.name)
+        if not any(jar.name.startswith(prefix) for prefix in args.client_remove_mods):
+            shutil.copy2(jar, profile / 'mods' / jar.name)
+    for extra in args.client_extra_mods:
+        extra = extra.resolve()
+        if not extra.is_relative_to(ROOT) or extra.suffix != '.jar' or not extra.is_file():
+            raise ValueError('Client extra mods must be project-local JAR files: ' + str(extra))
+        shutil.copy2(extra, profile / 'mods' / extra.name)
     shutil.copytree(play / 'config', profile / 'config', dirs_exist_ok=True)
     settings = {'renderDistance': str(args.render_distance), 'pauseOnLostFocus': 'false',
                 'onboardAccessibility': 'false', 'tutorialStep': 'none'}
@@ -91,7 +101,8 @@ def main() -> int:
     dirty = bool(subprocess.run(['git', 'status', '--porcelain', '--', 'modules', 'tools'], cwd=ROOT, text=True,
                                 capture_output=True).stdout.strip())
     record = {'label': args.label, 'run': run_id, 'mode': args.mode, 'renderDistance': args.render_distance,
-              'route': args.route, 'commit': commit + ('+dirty' if dirty else ''), 'startedAt': time.strftime('%F %T')}
+              'route': args.route, 'clientExtraMods': [path.name for path in args.client_extra_mods],
+              'clientRemovedMods': args.client_remove_mods, 'commit': commit + ('+dirty' if dirty else ''), 'startedAt': time.strftime('%F %T')}
     client_cmd = ['python3', 'tools/run_test_client.py', str(profile), '--skip-benchmark', '--gpu', 'nvidia',
                   '--memory', '12G', '--flight-bench=' + args.route,
                   '--flight-bench-ticks', str(args.measure_ticks)]

@@ -84,6 +84,7 @@ public final class FlightBenchClient {
             String result = "{\"route\":\"" + System.getProperty("frontier.flightBench") + "\",\"renderDistance\":"
                 + minecraft.options.renderDistance().get() + ",\"endX\":" + Math.round(plane.getX())
                 + ",\"endY\":" + Math.round(plane.getY()) + ",\"endZ\":" + Math.round(plane.getZ())
+                + ",\"loadedChunks\":" + minecraft.level.getChunkSource().getLoadedChunksCount()
                 + ",\"frames\":" + FlightFramePerformance.benchSummary() + "}";
             System.out.println("[flight-bench] " + result);
             try {
