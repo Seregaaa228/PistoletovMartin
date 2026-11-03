@@ -3,6 +3,6 @@
   "minVersion": "0.8",
   "package": "dev.frontier.nations.mixin.client",
   "compatibilityLevel": "JAVA_17",
-  "client": ["XaeroMapMixin", "PlayerTabFlagsMixin"],
+  "client": ["XaeroMapMixin", "XaeroWriterVehiclePauseMixin", "PlayerTabFlagsMixin"],
   "injectors": {"defaultRequire": 1}
 }
