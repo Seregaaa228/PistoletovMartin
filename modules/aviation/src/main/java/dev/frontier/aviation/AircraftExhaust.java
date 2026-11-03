@@ -9,7 +9,8 @@ import net.minecraft.util.Mth;
 
 /** Local visuals only: no packets, damage, world lights, or effect entities. */
 public final class AircraftExhaust {
-    public static final int FIRE_DISTANCE = 128;
+    /** DSM's flame is a ~500-vertex mesh per nozzle each frame; past this it is a few pixels. */
+    public static final int FIRE_DISTANCE = 64;
 
     private AircraftExhaust() {}
 
@@ -26,7 +27,11 @@ public final class AircraftExhaust {
         if (!running(plane) || !nativeFireAvailable()) return;
         AircraftProfile profile = AircraftProfile.of(plane);
         if (profile == null) return;
-        double distance = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition()
+        var minecraft = Minecraft.getInstance();
+        // From the cockpit the nozzles are behind the pilot and never in view.
+        if (minecraft.options.getCameraType().isFirstPerson() && minecraft.cameraEntity != null
+                && minecraft.cameraEntity.getVehicle() == plane) return;
+        double distance = minecraft.gameRenderer.getMainCamera().getPosition()
                 .distanceToSqr(plane.position());
         if (distance > FIRE_DISTANCE * FIRE_DISTANCE) return;
         float power = Mth.clamp(plane.getPower(), 0, 1);
