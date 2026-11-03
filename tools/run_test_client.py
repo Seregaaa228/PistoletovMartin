@@ -165,6 +165,11 @@ def main() -> int:
     parser.add_argument('--memory', default='3G', help='Java heap, e.g. 12G for a play session with Distant Horizons')
     parser.add_argument('--gpu', choices=('default', 'nvidia'), default='default',
                         help='nvidia: render on the discrete NVIDIA GPU of a PRIME (hybrid graphics) laptop')
+    parser.add_argument('--quick-play-world', help='Join this singleplayer world directly (Quick Play)')
+    parser.add_argument('--quick-play-server', help='Join this local host:port directly (Quick Play)')
+    parser.add_argument('--flight-bench', metavar='X,Y,Z,YAW',
+                        help='Fly the opt-in flight benchmark from this point; the client quits when done')
+    parser.add_argument('--flight-bench-ticks', type=int, default=1800, help='Measured window of the flight benchmark')
     parser.add_argument('--task-budget-ab', action='store_true',
                         help='Log flight frame times with the client task budget switched on/off every 10 s')
     args = parser.parse_args()
@@ -194,6 +199,11 @@ def main() -> int:
                   '-Dfrontier.pis1Restart=' + str(args.restart).lower(),
                   '-Dfrontier.pis1BenchmarkOnly=' + str(args.benchmark_only).lower(),
                   '-Dfrontier.pis1SkipBenchmark=' + str(args.skip_benchmark).lower()]
+    if args.flight_bench:
+        if not re.fullmatch(r'-?\d+,-?\d+,-?\d+,-?\d+(\.\d+)?', args.flight_bench):
+            raise ValueError('Use --flight-bench x,y,z,yaw')
+        properties.append('-Dfrontier.flightBench=' + args.flight_bench)
+        properties.append('-Dfrontier.flightBenchTicks=' + str(args.flight_bench_ticks))
     if args.task_budget_ab:
         properties += ['-Dfrontier.flightPerformance=true', '-Dfrontier.taskBudgetAB=true']
     if args.server:
@@ -207,6 +217,12 @@ def main() -> int:
                *expand(vanilla['arguments']['jvm'] + forge['arguments']['jvm'], values),
                forge['mainClass'], *expand(vanilla['arguments']['game'] + forge['arguments']['game'], values),
                '--width', '1280', '--height', '720']
+    if args.quick_play_world:
+        command += ['--quickPlaySingleplayer', args.quick_play_world]
+    if args.quick_play_server:
+        if args.quick_play_server.rsplit(':', 1)[0] not in {'localhost', '127.0.0.1'}:
+            raise ValueError('Quick Play is limited to a local test server')
+        command += ['--quickPlayMultiplayer', args.quick_play_server]
     if args.server:
         if args.server not in {'localhost', '127.0.0.1', '::1'}:
             raise ValueError('Only a local isolated test server is supported')

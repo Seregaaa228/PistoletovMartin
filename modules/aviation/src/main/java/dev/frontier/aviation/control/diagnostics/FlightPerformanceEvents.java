@@ -9,7 +9,8 @@ import net.minecraftforge.fml.common.Mod;
 /** Opt-in whole-server tick timing; this is not a flight-only measurement. */
 @Mod.EventBusSubscriber(modid = LightAviation.ID)
 public final class FlightPerformanceEvents {
-    public static final boolean ENABLED = Boolean.getBoolean("frontier.flightPerformance");
+    public static final boolean ENABLED = Boolean.getBoolean("frontier.flightPerformance")
+        || System.getProperty("frontier.flightBench") != null;
 
     private static final FlightTimingHistogram WHOLE_SERVER_TICK =
             ENABLED ? new FlightTimingHistogram() : null;
@@ -38,7 +39,15 @@ public final class FlightPerformanceEvents {
         dumpAndReset();
     }
 
-    private static void dumpAndReset() {
+    /** Starts a fresh measured window (flight benchmark). */
+    public static void reset() {
+        if (!ENABLED) return;
+        WHOLE_SERVER_TICK.reset();
+        tickStarted = false;
+    }
+
+    public static void dumpAndReset() {
+        if (!ENABLED) return;
         System.out.println("[flight-performance] metric=wholeServerTick unit=ns samples=" + WHOLE_SERVER_TICK.count()
                 + " sum=" + WHOLE_SERVER_TICK.sumNanos()
                 + " min=" + WHOLE_SERVER_TICK.minNanos()

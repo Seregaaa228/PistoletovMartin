@@ -162,7 +162,8 @@ public final class FlightClient implements FlightNativeHooks.Callbacks {
         if (lease == null && clientTick - requestTick >= 20) {
             FlightNetwork.requestLease(vehicle); requestTick = clientTick;
         }
-        boolean active = mc.screen == null && mc.isWindowActive() && !usingDroneMonitor();
+        boolean active = dev.frontier.aviation.client.FlightBenchClient.forcesActive()
+            || mc.screen == null && mc.isWindowActive() && !usingDroneMonitor();
         if (!active) commands.clearTransient();
         boolean free = ModKeyMappings.FREE_CAMERA.isDown();
         if (free != freeCamera || active != inputActive) mouse.clear();
@@ -185,7 +186,7 @@ public final class FlightClient implements FlightNativeHooks.Callbacks {
             heli ? -axes.horizontal() : bank, throttle, active && FlightKeys.BRAKE.isDown(),
             active && ModKeyMappings.MOVE_SHIFT.isDown(), active && ModKeyMappings.MOVE_CTRL.isDown(),
             ignition, gearRequest, hoverRequest);
-        commands.update(candidate);
+        commands.update(dev.frontier.aviation.client.FlightBenchClient.command(vehicle, candidate));
     }
     private void receive(FlightSnapshot snapshot) {
         Minecraft mc = Minecraft.getInstance();

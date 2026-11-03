@@ -4,6 +4,7 @@ from pathlib import Path
 import argparse
 import json
 import os
+import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,7 +17,14 @@ def main():
                         help='Allow Forge to load mods and report a missing/unaccepted EULA; never writes eula=true')
     parser.add_argument('--dedicated-acceptance', action='store_true',
                         help='Opt into the guarded two-loopback-client Jade/ownership test after EULA acceptance')
+    parser.add_argument('--memory', default='3G', help='Java heap, e.g. 8G for a long view distance')
+    parser.add_argument('--flight-bench', action='store_true',
+                        help='Register the opt-in flight benchmark command and log server tick timings')
+    parser.add_argument('--force-upgrade', action='store_true',
+                        help='Rewrite every chunk of an older-version world in the current format once, then start')
     args = parser.parse_args()
+    if not re.fullmatch(r'[1-9][0-9]?G', args.memory):
+        raise ValueError('Use a heap such as 3G or 8G')
     profile = args.profile.resolve()
     if not profile.is_relative_to(ROOT) or profile.is_relative_to(ROOT / 'instance'):
         raise ValueError('Use a separate test profile inside this project')
@@ -33,11 +41,17 @@ def main():
     arguments = profile / 'libraries/net/minecraftforge/forge/1.20.1-47.4.0' / filename
     if not arguments.is_file():
         raise ValueError('Install the pinned Forge installer into this profile with --installServer first')
-    command = ['java', '-Xmx3G', '-Xms512M', '-Dfrontier.pis1Smoke=true',
-               '-Dfrontier.pis1RunId=' + manifest['runId']]
+    # Same collector choice as the play client for a large heap.
+    tuning = [] if args.memory == '3G' else ['-XX:+UseShenandoahGC', '-XX:+AlwaysPreTouch', '-XX:+DisableExplicitGC']
+    command = ['java', '-Xmx' + args.memory, '-Xms' + ('512M' if args.memory == '3G' else '2G'), *tuning,
+               '-Dfrontier.pis1Smoke=true', '-Dfrontier.pis1RunId=' + manifest['runId']]
     if args.dedicated_acceptance:
         command.append('-Dfrontier.pis1DedicatedAcceptance=true')
+    if args.flight_bench:
+        command += ['-Dfrontier.flightBench=server', '-Dfrontier.flightPerformance=true']
     command.extend(['@' + str(arguments), 'nogui'])
+    if args.force_upgrade:
+        command.append('--forceUpgrade')
     return subprocess.run(command, cwd=profile, check=False).returncode
 
 
