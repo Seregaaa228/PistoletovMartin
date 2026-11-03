@@ -41,6 +41,8 @@ public final class FlightClient implements FlightNativeHooks.Callbacks {
         FlightSnapshot snapshot;
         FlightState from, displayed;
         long receivedTick, steppedTick = Long.MIN_VALUE;
+        /** Server ticks this snapshot spans since the previous one (usually 2). */
+        int span = 2;
         Tracked(Entity entity) { this.entity = entity; }
     }
     private FlightClient() {}
@@ -203,6 +205,8 @@ public final class FlightClient implements FlightNativeHooks.Callbacks {
         }
         if (entry == null) { entry = new Tracked(entity); tracked.put(snapshot.vehicleId(), entry); }
         entry.from = entry.displayed == null ? snapshot.telemetry().state() : entry.displayed;
+        entry.span = previous == null ? 2
+            : (int) Math.max(1, Math.min(4, snapshot.telemetry().serverTick() - previous.telemetry().serverTick()));
         entry.snapshot = snapshot; entry.receivedTick = clientTick;
         if (entity == localVehicle() && mc.player.getUUID().equals(snapshot.controllerId())) {
             boolean newEpoch = lease == null || lease.epoch() != snapshot.epoch();
@@ -248,7 +252,11 @@ public final class FlightClient implements FlightNativeHooks.Callbacks {
             output = prediction.step(NATIVE.profile(entity), command, NATIVE.sample(entity, tick), limits);
         } else {
             FlightTelemetry telemetry = entry.snapshot.telemetry();
-            FlightState state = FlightPrediction.interpolate(entry.from, telemetry.state(), (clientTick - entry.receivedTick + 1) / 2f);
+            // Spread each snapshot's change over the ticks it covers: the work queued from
+            // the network already runs one client tick later, so "+ 1" reached the target on
+            // the first tick and held it on the next, a 10 Hz shudder in every turn and roll.
+            FlightState state = FlightPrediction.interpolate(entry.from, telemetry.state(),
+                Math.min(1f, (float) (clientTick - entry.receivedTick) / entry.span));
             float nativePower = state.enginePhase() == EnginePhase.STARTING ? NATIVE.sample(entity, tick).idlePower() : state.effectivePower();
             output = new FlightOutput(state, nativePower, state.enginePhase() == EnginePhase.RUNNING,
                 telemetry.brake(), telemetry.secondaryBrake(), telemetry.boost(), telemetry.status());

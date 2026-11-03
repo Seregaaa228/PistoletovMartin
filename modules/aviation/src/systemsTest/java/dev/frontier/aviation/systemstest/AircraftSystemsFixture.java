@@ -34,6 +34,8 @@ public final class AircraftSystemsFixture {
         if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient())
             MinecraftForge.EVENT_BUS.register(new TabletClientHook());
             MinecraftForge.EVENT_BUS.register(new FlightTraceScenario.ClientRecorder());
+            MinecraftForge.EVENT_BUS.register(new FireFpsScenario.FrameRecorder());
+            MinecraftForge.EVENT_BUS.register(new ObserverRollScenario.Recorder());
     }
 
     @SubscribeEvent public void commands(RegisterCommandsEvent event) {
@@ -136,6 +138,25 @@ public final class AircraftSystemsFixture {
                 return 1;
             }));
         }
+        command.then(Commands.literal("fire_fps").executes(context -> {
+            var source = context.getSource();
+            if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
+            try {
+                var scenario = new FireFpsScenario(source.getPlayerOrException());
+                begin("fire_fps", scenario::tick, scenario::result);
+                limit = FireFpsScenario.TIMEOUT_TICKS;
+            } catch (RuntimeException | LinkageError error) { startFailure("fire_fps", error); }
+            return 1;
+        }));
+        command.then(Commands.literal("observer_roll").executes(context -> {
+            var source = context.getSource();
+            if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
+            try {
+                var scenario = new ObserverRollScenario(source.getPlayerOrException());
+                begin("observer_roll", scenario::tick, scenario::result);
+            } catch (RuntimeException | LinkageError error) { startFailure("observer_roll", error); }
+            return 1;
+        }));
         command.then(Commands.literal("deploy").executes(context -> {
             var source = context.getSource();
             if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;

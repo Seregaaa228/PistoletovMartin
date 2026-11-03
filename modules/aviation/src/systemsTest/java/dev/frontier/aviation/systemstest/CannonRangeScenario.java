@@ -29,6 +29,7 @@ final class CannonRangeScenario {
     private final BlockPos wall;
     private final JsonObject result = new JsonObject();
     private int ticks, before, fired, start = -1;
+    private final long impactsBefore = CannonShells.impacts, waitedBefore = CannonShells.waitedOut, spentBefore = CannonShells.spent;
 
     CannonRangeScenario(ServerPlayer pilot, int distance, boolean unloaded) {
         this.pilot = pilot;
@@ -39,7 +40,9 @@ final class CannonRangeScenario {
         plane = AircraftProfile.F16.entity.get().create(level);
         if (plane == null) throw new IllegalStateException("F-16 creation failed");
         Entity body = plane;
-        body.moveTo(pilot.getX(), pilot.getY() + 40, pilot.getZ(), 0, 0);
+        // Above the ground, not the player: an earlier scenario may leave them near the build limit.
+        int ground = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, pilot.getBlockX(), pilot.getBlockZ());
+        body.moveTo(pilot.getX(), ground + 40, pilot.getZ(), 0, 0);
         plane.setNoGravity(true);
         plane.setInvulnerable(true);
         plane.setEnergy(plane.getMaxEnergy());
@@ -83,6 +86,10 @@ final class CannonRangeScenario {
         if (t < 130) return false;
         int lost = before - solid(pilot.serverLevel());
         result.addProperty("shotsQueued", fired);
+        result.addProperty("impacts", CannonShells.impacts - impactsBefore);
+        result.addProperty("waitedOut", CannonShells.waitedOut - waitedBefore);
+        result.addProperty("spent", CannonShells.spent - spentBefore);
+        result.addProperty("wallLoadedAtEnd", pilot.serverLevel().isLoaded(wall));
         result.addProperty("wallBlocksLost", lost);
         result.addProperty("pass", fired > 10 && lost > 0 && (unloaded || !result.get("wallEntityTicking").getAsBoolean()));
         return finish(null);

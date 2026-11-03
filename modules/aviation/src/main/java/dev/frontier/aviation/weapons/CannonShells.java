@@ -73,11 +73,21 @@ public final class CannonShells {
     }
 
     private static final Map<ServerLevel, List<Shell>> FLYING = new WeakHashMap<>();
+    /** Diagnostics: impacts, shells given up while waiting for terrain, and spent in the air. */
+    public static volatile long impacts, waitedOut, spent;
 
     private CannonShells() {}
 
+    private static final String AIRCRAFT_ROUND = "frontierAircraftRound";
+
+    /** A shell flown here (it shows the light impact effect, see ControlledAircraftCannon). */
+    public static boolean isAircraftRound(SmallCannonShellEntity shell) {
+        return shell.getPersistentData().getBoolean(AIRCRAFT_ROUND);
+    }
+
     /** Takes over a native aircraft shell before it joins the world; it never becomes an entity. */
     public static void launch(ServerLevel level, SmallCannonShellEntity shell, Entity plane) {
+        shell.getPersistentData().putBoolean(AIRCRAFT_ROUND, true);
         Shell flight = new Shell(shell, plane);
         FLYING.computeIfAbsent(level, ignored -> new ArrayList<>()).add(flight);
         CannonNetwork.tracer(plane, flight.origin, flight.velocity, flight.gravity);
@@ -96,10 +106,15 @@ public final class CannonShells {
     /** One tick of flight; true once the shell is gone. */
     private static boolean advance(ServerLevel level, Shell shell) {
         Vec3 from = shell.position, to = from.add(shell.velocity);
-        if (++shell.ticks > MAX_TICKS || to.distanceToSqr(shell.origin) > MAX_DISTANCE * MAX_DISTANCE) return true;
+        if (++shell.ticks > MAX_TICKS || to.distanceToSqr(shell.origin) > MAX_DISTANCE * MAX_DISTANCE) {
+            spent++;
+            return true;
+        }
         if (!pathLoaded(level, from, to)) {
             shell.ticks--; // Waiting for terrain is not flight time.
-            return ++shell.waiting > MAX_WAIT_TICKS;
+            if (++shell.waiting <= MAX_WAIT_TICKS) return false;
+            waitedOut++;
+            return true;
         }
         Entity owner = shell.entity.getOwner();
         BlockHitResult block = level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY,
@@ -114,6 +129,7 @@ public final class CannonShells {
             return false;
         }
         impact(level, shell, hit);
+        impacts++;
         return true;
     }
 
