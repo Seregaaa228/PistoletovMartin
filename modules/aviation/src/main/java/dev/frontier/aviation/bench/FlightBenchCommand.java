@@ -44,7 +44,7 @@ public final class FlightBenchCommand {
                 return 1;
             }))
             .then(Commands.literal("finish").executes(context -> {
-                FlightPerformanceEvents.dumpAndReset();
+                FlightPerformanceEvents.dumpAndReset("bench");
                 return 1;
             })));
     }

@@ -36,7 +36,7 @@ public final class FlightPerformanceEvents {
     @SubscribeEvent
     public static void serverStopped(ServerStoppedEvent event) {
         if (!ENABLED) return;
-        dumpAndReset();
+        dumpAndReset("server_stopped");
     }
 
     /** Starts a fresh measured window (flight benchmark). */
@@ -46,9 +46,12 @@ public final class FlightPerformanceEvents {
         tickStarted = false;
     }
 
-    public static void dumpAndReset() {
+    public static void dumpAndReset() { dumpAndReset("lifecycle"); }
+
+    /** {@code window} names what the histogram covers, e.g. "bench" for the measured flight. */
+    public static void dumpAndReset(String window) {
         if (!ENABLED) return;
-        System.out.println("[flight-performance] metric=wholeServerTick unit=ns samples=" + WHOLE_SERVER_TICK.count()
+        System.out.println("[flight-performance] metric=wholeServerTick window=" + window + " unit=ns samples=" + WHOLE_SERVER_TICK.count()
                 + " sum=" + WHOLE_SERVER_TICK.sumNanos()
                 + " min=" + WHOLE_SERVER_TICK.minNanos()
                 + " max=" + WHOLE_SERVER_TICK.maxNanos()

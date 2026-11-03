@@ -29,8 +29,8 @@ SERVER = ROOT / 'run-play-server'
 
 
 def server_ticks(log: Path) -> dict | None:
-    """The last wholeServerTick line: the window between bench 'measure' and 'finish'."""
-    lines = [line for line in log.read_text(errors='replace').splitlines() if 'metric=wholeServerTick' in line]
+    """The wholeServerTick line of the window between bench 'measure' and 'finish'."""
+    lines = [line for line in log.read_text(errors='replace').splitlines() if 'metric=wholeServerTick window=bench' in line]
     if not lines:
         return None
     fields = dict(part.split('=', 1) for part in lines[-1].split('metric=wholeServerTick', 1)[1].split() if '=' in part)
