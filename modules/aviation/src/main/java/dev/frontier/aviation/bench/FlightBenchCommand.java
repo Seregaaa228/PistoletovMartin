@@ -62,9 +62,17 @@ public final class FlightBenchCommand {
     /** Parks the caller as a spectator at a point, e.g. while a LOD mod builds around it. */
     private static int hold(CommandSourceStack source, int x, int y, int z) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer player = source.getPlayerOrException();
+        noon(player.serverLevel());
         player.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
         player.teleportTo(player.serverLevel(), x + .5, y, z + .5, 0, 0);
         return 1;
+    }
+
+    /** Same light and sky in every run: noon, clear, no day cycle. */
+    private static void noon(net.minecraft.server.level.ServerLevel level) {
+        level.setDayTime(6000);
+        level.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DAYLIGHT).set(false, level.getServer());
+        level.setWeatherParameters(20 * 60 * 30, 0, false, false);
     }
 
     private static int start(CommandSourceStack source, int x, int y, int z, float yaw) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
@@ -75,10 +83,7 @@ public final class FlightBenchCommand {
         plane.moveTo(x + .5, y, z + .5, yaw, 0);
         plane.setEnergy(plane.getMaxEnergy());
         plane.setInvulnerable(true);
-        // Same light and sky in every run: noon, clear, no day cycle.
-        level.setDayTime(6000);
-        level.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DAYLIGHT).set(false, level.getServer());
-        level.setWeatherParameters(20 * 60 * 30, 0, false, false);
+        noon(level);
         // A world saved after a hold keeps the player a spectator, who cannot fly a vehicle.
         player.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
         if (player.isPassenger()) player.stopRiding();

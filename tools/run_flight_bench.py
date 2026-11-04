@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import signal
@@ -64,6 +65,10 @@ def main() -> int:
     parser.add_argument('--shots', action='store_true', help='Take two screenshots during the measured window')
     parser.add_argument('--save-world', type=Path,
                         help='Singleplayer: keep the world after the run at this new path (e.g. a LOD-baked template)')
+    parser.add_argument('--client-property', action='append', default=[], metavar='frontier.KEY=VALUE',
+                        help='Extra frontier.* system property for the bench client (repeatable)')
+    parser.add_argument('--config-set', action='append', default=[], metavar='FILE:KEY=VALUE',
+                        help='Replace one key in a copied config file for this run (repeatable)')
     parser.add_argument('--client-extra-mods', type=Path, nargs='+', default=[],
                         help='Project-local JARs added to the bench client (e.g. a far-terrain LOD mod)')
     parser.add_argument('--client-remove-mods', nargs='+', default=[],
@@ -93,6 +98,16 @@ def main() -> int:
             raise ValueError('Client extra mods must be project-local JAR files: ' + str(extra))
         shutil.copy2(extra, profile / 'mods' / extra.name)
     shutil.copytree(play / 'config', profile / 'config', dirs_exist_ok=True)
+    for change in args.config_set:
+        name, assignment = change.split(':', 1)
+        key, value = assignment.split('=', 1)
+        path = (profile / 'config' / name).resolve()
+        if not path.is_relative_to(profile / 'config') or not path.is_file():
+            raise ValueError('No such config file in the bench profile: ' + name)
+        text, count = re.subn(r'(?m)^(\s*' + re.escape(key) + r'\s*=\s*).*$', lambda m: m.group(1) + value, path.read_text())
+        if count != 1:
+            raise ValueError(f'{key} matched {count} lines in {name}')
+        path.write_text(text)
     settings = {'renderDistance': str(args.render_distance), 'pauseOnLostFocus': 'false',
                 'onboardAccessibility': 'false', 'tutorialStep': 'none'}
     lines = [line for line in (play / 'options.txt').read_text().splitlines() if line.split(':', 1)[0] not in settings]
@@ -107,12 +122,15 @@ def main() -> int:
                                 capture_output=True).stdout.strip())
     record = {'label': args.label, 'run': run_id, 'mode': args.mode, 'renderDistance': args.render_distance,
               'route': args.route, 'clientExtraMods': [path.name for path in args.client_extra_mods],
-              'clientRemovedMods': args.client_remove_mods, 'commit': commit + ('+dirty' if dirty else ''), 'startedAt': time.strftime('%F %T')}
+              'clientRemovedMods': args.client_remove_mods, 'configSet': args.config_set, 'commit': commit + ('+dirty' if dirty else ''), 'startedAt': time.strftime('%F %T')}
     client_cmd = ['python3', 'tools/run_test_client.py', str(profile), '--skip-benchmark', '--gpu', 'nvidia',
                   '--memory', '12G', '--flight-bench=' + args.route,
                   '--flight-bench-ticks', str(args.measure_ticks), '--flight-bench-hold', str(args.hold)]
     if args.shots:
         client_cmd.append('--flight-bench-shots')
+    for prop in args.client_property:
+        client_cmd += ['--property', prop]
+    record['clientProperties'] = args.client_property
     if args.save_world and (args.mode != 'singleplayer' or args.save_world.exists()):
         raise ValueError('--save-world needs singleplayer and a new path')
     server = None

@@ -75,6 +75,8 @@ public final class FlightBenchClient {
         if (HOLD_TICKS > 0) {
             if (++joinedTicks == JOIN_WAIT) minecraft.player.connection.sendCommand(
                 "frontier_bench hold " + ROUTE[0] + " " + ROUTE[1] + " " + ROUTE[2]);
+            if (SHOTS && joinedTicks > JOIN_WAIT && holdTicks == HOLD_TICKS - 20)
+                net.minecraft.client.Screenshot.grab(minecraft.gameDirectory, "hold.png", minecraft.getMainRenderTarget(), message -> { });
             if (joinedTicks > JOIN_WAIT && ++holdTicks == HOLD_TICKS) {
                 write(minecraft, "{\"route\":\"" + System.getProperty("frontier.flightBench") + "\",\"heldSeconds\":"
                     + HOLD_TICKS / 20 + ",\"loadedChunks\":" + minecraft.level.getChunkSource().getLoadedChunksCount() + "}");
