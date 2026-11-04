@@ -154,11 +154,12 @@ def expand(arguments: list, values: dict) -> list[str]:
 
 def samples_only_jfc(destination: Path) -> Path:
     """The JDK's default JFR settings with every event off except Java and native stack
-    samples (10 ms): cheap enough to keep running while playing, enough to see a freeze."""
+    samples (10 ms) and garbage collections: cheap enough to keep running while playing,
+    enough to see a freeze."""
     java = Path(os.path.realpath(subprocess.run(['which', 'java'], capture_output=True, text=True, check=True).stdout.strip()))
     settings = (java.parents[1] / 'lib/jfr/default.jfc').read_text()
     settings = re.sub(r'(<setting name="enabled"[^>]*>)true(</setting>)', r'\1false\2', settings)
-    for event in ('jdk.ExecutionSample', 'jdk.NativeMethodSample'):
+    for event in ('jdk.ExecutionSample', 'jdk.NativeMethodSample', 'jdk.GarbageCollection', 'jdk.GCPhasePause'):
         block = re.compile(r'(<event name="' + re.escape(event) + r'">.*?</event>)', re.S)
         settings = block.sub(lambda match: re.sub(r'>false<', '>true<', re.sub(
             r'(<setting name="period"[^>]*>)[^<]*', r'\g<1>10 ms', match.group(1)), count=1), settings)
@@ -244,6 +245,8 @@ def main() -> int:
     if args.jfr_ring:
         tuning.append('-XX:StartFlightRecording=name=ring,maxage=5m,disk=true,dumponexit=true,settings='
                       + str(samples_only_jfc(profile / 'frontier-samples.jfc')) + ',filename=' + str(args.jfr_ring.resolve()))
+        # Shenandoah's pacing stalls allocating threads outside Java code, so JFR samples miss them.
+        tuning.append('-Xlog:gc:file=' + str(args.jfr_ring.resolve().with_suffix('.gc.log')) + ':uptime,time')
     command = ['java', '-Xmx' + args.memory, '-Xms' + ('512M' if args.memory == '3G' else '4G'), *tuning, *properties,
                *expand(vanilla['arguments']['jvm'] + forge['arguments']['jvm'], values),
                forge['mainClass'], *expand(vanilla['arguments']['game'] + forge['arguments']['game'], values),
