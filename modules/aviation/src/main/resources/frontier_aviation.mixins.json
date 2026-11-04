@@ -53,7 +53,9 @@
     "VehicleCrosshairPickCache",
     "AircraftHudPickCache",
     "AircraftRenderBounds",
-    "ClientTaskBudgetHook"
+    "ClientTaskBudgetHook",
+    "ClientSkyLightSourcesSkip",
+    "BedrockModelPartCulling"
   ],
   "injectors": {
     "defaultRequire": 1

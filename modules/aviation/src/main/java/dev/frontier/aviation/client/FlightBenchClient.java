@@ -30,6 +30,8 @@ public final class FlightBenchClient {
     private static final int HOLD_TICKS = Integer.getInteger("frontier.flightBenchHold", 0) * 20;
     /** Screenshots at one and two thirds of the measured window. */
     private static final boolean SHOTS = Boolean.getBoolean("frontier.flightBenchShots");
+    /** Fly with the camera behind the aircraft (e.g. to check what of the airframe is drawn). */
+    private static final boolean THIRD_PERSON = Boolean.getBoolean("frontier.flightBenchThirdPerson");
 
     private static int joinedTicks, flightTicks, holdTicks, doneTicks = -1;
 
@@ -90,6 +92,7 @@ public final class FlightBenchClient {
             return;
         }
         flightTicks++;
+        if (THIRD_PERSON && flightTicks == 1) minecraft.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
         if (flightTicks == SETTLE) {
             FlightFramePerformance.benchReset();
             minecraft.player.connection.sendCommand("frontier_bench measure");

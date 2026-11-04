@@ -51,6 +51,7 @@ def flightChecks = [
     flightIngressLimiterTest: 'dev.frontier.aviation.control.net.FlightIngressLimiterTest',
     flightRenderAnglesTest: 'dev.frontier.aviation.control.client.FlightRenderAnglesTest',
     clientTaskBudgetTest: 'dev.frontier.aviation.client.ClientTaskBudgetTest',
+    modelPartCullingTest: 'dev.frontier.aviation.client.ModelPartCullingTest',
     flightPredictionPerformanceTest: 'dev.frontier.aviation.control.client.FlightPredictionPerformanceTest',
     flightBufferCodecTest: 'dev.frontier.aviation.control.net.FlightBufferCodecTest',
     flightTimingHistogramTest: 'dev.frontier.aviation.control.diagnostics.FlightTimingHistogramTest',
