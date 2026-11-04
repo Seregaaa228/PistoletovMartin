@@ -5,7 +5,7 @@ tasks.named('jar', Jar).configure {
 }
 
 tasks.named('jar', Jar).configure {
-    manifest.attributes('MixinConfigs': 'frontier_nations_client.mixins.json')
+    manifest.attributes('MixinConfigs': 'frontier_nations.mixins.json,frontier_nations_client.mixins.json')
 }
 tasks.register('geometryTest', JavaExec) {
     dependsOn testClasses
@@ -52,3 +52,10 @@ tasks.register('recruitsSchedulerLifecycleTest', JavaExec) {
     mainClass = 'dev.frontier.nations.compat.RecruitsSchedulerLifecycleTest'
 }
 tasks.named('check').configure { dependsOn 'recruitsSchedulerLifecycleTest' }
+
+tasks.register('relationsTickCacheTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.nations.compat.RelationsTickCacheTest'
+}
+tasks.named('check').configure { dependsOn 'relationsTickCacheTest' }
