@@ -75,6 +75,10 @@ public final class FlightBenchCommand {
         plane.moveTo(x + .5, y, z + .5, yaw, 0);
         plane.setEnergy(plane.getMaxEnergy());
         plane.setInvulnerable(true);
+        // Same light and sky in every run: noon, clear, no day cycle.
+        level.setDayTime(6000);
+        level.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DAYLIGHT).set(false, level.getServer());
+        level.setWeatherParameters(20 * 60 * 30, 0, false, false);
         // A world saved after a hold keeps the player a spectator, who cannot fly a vehicle.
         player.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
         if (player.isPassenger()) player.stopRiding();
