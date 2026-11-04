@@ -47,7 +47,7 @@ public final class FlightFramePerformance {
         }
 
         if (currentLevel == null || minecraft.isPaused() || (!minecraft.isWindowActive() && !BENCH)
-                || minecraft.screen != null || FlightClient.controlledEntity() == null) {
+                || minecraft.screen != null || (FlightClient.controlledEntity() == null && !FlightBenchClient.holding())) {
             hasPreviousFrame = false;
             return;
         }

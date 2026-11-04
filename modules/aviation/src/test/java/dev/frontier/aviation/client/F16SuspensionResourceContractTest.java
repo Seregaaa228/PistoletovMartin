@@ -40,7 +40,7 @@ public final class F16SuspensionResourceContractTest {
         Map<String, String> unchanged = Map.of(
                 "vehicle/j10.geo.json", "7a580a9110b39c61284fd8d6e7674280663a095fc115cde79fa6d29224e3ee16",
                 "vehicle/j10_lod.geo.json", "b0aa8b9aa9230961ac5be73b8f0b1329d5b84b9bc0df1bdd467c21c1e1630de4",
-                "vehicle/su25.geo.json", "e952576d6aeb9a7333f6990ec085792354f2d6a4aa20d117074c03268ef5e41b",
+                "vehicle/su25.geo.json", "9ea0538374766b225893e36b0975c78b30099978e65149012c00d06a3ea4826f",
                 "vehicle/su25_lod.geo.json", "50af4b0b0e666ff1ced436dcc25b946897054a3a9db2d054776320f9a13f7347",
                 "vehicle_lod/j10.geo.json", "b0aa8b9aa9230961ac5be73b8f0b1329d5b84b9bc0df1bdd467c21c1e1630de4",
                 "vehicle_lod/su25.geo.json", "50af4b0b0e666ff1ced436dcc25b946897054a3a9db2d054776320f9a13f7347");

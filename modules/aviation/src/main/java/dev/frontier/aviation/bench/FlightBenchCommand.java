@@ -78,8 +78,12 @@ public final class FlightBenchCommand {
     private static int start(CommandSourceStack source, int x, int y, int z, float yaw) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer player = source.getPlayerOrException();
         var level = player.serverLevel();
-        VehicleEntity plane = (VehicleEntity) AircraftProfile.F16.entity.get().create(level);
-        if (plane == null) throw new IllegalStateException("F-16 creation failed");
+        // -Dfrontier.flightBenchAircraft=j10 or su25 seats another owned aircraft; the F-16 by default.
+        AircraftProfile profile = AircraftProfile.values().stream()
+            .filter(candidate -> candidate.id.equals(System.getProperty("frontier.flightBenchAircraft", "f16")))
+            .findFirst().orElseThrow(() -> new IllegalStateException("unknown frontier.flightBenchAircraft"));
+        VehicleEntity plane = (VehicleEntity) profile.entity.get().create(level);
+        if (plane == null) throw new IllegalStateException(profile.id + " creation failed");
         plane.moveTo(x + .5, y, z + .5, yaw, 0);
         plane.setEnergy(plane.getMaxEnergy());
         plane.setInvulnerable(true);

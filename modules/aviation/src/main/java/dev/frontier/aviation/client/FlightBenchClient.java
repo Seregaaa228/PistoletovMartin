@@ -57,6 +57,9 @@ public final class FlightBenchClient {
             false, false, false, flightTicks < 40 ? ModeRequest.ENABLE : ModeRequest.KEEP, ModeRequest.KEEP, ModeRequest.KEEP);
     }
 
+    /** A hold (no aircraft) is measured too: frame times of standing at the route start. */
+    public static boolean holding() { return ENABLED && HOLD_TICKS > 0 && doneTicks < 0; }
+
     /** The benchmark flies without window focus. */
     public static boolean forcesActive() { return ENABLED && doneTicks < 0; }
 
@@ -79,9 +82,12 @@ public final class FlightBenchClient {
                 "frontier_bench hold " + ROUTE[0] + " " + ROUTE[1] + " " + ROUTE[2]);
             if (SHOTS && joinedTicks > JOIN_WAIT && holdTicks == HOLD_TICKS - 20)
                 net.minecraft.client.Screenshot.grab(minecraft.gameDirectory, "hold.png", minecraft.getMainRenderTarget(), message -> { });
+            // Frame times of the hold after the same settle period as a flight.
+            if (joinedTicks > JOIN_WAIT && holdTicks == SETTLE) FlightFramePerformance.benchReset();
             if (joinedTicks > JOIN_WAIT && ++holdTicks == HOLD_TICKS) {
                 write(minecraft, "{\"route\":\"" + System.getProperty("frontier.flightBench") + "\",\"heldSeconds\":"
-                    + HOLD_TICKS / 20 + ",\"loadedChunks\":" + minecraft.level.getChunkSource().getLoadedChunksCount() + "}");
+                    + HOLD_TICKS / 20 + ",\"loadedChunks\":" + minecraft.level.getChunkSource().getLoadedChunksCount()
+                    + (HOLD_TICKS > SETTLE ? ",\"frames\":" + FlightFramePerformance.benchSummary() : "") + "}");
                 doneTicks = 0;
             }
             return;

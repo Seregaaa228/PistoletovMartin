@@ -18,12 +18,16 @@ import net.minecraftforge.fml.common.Mod;
  * frame rate, which on foot or in a ground vehicle buys nothing. Outside an aircraft the
  * LOD radius is set to its minimum through the DH API; in one, the player's configured
  * radius is restored. (Switching DH rendering off instead hides all terrain in DH 3.3.)
- * DH keeps its data either way, so the horizon is back as soon as the jet is entered.
- * Does nothing without DH, or with -Dfrontier.lodOnlyInAircraft=false.
+ *
+ * Opt-in only (-Dfrontier.lodOnlyInAircraft=true): DH 3.3 rebuilds its whole render tree
+ * whenever the radius changes, so every boarding reloaded the LOD from scratch and the
+ * horizon filled in patch by patch after take-off. With the LOD pre-built, a fixed radius
+ * of 96 costs 312-323 fps against 369-396 standing over the island, and shows the
+ * horizon on foot instead of fog at ~200 blocks.
  */
 @Mod.EventBusSubscriber(modid = LightAviation.ID, value = Dist.CLIENT)
 public final class FarTerrainLod {
-    private static final boolean ENABLED = !"false".equals(System.getProperty("frontier.lodOnlyInAircraft"))
+    private static final boolean ENABLED = Boolean.getBoolean("frontier.lodOnlyInAircraft")
         && ModList.get().isLoaded("distanthorizons");
     private static Object radius;
     private static Method setValue;
