@@ -16,6 +16,7 @@
     "DeferredMissileTerrainContact",
     "GraphitePhysicalBlast",
     "MissileBlastLog",
+    "MissileBlastScale",
     "VanillaServerEffects",
     "FarFlightPacketCadence",
     "NativeDomeFollowUp",

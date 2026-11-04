@@ -14,4 +14,7 @@ public abstract class VanillaExplosionVisuals {
     private static void flamingo$noVolumetricBlastLight(Vec3 position,float radius,int duration){}
     @Inject(method={"renderSkyGlow","renderHorizonPlumes","renderFlash","onComputeFogColor"},at=@At("HEAD"),cancellable=true,remap=false)
     private static void flamingo$noCustomPlume(CallbackInfo c){c.cancel();}
+    @Inject(method="onRenderLevelStage",at=@At("HEAD"),remap=false)
+    private static void flamingo$fireball(net.minecraftforge.client.event.RenderLevelStageEvent event,CallbackInfo c){
+        dev.frontier.flamingofix.client.BlastFireball.render(event);}
 }

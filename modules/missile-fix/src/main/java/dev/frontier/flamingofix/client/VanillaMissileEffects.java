@@ -9,7 +9,12 @@ import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.ParticleStatus;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -39,7 +44,12 @@ public final class VanillaMissileEffects {
 
     private static void particle(Minecraft mc,SimpleParticleType type,Vec3 p,Vec3 velocity,boolean burst) {
         ParticleStatus setting=mc.options.particles().get();
-        int limit=burst?(setting==ParticleStatus.MINIMAL?24:96):(setting==ParticleStatus.MINIMAL?8:32);
+        particle(mc,(ParticleOptions)type,p,velocity,burst);
+    }
+
+    private static void particle(Minecraft mc,ParticleOptions type,Vec3 p,Vec3 velocity,boolean burst) {
+        ParticleStatus setting=mc.options.particles().get();
+        int limit=burst?(setting==ParticleStatus.MINIMAL?24:160):(setting==ParticleStatus.MINIMAL?8:32);
         if((burst?burstParticles:trailParticles)>=limit)return;
         if(type==ParticleTypes.EXPLOSION_EMITTER && emitters>=4)return;
         if(burst)burstParticles++;else trailParticles++;
@@ -115,8 +125,10 @@ public final class VanillaMissileEffects {
         Vec3 position=new Vec3(event.x(),event.y()+.8,event.z());
         Minecraft mc=ready(position);if(mc==null)return;
         double distance=position.distanceToSqr(mc.gameRenderer.getMainCamera().getPosition());
-        if(distance>192*192)return;
         boolean small="AIRBURST".equals(event.warhead()) || "shaped_charge".equals(event.warhead());
+        MissileKind kind=MissileKind.byId(event.kind());
+        if(!small && kind!=null && kind.craterRadius>=10)heavy(mc,event,position,kind,distance);
+        if(distance>192*192)return;
         particle(mc,ParticleTypes.EXPLOSION_EMITTER,position,Vec3.ZERO,true);
         if(distance>96*96)return;
         int count=small?12:32;
@@ -132,6 +144,35 @@ public final class VanillaMissileEffects {
             particle(mc,ParticleTypes.LARGE_SMOKE,p,velocity,true);
             if(i%3==0)particle(mc,ParticleTypes.FLAME,p,velocity.scale(.6),true);
             if(i<4)particle(mc,ParticleTypes.EXPLOSION,p,Vec3.ZERO,true);
+        }
+    }
+
+    /** Large missiles: a fireball mesh, a smoke column seen from far, ground debris and a dust ring. */
+    private static void heavy(Minecraft mc,DeepStrikeNetwork.BlastEffect event,Vec3 position,MissileKind kind,double distance) {
+        if(distance>384*384)return;
+        float radius=kind.craterRadius*1.3f;
+        BlastFireball.add(position,radius,mc.level.getGameTime());
+        var random=net.minecraft.util.RandomSource.create(event.seed()^0x5DEECE66DL);
+        for(int i=0;i<3;i++) {
+            double angle=random.nextDouble()*Math.PI*2,offset=radius*(.3+.4*random.nextDouble());
+            particle(mc,ParticleTypes.EXPLOSION_EMITTER,position.add(Math.cos(angle)*offset,random.nextDouble()*2,Math.sin(angle)*offset),Vec3.ZERO,true);
+        }
+        // Signal smoke rises far and lingers; a few of them read as a column from a distance.
+        for(int i=0;i<10;i++)
+            particle(mc,ParticleTypes.CAMPFIRE_SIGNAL_SMOKE,position.add(random.nextGaussian()*radius*.15,random.nextDouble()*3,
+                random.nextGaussian()*radius*.15),new Vec3(0,.06+random.nextDouble()*.06,0),true);
+        if(distance>128*128)return;
+        BlockState ground=mc.level.getBlockState(BlockPos.containing(position).below());
+        if(ground.isAir())ground=Blocks.DIRT.defaultBlockState();
+        var debris=new BlockParticleOption(ParticleTypes.BLOCK,ground);
+        for(int i=0;i<24;i++) {
+            double angle=random.nextDouble()*Math.PI*2,speed=.2+random.nextDouble()*.5;
+            particle(mc,debris,position.add(0,.5,0),new Vec3(Math.cos(angle)*speed,.4+random.nextDouble()*.6,Math.sin(angle)*speed),true);
+        }
+        for(int i=0;i<24;i++) {
+            double angle=Math.PI*2*i/24;
+            particle(mc,ParticleTypes.CLOUD,position.add(Math.cos(angle)*radius*.5,.2,Math.sin(angle)*radius*.5),
+                new Vec3(Math.cos(angle)*.6,.02,Math.sin(angle)*.6),true);
         }
     }
 
