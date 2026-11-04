@@ -55,7 +55,8 @@
     "AircraftRenderBounds",
     "ClientTaskBudgetHook",
     "ClientSkyLightSourcesSkip",
-    "BedrockModelPartCulling"
+    "BedrockModelPartCulling",
+    "TextureWarmupHook"
   ],
   "injectors": {
     "defaultRequire": 1
