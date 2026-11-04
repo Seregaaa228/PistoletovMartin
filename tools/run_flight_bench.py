@@ -98,6 +98,9 @@ def main() -> int:
             raise ValueError('Client extra mods must be project-local JAR files: ' + str(extra))
         shutil.copy2(extra, profile / 'mods' / extra.name)
     shutil.copytree(play / 'config', profile / 'config', dirs_exist_ok=True)
+    # Distant Horizons' per-server far-terrain cache, as a returning player has it.
+    if args.mode == 'server' and (play / 'Distant_Horizons_server_data').is_dir():
+        shutil.copytree(play / 'Distant_Horizons_server_data', profile / 'Distant_Horizons_server_data')
     for change in args.config_set:
         name, assignment = change.split(':', 1)
         key, value = assignment.split('=', 1)
