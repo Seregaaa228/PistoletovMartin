@@ -55,7 +55,12 @@ public abstract class GlideBombPylon implements GlideBombRackView {
     /** Surface height (first free block) under a map point; the tablet only picks X/Z. */
     @Unique
     private static double aviation$groundY(Level level, double x, double z, double fallback) {
-        int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(x), Mth.floor(z));
+        // Level.getHeight answers the build floor for a chunk that is not loaded, and a far
+        // target's chunk usually is not; the tablet's fallback Y is the aircraft's altitude
+        // (clients have no NO_LEAVES heightmap), so the missile burst in the air. Ask the
+        // chunk itself, loading it from disk on the server.
+        int bx = Mth.floor(x), bz = Mth.floor(z);
+        int y = level.getChunk(bx >> 4, bz >> 4).getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bx & 15, bz & 15) + 1;
         return y > level.getMinBuildHeight() ? y : fallback;
     }
 

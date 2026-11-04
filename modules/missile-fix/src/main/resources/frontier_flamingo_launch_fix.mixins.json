@@ -15,6 +15,7 @@
     "LazyMissileTerrainMesh",
     "DeferredMissileTerrainContact",
     "GraphitePhysicalBlast",
+    "MissileBlastLog",
     "VanillaServerEffects",
     "FarFlightPacketCadence",
     "NativeDomeFollowUp",
