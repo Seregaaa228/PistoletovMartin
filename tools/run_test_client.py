@@ -177,8 +177,10 @@ def main() -> int:
     parser.add_argument('--task-budget-ab', action='store_true',
                         help='Log flight frame times with the client task budget switched on/off every 10 s')
     args = parser.parse_args()
+    # Judged by the project path, which may be a link to a local data disk.
+    inside = Path(os.path.abspath(args.profile))
     profile = args.profile.resolve()
-    if not profile.is_relative_to(ROOT) or profile.is_relative_to(ROOT / 'instance'):
+    if not inside.is_relative_to(ROOT) or inside.is_relative_to(ROOT / 'instance'):
         raise ValueError('Test profile must be inside this project, outside instance')
     run = json.loads((profile / 'test-profile.json').read_text())
     if run.get('worldsCopied') is not False or not re.fullmatch(r'[A-Za-z0-9_-]{8,64}', run['runId']):

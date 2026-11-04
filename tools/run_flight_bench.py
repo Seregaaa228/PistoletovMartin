@@ -102,8 +102,16 @@ def main() -> int:
         name, assignment = change.split(':', 1)
         key, value = assignment.split('=', 1)
         path = (profile / 'config' / name).resolve()
-        if not path.is_relative_to(profile / 'config') or not path.is_file():
+        if not path.is_relative_to((profile / 'config').resolve()) or not path.is_file():
             raise ValueError('No such config file in the bench profile: ' + name)
+        if path.suffix == '.json':
+            # A top-level key, e.g. purescale.json:lowFpsRescue=false
+            config = json.loads(path.read_text())
+            if key not in config:
+                raise ValueError(f'{key} is not a key of {name}')
+            config[key] = json.loads(value)
+            path.write_text(json.dumps(config, indent=2) + '\n')
+            continue
         text, count = re.subn(r'(?m)^(\s*' + re.escape(key) + r'\s*=\s*).*$', lambda m: m.group(1) + value, path.read_text())
         if count != 1:
             raise ValueError(f'{key} matched {count} lines in {name}')

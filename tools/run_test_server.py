@@ -25,8 +25,10 @@ def main():
     args = parser.parse_args()
     if not re.fullmatch(r'[1-9][0-9]?G', args.memory):
         raise ValueError('Use a heap such as 3G or 8G')
+    # Judged by the project path, which may be a link to a local data disk.
+    inside = Path(os.path.abspath(args.profile))
     profile = args.profile.resolve()
-    if not profile.is_relative_to(ROOT) or profile.is_relative_to(ROOT / 'instance'):
+    if not inside.is_relative_to(ROOT) or inside.is_relative_to(ROOT / 'instance'):
         raise ValueError('Use a separate test profile inside this project')
     manifest = json.loads((profile / 'test-profile.json').read_text())
     if manifest.get('worldsCopied') is not False:
