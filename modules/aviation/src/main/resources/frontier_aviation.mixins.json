@@ -51,6 +51,7 @@
     "AircraftMapIdentity",
     "GlideBombTabletPanel",
     "VehicleCrosshairPickCache",
+    "AircraftHudPickCache",
     "AircraftRenderBounds",
     "ClientTaskBudgetHook"
   ],
