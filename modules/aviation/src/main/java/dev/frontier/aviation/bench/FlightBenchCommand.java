@@ -75,6 +75,8 @@ public final class FlightBenchCommand {
         plane.moveTo(x + .5, y, z + .5, yaw, 0);
         plane.setEnergy(plane.getMaxEnergy());
         plane.setInvulnerable(true);
+        // A world saved after a hold keeps the player a spectator, who cannot fly a vehicle.
+        player.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
         if (player.isPassenger()) player.stopRiding();
         player.teleportTo(level, x + .5, y, z + .5, yaw, 0);
         if (!level.addFreshEntity(plane) || !player.startRiding(plane, true))

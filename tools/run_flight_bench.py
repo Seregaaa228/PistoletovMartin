@@ -116,6 +116,7 @@ def main() -> int:
     if args.save_world and (args.mode != 'singleplayer' or args.save_world.exists()):
         raise ValueError('--save-world needs singleplayer and a new path')
     server = None
+    client = None
     world_copy = None
     added_server_mods = []
     try:
@@ -192,7 +193,15 @@ def main() -> int:
             link.symlink_to(record['serverWorldBefore'])
         for added in added_server_mods:
             added.unlink(missing_ok=True)
+        if client is not None and client.poll() is None:
+            os.killpg(client.pid, signal.SIGTERM)
+            try:
+                client.wait(timeout=60)
+            except subprocess.TimeoutExpired:
+                os.killpg(client.pid, signal.SIGKILL)
         if args.save_world and world_copy is not None and world_copy.exists() and 'client' in record:
+            # A template starts without the bench player's position and game mode.
+            shutil.rmtree(world_copy / 'playerdata', ignore_errors=True)
             shutil.move(str(world_copy), str(args.save_world))
             record['savedWorld'] = str(args.save_world)
         if world_copy is not None and world_copy.exists():
