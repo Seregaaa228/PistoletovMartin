@@ -7,7 +7,8 @@ import net.minecraftforge.common.ForgeConfigSpec;
 
 public final class MissileImpactConfig {
     public static final ForgeConfigSpec SPEC;
-    private static final Map<String,ForgeConfigSpec.DoubleValue> BASE=new LinkedHashMap<>(), SCALE=new LinkedHashMap<>(), BLAST=new LinkedHashMap<>();
+    private static final Map<String,ForgeConfigSpec.DoubleValue> BASE=new LinkedHashMap<>(), SCALE=new LinkedHashMap<>(), BLAST=new LinkedHashMap<>(),
+            PENETRATION=new LinkedHashMap<>();
     static {
         var builder=new ForgeConfigSpec.Builder();
         builder.comment("Raw damage on the exact native entity contact. Native splash and armor remain active.").push("directImpact");
@@ -18,8 +19,18 @@ public final class MissileImpactConfig {
             SCALE.put(warhead,builder.defineInRange(warhead,DirectImpactProfile.scale(warhead),0,10));
         builder.pop().comment("Native crater radius/depth and partial-destruction radius multiplier; destroyed blocks grow ~ scale^3.").push("blastScale");
         for(String kind:new String[]{"fp5","storm_shadow","jagm","peacekeeper","spike_nlos"})
-            BLAST.put(kind,builder.defineInRange(kind,kind.equals("storm_shadow")?1.6:1.0,0.25,3.0));
+            BLAST.put(kind,builder.defineInRange(kind,kind.equals("storm_shadow")?2.0:1.0,0.25,3.0));
+        builder.pop().comment("Penetrator depth in blocks: HE/penetrating warheads punch through roofs and floors along",
+                "their dive and burst on the first solid mass at least 4 blocks thick. 0 bursts at the contact.").push("penetration");
+        for(String kind:new String[]{"fp5","storm_shadow","jagm","peacekeeper","spike_nlos"})
+            PENETRATION.put(kind,builder.defineInRange(kind,switch(kind){case "storm_shadow"->24.0;case "fp5"->12.0;default->0.0;},0,64));
         SPEC=builder.pop().build();
+    }
+    /** 0 outside a loaded server config. */
+    public static double penetration(String kind) {
+        var value=PENETRATION.get(kind);
+        if(value==null)return 0;
+        try { return value.get(); } catch(IllegalStateException notLoaded) { return 0; }
     }
     /** 1 outside a loaded server config (client, early load). */
     public static double blastScale(String kind) {

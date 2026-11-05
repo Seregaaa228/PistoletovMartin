@@ -17,6 +17,8 @@
     "GraphitePhysicalBlast",
     "MissileBlastLog",
     "MissileBlastScale",
+    "MissileImpactAccess",
+    "MissilePenetrationBurst",
     "VanillaServerEffects",
     "FarFlightPacketCadence",
     "NativeDomeFollowUp",

@@ -44,3 +44,9 @@ tasks.register('farFlightCadenceTest', JavaExec) {
     mainClass = 'dev.frontier.flamingofix.FarFlightCadenceTest'
 }
 tasks.named('check').configure { dependsOn 'farFlightCadenceTest' }
+tasks.register('missilePenetrationTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.flamingofix.MissilePenetrationTest'
+}
+tasks.named('check').configure { dependsOn 'missilePenetrationTest' }

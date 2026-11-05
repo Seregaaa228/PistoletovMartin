@@ -125,9 +125,11 @@ public final class VanillaMissileEffects {
         Vec3 position=new Vec3(event.x(),event.y()+.8,event.z());
         Minecraft mc=ready(position);if(mc==null)return;
         double distance=position.distanceToSqr(mc.gameRenderer.getMainCamera().getPosition());
-        boolean small="AIRBURST".equals(event.warhead()) || "shaped_charge".equals(event.warhead());
-        MissileKind kind=MissileKind.byId(event.kind());
-        if(!small && kind!=null && kind.craterRadius>=10)heavy(mc,event,position,kind,distance);
+        boolean airburst="AIRBURST".equals(event.warhead());
+        boolean small=airburst || "shaped_charge".equals(event.warhead());
+        // Interceptor airbursts keep the plain burst; every ground blast gets its missile's look.
+        var style=airburst?null:BlastFireball.style(MissileKind.byId(event.kind()),event.warhead());
+        if(style!=null)styled(mc,event,position,style,distance);
         if(distance>192*192)return;
         particle(mc,ParticleTypes.EXPLOSION_EMITTER,position,Vec3.ZERO,true);
         if(distance>96*96)return;
@@ -147,23 +149,30 @@ public final class VanillaMissileEffects {
         }
     }
 
-    /** Large missiles: flashes over the crater and flying debris; BlastFireball adds the fireball, dust wave and smoke column. */
-    private static void heavy(Minecraft mc,DeepStrikeNetwork.BlastEffect event,Vec3 position,MissileKind kind,double distance) {
-        if(distance>384*384)return;
-        float radius=kind.craterRadius*1.3f;
-        BlastFireball.add(position.add(0,-.8,0),radius,mc.level.getGameTime(),event.seed());
+    /** Extra flashes over the crater, flying debris and, for a small warhead, sparks; BlastFireball does the rest. */
+    private static void styled(Minecraft mc,DeepStrikeNetwork.BlastEffect event,Vec3 position,BlastFireball.Style style,double distance) {
+        if(distance>(double)style.visible()*style.visible())return;
+        BlastFireball.add(position.add(0,-.8,0),style,mc.level.getGameTime(),event.seed());
+        float radius=style.radius();
         var random=net.minecraft.util.RandomSource.create(event.seed()^0x5DEECE66DL);
-        for(int i=0;i<3;i++) {
+        int flashes=radius<10?0:3;
+        for(int i=0;i<flashes;i++) {
             double angle=random.nextDouble()*Math.PI*2,offset=radius*(.3+.4*random.nextDouble());
             particle(mc,ParticleTypes.EXPLOSION_EMITTER,position.add(Math.cos(angle)*offset,random.nextDouble()*2,Math.sin(angle)*offset),Vec3.ZERO,true);
         }
-        if(distance>128*128)return;
+        double near=style.mushroom()?256:128;
+        if(distance>near*near)return;
+        if(radius<10) {
+            for(int i=0;i<6;i++)particle(mc,ParticleTypes.LAVA,position,Vec3.ZERO,true);
+        }
         BlockState ground=mc.level.getBlockState(BlockPos.containing(position).below());
         if(ground.isAir())ground=Blocks.DIRT.defaultBlockState();
         var debris=new BlockParticleOption(ParticleTypes.BLOCK,ground);
-        for(int i=0;i<40;i++) {
-            double angle=random.nextDouble()*Math.PI*2,speed=.2+random.nextDouble()*.6;
-            particle(mc,debris,position.add(0,.5,0),new Vec3(Math.cos(angle)*speed,.4+random.nextDouble()*.6,Math.sin(angle)*speed),true);
+        int pieces=radius<10?12:radius<25?40:radius<40?60:80;
+        double fling=radius<10?.35:radius<25?.6:.9;
+        for(int i=0;i<pieces;i++) {
+            double angle=random.nextDouble()*Math.PI*2,speed=.2+random.nextDouble()*fling;
+            particle(mc,debris,position.add(0,.5,0),new Vec3(Math.cos(angle)*speed,.4+random.nextDouble()*fling,Math.sin(angle)*speed),true);
         }
     }
 
