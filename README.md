@@ -73,6 +73,42 @@ Offline-сборка возможна только при уже заполне�
 аккаунты лаунчера, пользовательские миры, сохранённые серверы, личные карты и
 рабочие журналы игры.
 
+## Third-party mods used in Frontier Nations
+
+The accepted Minecraft 1.20.1 / Forge 47.4.0 profile includes these third-party
+mods. Versions refer to the pinned JAR files, not necessarily the latest releases.
+
+| Mod | Pinned version |
+|---|---|
+| Architectury | 9.2.14 |
+| Cloth Config | 11.1.136 |
+| Curios API | 5.14.1 |
+| DeepStrike | 0.9.0 |
+| Embeddium | 0.3.31 |
+| FerriteCore | 6.0.1 |
+| GeckoLib | 4.8.4 |
+| Just Enough Items (JEI) | 15.56.0.205 |
+| Kotlin for Forge | 4.12.0 |
+| Mob Player Animator | 1.3.3 |
+| ModernFix | 5.27.89 |
+| Player Animator | 1.0.2-rc1 |
+| Villager Recruits | 1.15.2 |
+| Recruits: Living Villages | 1.1.0 |
+| Superb Recruits | 1.115 |
+| Superb Warfare | 0.8.9.1-hotfix (993063bed) |
+| Timeless & Classics Guns: Zero (TaCZ) | 1.1.8-hotfix2 |
+| Uncomplicated FPV | 1.0.1 |
+| Xaero's Minimap | 26.6.0 |
+| Xaero's World Map | 1.47.0 |
+
+The profile also contains six Frontier-developed modules listed above and the
+Recruits/TaCZ compatibility patch `1.022-frontier.1`. The complete 27-JAR
+inventory, source links and declared licenses are recorded in
+[modpack-manifest.json](modpack-manifest.json); file hashes are recorded in
+[modpack.lock.json](modpack.lock.json). Additional PIS-1 integrations described
+below are separate from this accepted profile. This inventory documents which
+mods are included; it is not a count of users or downloads.
+
 ## Интеграции PIS-1
 
 В ветке PIS-1 разрабатываются интеграции LDLib, SmartBrainLib, GeckoLib4,
