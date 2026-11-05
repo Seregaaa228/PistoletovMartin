@@ -147,32 +147,23 @@ public final class VanillaMissileEffects {
         }
     }
 
-    /** Large missiles: a fireball mesh, a smoke column seen from far, ground debris and a dust ring. */
+    /** Large missiles: flashes over the crater and flying debris; BlastFireball adds the fireball, dust wave and smoke column. */
     private static void heavy(Minecraft mc,DeepStrikeNetwork.BlastEffect event,Vec3 position,MissileKind kind,double distance) {
         if(distance>384*384)return;
         float radius=kind.craterRadius*1.3f;
-        BlastFireball.add(position,radius,mc.level.getGameTime());
+        BlastFireball.add(position.add(0,-.8,0),radius,mc.level.getGameTime(),event.seed());
         var random=net.minecraft.util.RandomSource.create(event.seed()^0x5DEECE66DL);
         for(int i=0;i<3;i++) {
             double angle=random.nextDouble()*Math.PI*2,offset=radius*(.3+.4*random.nextDouble());
             particle(mc,ParticleTypes.EXPLOSION_EMITTER,position.add(Math.cos(angle)*offset,random.nextDouble()*2,Math.sin(angle)*offset),Vec3.ZERO,true);
         }
-        // Signal smoke rises far and lingers; a few of them read as a column from a distance.
-        for(int i=0;i<10;i++)
-            particle(mc,ParticleTypes.CAMPFIRE_SIGNAL_SMOKE,position.add(random.nextGaussian()*radius*.15,random.nextDouble()*3,
-                random.nextGaussian()*radius*.15),new Vec3(0,.06+random.nextDouble()*.06,0),true);
         if(distance>128*128)return;
         BlockState ground=mc.level.getBlockState(BlockPos.containing(position).below());
         if(ground.isAir())ground=Blocks.DIRT.defaultBlockState();
         var debris=new BlockParticleOption(ParticleTypes.BLOCK,ground);
-        for(int i=0;i<24;i++) {
-            double angle=random.nextDouble()*Math.PI*2,speed=.2+random.nextDouble()*.5;
+        for(int i=0;i<40;i++) {
+            double angle=random.nextDouble()*Math.PI*2,speed=.2+random.nextDouble()*.6;
             particle(mc,debris,position.add(0,.5,0),new Vec3(Math.cos(angle)*speed,.4+random.nextDouble()*.6,Math.sin(angle)*speed),true);
-        }
-        for(int i=0;i<24;i++) {
-            double angle=Math.PI*2*i/24;
-            particle(mc,ParticleTypes.CLOUD,position.add(Math.cos(angle)*radius*.5,.2,Math.sin(angle)*radius*.5),
-                new Vec3(Math.cos(angle)*.6,.02,Math.sin(angle)*.6),true);
         }
     }
 
