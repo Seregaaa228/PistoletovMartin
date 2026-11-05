@@ -1,4 +1,4 @@
-version = '0.4.1-buildings-test'
+version = '0.4.1'
 base { archivesName = 'frontier-industry-1.20.1' }
 
 // These two source files do not match the retained production classes. Keep the
