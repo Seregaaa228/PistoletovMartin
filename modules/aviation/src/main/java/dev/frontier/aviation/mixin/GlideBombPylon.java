@@ -1,5 +1,7 @@
 package dev.frontier.aviation.mixin;
 
+import dev.frontier.aviation.ordnance.StoreLoadout;
+import dev.frontier.aviation.ordnance.StoreStations;
 import dev.frontier.aviation.weapons.GlideBombRackView;
 import dev.frontier.aviation.weapons.GuidedOrdnance;
 import dev.frontier.aviation.weapons.KabEntity;
@@ -19,6 +21,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3d;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -143,6 +146,11 @@ public abstract class GlideBombPylon implements GlideBombRackView {
             result.setReturnValue(false);
             return;
         }
+        // A J-10 has one (belly) rack, and every owned jet shares its stations with missiles.
+        if (!StoreLoadout.canLoadStormShadow(plane, slot)) {
+            result.setReturnValue(false);
+            return;
+        }
         PylonOrdnance.Kab kab = PylonOrdnance.KABS.get(variant);
         var inventory = p.getInventory();
         int have = 0;
@@ -164,6 +172,21 @@ public abstract class GlideBombPylon implements GlideBombRackView {
         syncRacks();
         messages[slot] = routes[slot].isEmpty() ? "loaded" : "ready";
         result.setReturnValue(true);
+    }
+
+    // DeepStrike launches from its Su-24M pylons (+-2.1, 2.2, 0.2). An owned jet launches
+    // from where its store hangs: the station of that rack (the J-10's belly) and the
+    // hung model's origin, so the released store leaves from where it was drawn.
+    @Inject(method = "pylonPosition", at = @At("HEAD"), cancellable = true)
+    private void aviation$stationPosition(int slot, CallbackInfoReturnable<Vec3> result) {
+        Su24mEntity plane = (Su24mEntity) (Object) this;
+        var layout = StoreLoadout.layout(plane).orElse(null);
+        int station = layout == null ? -1 : layout.rackStation(slot);
+        if (station < 0 || slot >= stores.length) return;
+        int model = StoreStations.model(StoreStations.RACK, PylonOrdnance.kabIndex(stores[slot]));
+        double[] p = StoreStations.launch(layout.stations().get(station), model);
+        var point = plane.getTransformFromString("Vehicle").transformPosition(new Vector3d(p[0], p[1], p[2]));
+        result.setReturnValue(new Vec3(point.x, point.y, point.z));
     }
 
     @Inject(method = "unloadStore", at = @At("HEAD"), cancellable = true)

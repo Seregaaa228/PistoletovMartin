@@ -1,8 +1,8 @@
 package dev.frontier.aviation.mixin;
 
-import dev.frontier.aviation.ordnance.F16Loadout;
-import dev.frontier.aviation.ordnance.F16Stations;
-import dev.frontier.aviation.ordnance.F16StormLoader;
+import dev.frontier.aviation.ordnance.RackLoader;
+import dev.frontier.aviation.ordnance.StoreLoadout;
+import dev.frontier.aviation.ordnance.StoreStations;
 import dev.sbw.deepstrike.game.MissileData;
 import dev.sbw.deepstrike.game.RoutePoint;
 import dev.sbw.deepstrike.vehicle.Su24mEntity;
@@ -17,7 +17,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = Su24mEntity.class, remap = false)
-public abstract class F16StormStoreLimit implements F16StormLoader {
+/** Tablet racks of an owned jet follow its station layout; Storm Shadows in its inventory load when parked. */
+public abstract class F16StormStoreLimit implements RackLoader {
     @Shadow @Final private ItemStack[] stores;
     @Shadow @Final private Su24mEntity.Order[] orders;
     @Shadow @Final private String[] messages;
@@ -25,22 +26,23 @@ public abstract class F16StormStoreLimit implements F16StormLoader {
     @Shadow private void syncRacks() { throw new AssertionError(); }
     @Inject(method = "loadStore", at = @At("HEAD"), cancellable = true)
     private void aviation$limitStormStore(ServerPlayer player, int slot, CallbackInfoReturnable<Boolean> result) {
-        if (!F16Loadout.canLoadStormShadow((Su24mEntity) (Object) this, slot)) result.setReturnValue(false);
+        if (!StoreLoadout.canLoadStormShadow((Su24mEntity) (Object) this, slot)) result.setReturnValue(false);
     }
 
     @Override
     public void aviation$loadInventoryStores() {
         Su24mEntity plane = (Su24mEntity) (Object) this;
-        if (!F16Loadout.supports(plane) || plane.level().isClientSide || !plane.parked()) return;
+        var layout = StoreLoadout.layout(plane).orElse(null);
+        if (layout == null || plane.level().isClientSide || !plane.parked()) return;
         var inventory = plane.getInventory();
-        for (int rack = 0; rack < 2; rack++) {
+        for (int rack = 0; rack < layout.racks(); rack++) {
             if (!stores[rack].isEmpty() || orders[rack] != null) continue;
             for (int slot = 0; slot < inventory.getSlots(); slot++) {
                 ItemStack stack = inventory.getStackInSlot(slot);
-                if (F16Loadout.type(stack) != F16Stations.Store.STORM_SHADOW) continue;
+                if (StoreLoadout.type(plane, stack) != StoreStations.Store.STORM_SHADOW) continue;
                 MissileData data = MissileData.fromItemStack(stack);
                 if (data == null || !data.isFueled() || !data.supportsWarhead()) continue;
-                if (!F16Loadout.fits(plane)) return;
+                if (!StoreLoadout.fits(plane)) return;
                 ItemStack extracted = inventory.extractItem(slot, 1, false);
                 if (extracted.isEmpty()) continue;
                 stores[rack] = extracted;

@@ -70,6 +70,10 @@ public final class F16MissileResourceContractTest {
                     locale + " missing weapon translation " + key);
             }
         }
+        checkOtherJet("su25", dev.frontier.aviation.ordnance.StoreStations.SU25,
+            "[\"Cannon\",\"Missile\",\"MediumAGMissile\",\"LightAAMissile\"]", weapons);
+        checkOtherJet("j10", dev.frontier.aviation.ordnance.StoreStations.J10,
+            "[\"Cannon\",\"AAMissile\",\"LightAAMissile\",\"MediumAGMissile\"]", weapons);
         String properties = Files.readString(Path.of("../../gradle.properties"));
         check(properties.contains("minecraft_version=1.20.1") && properties.contains("forge_version=47.4.0"), "platform versions");
         System.out.println("F16MissileResourceContractTest passed");
@@ -99,6 +103,52 @@ public final class F16MissileResourceContractTest {
             name + " launches forward");
         check(weapon.getAsJsonObject("ShootPos").getAsJsonArray("Positions").toString().equals(positions),
             name + " uses the assigned F-16 stations");
+    }
+    /**
+     * The Su-25 and J-10 fire the F-16's native missiles: same projectile, ammunition,
+     * seeker and cadence, from their own first two firing stations, through their own
+     * cannon sight. Their stores are drawn from the station table, not SBW dummies.
+     */
+    private static void checkOtherJet(String id, dev.frontier.aviation.ordnance.StoreStations.Layout layout,
+                                      String seat, JsonObject f16) throws Exception {
+        JsonObject config = JsonParser.parseString(Files.readString(Path.of(
+            "src/main/resources/data/frontier_aviation/sbw/vehicles/" + id + ".json"))).getAsJsonObject();
+        check(config.getAsJsonArray("Seats").get(0).getAsJsonObject().getAsJsonArray("Weapons").toString().equals(seat),
+            id + " pilot weapon order");
+        JsonObject weapons = config.getAsJsonObject("Weapons");
+        JsonObject cannon = weapons.getAsJsonObject("Cannon");
+        check(cannon.get("Magazine").getAsInt() == 500 && cannon.get("RPM").getAsInt() == 1200, id + " cannon unchanged");
+        var definition = dev.frontier.aviation.aircraft.AircraftCatalog.find("frontier_aviation:" + id).orElseThrow();
+        check(weapons.size() == definition.weapons().mounts().size(), id + " every gun has a catalog slot");
+        for (var name : weapons.keySet()) {
+            if (name.equals("Cannon")) continue;
+            JsonObject weapon = weapons.getAsJsonObject(name), reference = f16.getAsJsonObject(name);
+            for (String key : new String[]{"Projectile", "AmmoType", "SeekWeaponInfo", "Magazine", "RPM", "Name",
+                    "DefaultFireMode", "AvailableFireModes", "Crosshair", "CrosshairZooming", "Damage"})
+                check(weapon.get(key).equals(reference.get(key)), id + " " + name + " " + key + " matches the F-16");
+            check(!weapon.has("ProjectileDummyInfo"), id + " " + name + " is drawn from the station table");
+            JsonObject shoot = weapon.getAsJsonObject("ShootPos");
+            JsonObject own = cannon.getAsJsonObject("ShootPos");
+            check(shoot.get("Transform").getAsString().equals("Vehicle") && shoot.get("BoundUpWithAmmoAmount").getAsBoolean()
+                && shoot.getAsJsonArray("Directions").toString().equals("[[0,0,1]]"), id + " " + name + " pylon basis");
+            check(shoot.get("ViewPosition").equals(own.get("ViewPosition"))
+                && shoot.get("ShootPositionForHud").equals(own.getAsJsonArray("Positions").get(0))
+                && shoot.get("ShootDirectionForHud").equals(own.get("ShootDirectionForHud")), id + " " + name + " own sight");
+            var store = name.equals("LightAAMissile") ? dev.frontier.aviation.ordnance.StoreStations.Store.LIGHT_AIR_TO_AIR
+                : dev.frontier.aviation.ordnance.StoreStations.Store.UNDERWING;
+            int[] order = layout.fireOrder(store);
+            JsonArray positions = shoot.getAsJsonArray("Positions");
+            check(positions.size() == 2, id + " " + name + " two positions");
+            for (int i = 0; i < 2; i++) {
+                var station = layout.stations().get(order[i]);
+                JsonArray p = positions.get(i).getAsJsonArray();
+                check(close4(p.get(0).getAsDouble(), -station.x()) && close4(p.get(1).getAsDouble(), station.y())
+                    && close4(p.get(2).getAsDouble(), -station.z()), id + " " + name + " fires from its stations");
+            }
+        }
+    }
+    private static boolean close4(double a, double b) {
+        return Math.abs(a - b) <= 1.0e-4;
     }
     private static void checkAgm(JsonObject weapon) {
         check(weapon.get("Projectile").getAsString().equals("superbwarfare:wire_guide_missile"),

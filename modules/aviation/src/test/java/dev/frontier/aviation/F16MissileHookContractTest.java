@@ -50,6 +50,28 @@ public final class F16MissileHookContractTest {
                     && call.name.equals("mediumTrail") && call.desc.equals("()V")).count();
             if (trailCalls != 1) throw new AssertionError("wire guidance hook anchor changed");
         }
+        // Tablet racks (GlideBombPylon, F16StormStoreLimit): an owned jet's launch point comes
+        // from pylonPosition, which DeepStrike's launch must still call.
+        try (JarFile dsm = new JarFile(Path.of("instance/mods/dsm-0.9.0.jar").toFile())) {
+            String su24 = "dev/sbw/deepstrike/vehicle/Su24mEntity";
+            ClassNode node = new ClassNode();
+            try (var input = dsm.getInputStream(dsm.getJarEntry(su24 + ".class"))) {
+                new ClassReader(input).accept(node, 0);
+            }
+            for (String signature : new String[]{"pylonPosition(I)Lnet/minecraft/world/phys/Vec3;",
+                    "loadStore(Lnet/minecraft/server/level/ServerPlayer;I)Z", "loaded(I)Z",
+                    "launch(Lnet/minecraft/server/level/ServerLevel;IL" + su24 + "$Order;)V"}) {
+                String name = signature.substring(0, signature.indexOf('('));
+                String descriptor = signature.substring(signature.indexOf('('));
+                if (node.methods.stream().noneMatch(m -> m.name.equals(name) && m.desc.equals(descriptor)))
+                    throw new AssertionError("DeepStrike rack method changed: " + signature);
+            }
+            MethodNode launch = node.methods.stream().filter(m -> m.name.equals("launch")).findFirst().orElseThrow();
+            boolean calls = false;
+            for (var insn : launch.instructions) if (insn instanceof MethodInsnNode call
+                    && call.owner.equals(su24) && call.name.equals("pylonPosition")) calls = true;
+            if (!calls) throw new AssertionError("DeepStrike launch no longer asks pylonPosition");
+        }
         System.out.println("Pinned missile deferred-shot bytecode contract passed; runtime mixin application remains unverified");
     }
 }

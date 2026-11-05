@@ -14,22 +14,22 @@ import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-/** Sends derived visual state; native stores remain authoritative and persistent. */
+/** Sends each owned jet's derived store visuals; native stores remain authoritative and persistent. */
 @Mod.EventBusSubscriber(modid = LightAviation.ID)
-public final class F16PayloadSync {
+public final class StorePayloadSync {
     private static final Map<Su24mEntity, Integer> PLANES = new WeakHashMap<>();
-    private F16PayloadSync() {}
+    private StorePayloadSync() {}
 
     @SubscribeEvent public static void join(EntityJoinLevelEvent event) {
         if (!event.getLevel().isClientSide() && event.getEntity() instanceof Su24mEntity plane
-                && F16Loadout.supports(plane)) PLANES.put(plane, -1);
+                && StoreLoadout.supports(plane)) PLANES.put(plane, -1);
     }
     @SubscribeEvent public static void leave(EntityLeaveLevelEvent event) {
         if (!event.getLevel().isClientSide() && event.getEntity() instanceof Su24mEntity plane) PLANES.remove(plane);
     }
     @SubscribeEvent public static void tracking(PlayerEvent.StartTracking event) {
         if (event.getEntity() instanceof ServerPlayer player && event.getTarget() instanceof Su24mEntity plane
-                && F16Loadout.supports(plane)) FlightNetwork.sendPayload(player, plane, F16Loadout.visualBits(plane));
+                && StoreLoadout.supports(plane)) FlightNetwork.sendPayload(player, plane, StoreLoadout.visualBits(plane));
     }
     @SubscribeEvent public static void tick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
@@ -38,8 +38,8 @@ public final class F16PayloadSync {
         PLANES.entrySet().removeIf(entry -> entry.getKey().isRemoved());
         for (var entry : PLANES.entrySet()) {
             Su24mEntity plane = entry.getKey();
-            if ((Object) plane instanceof F16StormLoader loader) loader.aviation$loadInventoryStores();
-            int bits = F16Loadout.visualBits(plane);
+            if ((Object) plane instanceof RackLoader loader) loader.aviation$loadInventoryStores();
+            int bits = StoreLoadout.visualBits(plane);
             if (bits != entry.getValue() || tick % 40 == 0) {
                 FlightNetwork.broadcastPayload(plane, bits);
                 entry.setValue(bits);

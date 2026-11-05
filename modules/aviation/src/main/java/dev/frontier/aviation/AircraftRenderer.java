@@ -8,6 +8,7 @@ import com.mojang.math.Axis;
 import dev.frontier.aviation.client.F16ControlSurfaces;
 import dev.frontier.aviation.client.F16PayloadVisual;
 import dev.frontier.aviation.client.F16VisualStateManager;
+import dev.frontier.aviation.ordnance.StoreStations;
 import dev.frontier.aviation.weapons.GlideBombRackView;
 import com.atsuishio.superbwarfare.resource.model.ProjectileModelReloadListener;
 import com.github.mcmodderanchor.simplebedrockmodel.v2.common.model.baked.BakedBedrockModel;
@@ -35,10 +36,6 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
     private static final String[] GEAR_DOORS = {"gear_door_nose_l", "gear_door_nose_r", "gear_door_left_l",
         "gear_door_left_r", "gear_door_right_l", "gear_door_right_r"};
     private static final String[] PAYLOAD_MODELS = {"", "", "agm_65", "ru_9m100_missile", "ru_9m336_missile", "wire_guide_missile"};
-    // Projectile models use their exhaust as origin, not their centre. Move
-    // each model back so its centre sits beneath the physical pylon.
-    // Measured from the pinned models after baking, with their flare hidden.
-    private static final double[] PAYLOAD_CENTER_OFFSET = {0, 0, 1.86134, 1.25737, 0.85467, 1.03125};
     private static final BakedBedrockModel[] PAYLOAD_BAKED = new BakedBedrockModel[PAYLOAD_MODELS.length];
     private static final BakedModelInstance[] PAYLOAD_INSTANCE = new BakedModelInstance[PAYLOAD_MODELS.length];
     // Lazily built once per kind the first time it is rendered; stations reuse the same two models per kind.
@@ -168,71 +165,77 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
     @Override
     public void renderCustomPart(Su24mEntity plane, VehicleModelInstance instance, PoseStack pose,
                                   float yaw, float partial, MultiBufferSource buffers, int light) {
-        // F-16 payloads are rendered from the server's combined station state;
-        // the native hook would otherwise draw magazine rounds a second time.
+        // Owned jets draw their stores from the server's combined station state
+        // (StoreStations); the native hook would otherwise draw magazine rounds a second time.
         AircraftProfile profile = AircraftProfile.of(plane);
-        boolean f16 = profile == AircraftProfile.F16;
-        if (!f16) super.renderCustomPart(plane, instance, pose, yaw, partial, buffers, light);
+        var layout = profile == null ? null : StoreStations.forType(profile.definition().typeId()).orElse(null);
+        if (layout == null) super.renderCustomPart(plane, instance, pose, yaw, partial, buffers, light);
         AircraftExhaust.render(plane, pose, partial, buffers);
         // Small payload details follow the same 96-block LOD boundary as the airframe.
-        if (getCurrentModelEntry(pose, plane).isLOD()) return;
-        int bits = f16 ? F16PayloadVisual.bits(plane.getUUID()) : 0;
-        if (f16) {
-            double[] x = {-2.1, 2.1, -3.4, 3.4, -4.95, 4.95};
-            for (int station = 0; station < x.length; station++) {
-                int kind = (bits >>> (station * 3)) & 7;
-                if (kind < 2 || kind >= PAYLOAD_MODELS.length) continue;
-                var key = PAYLOAD_KEYS[kind];
-                if (key == null) {
-                    key = new ResourceLocation("superbwarfare", "models/bedrock/projectile/" + PAYLOAD_MODELS[kind] + ".geo.json");
-                    PAYLOAD_KEYS[kind] = key;
-                }
-                BakedBedrockModel baked = ProjectileModelReloadListener.INSTANCE.getModel(key);
-                if (baked == null) continue;
-                if (PAYLOAD_BAKED[kind] != baked) {
-                    PAYLOAD_BAKED[kind] = baked;
-                    PAYLOAD_INSTANCE[kind] = baked.createInstance();
-                }
-                BakedModelInstance payload = PAYLOAD_INSTANCE[kind];
-                BoneState flare = payload.getBone("flare");
-                if (flare != null) flare.visible = false;
-                var texture = PAYLOAD_TEXTURES[kind];
-                if (texture == null) {
-                    texture = new ResourceLocation("superbwarfare", "textures/bedrock/projectile/" + PAYLOAD_MODELS[kind] + ".png");
-                    PAYLOAD_TEXTURES[kind] = texture;
-                }
-                pose.pushPose();
-                pose.translate(x[station], station >= 4 ? 2.6 : 2.2,
-                    (station >= 4 ? 1.25 : -0.2) + PAYLOAD_CENTER_OFFSET[kind]);
-                payload.renderToBuffer(pose, buffers, RenderType.entityCutout(texture),
-                    BedrockModelRenderTypes.polyMeshCutout(texture), light, OverlayTexture.NO_OVERLAY);
-                pose.popPose();
+        if (layout == null || getCurrentModelEntry(pose, plane).isLOD()) return;
+        int bits = F16PayloadVisual.bits(plane.getUUID());
+        var racks = (GlideBombRackView) (Object) plane;
+        for (int index = 0; index < layout.size(); index++) {
+            int kind = (bits >>> (index * 3)) & 7;
+            var station = layout.stations().get(index);
+            if (kind == StoreStations.RACK) {
+                int rack = station.rack();
+                int variant = rack < 0 || (racks.aviation$kabMask() >> rack & 1) == 0 ? -1 : racks.aviation$kabVariant(rack);
+                if (variant >= 0) renderKab(pose, buffers, light, station, variant);
+                else renderStormShadow(pose, buffers, light, station);
+            } else if (kind >= StoreStations.AGM_65 && kind < PAYLOAD_MODELS.length) {
+                renderPayload(pose, buffers, light, station, kind);
             }
-        }
-        int kabMask = ((GlideBombRackView) (Object) plane).aviation$kabMask();
-        for (int slot = 0; slot < 2; slot++) {
-            boolean displayed = f16
-                ? ((bits >>> (slot * 3)) & 7) == 1
-                : plane.loaded(slot);
-            if (!displayed) continue;
-            if ((kabMask >> slot & 1) != 0) {
-                int variant = ((GlideBombRackView) (Object) plane).aviation$kabVariant(slot);
-                renderKab(pose, buffers, light, slot == 0 ? -2.1 : 2.1, 1.0F + 0.25F * Math.max(0, variant));
-                continue;
-            }
-            pose.pushPose();
-            pose.translate(slot == 0 ? -2.1 : 2.1, 2.2, -0.2);
-            pose.mulPose(Axis.YP.rotationDegrees(-90));
-            ModelRenderer.render(ModelAssets.missile(MissileKind.STORM_SHADOW),
-                    ModelAssets.texture(MissileKind.STORM_SHADOW, false), pose, buffers,
-                    light, OverlayTexture.NO_OVERLAY, 0, 0,
-                    bone -> !bone.startsWith("wing_") && !bone.startsWith("fin_"));
-            pose.popPose();
         }
     }
 
-    /** A tablet pylon holding a КАБ-500 (GlideBombPylon): the bomb's own projectile model, top at the pylon. */
-    private static void renderKab(PoseStack pose, MultiBufferSource buffers, int light, double x, float scale) {
+    /** An SBW projectile model under a station; it uses its exhaust as origin, not its centre. */
+    private static void renderPayload(PoseStack pose, MultiBufferSource buffers, int light,
+                                      StoreStations.Station station, int kind) {
+        var key = PAYLOAD_KEYS[kind];
+        if (key == null) {
+            key = new ResourceLocation("superbwarfare", "models/bedrock/projectile/" + PAYLOAD_MODELS[kind] + ".geo.json");
+            PAYLOAD_KEYS[kind] = key;
+        }
+        BakedBedrockModel baked = ProjectileModelReloadListener.INSTANCE.getModel(key);
+        if (baked == null) return;
+        if (PAYLOAD_BAKED[kind] != baked) {
+            PAYLOAD_BAKED[kind] = baked;
+            PAYLOAD_INSTANCE[kind] = baked.createInstance();
+        }
+        BakedModelInstance payload = PAYLOAD_INSTANCE[kind];
+        BoneState flare = payload.getBone("flare");
+        if (flare != null) flare.visible = false;
+        var texture = PAYLOAD_TEXTURES[kind];
+        if (texture == null) {
+            texture = new ResourceLocation("superbwarfare", "textures/bedrock/projectile/" + PAYLOAD_MODELS[kind] + ".png");
+            PAYLOAD_TEXTURES[kind] = texture;
+        }
+        double[] at = StoreStations.hang(station, StoreStations.model(kind, -1));
+        pose.pushPose();
+        pose.translate(at[0], at[1], at[2]);
+        payload.renderToBuffer(pose, buffers, RenderType.entityCutout(texture),
+            BedrockModelRenderTypes.polyMeshCutout(texture), light, OverlayTexture.NO_OVERLAY);
+        pose.popPose();
+    }
+
+    /** DeepStrike's Storm Shadow with its wings and fins folded away, as carried. */
+    private static void renderStormShadow(PoseStack pose, MultiBufferSource buffers, int light,
+                                          StoreStations.Station station) {
+        double[] at = StoreStations.hang(station, StoreStations.model(StoreStations.RACK, -1));
+        pose.pushPose();
+        pose.translate(at[0], at[1], at[2]);
+        pose.mulPose(Axis.YP.rotationDegrees(-90));
+        ModelRenderer.render(ModelAssets.missile(MissileKind.STORM_SHADOW),
+                ModelAssets.texture(MissileKind.STORM_SHADOW, false), pose, buffers,
+                light, OverlayTexture.NO_OVERLAY, 0, 0,
+                bone -> !bone.startsWith("wing_") && !bone.startsWith("fin_"));
+        pose.popPose();
+    }
+
+    /** A tablet rack holding a КАБ (GlideBombPylon): the bomb's own projectile model, heavier ones larger. */
+    private static void renderKab(PoseStack pose, MultiBufferSource buffers, int light,
+                                  StoreStations.Station station, int variant) {
         BakedBedrockModel baked = ProjectileModelReloadListener.INSTANCE.getModel(KAB_MODEL);
         if (baked == null) return;
         if (kabBaked != baked) {
@@ -247,10 +250,10 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
             bone.reset();
             bone.rotation.rotateY((float) Math.toRadians(wing.equals("wing_left") ? -88 : 88));
         }
+        float scale = 1.0F + 0.25F * Math.max(0, variant);
+        double[] at = StoreStations.hang(station, StoreStations.model(StoreStations.RACK, variant));
         pose.pushPose();
-        // Body top (y 0.25) against the pylon's lower edge (y 2.2); model z -1.56..1.19, nose -Z.
-        // Heavier КАБs are drawn larger, still hanging from the pylon edge.
-        pose.translate(x, 2.2 - 0.25 * scale, -0.2 + 0.19);
+        pose.translate(at[0], at[1], at[2]);
         pose.scale(scale, scale, scale);
         kabInstance.renderToBuffer(pose, buffers, RenderType.entityCutout(KAB_TEXTURE),
             BedrockModelRenderTypes.polyMeshCutout(KAB_TEXTURE), light, OverlayTexture.NO_OVERLAY);

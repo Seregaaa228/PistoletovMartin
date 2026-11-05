@@ -148,7 +148,18 @@ public abstract class GlideBombTabletPanel {
         return String.format(Locale.ROOT, "%.0f", value);
     }
 
-    @Unique private int aviation$racks() { return snapshot == null ? 2 : snapshot.racks().size(); }
+    /**
+     * DeepStrike always reports two racks; an owned jet shows the racks its layout has
+     * (J-10: the belly one), plus a still loaded older second rack so it can be unloaded.
+     */
+    @Unique private int aviation$racks() {
+        int racks = snapshot == null ? 2 : snapshot.racks().size();
+        var layout = dev.frontier.aviation.ordnance.StoreLoadout.layout(aviation$plane()).orElse(null);
+        if (layout == null) return racks;
+        int shown = Math.min(racks, layout.racks());
+        for (int i = shown; snapshot != null && i < racks; i++) if (snapshot.racks().get(i).loaded()) shown = i + 1;
+        return shown;
+    }
     @Unique private int aviation$after() { return ROW_TOP + aviation$racks() * ROW_STEP; }
     @Unique private int aviation$loadY() { return aviation$after() + 14; }
     @Unique private int aviation$fieldsY() { return aviation$after() + 64; }
@@ -290,6 +301,8 @@ public abstract class GlideBombTabletPanel {
     @Inject(method = "m_86600_", at = @At("TAIL"))
     private void aviation$syncTarget(CallbackInfo ci) {
         if (!aviation$active()) return;
+        // Native slot keys may still step to DeepStrike's second rack on a one-rack jet.
+        if (slot >= aviation$racks()) selectSlot(0);
         RoutePoint target = aviation$parseTarget();
         if (Objects.equals(target, aviation$target)) return;
         aviation$target = target;

@@ -113,7 +113,7 @@ final class F16VisualLoadoutScenario {
             result.addProperty("error", error);
             result.addProperty("pass", false);
         }
-        result.addProperty("loadedStations", dev.frontier.aviation.ordnance.F16Loadout.visualBits((Su24mEntity) plane));
+        result.addProperty("loadedStations", dev.frontier.aviation.ordnance.StoreLoadout.visualBits((Su24mEntity) plane));
         AircraftController.release(dummy, lease);
         dummy.stopRiding(); dummy.discard();
         plane.discard();
