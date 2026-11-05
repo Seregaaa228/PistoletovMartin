@@ -99,8 +99,6 @@ public final class Construction {
         // Rotating start avoids starving later sites when many bases build concurrently.
         var sites=new ArrayList<>(data.sites.values());if(!sites.isEmpty())Collections.rotate(sites,-Math.floorMod(server.getTickCount(),sites.size()));
         for(Site site:sites)if(site.constructing) {
-            var savedPlan=plan(site);
-            if(site.constructionDuration!=300){site.constructionDuration=300;site.constructionTicks=(int)((long)Math.min(site.constructionCursor,savedPlan.size())*300/Math.max(1,savedPlan.size()));data.setDirty();}
             var level=IndustryEngine.level(server,site);
             if(level==null || !IndustryEngine.loaded(level,site)){site.status="Стройка: чанки выгружены — пауза";continue;}
             if(server.getTickCount()%20==0)autoAssign(server,data,site,false);

@@ -67,16 +67,22 @@ public final class OutputWarehouse extends Block {
         ensureInventories(site);
         return site.containerInventory(relativeKey(site, worldPos));
     }
-    public static void ensureInventories(IndustryData.Site site) {
-        for (var entry : dev.frontier.industry.engine.Blueprint.blocks(site.type, BlockPos.ZERO, site.blueprintVersion).entrySet()) {
-            Block block = entry.getValue().getBlock();
-            boolean physical = block == FunctionalBuildings.CONTAINER.get()
-                || block instanceof ProcessEquipment equipment && CONTAINER_KINDS.contains(equipment.kind);
-            if (physical) {
-                BlockPos unrotated = BuildingOrientation.rotate(entry.getKey(), 6 + 100 * ((4 - BuildingOrientation.quarter(site.blueprintVersion)) % 4));
-                site.containerInventory(unrotated.asLong());
+    /** Container keys per building type and blueprint version: the blueprint map is costly to build and fixed at runtime. */
+    private static final java.util.Map<String, long[]> CONTAINER_KEYS = new java.util.concurrent.ConcurrentHashMap<>();
+    private static long[] containerKeys(IndustryData.Site site) {
+        return CONTAINER_KEYS.computeIfAbsent(site.type.name() + "#" + site.blueprintVersion, key -> {
+            var keys = new java.util.ArrayList<Long>();
+            for (var entry : dev.frontier.industry.engine.Blueprint.blocks(site.type, BlockPos.ZERO, site.blueprintVersion).entrySet()) {
+                Block block = entry.getValue().getBlock();
+                boolean physical = block == FunctionalBuildings.CONTAINER.get()
+                    || block instanceof ProcessEquipment equipment && CONTAINER_KINDS.contains(equipment.kind);
+                if (physical) keys.add(BuildingOrientation.rotate(entry.getKey(), 6 + 100 * ((4 - BuildingOrientation.quarter(site.blueprintVersion)) % 4)).asLong());
             }
-        }
+            return keys.stream().mapToLong(Long::longValue).toArray();
+        });
+    }
+    public static void ensureInventories(IndustryData.Site site) {
+        for (long key : containerKeys(site)) site.containerInventory(key);
     }
     public static boolean putOutputs(IndustryData.Site site, ItemStack output) {
         ensureInventories(site);
@@ -131,7 +137,7 @@ public final class OutputWarehouse extends Block {
             super.clicked(slot,button,type,player);
         }
         @Override public ItemStack quickMoveStack(Player player,int slot){
-            return stillValid(player)&&!(slot>=45&&slot<54)?super.quickMoveStack(player,slot):ItemStack.EMPTY;
+            return stillValid(player)&&slot<45?super.quickMoveStack(player,slot):ItemStack.EMPTY;
         }
     }
     private static final class OverviewStock implements Container {
@@ -181,7 +187,8 @@ public final class OutputWarehouse extends Block {
                 };locked.index=previous.index;slots.set(i,locked);
             }
         }
-        @Override public ItemStack quickMoveStack(Player p,int slot){return stillValid(p)?super.quickMoveStack(p,slot):ItemStack.EMPTY;}
+        // Output stock is take-only: shift-clicks from the player's inventory would merge into it (merge pass skips mayPlace).
+        @Override public ItemStack quickMoveStack(Player p,int slot){return stillValid(p)&&slot<18?super.quickMoveStack(p,slot):ItemStack.EMPTY;}
     }
     private static final class OutputStock implements Container {
         final ServerPlayer owner;final IndustryData.Site site;final BlockPos terminal;

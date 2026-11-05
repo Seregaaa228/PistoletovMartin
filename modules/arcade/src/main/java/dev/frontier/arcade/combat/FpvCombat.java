@@ -1,10 +1,14 @@
 package dev.frontier.arcade.combat;
 
 import com.atsuishio.superbwarfare.data.CustomData;
+import com.atsuishio.superbwarfare.init.ModDamageTypes;
+import com.atsuishio.superbwarfare.tools.DamageHandler;
 import dev.frontier.arcade.control.ControlSessions;
 import dev.frontier.arcade.fpv.FpvExplosion;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.AreaEffectCloud;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -47,7 +51,16 @@ public final class FpvCombat {
         var operator = owner == null ? null : level.getServer().getPlayerList().getPlayer(owner);
         ControlSessions.forgetPair(drone); drone.handleSignalLoss(operator);
         if (owner != null && payload != null) {
-            FpvExplosion.detonate(drone, point, operator);
+            Entity attacker = operator == null ? drone : operator;
+            Entity warhead = EntityType.byString(payload.displayEntity()).map(type -> type.create(level)).orElse(null);
+            if (warhead == null) warhead = drone;
+            warhead.setPos(point); // Unspawned native source keeps SBW armor/damage type rules.
+            // The living near the blast take the scaled FPV damage; vehicles and the rest stay native.
+            var damaged = FpvExplosion.damageLiving(drone, point, operator);
+            if (directTarget != null && !(directTarget instanceof LivingEntity) && impactTarget(drone, directTarget)) {
+                DamageHandler.doDamage(directTarget, ModDamageTypes.causeCustomExplosionDamage(level.registryAccess(), warhead, attacker), payload.hitDamage);
+            }
+            DroneBlastLimits.explode(drone, point, warhead, attacker, payload.explosionDamage, payload.explosionRadius, directTarget, damaged);
         }
         drone.discard();
     }

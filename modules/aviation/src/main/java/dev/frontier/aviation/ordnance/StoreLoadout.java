@@ -68,7 +68,18 @@ public final class StoreLoadout {
         var result = new Store[layout.size()];
         for (int rack = 0; rack < layout.racks(); rack++)
             if (plane.loaded(rack)) result[layout.rackStation(rack)] = Store.STORM_SHADOW;
+        int legacy = legacyRackStation(plane, layout);
+        if (legacy >= 0) result[legacy] = Store.STORM_SHADOW;
         return result;
+    }
+
+    /**
+     * A one-rack jet (J-10) saved with a store on DeepStrike's second rack: it occupies the
+     * belly station until unloaded, so nothing is loaded over it. -1 when there is none.
+     */
+    private static int legacyRackStation(Su24mEntity plane, Layout layout) {
+        if (layout.racks() != 1 || !plane.loaded(1) || plane.loaded(0)) return -1;
+        return layout.rackStation(0);
     }
 
     private static List<Store> stores(VehicleEntity plane) {
@@ -127,6 +138,8 @@ public final class StoreLoadout {
         int[] slots = new int[layout.size()];
         for (int rack = 0; rack < layout.racks(); rack++)
             if (plane.loaded(rack)) slots[layout.rackStation(rack)] = StoreStations.RACK;
+        int legacy = legacyRackStation(plane, layout);
+        if (legacy >= 0) slots[legacy] = StoreStations.RACK;
         int[] count = new int[StoreStations.GUNS.size()];
         for (int gun = 0; gun < count.length; gun++) count[gun] = magazine(plane, StoreStations.GUNS.get(gun));
         int storm = 0;

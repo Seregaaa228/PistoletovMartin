@@ -20,7 +20,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 /** Server-authorized flight intentions. Common code never links a Minecraft client class. */
 public final class FlightNetwork {
-    public static final String PROTOCOL = "1.1.0:flight6";
+    public static final String PROTOCOL = "1.2.0:flight7";
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
         new ResourceLocation("frontier_aviation", "flight_controls"), () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
     private static Consumer<FlightSnapshot> clientReceiver = ignored -> {};

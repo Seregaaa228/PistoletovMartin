@@ -3,6 +3,7 @@ package dev.frontier.arcade.mixin;
 import com.atsuishio.superbwarfare.compat.valkyrienskies.ValkyrienSkiesCompat;
 import com.atsuishio.superbwarfare.tools.CustomExplosion;
 import dev.frontier.arcade.combat.WarheadRules;
+import dev.frontier.arcade.fpv.FpvExplosion;
 import dev.frontier.arcade.geranium.GeraniumEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
@@ -28,6 +29,7 @@ import java.util.Comparator;
 public abstract class DroneExplosionBlocks {
     @Shadow @Final private Level level;
     @Unique private int frontier$blocksSpent;
+    @Unique private boolean frontier$craterDug;
     @Unique private static boolean frontier$limited(CustomExplosion blast) {
         Entity source = blast.getDirectSourceEntity();
         return source instanceof FpvDroneEntity || source instanceof GeraniumEntity;
@@ -41,10 +43,21 @@ public abstract class DroneExplosionBlocks {
         int limit = fpv ? WarheadRules.FPV_BLOCK_LIMIT : WarheadRules.GERANIUM_BLOCK_LIMIT;
         Vec3 origin = new Vec3(blast.getX(), blast.getY(), blast.getZ());
         var result = new ArrayList<BlockPos>();
+        var seen = new java.util.HashSet<BlockPos>();
         for (BlockPos pos : original) {
             if (!level.hasChunkAt(pos) || pos.distToCenterSqr(origin) > radius * radius) continue;
             var block = level.getBlockState(pos);
-            if (!block.isAir() && block.getDestroySpeed(level, pos) >= 0) result.add(pos.immutable());
+            if (!block.isAir() && block.getDestroySpeed(level, pos) >= 0 && seen.add(pos.immutable())) result.add(pos.immutable());
+        }
+        // An FPV's first wave also digs its crater bowl; the hardest blocks (obsidian and up) resist it.
+        if (fpv && !frontier$craterDug) {
+            frontier$craterDug = true;
+            FpvExplosion.crater(BlockPos.containing(origin.x, origin.y - 0.1, origin.z), pos -> {
+                if (!level.hasChunkAt(pos) || seen.contains(pos)) return;
+                var block = level.getBlockState(pos);
+                if (!block.isAir() && block.getDestroySpeed(level, pos) >= 0
+                        && block.getExplosionResistance(level, pos, blast) < 100 && seen.add(pos)) result.add(pos);
+            });
         }
         result.sort(Comparator.comparingDouble(pos -> pos.distToCenterSqr(origin)));
         int remaining = Math.max(0, limit - frontier$blocksSpent);
