@@ -17,4 +17,8 @@ public abstract class VanillaExplosionVisuals {
     @Inject(method="onRenderLevelStage",at=@At("HEAD"),remap=false)
     private static void flamingo$fireball(net.minecraftforge.client.event.RenderLevelStageEvent event,CallbackInfo c){
         dev.frontier.flamingofix.client.BlastFireball.render(event);}
+    /** Our blast shake rides on DeepStrike's already registered camera handler; its own shake follows unchanged. */
+    @Inject(method="onComputeCameraAngles",at=@At("HEAD"),remap=false)
+    private static void flamingo$blastShake(net.minecraftforge.client.event.ViewportEvent.ComputeCameraAngles event,CallbackInfo c){
+        dev.frontier.flamingofix.client.BlastShake.apply(event);}
 }

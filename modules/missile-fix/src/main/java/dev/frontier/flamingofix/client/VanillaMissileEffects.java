@@ -151,6 +151,8 @@ public final class VanillaMissileEffects {
 
     /** Extra flashes over the crater, flying debris and, for a small warhead, sparks; BlastFireball does the rest. */
     private static void styled(Minecraft mc,DeepStrikeNetwork.BlastEffect event,Vec3 position,BlastFireball.Style style,double distance) {
+        // Felt even beyond the drawn range: a far strategic burst still rocks the camera a little.
+        BlastShake.add(style.radius(),distance,mc.level.getGameTime(),event.seed());
         if(distance>(double)style.visible()*style.visible())return;
         BlastFireball.add(position.add(0,-.8,0),style,mc.level.getGameTime(),event.seed());
         float radius=style.radius();
