@@ -51,7 +51,11 @@ public final class AircraftCreativeTab {
 
     /** Removes the aircraft from every other tab (SBW vehicles, DeepStrike). */
     static void moveOut(BuildCreativeModeTabContentsEvent event) {
-        if (event.getTabKey().location().equals(new ResourceLocation(LightAviation.ID, "aircraft"))) return;
+        ResourceLocation tab = event.getTabKey().location();
+        if (tab.equals(new ResourceLocation(LightAviation.ID, "aircraft"))) return;
+        // The style module's curated catalog tabs («Frontier · …») are where the aircraft belong:
+        // it then hides this tab as redundant, so stripping them there too would lose them everywhere.
+        if (tab.getNamespace().equals("frontier_ifv")) return;
         Set<String> sbw = Set.copyOf(SBW_AIRCRAFT);
         List<ItemStack> remove = new ArrayList<>();
         for (var entry : event.getEntries()) {
