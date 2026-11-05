@@ -12,3 +12,11 @@ tasks.register('warheadRulesTest', JavaExec) {
     mainClass = 'dev.frontier.arcade.combat.WarheadRulesTest'
 }
 tasks.named('check').configure { dependsOn 'warheadRulesTest' }
+
+
+tasks.register('vehicleBallisticsTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.arcade.balance.VehicleBallisticsTest'
+}
+tasks.named('check').configure { dependsOn 'vehicleBallisticsTest' }
