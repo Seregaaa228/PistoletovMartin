@@ -10,6 +10,7 @@ import net.minecraft.client.ParticleStatus;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
@@ -18,7 +19,7 @@ import org.joml.Matrix4f;
 /**
  * The look of a missile blast after DeepStrike's flash, per missile: a billowing fireball (core
  * and rising lobes, one additive mesh), a ground dust wave with a low wall, a smoke column fed
- * with vanilla campfire signal smoke, and for a strategic burst a mushroom (stem, cap torus).
+ * with vanilla campfire signal smoke, and for a strategic burst a mushroom (rolling cap, stem, dust skirt).
  * Meshes are a few hundred to ~1500 quads for seconds; the column is capped per tick and
  * thinned with distance and the particle setting.
  */
@@ -105,7 +106,11 @@ public final class BlastFireball {
             pose.translate(blast.center.x - camera.x, blast.center.y - camera.y, blast.center.z - camera.z);
             if (age < blast.style.waveTicks()) { wave(out, pose.last().pose(), blast.style, age / blast.style.waveTicks()); any = true; }
             if (blast.style.mushroom() && age < CONDENSATION_TICKS) { condensation(out, pose.last().pose(), blast, age); any = true; }
-            if (blast.style.mushroom()) { mushroom(out, pose.last().pose(), blast, age); any = true; }
+            if (blast.style.mushroom()) {
+                mushroom(out, pose.last().pose(), blast, age, (float) (camera.x - blast.center.x), (float) (camera.y - blast.center.y),
+                        (float) (camera.z - blast.center.z), mc.level.getSkyDarken(event.getPartialTick()));
+                any = true;
+            }
             pose.popPose();
         }
         if (any) buffers.endBatch(RenderType.debugQuads());
@@ -236,47 +241,145 @@ public final class BlastFireball {
         return r * (0.45f + 2.4f * climb) + Math.max(0, age - style.fireTicks()) * r * 0.0015f;
     }
 
-    /** Stem and cap: glowing at first, then dark grey-brown smoke fading over the last third. */
-    private static void mushroom(VertexConsumer out, Matrix4f m, Blast blast, float age) {
+    /** One lumpy smoke puff of the mushroom; {@code glow} is how much fire still lights it from inside. */
+    private record Puff(float x, float y, float z, float size, float squash, long seed, int kind, float glow) {}
+    private static final int CAP = 0, STEM = 1, DUST = 2, MAX_GRID = 7 * 11;
+    // Render thread only: one puff's vertex grid.
+    private static final float[] GX = new float[MAX_GRID], GY = new float[MAX_GRID], GZ = new float[MAX_GRID], GA = new float[MAX_GRID];
+    private static final int[] GC = new int[MAX_GRID];
+    /** The sun high in the south-east; the cloud is lit from there and dark underneath. */
+    private static final float SUN_X = 0.33f, SUN_Y = 0.85f, SUN_Z = -0.41f;
+
+    /**
+     * A cauliflower cap rolling as a vortex ring (out over the crown, in under the bottom) under a
+     * closed dome, a dust stem flaring into it, a dust skirt on the ground and, for a while, a white
+     * condensation ring around the stem; wind slowly shears it all. Puffs are sun-lit, dimmed at
+     * night, glow orange from below while hot and have soft edges: only faces towards the camera
+     * are drawn, puffs back to front, so the translucent smoke blends in order.
+     */
+    private static void mushroom(VertexConsumer out, Matrix4f m, Blast blast, float age, float camX, float camY, float camZ, float daylight) {
         Style style = blast.style;
-        float r = style.radius();
-        float life = 600;
+        float r = style.radius(), life = 600;
         float fade = age < life * 2 / 3 ? 1 : 1 - (age - life * 2 / 3) / (life / 3);
         if (fade <= 0) return;
-        float glow = Math.max(0, 1 - age / (style.fireTicks() * 1.5f));
         float cap = capHeight(style, age);
         float spread = Math.min(1, age / 140f);
-        float major = r * (0.55f + 0.85f * spread), minor = major * 0.42f;
-        int alpha = (int) (175 * fade);
-        // Stem: a tapered tube from the ground into the cap.
-        int segments = 16, rings = 6;
-        for (int ring = 0; ring < rings; ring++) {
-            float h0 = cap * ring / rings, h1 = cap * (ring + 1) / rings;
-            float w0 = r * (0.3f - 0.12f * ring / rings), w1 = r * (0.3f - 0.12f * (ring + 1) / rings);
-            for (int seg = 0; seg < segments; seg++) {
-                double b0 = 2 * Math.PI * seg / segments, b1 = 2 * Math.PI * (seg + 1) / segments;
-                float shade = 0.75f + 0.25f * hash(blast.seed, ring, seg);
-                int[] c = smoke(shade, glow * (1 - (float) ring / rings));
-                quad(out, m, (float) Math.cos(b0) * w0, h0, (float) Math.sin(b0) * w0, (float) Math.cos(b1) * w0, h0, (float) Math.sin(b1) * w0,
-                        (float) Math.cos(b1) * w1, h1, (float) Math.sin(b1) * w1, (float) Math.cos(b0) * w1, h1, (float) Math.sin(b0) * w1,
-                        c[0], c[1], c[2], (int) (alpha * 0.7f), (int) (alpha * 0.7f));
+        spread = 1 - (1 - spread) * (1 - spread);
+        float major = r * (0.45f + 0.75f * spread), minor = r * (0.3f + 0.3f * spread);
+        float hot = Math.max(0, 1 - age / (style.fireTicks() * 1.8f));
+        double wind = hash(blast.seed, 3, 5) * Math.PI * 2;
+        float windX = (float) Math.cos(wind) * age * 0.012f, windZ = (float) Math.sin(wind) * age * 0.012f;
+        List<Puff> puffs = new ArrayList<>(64);
+        int around = 16;
+        double roll = -age * 0.008;
+        for (int i = 0; i < around; i++) {
+            double u = 2 * Math.PI * (i + 0.5f * hash(blast.seed, i, 1)) / around;
+            for (int k = 0; k < 2; k++) {
+                double v = roll + k * Math.PI + i * 0.9;
+                float ring = major + minor * 0.55f * (float) Math.cos(v);
+                puffs.add(new Puff((float) Math.cos(u) * ring + windX, cap + minor * 0.45f * (float) Math.sin(v),
+                        (float) Math.sin(u) * ring + windZ, minor * (0.62f + 0.3f * hash(blast.seed, i, k + 2)), 0.85f,
+                        blast.seed + i * 131L + k, CAP, hot));
             }
         }
-        // Cap: a torus rolling over the top of the stem.
-        int around = 24, tube = 10;
-        for (int i = 0; i < around; i++) {
-            double u0 = 2 * Math.PI * i / around, u1 = 2 * Math.PI * (i + 1) / around;
-            for (int j = 0; j < tube; j++) {
-                double v0 = 2 * Math.PI * j / tube, v1 = 2 * Math.PI * (j + 1) / tube;
-                float shade = 0.65f + 0.35f * hash(blast.seed + 17, i, j);
-                // The underside keeps the fire's glow longest.
-                float under = (float) Math.max(0, -Math.sin((v0 + v1) / 2));
-                int[] c = smoke(shade, glow * (0.4f + 0.6f * under));
-                float[] p00 = torus(major, minor, u0, v0, cap), p10 = torus(major, minor, u1, v0, cap);
-                float[] p11 = torus(major, minor, u1, v1, cap), p01 = torus(major, minor, u0, v1, cap);
-                quad(out, m, p00[0], p00[1], p00[2], p10[0], p10[1], p10[2], p11[0], p11[1], p11[2], p01[0], p01[1], p01[2],
-                        c[0], c[1], c[2], alpha, alpha);
+        puffs.add(new Puff(windX, cap + minor * 0.35f, windZ, major * 0.75f, 0.6f, blast.seed + 7, CAP, hot));
+        for (int i = 0; i < 6; i++) {
+            double u = Math.PI * i / 3 + 0.4;
+            puffs.add(new Puff((float) Math.cos(u) * major * 0.45f + windX, cap + minor * 0.6f, (float) Math.sin(u) * major * 0.45f + windZ,
+                    minor * (0.6f + 0.2f * hash(blast.seed, i, 9)), 0.8f, blast.seed + 977L * i, CAP, hot));
+        }
+        // Stem: widest at the ground, narrowest in the middle, flaring where it feeds the cap; it leans after the cap.
+        float top = cap - minor * 0.5f, stemR = r * (0.16f + 0.06f * spread);
+        int stems = Mth.clamp((int) Math.ceil(top / (stemR * 1.3f)), 3, 14);
+        for (int i = 0; i < stems; i++) {
+            float f = (i + 0.5f) / stems, lean = f * f, jitter = stemR * 0.5f;
+            puffs.add(new Puff(windX * lean + (hash(blast.seed, i, 11) - 0.5f) * jitter, top * f,
+                    windZ * lean + (hash(blast.seed, i, 12) - 0.5f) * jitter,
+                    stemR * (1 + 0.6f * (1 - f) * (1 - f) + 0.9f * f * f * f), 1.25f, blast.seed + 31L * i, STEM, hot * f));
+        }
+        if (age > 6) {
+            float t = Math.min(1, (age - 6) / 120f), reach = r * (0.5f + 1.1f * (1 - (1 - t) * (1 - t)));
+            for (int i = 0; i < 10; i++) {
+                double u = 2 * Math.PI * (i + hash(blast.seed, i, 13)) / 10;
+                puffs.add(new Puff((float) Math.cos(u) * reach, r * 0.08f, (float) Math.sin(u) * reach,
+                        r * (0.26f + 0.12f * hash(blast.seed, i, 14)), 0.5f, blast.seed + 53L * i, DUST, 0));
             }
+        }
+        puffs.sort((a, b) -> Float.compare(distanceSqr(b, camX, camY, camZ), distanceSqr(a, camX, camY, camZ)));
+        float distance = (float) Math.sqrt(camX * camX + camY * camY + camZ * camZ);
+        int rings = distance > 384 ? 4 : distance > 160 ? 5 : 6, segments = distance > 384 ? 6 : distance > 160 ? 8 : 10;
+        float alpha = 235 * fade * (0.4f + 0.6f * Mth.clamp((age - 15) / 90f, 0, 1));
+        float clean = Math.min(1, age / 360f);
+        for (Puff p : puffs) puff(out, m, p, rings, segments, camX, camY, camZ, p.kind == DUST ? alpha * 0.7f * (1 - age / life) : alpha, clean, daylight);
+        // Drawn last: behind the stem it fails the depth test, in front it blends over the stem.
+        if (age > 25 && age < 260)
+            wilsonRing(out, m, top * 0.55f, stemR * 1.6f, major * 1.05f, windX * 0.3f, windZ * 0.3f,
+                    (int) (110 * fade * Math.sin(Math.PI * (age - 25) / 235) * daylight));
+    }
+
+    private static float distanceSqr(Puff p, float x, float y, float z) {
+        float dx = p.x - x, dy = p.y - y, dz = p.z - z;
+        return dx * dx + dy * dy + dz * dz;
+    }
+
+    private static void puff(VertexConsumer out, Matrix4f m, Puff p, int rings, int segments, float camX, float camY, float camZ,
+            float alpha, float clean, float daylight) {
+        float br, bg, bb, ambient;
+        if (p.kind == CAP) { br = 150 + 46 * clean; bg = 92 + 96 * clean; bb = 68 + 112 * clean; ambient = 1; }
+        else if (p.kind == STEM) { br = 118 + 32 * clean; bg = 98 + 42 * clean; bb = 80 + 48 * clean; ambient = 0.8f; }
+        else { br = 142; bg = 122; bb = 98; ambient = 0.85f; }
+        int columns = segments + 1;
+        for (int lat = 0; lat <= rings; lat++) {
+            double a = Math.PI * lat / rings - Math.PI / 2;
+            float ny = (float) Math.sin(a), horizontal = (float) Math.cos(a);
+            boolean pole = lat == 0 || lat == rings;
+            for (int seg = 0; seg <= segments; seg++) {
+                double b = 2 * Math.PI * seg / segments;
+                float nx = horizontal * (float) Math.cos(b), nz = horizontal * (float) Math.sin(b);
+                int key = pole ? 0 : seg % segments;
+                // Lumps and patchy shading: the cauliflower look; the seam and the poles share one value.
+                float size = p.size * (0.82f + 0.36f * hash(p.seed, lat, key));
+                float x = p.x + nx * size, y = p.y + ny * size * p.squash, z = p.z + nz * size;
+                float vx = x - camX, vy = y - camY, vz = z - camZ, view = (float) Math.sqrt(vx * vx + vy * vy + vz * vz) + 1e-3f;
+                float facing = -(nx * vx + ny * vy + nz * vz) / view;
+                float lit = (0.45f + 0.55f * Math.max(0, nx * SUN_X + ny * SUN_Y + nz * SUN_Z)) * (0.85f + 0.3f * hash(p.seed + 1, lat, key))
+                        * ambient * daylight;
+                float glow = p.kind == CAP ? p.glow * (0.25f + 0.75f * Math.max(0, -ny)) : p.kind == STEM ? p.glow * 0.8f : 0;
+                glow = Math.min(1, glow);
+                int i = lat * columns + seg;
+                GX[i] = x; GY[i] = y; GZ[i] = z;
+                GA[i] = alpha * Mth.clamp(facing * 1.8f, 0, 1);
+                int red = (int) Mth.clamp(br * lit + (255 - br * lit) * glow, 0, 255);
+                int green = (int) Mth.clamp(bg * lit + (120 + 60 * glow - bg * lit) * glow, 0, 255);
+                int blue = (int) Mth.clamp(bb * lit + (30 + 40 * glow - bb * lit) * glow, 0, 255);
+                GC[i] = red << 16 | green << 8 | blue;
+            }
+        }
+        for (int lat = 0; lat < rings; lat++) {
+            for (int seg = 0; seg < segments; seg++) {
+                int a = lat * columns + seg, b = a + 1, c = b + columns, d = a + columns;
+                if (GA[a] + GA[b] + GA[c] + GA[d] < 4) continue;
+                vertex(out, m, a); vertex(out, m, b); vertex(out, m, c); vertex(out, m, d);
+            }
+        }
+    }
+
+    private static void vertex(VertexConsumer out, Matrix4f m, int i) {
+        out.vertex(m, GX[i], GY[i], GZ[i]).color(GC[i] >> 16 & 255, GC[i] >> 8 & 255, GC[i] & 255, (int) GA[i]).endVertex();
+    }
+
+    /** A thin white skirt of condensation around the stem, left as the rising cap passes through humid air. */
+    private static void wilsonRing(VertexConsumer out, Matrix4f m, float y, float inner, float outer, float cx, float cz, int alpha) {
+        if (alpha <= 0 || outer <= inner) return;
+        float mid = (inner + outer) / 2, droop = outer * 0.08f;
+        int segments = 36;
+        for (int seg = 0; seg < segments; seg++) {
+            double b0 = 2 * Math.PI * seg / segments, b1 = 2 * Math.PI * (seg + 1) / segments;
+            float x0 = (float) Math.cos(b0), z0 = (float) Math.sin(b0), x1 = (float) Math.cos(b1), z1 = (float) Math.sin(b1);
+            quad(out, m, cx + x0 * inner, y + droop, cz + z0 * inner, cx + x1 * inner, y + droop, cz + z1 * inner,
+                    cx + x1 * mid, y, cz + z1 * mid, cx + x0 * mid, y, cz + z0 * mid, 236, 238, 242, 0, alpha);
+            quad(out, m, cx + x0 * mid, y, cz + z0 * mid, cx + x1 * mid, y, cz + z1 * mid,
+                    cx + x1 * outer, y - droop, cz + z1 * outer, cx + x0 * outer, y - droop, cz + z0 * outer, 236, 238, 242, alpha, 0);
         }
     }
 
@@ -299,18 +402,6 @@ public final class BlastFireball {
                         x0 * c1, y1, z0 * c1, 236, 238, 244, alpha, alpha);
             }
         }
-    }
-
-    private static float[] torus(float major, float minor, double u, double v, float height) {
-        double ring = major + minor * Math.cos(v);
-        return new float[] {(float) (Math.cos(u) * ring), height + (float) (Math.sin(v) * minor * 0.8), (float) (Math.sin(u) * ring)};
-    }
-
-    /** Grey-brown smoke, lit orange by the fire while {@code glow} > 0. */
-    private static int[] smoke(float shade, float glow) {
-        float r = 92 * shade, g = 82 * shade, b = 74 * shade;
-        r += (255 - r) * glow; g += (140 - g) * glow; b += (40 - b) * glow;
-        return new int[] {(int) r, (int) g, (int) b};
     }
 
     private static void sphere(VertexConsumer out, Matrix4f m, float cx, float cy, float cz, float r, float squash,

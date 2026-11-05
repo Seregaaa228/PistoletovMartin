@@ -43,7 +43,8 @@
     "LightweightPatriotBodies",
     "LightweightPatriotBursts",
     "VanillaGuidedExhaust",
-    "SmoothFastProjectileMotion"
+    "SmoothFastProjectileMotion",
+    "FastFlightUiLines"
   ],
   "injectors": {
     "defaultRequire": 1
