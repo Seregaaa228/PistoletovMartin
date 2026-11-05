@@ -163,24 +163,24 @@ public final class StoreStations {
         Map.of(LIGHT, new int[]{4, 5, 2, 3, 0, 1}));
 
     // Su-25: tablet stores and AG missiles on the functional inner pylons (pylon_l/r);
-    // AG missiles under the wing pylons at 3.61 m (bottom 38.786 px), hung ahead of
+    // AG missiles under the wing pylons at 3.61 m (hung 2 cm below the thicker wing), ahead of
     // the flaps; light AAMs on the outermost pylons at 5.10 m (bottom 37.745 px).
     public static final Layout SU25 = layout("su25", List.of(
         station(-2.1, 2.2, -0.2, STORM, WING),
         station(2.1, 2.2, -0.2, STORM, WING),
-        station(-3.61, 2.4241, -0.4, WING),
-        station(3.61, 2.4241, -0.4, WING),
+        station(-3.61, 2.4041, -0.4, WING),
+        station(3.61, 2.4041, -0.4, WING),
         station(-5.1, 2.3591, 0.6675, LIGHT),
         station(5.1, 2.3591, 0.6675, LIGHT)),
         Map.of(STORM, new int[]{0, 1}, WING, new int[]{2, 3, 0, 1}, LIGHT, new int[]{4, 5}),
         Map.of());
 
     // J-10: two tablet stores do not fit under its wings, so it carries one on the
-    // belly centreline, aft of the nose-gear doors (fuselage underside 1.80 m);
+    // belly centreline, aft of the nose-gear doors (hung at 1.70 m under the rounded belly);
     // a missile (wire-guided AGM or large AAM) on each functional inner pylon and a
     // light AAM on each outer wing pylon at 3.76 m (bottom 31.6 px).
     public static final Layout J10 = layout("j10", List.of(
-        station(0, 1.80, 2.2, STORM),
+        station(0, 1.70, 2.2, STORM),
         station(-2.1, 2.2, -0.2, WING, LIGHT),
         station(2.1, 2.2, -0.2, WING, LIGHT),
         station(-3.76, 1.975, 3.2577, LIGHT),

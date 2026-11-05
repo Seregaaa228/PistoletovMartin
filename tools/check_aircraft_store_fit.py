@@ -39,7 +39,7 @@ ASSETS = AVIATION / 'resources/assets/frontier_aviation'
 STATIONS = AVIATION / 'java/dev/frontier/aviation/ordnance/StoreStations.java'
 PX = 16.0
 EPS = 1e-4   # m; contact within this is touching, not intersecting
-SLACK = 0.035   # m; a hung store's top may be this much below the clearance, not more (no floating)
+SLACK = 0.06    # m; a hung store's top may be this much below the clearance, not more (no floating); the J-10 belly curves under the wide КАБ-3000
 
 
 # ---------------------------------------------------------------- geometry
