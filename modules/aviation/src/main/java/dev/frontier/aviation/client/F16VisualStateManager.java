@@ -38,8 +38,11 @@ public final class F16VisualStateManager {
         void update(Su24mEntity plane) {
             PilotCommand command = FlightClient.visualInput(plane);
             FlightState flightState = FlightClient.hasVisualPilot(plane) ? FlightClient.visualState(plane) : null;
+            // On the wheels A/D steer with the rudder pedals too, so the rudder and nose wheel follow them.
+            float pedals = command == null ? 0 : plane.onGround()
+                ? Math.max(-1, Math.min(1, command.yawAxis() + command.rollAxis())) : command.yawAxis();
             F16ControlSurfaces.Axes input = command == null ? null
-                : new F16ControlSurfaces.Axes(command.rollAxis(), command.pitchAxis(), command.yawAxis());
+                : new F16ControlSurfaces.Axes(command.rollAxis(), command.pitchAxis(), pedals);
             F16ControlSurfaces.Axes rates = flightState == null ? null
                 : new F16ControlSurfaces.Axes(flightState.rollRate(), flightState.pitchRate(), flightState.yawRate());
             surfaces.tick(input, rates, plane.getRoll(), plane.getXRot(), plane.getYRot());

@@ -2,6 +2,7 @@ package dev.frontier.aviation.aircraft;
 
 import dev.frontier.aviation.control.FlightKind;
 import dev.frontier.aviation.control.FlightProfile;
+import dev.frontier.aviation.handling.FlightDynamics;
 import dev.frontier.aviation.handling.HandlingProfile;
 import dev.frontier.aviation.weapons.WeaponLoadout;
 import java.util.Collection;
@@ -51,6 +52,14 @@ public final class AircraftCatalog {
         "frontier_aviation:su25", new AircraftPerformance(0.82f, 2.0f, 0.75f, 0.8f, 0.75f, 90),
         "frontier_aviation:j10", new AircraftPerformance(1.46f, 3.3f, 1.2f, 1.05f, 1.1f, 110),
         "frontier_aviation:f16", new AircraftPerformance(1.8f, 3.9f, 1.4f, 1.15f, 1.35f, 115));
+    /**
+     * Control feel of the same three jets (inertia, coordinated turn, nose-wheel steering,
+     * brakes, buffet): Su-25 heavy and steady, F-16 crisp, J-10 between. Native: none.
+     */
+    private static final Map<String, FlightDynamics> DYNAMICS = Map.of(
+        "frontier_aviation:su25", FlightDynamics.SU25,
+        "frontier_aviation:j10", FlightDynamics.J10,
+        "frontier_aviation:f16", FlightDynamics.F16);
     private static final List<AircraftDefinition> ALL = List.copyOf(DEFINITIONS.values());
     private static final List<AircraftDefinition> MODELS = ALL.stream()
         .filter(AircraftDefinition::registersModel).toList();
@@ -67,6 +76,11 @@ public final class AircraftCatalog {
 
     public static Optional<AircraftPerformance> performance(String entityTypeId) {
         return Optional.ofNullable(PERFORMANCE.get(entityTypeId));
+    }
+
+    /** Per-jet control dynamics; {@link FlightDynamics#NONE} keeps the original model. */
+    public static FlightDynamics dynamics(String entityTypeId) {
+        return DYNAMICS.getOrDefault(entityTypeId, FlightDynamics.NONE);
     }
 
     public static List<AircraftDefinition> all() { return ALL; }

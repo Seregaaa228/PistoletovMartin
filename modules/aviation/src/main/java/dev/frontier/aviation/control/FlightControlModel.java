@@ -1,5 +1,6 @@
 package dev.frontier.aviation.control;
 
+import dev.frontier.aviation.handling.FlightDynamics;
 import java.util.Objects;
 
 /** One deterministic 20 Hz control tick. Native forces and energy remain outside this class. */
@@ -43,14 +44,27 @@ public final class FlightControlModel {
         }
         if (command.pitchAxis() != 0 || command.rollAxis() != 0) hover = false;
 
+        FlightDynamics dynamics = environment.dynamics();
+        boolean inertial = !helicopter && dynamics.active();
+        // A wheel hop off a block edge at taxi speed is still the ground phase: no stall
+        // nose-drop and no pitch/bank from the stick until the gear is back down.
+        boolean hop = taxiHop(helicopter, environment);
+        boolean groundPhase = inertial && (environment.onGround() || hop);
+        float pitchAxis = hop ? 0 : command.pitchAxis();
+        float rollAxis = groundPhase ? 0 : command.rollAxis();
+        // On the ground A/D steer the nose wheel together with the mouse.
+        float yawAxis = groundPhase ? clamp(command.yawAxis() + command.rollAxis(), -1, 1) : command.yawAxis();
+
         FlightEnvironment.AxisCaps caps = environment.caps();
-        float pitchRate = environment.nativeEmergency() ? 0 : rate(previous.pitchRate(), command.pitchAxis(),
-            caps.pitchNegative(), caps.pitchPositive(), profile);
+        float pitchRate = environment.nativeEmergency() ? 0 : rate(previous.pitchRate(), pitchAxis,
+            caps.pitchNegative(), caps.pitchPositive(), profile, dynamics, inertial);
         pitchRate = stall(pitchRate, previous.pitch(), helicopter, environment);
-        float yawRate = environment.nativeEmergency() ? 0 : rate(previous.yawRate(), command.yawAxis(),
-            caps.yawNegative(), caps.yawPositive(), profile);
-        float rollRate = environment.nativeEmergency() ? 0 : rate(previous.rollRate(), command.rollAxis(),
-            caps.rollNegative(), caps.rollPositive(), profile);
+        float yawRate = environment.nativeEmergency() ? 0 : rate(previous.yawRate(), yawAxis,
+            caps.yawNegative(), caps.yawPositive(), profile, dynamics, inertial);
+        float rollRate = environment.nativeEmergency() ? 0 : rate(previous.rollRate(), rollAxis,
+            caps.rollNegative(), caps.rollPositive(), profile, dynamics, inertial);
+        float turnRate = inertial && !groundPhase && !environment.nativeEmergency()
+            ? turn(previous.pitch(), previous.roll(), rollRate - previous.rollRate(), environment) : 0;
 
         // Shift is a temporary native collective command, not a replacement remembered selection.
         boolean secondaryDown = helicopter && command.secondaryBrake();
@@ -139,7 +153,8 @@ public final class FlightControlModel {
             case STOPPING -> environment.rotorSpool();
         };
         FlightState state = new FlightState(previous.pitch() + pitchRate,
-            wrapDegrees(previous.yaw() + yawRate), wrapDegrees(previous.roll() + rollRate),
+            wrapDegrees(turnRate == 0 ? previous.yaw() + yawRate : previous.yaw() + yawRate + turnRate),
+            wrapDegrees(previous.roll() + rollRate),
             pitchRate, yawRate, rollRate, target, effective, phase, phaseTicks, spool, gear, hover, held);
         return new FlightOutput(state, nativePower, phase == EnginePhase.RUNNING,
             command.brake(), command.secondaryBrake(), command.boost(), status);
@@ -155,13 +170,64 @@ public final class FlightControlModel {
      */
     static float stall(float pitchRate, float pitch, boolean helicopter, FlightEnvironment environment) {
         float stall = environment.stallSpeed();
-        if (helicopter || stall <= 0 || environment.onGround() || environment.speed() >= stall) return pitchRate;
-        float lift = environment.speed() / stall;
-        if (pitchRate < 0) pitchRate *= lift;
+        if (helicopter || stall <= 0 || environment.onGround() || taxiHop(false, environment)) return pitchRate;
+        float speed = environment.speed();
         // Falls fastest nose-high; stops pushing once the nose points well down.
-        float drop = STALL_DROP * (1 - lift) * clamp((70 - pitch) / 70, 0, 1);
-        return pitchRate + drop;
+        float noseHigh = clamp((70 - pitch) / 70, 0, 1);
+        // As speed bleeds off toward the stall the nose grows heavy (per-jet dynamics only).
+        float sink = environment.dynamics().noseSink() * clamp((SINK_ONSET * stall - speed) / ((SINK_ONSET - 1) * stall), 0, 1) * noseHigh;
+        // Without a sink the original arithmetic is kept exactly (no -0 + 0 sign change).
+        if (speed >= stall) return sink == 0 ? pitchRate : pitchRate + sink;
+        float lift = speed / stall;
+        if (pitchRate < 0) pitchRate *= lift;
+        float drop = STALL_DROP * (1 - lift) * noseHigh;
+        return sink == 0 ? pitchRate + drop : pitchRate + drop + sink;
     }
+
+    /** The nose starts to feel heavy below this multiple of the stall speed. */
+    static final float SINK_ONSET = 1.6f;
+    /** Gear within this many blocks of the ground counts as a wheel hop, not flight. */
+    static final float HOP_CLEARANCE = 1.6f;
+    /** A hop only happens below this fraction of the stall speed (taxiing, not a take-off). */
+    static final float HOP_SPEED = .75f;
+
+    /** Airborne for a moment over a block edge while taxiing (per-jet dynamics only). */
+    static boolean taxiHop(boolean helicopter, FlightEnvironment environment) {
+        return !helicopter && environment.dynamics().active() && !environment.onGround()
+            && environment.groundClearance() < HOP_CLEARANCE && environment.speed() < HOP_SPEED * environment.stallSpeed();
+    }
+
+    /**
+     * Yaw that follows the bank (a banked jet turns by itself, fading in with airspeed) and
+     * a touch of adverse yaw against the roll while a roll starts (and back as it stops), so
+     * a complete roll leaves the heading where it was.
+     */
+    static float turn(float pitch, float roll, float rollAcceleration, FlightEnvironment environment) {
+        FlightDynamics dynamics = environment.dynamics();
+        double level = Math.max(0, Math.cos(Math.toRadians(pitch)));
+        float stall = environment.stallSpeed();
+        float weight = stall > 0 ? clamp(environment.speed() / (1.5f * stall), 0, 1) : 1;
+        return (float) ((dynamics.bankTurn() * Math.sin(Math.toRadians(roll)) * weight
+            - dynamics.adverseYaw() * rollAcceleration) * level);
+    }
+
+    private static float rate(float current, float axis, float negative, float positive, FlightProfile profile,
+                              FlightDynamics dynamics, boolean inertial) {
+        if (!inertial) return rate(current, axis, negative, positive, profile);
+        // Inertial axis: the rate eases toward the request (and back to zero on release)
+        // instead of ramping linearly, limited to the profile's angular acceleration.
+        current = clamp(current, -negative, positive);
+        float cap = axis == 0 ? (current < 0 ? negative : positive) : axis < 0 ? negative : positive;
+        float desired = axis * cap;
+        float gain = axis == 0 ? dynamics.release() : dynamics.response();
+        float maxStep = cap / (axis == 0 ? profile.dampingTicks() : profile.responseTicks());
+        float next = current + clamp((desired - current) * gain, -maxStep, maxStep);
+        if (Math.abs(desired - next) <= RATE_SNAP) next = desired;
+        return clamp(next, -negative, positive);
+    }
+
+    /** Below this rate difference (deg/tick) an inertial axis has arrived. */
+    static final float RATE_SNAP = .01f;
 
     private static float rate(float current, float axis, float negative, float positive, FlightProfile profile) {
         current = clamp(current, -negative, positive);

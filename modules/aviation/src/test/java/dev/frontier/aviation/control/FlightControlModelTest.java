@@ -1,5 +1,6 @@
 package dev.frontier.aviation.control;
 
+import dev.frontier.aviation.handling.FlightDynamics;
 import java.util.List;
 
 /** Standalone Java 17 deterministic oracles; no game/bootstrap or assertions flag required. */
@@ -17,6 +18,7 @@ public final class FlightControlModelTest {
         helicopterRampsAndFloors();
         modesAndIsolation();
         invalidInputs();
+        perJetDynamics();
         System.out.println("FlightControlModelTest: " + checks + " checks passed");
     }
 
@@ -353,6 +355,110 @@ public final class FlightControlModelTest {
         equal(PilotCommand.neutral(0), transientInput.withoutTransientInput(), "timeout helper clears axes buttons and pending modes");
     }
 
+    private static void perJetDynamics() {
+        // The native model is untouched: the long form with NONE dynamics is identical.
+        java.util.Random random = new java.util.Random(0x5EEDL);
+        FlightProfile f16 = profile("frontier_aviation:f16"), su25 = profile("frontier_aviation:su25");
+        FlightState a = initial(EnginePhase.OFF, 0), b = a;
+        for (int i = 0; i < 200; i++) {
+            PilotCommand c = command(axis(random), axis(random), axis(random), 0, false, false, false,
+                ModeRequest.KEEP, ModeRequest.KEEP, ModeRequest.KEEP);
+            a = step(f16, a, c, environment(false));
+            b = step(f16, b, c, jet(FlightDynamics.NONE, 1, false, FlightEnvironment.CLEAR, 0, CAPS));
+        }
+        equal(a, b, "NONE dynamics keep the original model bit for bit");
+
+        // Inertia: the roll rate eases in, never faster than the profile's linear ramp.
+        float stall = 1.6f, cruise = 3.5f;
+        FlightEnvironment air = jet(FlightDynamics.F16, cruise, false, FlightEnvironment.CLEAR, stall, CAPS);
+        PilotCommand right = command(0, 0, 1, 0, false, false, false, ModeRequest.KEEP, ModeRequest.KEEP, ModeRequest.KEEP);
+        FlightState s = initial(EnginePhase.OFF, 0);
+        float last = 0;
+        for (int tick = 1; tick <= 40; tick++) {
+            s = step(f16, s, right, air);
+            truth(s.rollRate() >= last - 1e-6f, "roll rate builds monotonically " + tick);
+            truth(s.rollRate() <= 20f * tick / f16.responseTicks() + 1e-4f, "no faster than the linear ramp " + tick);
+            last = s.rollRate();
+        }
+        near(20, s.rollRate(), "reaches the full roll rate");
+        FlightState su = step(su25, step(su25, step(su25, initial(EnginePhase.OFF, 0), right,
+            jet(FlightDynamics.SU25, cruise, false, FlightEnvironment.CLEAR, 1.25f, CAPS)), right,
+            jet(FlightDynamics.SU25, cruise, false, FlightEnvironment.CLEAR, 1.25f, CAPS)), right,
+            jet(FlightDynamics.SU25, cruise, false, FlightEnvironment.CLEAR, 1.25f, CAPS));
+        FlightState fast = step(f16, step(f16, step(f16, initial(EnginePhase.OFF, 0), right, air), right, air), right, air);
+        truth(su.rollRate() < fast.rollRate(), "the Su-25 rolls in more slowly than the F-16");
+        // Release: the rate coasts down geometrically and then stops exactly.
+        FlightState released = step(f16, withRates(levelAttitude(s), 0, 0, 10), PilotCommand.neutral(0), air);
+        near(10 * (1 - FlightDynamics.F16.release()), released.rollRate(), "rotation coasts after release");
+        for (int i = 0; i < 40; i++) released = step(f16, released, PilotCommand.neutral(0), air);
+        near(0, released.rollRate(), "coast ends at exactly zero");
+        // Reversal passes through zero smoothly, never more than one ramp step per tick.
+        FlightState reverse = withRates(levelAttitude(s), 0, 0, 20);
+        PilotCommand left = command(0, 0, -1, 0, false, false, false, ModeRequest.KEEP, ModeRequest.KEEP, ModeRequest.KEEP);
+        for (int i = 0; i < 20; i++) {
+            FlightState next = step(f16, reverse, left, air);
+            truth(Math.abs(next.rollRate() - reverse.rollRate()) <= 20f / f16.responseTicks() + 1e-4f, "bounded reversal " + i);
+            reverse = next;
+        }
+        truth(reverse.rollRate() < -9, "reversal reaches the opposite rate");
+
+        // Coordinated turn: a banked jet turns toward the low wing by itself; level wings do not.
+        FlightState banked = new FlightState(0, 0, 45, 0, 0, 0, 0, 0, EnginePhase.OFF, 0, 0, true, false, 0);
+        FlightState turned = step(f16, banked, PilotCommand.neutral(0), air);
+        near((float) (FlightDynamics.F16.bankTurn() * Math.sin(Math.toRadians(45))), turned.yaw(), "right bank turns right");
+        truth(step(f16, new FlightState(0, 0, -45, 0, 0, 0, 0, 0, EnginePhase.OFF, 0, 0, true, false, 0),
+            PilotCommand.neutral(0), air).yaw() < 0, "left bank turns left");
+        near(0, step(f16, initial(EnginePhase.OFF, 0), PilotCommand.neutral(0), air).yaw(), "level wings hold heading");
+        truth(step(f16, initial(EnginePhase.OFF, 0), right, air).yaw() < 0, "adverse yaw against a roll to the right");
+        truth(Math.abs(step(f16, initial(EnginePhase.OFF, 0), right, air).yaw()) < .5f, "adverse yaw is slight");
+        // A full roll-in and roll-out with wings ending level leaves no adverse-yaw drift.
+        FlightState roll = initial(EnginePhase.OFF, 0);
+        float adverse = 0;
+        for (int i = 0; i < 6; i++) { FlightState n = step(f16, roll, right, air); adverse += turnOnly(roll, n); roll = n; }
+        for (int i = 0; i < 40; i++) { FlightState n = step(f16, roll, PilotCommand.neutral(0), air); adverse += turnOnly(roll, n); roll = n; }
+        truth(Math.abs(adverse) < 1e-3f, "adverse yaw nets to zero over a roll: " + adverse);
+
+        // The nose grows heavy as speed bleeds toward the stall; not at cruise, not for native jets.
+        FlightState level = initial(EnginePhase.OFF, 0);
+        truth(step(f16, level, PilotCommand.neutral(0), jet(FlightDynamics.F16, 1.15f * stall, false, FlightEnvironment.CLEAR, stall, CAPS)).pitch() > 0,
+            "nose sinks near the stall");
+        near(0, step(f16, level, PilotCommand.neutral(0), air).pitch(), "no sink at cruise");
+        near(0, step(f16, level, PilotCommand.neutral(0), jet(FlightDynamics.NONE, 1.15f * stall, false, FlightEnvironment.CLEAR, stall, CAPS)).pitch(),
+            "native jets keep the original stall boundary");
+
+        // A wheel hop off a block edge while taxiing is not a stall: no nose drop, no stick pitch/bank.
+        PilotCommand yank = command(-1, 0, 1, 0, false, false, false, ModeRequest.KEEP, ModeRequest.KEEP, ModeRequest.KEEP);
+        FlightState hop = step(su25, level, yank, jet(FlightDynamics.SU25, .4f, false, .5f, 1.25f, CAPS));
+        near(0, hop.pitch(), "no pitch in a taxi hop");
+        near(0, hop.roll(), "no bank in a taxi hop");
+        truth(step(su25, level, PilotCommand.neutral(0), jet(FlightDynamics.SU25, .4f, false, 5, 1.25f, CAPS)).pitch() > 1,
+            "a real low-speed stall still drops the nose");
+
+        // On the wheels A/D steer the nose wheel; the airframe never banks.
+        FlightEnvironment taxi = jet(FlightDynamics.SU25, .3f, true, 0, 1.25f, new FlightEnvironment.AxisCaps(0, 0, 1.5f, 1.5f, 0, 0));
+        FlightState rolled = level;
+        for (int i = 0; i < 10; i++) rolled = step(su25, rolled, right, taxi);
+        truth(rolled.yaw() > 2, "A/D steer on the ground");
+        near(0, rolled.roll(), "wings stay level on the ground");
+    }
+    /** The adverse-yaw part of one step: heading change minus pilot yaw and the bank turn. */
+    private static float turnOnly(FlightState before, FlightState after) {
+        float bank = (float) (FlightDynamics.F16.bankTurn() * Math.sin(Math.toRadians(before.roll())));
+        return FlightControlModel.wrapDegrees(after.yaw() - before.yaw()) - after.yawRate() - bank;
+    }
+    private static float axis(java.util.Random random) {
+        float value = random.nextFloat() * 2 - 1;
+        return Math.abs(value) < .3f ? 0 : value;
+    }
+    private static FlightState levelAttitude(FlightState s) {
+        return new FlightState(0, 0, 0, s.pitchRate(), s.yawRate(), s.rollRate(), s.targetThrottle(), s.effectivePower(),
+            s.enginePhase(), s.phaseTicks(), s.spool(), s.gearDown(), s.hover(), s.throttleHoldTicks());
+    }
+    private static FlightEnvironment jet(FlightDynamics dynamics, float speed, boolean ground, float clearance, float stall,
+                                         FlightEnvironment.AxisCaps caps) {
+        return new FlightEnvironment(1, speed, ground, true, true, true, false, false, caps, .02f, 1, 3, .006f, .006f, .03f,
+            1, 1, 0, 0, .25f, 0, .006f, stall, clearance, dynamics);
+    }
     private static FlightProfile profile(String id) { return FlightProfiles.find(id).orElseThrow(); }
     private static FlightState initial(EnginePhase phase, float target) { return FlightControlModel.initial(0, 0, 0, target, phase, true, false); }
     private static FlightState running(float target, float effective) {

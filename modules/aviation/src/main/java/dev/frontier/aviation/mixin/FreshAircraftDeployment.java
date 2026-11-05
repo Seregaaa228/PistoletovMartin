@@ -2,6 +2,7 @@ package dev.frontier.aviation.mixin;
 
 import dev.frontier.aviation.AircraftPlacement;
 import dev.frontier.aviation.AircraftProfile;
+import dev.frontier.aviation.control.nativebridge.NativeFlightAdapter;
 import dev.sbw.deepstrike.vehicle.Su24mEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.context.UseOnContext;
@@ -24,6 +25,10 @@ public abstract class FreshAircraftDeployment {
     private boolean aviation$deployFueled(Level level, Entity entity) {
         if (entity instanceof Su24mEntity plane && AircraftProfile.of(plane) != null) {
             plane.setEnergy(plane.getMaxEnergy());
+            // Standing on its wheels from the first tick: gear stance, wings level, grounded,
+            // so neither the airborne native branch nor terrain compat tilts it while it settles.
+            NativeFlightAdapter.deployOnGear(plane);
+            plane.setOnGround(true);
         }
         return level.addFreshEntity(entity);
     }

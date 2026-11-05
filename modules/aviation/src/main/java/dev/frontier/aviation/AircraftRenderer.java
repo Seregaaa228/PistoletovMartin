@@ -28,6 +28,8 @@ import net.minecraft.resources.ResourceLocation;
 public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
     private static final String[] GEAR = {"gear_nose", "gear_main_l", "gear_main_r"};
     private static final String[] GEAR_CHILD_SUFFIXES = {"_suspension", "_wheel"};
+    /** Nose-wheel steering angle at full pedal (degrees). */
+    private static final float NOSE_STEER = 30;
     // "_l" doors hinge on their +X edge, "_r" doors on their -X edge. SBW bakes bones in an
     // X-mirrored frame, so rotations about Y and Z run opposite to the geo file's axes.
     private static final String[] GEAR_DOORS = {"gear_door_nose_l", "gear_door_nose_r", "gear_door_left_l",
@@ -71,13 +73,18 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
             }
             bone.rotation.rotateX((float)Math.toRadians(name.equals("gear_nose") ? noseFold : 82) * fold);
         }
+        // Nose-wheel steering: the whole nose leg turns about its vertical strut on the ground.
+        // Opposite sense to the rudder, whose trailing edge sits behind its hinge.
+        BoneState noseLeg = instance.getBone("gear_nose");
+        F16VisualStateManager.RenderState state = F16VisualStateManager.renderState(plane, partial);
+        if (noseLeg != null && progress < 0.001F && plane.onGround())
+            noseLeg.rotation.rotateY((float) Math.toRadians(-NOSE_STEER * state.surfaces().yaw()));
         // Bay doors stand open while the gear is out and close flush once it is stowed.
         for (String name : GEAR_DOORS) {
             BoneState door = instance.getBone(name);
             if (door != null) door.rotation.rotateZ((float) Math.toRadians(name.endsWith("_l") ? -85 : 85) * (1 - fold));
         }
-        // One STATES lookup for all values of this frame.
-        F16VisualStateManager.RenderState state = F16VisualStateManager.renderState(plane, partial);
+        // One STATES lookup for all values of this frame (taken above).
         F16ControlSurfaces.Axes axes = state.surfaces();
         rotateSurface(instance, "aileron_left", 25 * axes.roll(), false);
         rotateSurface(instance, "aileron_right", -25 * axes.roll(), false);
