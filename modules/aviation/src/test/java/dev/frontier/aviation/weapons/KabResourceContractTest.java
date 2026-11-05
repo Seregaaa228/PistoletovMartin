@@ -60,13 +60,22 @@ public final class KabResourceContractTest {
             .getAsJsonObject("animations").getAsJsonObject("animation.projectile.start");
         check(start != null && start.get("loop").getAsString().equals("hold_on_last_frame"), "wings stay deployed");
 
-        JsonObject su25 = JsonParser.parseString(Files.readString(Path.of(
-            "src/main/resources/data/frontier_aviation/sbw/vehicles/su25.json"))).getAsJsonObject();
         // КАБ-500 is released only from the DeepStrike tablet pylons, never from the SBW weapon wheel.
-        check(su25.getAsJsonArray("Seats").get(0).getAsJsonObject().getAsJsonArray("Weapons").toString()
-            .equals("[\"Cannon\"]"), "pilot weapon wheel has no KAB");
-        check(!su25.getAsJsonObject("Weapons").has("GuidedBomb"), "no native GuidedBomb gun");
-        check(WeaponLoadout.SU25.find("glide_bomb").isEmpty(), "no glide_bomb wheel slot");
+        for (String jet : new String[]{"su25", "f16", "j10"}) {
+            JsonObject config = JsonParser.parseString(Files.readString(Path.of(
+                "src/main/resources/data/frontier_aviation/sbw/vehicles/" + jet + ".json"))).getAsJsonObject();
+            var wheel = config.getAsJsonArray("Seats").get(0).getAsJsonObject().getAsJsonArray("Weapons").toString();
+            check(!wheel.contains("GuidedBomb") && !wheel.contains("Kab"), jet + " pilot weapon wheel has no KAB");
+            check(!config.getAsJsonObject("Weapons").has("GuidedBomb"), jet + " no native GuidedBomb gun");
+        }
+        for (var loadout : new WeaponLoadout[]{WeaponLoadout.SU25, WeaponLoadout.F16, WeaponLoadout.J10})
+            check(loadout.find("glide_bomb").isEmpty(), "no glide_bomb wheel slot");
+        // The hung КАБ's tail fins are an X, so they pass beside the narrow pylons.
+        for (JsonElement bone : root.getAsJsonArray("bones")) {
+            JsonObject object = bone.getAsJsonObject();
+            if (!object.get("name").getAsString().equals("fins")) continue;
+            check(object.getAsJsonArray("rotation").toString().equals("[0,0,45]"), "X tail fins");
+        }
         for (String locale : new String[]{"en_us", "ru_ru"}) {
             JsonObject lang = JsonParser.parseString(Files.readString(ASSETS.resolve("lang/" + locale + ".json"))).getAsJsonObject();
             check(lang.has("entity.frontier_aviation.kab_500") && lang.has("frontier_aviation.tablet.weapon.kab_500"), locale + " names");

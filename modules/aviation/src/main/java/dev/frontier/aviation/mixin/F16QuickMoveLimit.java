@@ -2,7 +2,7 @@ package dev.frontier.aviation.mixin;
 
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity;
 import com.atsuishio.superbwarfare.inventory.menu.AbstractVehicleContainerMenu;
-import dev.frontier.aviation.ordnance.F16Loadout;
+import dev.frontier.aviation.ordnance.StoreLoadout;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
@@ -23,10 +23,10 @@ public abstract class F16QuickMoveLimit extends AbstractContainerMenu {
         at = @At("HEAD"), cancellable = true, require = 1)
     private void aviation$quickMoveOrdnance(Player player, int index, CallbackInfoReturnable<ItemStack> result) {
         VehicleEntity plane = getVehicle();
-        if (plane == null || !F16Loadout.supports(plane) || index < 0 || index >= 36 || index >= slots.size()) return;
+        if (plane == null || !StoreLoadout.supports(plane) || index < 0 || index >= 36 || index >= slots.size()) return;
         var sourceSlot = slots.get(index);
         ItemStack source = sourceSlot.getItem();
-        if (source.isEmpty() || F16Loadout.type(source) == null) return;
+        if (source.isEmpty() || StoreLoadout.type(plane, source) == null) return;
         ItemStack original = source.copy();
         ItemStack remainder = source.copy();
         var inventory = plane.getInventory();

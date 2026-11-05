@@ -7,7 +7,7 @@ import dev.frontier.aviation.api.AircraftArmament;
 import dev.frontier.aviation.api.AircraftController;
 import dev.frontier.aviation.control.ControlLease;
 import dev.frontier.aviation.control.PilotCommand;
-import dev.frontier.aviation.ordnance.F16StormLoader;
+import dev.frontier.aviation.ordnance.RackLoader;
 import dev.sbw.deepstrike.game.MissileData;
 import dev.sbw.deepstrike.game.MissileKind;
 import dev.sbw.deepstrike.vehicle.Su24mEntity;
@@ -212,7 +212,7 @@ final class F16AirToAirOrdnanceScenario {
 
     private boolean checkStormTransfer() {
         var item = ForgeRegistries.ITEMS.getValue(new ResourceLocation("deepstrike", "storm_shadow"));
-        if (item == null || !((Object) plane instanceof F16StormLoader loader)) return false;
+        if (item == null || !((Object) plane instanceof RackLoader loader)) return false;
         ItemStack stack = new ItemStack(item);
         var data = new MissileData(MissileKind.STORM_SHADOW, MissileData.WARHEAD_HE,
             MissileData.ENGINE_TURBOJET, List.of(), MissileData.CAMO_DEFAULT, 1000, 1000);

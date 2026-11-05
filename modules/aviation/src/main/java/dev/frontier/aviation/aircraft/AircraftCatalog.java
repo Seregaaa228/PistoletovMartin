@@ -29,7 +29,7 @@ public final class AircraftCatalog {
             WeaponLoadout.F16, true, new AircraftModel(8, 6.5f,
                 List.of(new AircraftModel.Exhaust(0, 2.46, -6.11)), 1.5f)),
         new AircraftDefinition("frontier_aviation:j10", FIGHTER, HandlingProfile.FIGHTER,
-            WeaponLoadout.CANNON_ONLY, true, new AircraftModel(8, 6.5f,
+            WeaponLoadout.J10, true, new AircraftModel(8, 6.5f,
                 List.of(new AircraftModel.Exhaust(0, 2.55, -7.4)), 1.5f)),
         nativeAircraft("superbwarfare:j_16", FIGHTER),
         nativeAircraft("superbwarfare:kv_16", FIGHTER),

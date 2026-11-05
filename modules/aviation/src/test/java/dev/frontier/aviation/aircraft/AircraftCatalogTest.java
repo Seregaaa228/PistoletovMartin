@@ -57,8 +57,8 @@ public final class AircraftCatalogTest {
             "medium AAM native name is stable");
         check(fighter.weapons().find("medium_agmissile").orElseThrow().nativeGun().equals("MediumAGMissile"),
             "medium AGM has a stable separate native slot");
-        check(AircraftCatalog.find("frontier_aviation:su25").orElseThrow().weapons().find("missile").isEmpty(),
-            "cannon-only model cannot acquire another model's missile");
+        check(AircraftCatalog.find("frontier_aviation:j10").orElseThrow().weapons().find("missile").isEmpty(),
+            "a model cannot acquire another model's missile");
         check(AircraftCatalog.find("test:unknown").isEmpty(), "unknown models require a definition");
         check(FlightProfiles.find("superbwarfare:ah_6").orElseThrow().kind() == FlightKind.HELICOPTER,
             "helicopter kind retained");

@@ -11,6 +11,8 @@ import dev.frontier.aviation.LightAviation;
 import dev.frontier.aviation.aircraft.AircraftCatalog;
 import dev.frontier.aviation.api.AircraftController;
 import dev.frontier.aviation.control.ControlLease;
+import dev.frontier.aviation.ordnance.StoreLoadout;
+import dev.frontier.aviation.ordnance.StoreStations;
 import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.Objects;
@@ -45,6 +47,12 @@ public final class ManualMissileShots {
     private static final ThreadLocal<ArrayDeque<Frame>> FRAMES = ThreadLocal.withInitial(ArrayDeque::new);
     private ManualMissileShots() {}
 
+    /** Visual kind (StoreStations, 2..5) a native missile gun shows on its station, or 0. */
+    private static int kind(String gun) {
+        int index = StoreStations.GUNS.indexOf(gun);
+        return index < 0 ? 0 : StoreStations.AGM_65 + index;
+    }
+
     public static boolean reserve(VehicleEntity plane, LivingEntity pilot, long epoch, String gun,
                                   int count, Vec3 target, Vec3 ray, UUID trackedEntity) {
         if (!(plane.level() instanceof ServerLevel level) || !level.getServer().isSameThread()) return false;
@@ -55,14 +63,15 @@ public final class ManualMissileShots {
         var tickets = PENDING.computeIfAbsent(plane, ignored -> new ArrayDeque<>());
         while (!tickets.isEmpty() && now - tickets.peekFirst().tick() > 4) tickets.removeFirst();
         if (count < 1 || count > 2 || tickets.size() + count > 16) return false;
-        int bits = plane instanceof Su24mEntity su24 && dev.frontier.aviation.ordnance.F16Loadout.supports(plane)
-            ? dev.frontier.aviation.ordnance.F16Loadout.visualBits(su24) : 0;
-        int kind = switch (gun) { case "Missile" -> 2; case "AAMissile" -> 3;
-            case "LightAAMissile" -> 4; case "MediumAGMissile" -> 5; default -> 0; };
-        int[] order = kind == 4 ? new int[]{4, 5, 2, 3, 0, 1} : new int[]{2, 3, 0, 1};
+        var layout = StoreLoadout.layout(plane).orElse(null);
+        int bits = layout != null ? StoreLoadout.visualBits((Su24mEntity) plane) : 0;
+        int kind = kind(gun);
+        // Each shot leaves from a station showing that missile, in the layout's firing order.
+        int[] order = layout == null || kind == 0 ? new int[0] : layout.fireOrder(
+            kind == StoreStations.LIGHT_AAM ? StoreStations.Store.LIGHT_AIR_TO_AIR : StoreStations.Store.UNDERWING);
         int[] stations = {-1, -1};
         int matched = 0;
-        for (int station : order) if (kind != 0 && ((bits >>> (station * 3)) & 7) == kind && matched < count)
+        for (int station : order) if (((bits >>> (station * 3)) & 7) == kind && matched < count)
             stations[matched++] = station;
         for (int shot = 0; shot < count; shot++) tickets.addLast(
             new Ticket(plane.getUUID(), pilot.getUUID(), epoch, gun, target, ray, trackedEntity, now, stations[shot]));
@@ -136,11 +145,14 @@ public final class ManualMissileShots {
             var vehicle = ((ServerLevel) event.getLevel()).getEntity(frame.ticket.vehicle());
             if (vehicle instanceof VehicleEntity plane && owner != null
                     && (owner.getUUID().equals(frame.ticket.pilot()) || owner.getUUID().equals(frame.ticket.vehicle()))) {
-                int station = frame.ticket.station();
-                double[] x = {2.1, -2.1, 3.4, -3.4, 4.95, -4.95};
-                var point = plane.getTransformFromString("Vehicle").transformPosition(new org.joml.Vector3d(
-                    x[station], station >= 4 ? 2.6 : 2.2, station >= 4 ? 1.25 : .2));
-                projectile.setPos(point.x, point.y, point.z);
+                var layout = StoreLoadout.layout(plane).orElse(null);
+                int station = frame.ticket.station(), kind = kind(frame.ticket.gun());
+                if (layout != null && station < layout.size() && kind != 0) {
+                    // Leave from the hung missile's own origin (its exhaust), where it was drawn.
+                    double[] p = StoreStations.launch(layout.stations().get(station), StoreStations.model(kind, -1));
+                    var point = plane.getTransformFromString("Vehicle").transformPosition(new org.joml.Vector3d(p[0], p[1], p[2]));
+                    projectile.setPos(point.x, point.y, point.z);
+                }
             }
         }
         if (event.getEntity() instanceof WireGuideMissileEntity wire

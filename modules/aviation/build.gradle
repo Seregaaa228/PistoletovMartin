@@ -32,7 +32,7 @@ def flightChecks = [
     aircraftAerodynamicModelTest: 'dev.frontier.aviation.handling.AerodynamicModelTest',
     aircraftTerminalDestructionContractTest: 'dev.frontier.aviation.AircraftTerminalDestructionContractTest',
     missileAimSolutionTest: 'dev.frontier.aviation.missile.MissileAimSolutionTest',
-    f16StationsTest: 'dev.frontier.aviation.ordnance.F16StationsTest',
+    storeStationsTest: 'dev.frontier.aviation.ordnance.StoreStationsTest',
     f16AirBrakeSmoothingTest: 'dev.frontier.aviation.client.F16AirBrakeSmoothingTest',
     f16PayloadWireTest: 'dev.frontier.aviation.control.net.F16PayloadWireTest',
     interceptSolverTest: 'dev.frontier.aviation.weapons.InterceptSolverTest',
