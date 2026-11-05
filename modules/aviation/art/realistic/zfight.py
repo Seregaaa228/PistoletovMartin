@@ -5,7 +5,7 @@ way and overlap fight for the depth buffer and flicker in game. resolve()
 pushes the smaller of the two faces outward by EPS so it always wins; run it
 on the finished cube list before the atlas is packed.
 
-    python3 zfight.py [su25 f16 j10]   # report remaining pairs after repair
+    python3 zfight.py [su25 f16 j10]   # report remaining pairs after hidden-face removal and repair
 """
 import importlib
 import os
@@ -113,10 +113,12 @@ def resolve(cubes, eps=EPS, rounds=4):
 
 def main():
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import cull
     for name in sys.argv[1:] or ['su25', 'f16', 'j10']:
         mod = importlib.import_module(name)
         for lod in (False, True):
             m = mod.build(lod=lod)
+            cull.cull(m.cubes)          # as build_models does: hidden faces never fight
             before = len(coplanar_pairs(m.cubes))
             left = resolve(m.cubes)
             print('%s%s: %d coplanar pairs, %d left after repair' % (name, ' LOD' if lod else '', before, len(left)))

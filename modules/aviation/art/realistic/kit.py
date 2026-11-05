@@ -33,6 +33,54 @@ def rot_matrix(rotation):
     return mz @ my @ mx
 
 
+def euler_from_matrix(r):
+    """Geo rotation (rx, ry, rz) in degrees whose rot_matrix() equals the proper rotation r."""
+    r = np.asarray(r, float)
+    b = math.asin(max(-1.0, min(1.0, -r[2, 0])))
+    if abs(math.cos(b)) > 1e-9:
+        c = math.atan2(r[2, 1], r[2, 2])
+        a = math.atan2(r[1, 0], r[0, 0])
+    else:  # gimbal lock: fold the roll into a
+        c = 0.0
+        a = math.atan2(-r[0, 1], r[1, 1])
+    return -math.degrees(c), math.degrees(b), -math.degrees(a)
+
+
+def axis_rot(axis, deg):
+    """Right-handed rotation matrix about 'x', 'y' or 'z'."""
+    t = math.radians(deg)
+    c, s = math.cos(t), math.sin(t)
+    if axis == 'x':
+        return np.array([[1, 0, 0], [0, c, -s], [0, s, c]])
+    if axis == 'y':
+        return np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
+    return np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
+
+
+def smooth(stations, k):
+    """Subdivide loft stations k times per interval (Catmull-Rom through every column), so a
+    nose or a transition steps in small increments instead of a few big ones."""
+    if k <= 1 or len(stations) < 2:
+        return list(stations)
+    a = np.array(stations, float)
+    pad = np.vstack([2 * a[0] - a[1], a, 2 * a[-1] - a[-2]])
+    out = []
+    for i in range(len(a) - 1):
+        p0, p1, p2, p3 = pad[i], pad[i + 1], pad[i + 2], pad[i + 3]
+        for j in range(k):
+            t = j / k
+            v = 0.5 * (2 * p1 + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t
+                       + (-p0 + 3 * p1 - 3 * p2 + p3) * t ** 3)
+            if j == 0:
+                v = p1.copy()
+            v[0] = p1[0] + (p2[0] - p1[0]) * t          # z stays evenly spaced
+            for col in (5, 6):                           # chamfers stay between their end values
+                v[col] = min(max(v[col], min(p1[col], p2[col])), max(p1[col], p2[col]))
+            out.append(tuple(float(x) for x in v))
+    out.append(tuple(float(x) for x in a[-1]))
+    return out
+
+
 def face_frame(face, o, s):
     """Corner, s-axis, t-axis and outward normal of a face in unrotated cube space.
 
@@ -123,11 +171,65 @@ class Model:
         return self.cube(bone, (cx - sx / 2, cy - sy / 2, cz - sz / 2), size, mat,
                          pivot=pivot if pivot is not None else center, rotation=rotation, **kw)
 
+    def oriented(self, bone, center, size, r, mat, **kw):
+        """Cube of `size` centred on `center` whose local axes are the columns of rotation r."""
+        rot = euler_from_matrix(r)
+        if not any(abs(a) > 1e-7 for a in rot):
+            rot = None
+        return self.centered(bone, center, size, mat, rotation=rot, pivot=tuple(center), **kw)
+
+    def prism(self, bone, axis, center, radius, length, mat, n=6, lod=True, caps=(True, True), stagger=0.04,
+              roll=0.0):
+        """Regular 2n-gon prism along 'x', 'y' or 'z' with inradius `radius` (a flat facing down
+        for X/Z axes, so a wheel keeps its contact height). It is the union of n bars turned in
+        180/n degree steps; each bar shows two facets and its caps, its sides lie inside the
+        others. Caps are staggered by `stagger` px per bar so overlapping caps never z-fight."""
+        # half-width rounded so the exported (5-decimal) bar stays exactly centred on `center`
+        a = round(radius * math.tan(math.pi / (2 * n)), 4)
+        out = []
+        c0 = np.array(center, float)
+        ax = {'x': 0, 'y': 1, 'z': 2}[axis]
+        for k in range(n):
+            # stagger only the shown caps; a hidden end stays flush with what it is built against
+            cut = [k * stagger if caps[0] else 0.0, k * stagger if caps[1] else 0.0]
+            ln = length - cut[0] - cut[1]
+            c = c0.copy()
+            c[ax] += (cut[0] - cut[1]) / 2
+            if axis == 'x':
+                size, r = (ln, 2 * radius, 2 * a), axis_rot('x', roll + 180.0 * k / n)
+                skip = {'north', 'south'} | ({'east'} if not caps[0] else set()) | ({'west'} if not caps[1] else set())
+            elif axis == 'z':
+                size, r = (2 * a, 2 * radius, ln), axis_rot('z', roll + 180.0 * k / n)
+                skip = {'east', 'west'} | ({'north'} if not caps[0] else set()) | ({'south'} if not caps[1] else set())
+            else:
+                size, r = (2 * radius, ln, 2 * a), axis_rot('y', roll + 180.0 * k / n)
+                skip = {'north', 'south'} | ({'down'} if not caps[0] else set()) | ({'up'} if not caps[1] else set())
+            out.append(self.oriented(bone, c, size, r, mat, lod=lod, skip=skip))
+        return out
+
+    def petals(self, bone, cx, cy, z0, z1, r0, r1, n, thick, mat, lod=True, roll=0.0, overlap=1.06, tag=None):
+        """Ring of n plates forming a frustum along Z from radius r0 at z0 to r1 at z1 (outer
+        surface): the flaps of a convergent nozzle or an intake lip."""
+        dz, dr = z1 - z0, r1 - r0
+        ln = math.hypot(dz, dr)
+        cos_t, sin_t = dz / ln, dr / ln
+        tilt = np.array([[1, 0, 0], [0, cos_t, sin_t], [0, -sin_t, cos_t]], float)   # columns: X, normal, along
+        width = 2 * max(r0, r1) * math.tan(math.pi / n) * overlap
+        rm = (r0 + r1) / 2 - thick / 2 * cos_t
+        out = []
+        for k in range(n):
+            rr = axis_rot('z', roll + 360.0 * k / n)
+            centre = np.array([cx, cy, (z0 + z1) / 2 + thick / 2 * sin_t]) + rr @ np.array([0.0, rm, 0.0])
+            out.append(self.oriented(bone, centre, (width, thick, ln), rr @ tilt, mat, lod=lod,
+                                     skip={'east', 'west'}, tag=tag))
+        return out
+
     # ----- composite shapes -------------------------------------------------
     def section(self, bone, z0, z1, cx, cy, w, h, ct, cb=None, mat='skin', lod=True, ends=(True, True),
-                skip_bottom=False, top_mat=None):
+                skip_bottom=False, top_mat=None, round_=False):
         """Octagonal fuselage section along Z: width w, height h centred at (cx, cy),
-        top corner chamfer ct and bottom chamfer cb (pixels)."""
+        top corner chamfer ct and bottom chamfer cb (pixels). round_ replaces each chamfer
+        by two facets on a quarter circle through the same end points (a rounder 16-gon)."""
         cb = ct if cb is None else cb
         ct = min(ct, w / 2 - 0.01, h / 2 - 0.01)
         cb = min(cb, w / 2 - 0.01, h / 2 - 0.01)
@@ -148,6 +250,28 @@ class Model:
         for c, top in ((ct, True), (cb, False)):
             if c <= 0.15:
                 continue
+            if round_ and c > 0.6 and round_ in (True, 'top' if top else 'bottom'):
+                ey = 1 if top else -1
+                for side in (-1, 1):
+                    o = np.array([cx + side * (w / 2 - c), (y1 - c) if top else (y0 + c)])
+                    pts = [o + c * np.array([0, ey]), o + c * np.array([side, ey]) / math.sqrt(2),
+                           o + c * np.array([side, 0])]
+                    for k, (pa, pb) in enumerate(zip(pts, pts[1:])):
+                        u = (pb - pa) / np.linalg.norm(pb - pa)
+                        nrm = np.array([-u[1], u[0]])
+                        mid = (pa + pb) / 2
+                        if nrm @ (mid - o) < 0:
+                            u, nrm = -u, -nrm
+                        t = c * math.cos(math.pi / 8) + 0.02
+                        ctr = mid - nrm * t / 2
+                        r = np.array([[u[0], nrm[0], 0], [u[1], nrm[1], 0], [0, 0, 1]])
+                        cube = self.oriented(bone, (ctr[0], ctr[1], (z0 + z1) / 2),
+                                             (2 * c * math.sin(math.pi / 8) + 0.01, t, z1 - z0), r,
+                                             (top_mat or mat) if top else mat, lod=lod,
+                                             skip=skip | {'down', 'east', 'west'})
+                        cube.tag = 'arc%d' % k
+                        out.append(cube)
+                continue
             t = c / math.sqrt(2) + 0.02
             length = c * math.sqrt(2)
             for side in (-1, 1):
@@ -166,7 +290,9 @@ class Model:
         # step the end faces back by a hair (core 0, top/bottom 0.04, chamfers 0.08 px)
         # so the overlapping caps do not z-fight (flicker) in game.
         for k, c in enumerate(out):
-            inset = 0.0 if k == 0 else (0.04 if k < 3 else 0.08)
+            inset = 0.0 if k == 0 else (0.04 if k < 3 else (0.12 if c.tag == 'arc1' else 0.08))
+            if round_ and c.tag is None:
+                c.tag = 'arc'
             if ends[0]:
                 c.origin[2] += inset
                 c.size[2] -= inset
@@ -174,7 +300,7 @@ class Model:
                 c.size[2] -= inset
         return out
 
-    def loft(self, bone, stations, mat='skin', lod=True, top_mat=None, skip_bottom=False):
+    def loft(self, bone, stations, mat='skin', lod=True, top_mat=None, skip_bottom=False, round_=False):
         """Stations: (z, cx, cy, w, h, ct, cb). One section per interval using the
         mean of its two end stations, end faces kept only where they are exposed."""
         segs = []
@@ -189,7 +315,7 @@ class Model:
             front = prev is None or s[4] > prev[4] + 0.3 or s[5] > prev[5] + 0.3
             back = nxt is None or s[4] > nxt[4] + 0.3 or s[5] > nxt[5] + 0.3
             cubes += self.section(bone, s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], mat=mat, lod=lod,
-                                  ends=(front, back), top_mat=top_mat, skip_bottom=skip_bottom)
+                                  ends=(front, back), top_mat=top_mat, skip_bottom=skip_bottom, round_=round_)
         return cubes
 
     def slab(self, bone, p0, p1, width, thick, mat, up=(0, 1, 0), lod=True, skip=()):
@@ -222,7 +348,7 @@ class Model:
                          skip=('up',))
 
     def panel(self, bone, root, tip, thick, mat, side=1, strips=3, lod=True, thin_tip=None,
-              skip_root=True, tip_mat=None, root_in=0.0):
+              skip_root=True, tip_mat=None, root_in=0.0, le_round=False):
         """Tapered, swept lifting surface (wing, stabiliser) in its own plane (Y=0).
 
         root/tip: (x_abs, z_le, chord) with x_abs measured outward from the
@@ -293,13 +419,24 @@ class Model:
                 else:
                     ze = zr + cr + (xm - xr) * math.tan(sweep)
                     sgn = -1
-                u = xm - sgn * math.sin(sweep) * d / 2
-                z = ze + sgn * math.cos(sweep) * d / 2
-                cx = side * u
                 skip = set()
                 if skip_root and k == 0:
                     skip.add('east' if side > 0 else 'west')
-                cube = self.cube(bone, (cx - length / 2, -t / 2, z - d / 2), (length, t, d),
+                e = t / 2 if (edge == 'le' and le_round) else 0.0
+                if e:
+                    # rounded leading edge: a 45-degree 'diamond' whose front vertex is the LE line;
+                    # the flat box starts at its widest point, half a thickness behind the LE
+                    s = t / math.sqrt(2) - 0.02
+                    du, dz = -math.sin(sweep) * e, math.cos(sweep) * e
+                    self.cube(bone, (side * (xm + du) - length / 2, -s / 2, ze + dz - s / 2), (length, s, s), mat,
+                              pivot=(side * (xm + du), 0, ze + dz), rotation=(45, -side * math.degrees(sweep), 0),
+                              lod=lod, skip=set(skip))
+                    out.append(self.cubes[-1])
+                    skip.add('north')
+                u = xm - sgn * math.sin(sweep) * (d + e) / 2
+                z = ze + sgn * math.cos(sweep) * (d + e) / 2
+                cx = side * u
+                cube = self.cube(bone, (cx - length / 2, -t / 2, z - (d - e) / 2), (length, t, d - e),
                                  tip_mat if (tip_mat and k == strips - 1) else mat,
                                  pivot=(cx, 0, z), rotation=(0, -side * math.degrees(sweep), 0),
                                  lod=lod, skip=skip)
@@ -401,7 +538,9 @@ class Atlas:
                 # Gentle outline along every face edge, like hand-painted panel borders.
                 edge = np.minimum(np.minimum(ss, 1 - ss) * w, np.minimum(tt, 1 - tt) * h)
                 if c.mat != 'glass':
-                    out[..., :3] *= np.where(edge < 1.0, 0.86, 1.0)[..., None]
+                    # facets of a rounded section are one surface: only a faint seam there
+                    k = 0.96 if isinstance(c.tag, str) and c.tag.startswith('arc') else 0.86
+                    out[..., :3] *= np.where(edge < 1.0, k, 1.0)[..., None]
                 self.image[v:v + h, u:u + w] = out
                 # Bleed one texel around the rect to avoid seams under filtering.
                 if v > 0:

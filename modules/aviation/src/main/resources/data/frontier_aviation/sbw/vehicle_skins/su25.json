@@ -1,0 +1,25 @@
+{
+  "Skins": [
+    {
+      "Id": "standard",
+      "Name": "Afghan Four-Tone",
+      "Description": "Четырёхцветный камуфляж ВВС СССР, голубой низ",
+      "Texture": "frontier_aviation:textures/bedrock/vehicle/su25.png",
+      "Priority": 1
+    },
+    {
+      "Id": "grey",
+      "Name": "Modern Grey",
+      "Description": "Двухцветный серый камуфляж Су-25СМ3",
+      "Texture": "frontier_aviation:textures/bedrock/vehicle/su25_grey.png",
+      "Priority": 2
+    },
+    {
+      "Id": "desert",
+      "Name": "Desert",
+      "Description": "Песочно-коричневый пустынный камуфляж",
+      "Texture": "frontier_aviation:textures/bedrock/vehicle/su25_desert.png",
+      "Priority": 3
+    }
+  ]
+}
