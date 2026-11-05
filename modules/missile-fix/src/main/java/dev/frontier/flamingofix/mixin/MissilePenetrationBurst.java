@@ -23,6 +23,8 @@ public abstract class MissilePenetrationBurst {
         if(missile.isIntercepted() || !"he".equals(warhead) && !"penetrating".equals(warhead))return;
         double depth=MissileImpactConfig.penetration(missile.kind().id);
         if(depth<=0)return;
+        // The roof it hit: the burst below vents back up to here.
+        double roofY=missile.impactPosition().y;
         var result=MissilePenetration.resolve(missile.impactPosition(),depth,
                 pos->flamingo$solid(level,pos),flamingo$hard(level));
         for(BlockPos pos:result.channel()) {
@@ -33,7 +35,7 @@ public abstract class MissilePenetrationBurst {
         ((MissileImpactAccess)(Object)missile).flamingo$setImpactPosition(result.burst());
         if(!result.channel().isEmpty()) {
             double radius=missile.kind().craterRadius*MissileImpactConfig.blastScale(missile.kind().id);
-            flamingo$CONFINED.set(new Confined(missile.impactPosition().y,result.burst(),radius));
+            flamingo$CONFINED.set(new Confined(roofY,result.burst(),radius));
         }
     }
 

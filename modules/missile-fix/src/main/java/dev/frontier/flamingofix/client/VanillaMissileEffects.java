@@ -154,6 +154,14 @@ public final class VanillaMissileEffects {
         if(distance>(double)style.visible()*style.visible())return;
         BlastFireball.add(position.add(0,-.8,0),style,mc.level.getGameTime(),event.seed());
         float radius=style.radius();
+        // A deep rumble under DeepStrike's own blast sound: heard further for a bigger blast.
+        if(radius>=10) {
+            float volume=Math.min(16,radius/4);
+            mc.level.playLocalSound(position.x,position.y,position.z,net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE,
+                net.minecraft.sounds.SoundSource.BLOCKS,volume,style.mushroom()?.45f:.6f,true);
+            if(style.mushroom())mc.level.playLocalSound(position.x,position.y,position.z,net.minecraft.sounds.SoundEvents.LIGHTNING_BOLT_THUNDER,
+                net.minecraft.sounds.SoundSource.WEATHER,16,.5f,true);
+        }
         var random=net.minecraft.util.RandomSource.create(event.seed()^0x5DEECE66DL);
         int flashes=radius<10?0:3;
         for(int i=0;i<flashes;i++) {
@@ -168,8 +176,8 @@ public final class VanillaMissileEffects {
         BlockState ground=mc.level.getBlockState(BlockPos.containing(position).below());
         if(ground.isAir())ground=Blocks.DIRT.defaultBlockState();
         var debris=new BlockParticleOption(ParticleTypes.BLOCK,ground);
-        int pieces=radius<10?12:radius<25?40:radius<40?60:80;
-        double fling=radius<10?.35:radius<25?.6:.9;
+        int pieces=radius<10?12:radius<25?40:radius<40?60:120;
+        double fling=radius<10?.35:radius<25?.6:radius<40?.9:1.4;
         for(int i=0;i<pieces;i++) {
             double angle=random.nextDouble()*Math.PI*2,speed=.2+random.nextDouble()*fling;
             particle(mc,debris,position.add(0,.5,0),new Vec3(Math.cos(angle)*speed,.4+random.nextDouble()*fling,Math.sin(angle)*speed),true);

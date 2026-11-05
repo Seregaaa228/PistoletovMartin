@@ -41,7 +41,8 @@ public final class BlastFireball {
         if (kind == null) return null;
         Style style;
         if (kind == MissileKind.PEACEKEEPER || "nuclear".equals(warhead)) {
-            style = new Style(kind.craterRadius * 1.2f, 160, 10, 70, 6, 600, 4, 220, 0.3, 1024, true);
+            // Matches the server's default 1.5 blast scale for Peacekeeper.
+            style = new Style(kind.craterRadius * 1.2f * 1.5f, 180, 12, 90, 8, 700, 5, 260, 0.35, 1024, true);
         } else if (kind == MissileKind.FP5) {
             style = new Style(kind.craterRadius * 0.9f, 52, 8, 40, 4.5f, 400, 4, 160, 0.17, 512, false);
         } else if (kind == MissileKind.STORM_SHADOW) {
@@ -64,7 +65,7 @@ public final class BlastFireball {
         }
     }
     private static final List<Blast> ACTIVE = new ArrayList<>();
-    private static final int MAX = 8, COLUMN_PER_TICK = 16;
+    private static final int MAX = 8, COLUMN_PER_TICK = 16, CONDENSATION_TICKS = 30;
 
     public static void add(Vec3 center, Style style, long gameTime, long seed) {
         if (ACTIVE.size() >= MAX) ACTIVE.remove(0);
@@ -103,6 +104,7 @@ public final class BlastFireball {
             pose.pushPose();
             pose.translate(blast.center.x - camera.x, blast.center.y - camera.y, blast.center.z - camera.z);
             if (age < blast.style.waveTicks()) { wave(out, pose.last().pose(), blast.style, age / blast.style.waveTicks()); any = true; }
+            if (blast.style.mushroom() && age < CONDENSATION_TICKS) { condensation(out, pose.last().pose(), blast, age); any = true; }
             if (blast.style.mushroom()) { mushroom(out, pose.last().pose(), blast, age); any = true; }
             pose.popPose();
         }
@@ -227,6 +229,27 @@ public final class BlastFireball {
                 float[] p11 = torus(major, minor, u1, v1, cap), p01 = torus(major, minor, u0, v1, cap);
                 quad(out, m, p00[0], p00[1], p00[2], p10[0], p10[1], p10[2], p11[0], p11[1], p11[2], p01[0], p01[1], p01[2],
                         c[0], c[1], c[2], alpha, alpha);
+            }
+        }
+    }
+
+    /** The shock front's condensation shell: a white sphere racing out past the fireball and thinning. */
+    private static void condensation(VertexConsumer out, Matrix4f m, Blast blast, float age) {
+        float t = age / CONDENSATION_TICKS, r = blast.style.radius() * (0.6f + 2.4f * (1 - (1 - t) * (1 - t)));
+        int alpha = (int) (110 * (1 - t) * (1 - t));
+        if (alpha <= 0) return;
+        int rings = 10, segments = 20;
+        for (int lat = 0; lat < rings; lat++) {
+            double a0 = Math.PI * lat / rings - Math.PI / 2, a1 = Math.PI * (lat + 1) / rings - Math.PI / 2;
+            // Only the upper half; the ground takes the rest.
+            if (a1 <= 0) continue;
+            float y0 = (float) Math.sin(a0) * r, y1 = (float) Math.sin(a1) * r;
+            float c0 = (float) Math.cos(a0) * r, c1 = (float) Math.cos(a1) * r;
+            for (int seg = 0; seg < segments; seg++) {
+                double b0 = 2 * Math.PI * seg / segments, b1 = 2 * Math.PI * (seg + 1) / segments;
+                float x0 = (float) Math.cos(b0), z0 = (float) Math.sin(b0), x1 = (float) Math.cos(b1), z1 = (float) Math.sin(b1);
+                quad(out, m, x0 * c0, Math.max(0, y0), z0 * c0, x1 * c0, Math.max(0, y0), z1 * c0, x1 * c1, y1, z1 * c1,
+                        x0 * c1, y1, z0 * c1, 236, 238, 244, alpha, alpha);
             }
         }
     }

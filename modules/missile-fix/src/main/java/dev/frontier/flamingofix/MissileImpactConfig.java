@@ -19,7 +19,7 @@ public final class MissileImpactConfig {
             SCALE.put(warhead,builder.defineInRange(warhead,DirectImpactProfile.scale(warhead),0,10));
         builder.pop().comment("Native crater radius/depth and partial-destruction radius multiplier; destroyed blocks grow ~ scale^3.").push("blastScale");
         for(String kind:new String[]{"fp5","storm_shadow","jagm","peacekeeper","spike_nlos"})
-            BLAST.put(kind,builder.defineInRange(kind,kind.equals("storm_shadow")?2.0:1.0,0.25,3.0));
+            BLAST.put(kind,builder.defineInRange(kind,switch(kind){case "storm_shadow"->2.0;case "peacekeeper"->1.5;default->1.0;},0.25,3.0));
         builder.pop().comment("Penetrator depth in blocks: HE/penetrating warheads punch through roofs and floors along",
                 "their dive and burst on the first solid mass at least 4 blocks thick. 0 bursts at the contact.").push("penetration");
         for(String kind:new String[]{"fp5","storm_shadow","jagm","peacekeeper","spike_nlos"})
