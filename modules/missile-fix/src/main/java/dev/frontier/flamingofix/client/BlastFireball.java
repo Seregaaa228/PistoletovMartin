@@ -41,8 +41,8 @@ public final class BlastFireball {
         if (kind == null) return null;
         Style style;
         if (kind == MissileKind.PEACEKEEPER || "nuclear".equals(warhead)) {
-            // Matches the server's default 1.5 blast scale for Peacekeeper.
-            style = new Style(kind.craterRadius * 1.2f * 1.5f, 180, 12, 90, 8, 700, 5, 260, 0.35, 1024, true);
+            // A compact mushroom; the crater itself is 1.5x (the server's default blast scale).
+            style = new Style(kind.craterRadius * 1.1f, 180, 12, 90, 8, 700, 5, 260, 0.35, 1024, true);
         } else if (kind == MissileKind.FP5) {
             style = new Style(kind.craterRadius * 0.9f, 52, 8, 40, 4.5f, 400, 4, 160, 0.17, 512, false);
         } else if (kind == MissileKind.STORM_SHADOW) {
@@ -65,7 +65,7 @@ public final class BlastFireball {
         }
     }
     private static final List<Blast> ACTIVE = new ArrayList<>();
-    private static final int MAX = 8, COLUMN_PER_TICK = 16, CONDENSATION_TICKS = 30;
+    private static final int MAX = 8, COLUMN_PER_TICK = 16, EXTRA_PER_TICK = 12, CONDENSATION_TICKS = 30;
 
     public static void add(Vec3 center, Style style, long gameTime, long seed) {
         if (ACTIVE.size() >= MAX) ACTIVE.remove(0);
@@ -150,6 +150,53 @@ public final class BlastFireball {
                 mc.particleEngine.createParticle(ParticleTypes.LARGE_SMOKE,
                         blast.center.x + Math.cos(angle) * offset, blast.center.y + 0.5 + random.nextDouble() * 2,
                         blast.center.z + Math.sin(angle) * offset, 0, 0.04 + random.nextDouble() * 0.05, 0);
+            }
+            double near = style.mushroom() ? 384 : 256;
+            if (r >= 10 && distance <= near * near) aftermath(mc, blast, age, random, setting == ParticleStatus.ALL ? EXTRA_PER_TICK : EXTRA_PER_TICK / 2);
+        }
+    }
+
+    /**
+     * What follows a large blast: secondary pops over the crater, a fan of sparks, glowing debris
+     * thrown up and falling back, small fires on the ground and, after a strategic one, falling ash.
+     */
+    private static void aftermath(Minecraft mc, Blast blast, long age, RandomSource random, int budget) {
+        Style style = blast.style;
+        float r = style.radius();
+        boolean big = style.mushroom();
+        Vec3 c = blast.center;
+        if (age >= 4 && age < 64 && age % (big ? 3 : 5) == 0 && budget > 0) {
+            double angle = random.nextDouble() * Math.PI * 2, offset = r * 0.8 * Math.sqrt(random.nextDouble());
+            var pop = big && age % 9 == 0 ? ParticleTypes.EXPLOSION_EMITTER : ParticleTypes.EXPLOSION;
+            mc.particleEngine.createParticle(pop, c.x + Math.cos(angle) * offset, c.y + 0.5 + random.nextDouble() * 2,
+                    c.z + Math.sin(angle) * offset, 0, 0, 0);
+            budget--;
+        }
+        if (age < 10) {
+            for (int i = 0; i < (big ? 6 : 3) && budget > 0; i++, budget--) {
+                double angle = random.nextDouble() * Math.PI * 2, out = 0.3 + random.nextDouble() * 0.5;
+                mc.particleEngine.createParticle(ParticleTypes.FIREWORK, c.x, c.y + 1, c.z,
+                        Math.cos(angle) * out, 0.6 + random.nextDouble() * 0.8, Math.sin(angle) * out);
+            }
+        }
+        if (age < 80) {
+            for (int i = 0; i < (big ? 3 : 2) && budget > 0; i++, budget--) {
+                double angle = random.nextDouble() * Math.PI * 2, offset = r * 0.5 * random.nextDouble();
+                mc.particleEngine.createParticle(ParticleTypes.LAVA, c.x + Math.cos(angle) * offset, c.y + 0.5,
+                        c.z + Math.sin(angle) * offset, 0, 0, 0);
+            }
+        }
+        if (age < 200 && (age & 1) == 0 && budget > 0) {
+            double angle = random.nextDouble() * Math.PI * 2, offset = r * Math.sqrt(random.nextDouble());
+            mc.particleEngine.createParticle(ParticleTypes.FLAME, c.x + Math.cos(angle) * offset, c.y + 0.3,
+                    c.z + Math.sin(angle) * offset, 0, 0.02, 0);
+            budget--;
+        }
+        if (big && age >= 40 && age < 500) {
+            for (int i = 0; i < 2 && budget > 0; i++, budget--) {
+                double angle = random.nextDouble() * Math.PI * 2, offset = r * 2 * Math.sqrt(random.nextDouble());
+                mc.particleEngine.createParticle(ParticleTypes.ASH, c.x + Math.cos(angle) * offset,
+                        c.y + 4 + random.nextDouble() * r, c.z + Math.sin(angle) * offset, 0, 0, 0);
             }
         }
     }
