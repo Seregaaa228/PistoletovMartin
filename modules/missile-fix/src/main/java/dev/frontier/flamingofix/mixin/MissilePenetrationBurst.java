@@ -23,7 +23,7 @@ public abstract class MissilePenetrationBurst {
         if(missile.isIntercepted() || !"he".equals(warhead) && !"penetrating".equals(warhead))return;
         double depth=MissileImpactConfig.penetration(missile.kind().id);
         if(depth<=0)return;
-        var result=MissilePenetration.resolve(missile.impactPosition(),missile.getDeltaMovement(),depth,
+        var result=MissilePenetration.resolve(missile.impactPosition(),depth,
                 pos->flamingo$solid(level,pos),flamingo$hard(level));
         for(BlockPos pos:result.channel()) {
             flamingo$clear(level,pos);

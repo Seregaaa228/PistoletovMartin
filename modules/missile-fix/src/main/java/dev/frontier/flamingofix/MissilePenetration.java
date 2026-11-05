@@ -7,8 +7,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Where a penetrating warhead bursts: it follows its dive (at least 45 degrees down) from the
- * contact through roofs, floors and the air between, and stops on the first solid run at least
+ * Where a penetrating warhead bursts: straight down under the contact (so it never lands past
+ * the aim point) through roofs, floors and the air between, and stops on the first solid run at least
  * {@link #GROUND_RUN} blocks thick (a foundation or the ground), on an unbreakable block, or
  * at the depth limit. The blocks it passed through are its entry channel.
  */
@@ -19,12 +19,8 @@ public final class MissilePenetration {
     public record Result(Vec3 burst, List<BlockPos> channel) { }
 
     /** {@code solid}: occupies the path; {@code hard}: cannot be broken (bedrock, barriers). */
-    public static Result resolve(Vec3 contact, Vec3 velocity, double depth, Predicate<BlockPos> solid, Predicate<BlockPos> hard) {
-        Vec3 dive = velocity.lengthSqr() > 1e-6 ? velocity.normalize() : new Vec3(0, -1, 0);
-        if (dive.y > -0.7071) {
-            double flat = Math.sqrt(dive.x * dive.x + dive.z * dive.z);
-            dive = flat < 1e-6 ? new Vec3(0, -1, 0) : new Vec3(dive.x / flat * 0.7071, -0.7071, dive.z / flat * 0.7071);
-        }
+    public static Result resolve(Vec3 contact, double depth, Predicate<BlockPos> solid, Predicate<BlockPos> hard) {
+        Vec3 dive = new Vec3(0, -1, 0);
         List<BlockPos> channel = new ArrayList<>();
         BlockPos runStart = null, last = null;
         Vec3 runEntry = contact;
