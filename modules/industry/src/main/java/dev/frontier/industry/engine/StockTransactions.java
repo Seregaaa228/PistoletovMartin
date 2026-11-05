@@ -28,10 +28,34 @@ public final class StockTransactions {
     }
 
     public static boolean putOutputs(ItemStackHandler inventory, ItemStack output) {
-        return put(inventory, IndustryRules.INPUTS, IndustryRules.SLOTS, List.of(output), true);
+        return put(inventory, outputStart(inventory), inventory.getSlots(), List.of(output), true);
     }
     public static boolean outputFits(ItemStackHandler inventory, ItemStack output) {
-        return put(inventory, IndustryRules.INPUTS, IndustryRules.SLOTS, List.of(output), false);
+        return put(inventory, outputStart(inventory), inventory.getSlots(), List.of(output), false);
+    }
+    /** Plan the entire stack before writing any container; called only on the server thread. */
+    public static boolean distributedOutputs(List<ItemStackHandler> inventories, ItemStack output, boolean commit) {
+        ItemStack remaining = output.copy();
+        for (ItemStackHandler inventory : inventories) {
+            for (int slot = outputStart(inventory); slot < inventory.getSlots() && !remaining.isEmpty(); slot++)
+                remaining = inventory.insertItem(slot, remaining, true);
+            if (remaining.isEmpty()) break;
+        }
+        if (!remaining.isEmpty()) return false;
+        if (!commit) return true;
+        remaining = output.copy();
+        for (ItemStackHandler inventory : inventories) {
+            for (int slot = outputStart(inventory); slot < inventory.getSlots() && !remaining.isEmpty(); slot++)
+                remaining = inventory.insertItem(slot, remaining, false);
+            if (remaining.isEmpty()) break;
+        }
+        if (!remaining.isEmpty()) throw new IllegalStateException("Output capacity changed during transaction");
+        return true;
+    }
+    private static int outputStart(ItemStackHandler inventory) {
+        if (inventory.getSlots() == IndustryRules.SLOTS) return IndustryRules.INPUTS;
+        if (inventory.getSlots() == IndustryRules.CONTAINER_SLOTS) return 0;
+        throw new IllegalArgumentException("Unsupported output inventory size: " + inventory.getSlots());
     }
     public static boolean refundInputs(ItemStackHandler inventory, List<ItemStack> stacks) {
         return put(inventory, 0, IndustryRules.INPUTS, stacks, true);

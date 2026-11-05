@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "frontier_industry:block/mock_air_tail"
+    },
+    "facing=east": {
+      "model": "frontier_industry:block/mock_air_tail",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "frontier_industry:block/mock_air_tail",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "frontier_industry:block/mock_air_tail",
+      "y": 270
+    },
+    "facing=up": {
+      "model": "frontier_industry:block/mock_air_tail",
+      "x": 90
+    },
+    "facing=down": {
+      "model": "frontier_industry:block/mock_air_tail",
+      "x": 270
+    }
+  }
+}

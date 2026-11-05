@@ -17,6 +17,7 @@ import dev.frontier.industry.engine.IndustryRules;
 import dev.frontier.industry.engine.IndustryState;
 import dev.frontier.industry.energy.IndustryEnergy;
 import dev.frontier.industry.engine.StockTransactions;
+import dev.frontier.industry.buildings.OutputWarehouse;
 import dev.frontier.industry.engine.NativeRecruitCustody;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -105,7 +106,7 @@ public final class IndustryEngine {
             IndustryCatalog.Recipe currentRecipe = productionRecipe(current, site.type);
             // An idle or jammed factory must not hoard a whole battery before its neighbours get a turn.
             if (path && currentRecipe != null && site.liveProduction > 0 && current.progress < currentRecipe.ticks()
-                && StockTransactions.outputFits(site.inventory, currentRecipe.output()))
+                && OutputWarehouse.outputFits(level(server,site), site, currentRecipe.output()))
                 moveEnergy(data, substation, site, Math.max(0, currentRecipe.fePerTick() - site.energy));
             site.powered = path && (site.energy > 0 || substation.energy > 0 || plant.energy > 0 || plant.burn > 0);
             if (!path) { site.status = IndustryEnergy.network(data, site).reason(); continue; }
@@ -137,7 +138,7 @@ public final class IndustryEngine {
             tell(player, "Достигнут предел промышленных объектов"); return null;
         }
         Site site = new Site(data, UUID.randomUUID(), player.getUUID(), type, level.dimension().location(), origin);
-        site.blueprintVersion = Blueprint.CURRENT_VERSION;
+        site.blueprintVersion = dev.frontier.industry.buildings.BuildingOrientation.forPlayer(player);
         site.team = player.getTeam() == null ? "" : player.getTeam().getName();
         if (distance(site, player.getX(), player.getY(), player.getZ()) > 64 || !loaded(level, site)) {
             tell(player, "Нужна свободная загруженная площадка рядом с игроком"); return null;
@@ -488,9 +489,10 @@ public final class IndustryEngine {
         if (order.reserved && order.paidRecipe(site.type) == null) {
             order.reserve(recipe); data.setDirty();
         }
-        if (!StockTransactions.outputFits(site.inventory, recipe.output())) { site.status = "Выход заполнен — пауза без потери материалов"; return; }
+        if (!site.outputMigrationAttempted) migrateLegacyOutputs(server, data, site);
+        if (!OutputWarehouse.outputFits(level(server,site), site, recipe.output())) { site.status = "Выход заполнен — пауза без потери материалов"; return; }
         // A paid, finished unit survives output congestion/restart. Inserting it does not charge twice.
-        if (order.reserved && order.progress >= recipe.ticks()) { complete(data, site, order, recipe); return; }
+        if (order.reserved && order.progress >= recipe.ticks()) { complete(server, data, site, order, recipe); return; }
         if (site.liveProduction < 1) { site.status = "Нет живых назначенных рабочих рядом"; return; }
         if (site.energy < recipe.fePerTick()) { site.status = "Недостаточно FE"; site.powered = false; return; }
         if (!order.reserved) {
@@ -507,10 +509,27 @@ public final class IndustryEngine {
         order.progress = Math.min(recipe.ticks(), order.progress + Math.min(site.liveProduction, 4));
         site.operating = true;
         site.status = "Производство: " + recipe.title(); data.setDirty();
-        if (order.progress >= recipe.ticks()) complete(data, site, order, recipe);
+        if (order.progress >= recipe.ticks()) complete(server, data, site, order, recipe);
     }
-    private static void complete(IndustryData data, Site site, Order order, IndustryCatalog.Recipe recipe) {
-        if (!StockTransactions.putOutputs(site.inventory, recipe.output())) { site.status = "Выход заполнен"; return; }
+    private static void migrateLegacyOutputs(MinecraftServer server, IndustryData data, Site site) {
+        if (site.outputMigrationAttempted) return;
+        OutputWarehouse.ensureInventories(site);
+        // With no physical containers the legacy inventory remains authoritative;
+        // inserting it into itself and then clearing the source would destroy stock.
+        if (site.containerInventories.isEmpty()) return;
+        boolean complete = true;
+        for (int slot = IndustryRules.INPUTS; slot < IndustryRules.SLOTS; slot++) {
+            ItemStack stack = site.inventory.getStackInSlot(slot).copy();
+            if (stack.isEmpty()) continue;
+            boolean moved = OutputWarehouse.putOutputs(level(server,site), site, stack);
+            if (moved) site.inventory.setStackInSlot(slot, ItemStack.EMPTY);
+            else complete = false;
+        }
+        site.outputMigrationAttempted = complete;
+        data.setDirty();
+    }
+    private static void complete(MinecraftServer server, IndustryData data, Site site, Order order, IndustryCatalog.Recipe recipe) {
+        if (!OutputWarehouse.putOutputs(level(server,site), site, recipe.output())) { site.status = "Выход заполнен"; return; }
         order.quantity--; order.progress = 0; order.clearReservation();
         if (order.quantity == 0) site.orders.removeFirst();
         data.setDirty();

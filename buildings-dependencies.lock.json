@@ -1,0 +1,34 @@
+{
+  "minecraft": "1.20.1",
+  "forge": "47.4.0",
+  "mods": [
+    {
+      "id": "engineersdecor",
+      "file": "engineersdecor-1.3.31.jar",
+      "source": "https://www.curseforge.com/minecraft/mc-mods/engineers-decor-ported/files/5817392",
+      "url": "https://mediafilez.forgecdn.net/files/5817/392/engineersdecor-1.3.31.jar",
+      "sha256": "b0bc8be729534fca36576623f7439370a66161e370e31cace3eeed6ff5a1f5bf"
+    },
+    {
+      "id": "another_furniture",
+      "file": "another_furniture-forge-1.20.1-3.0.4.jar",
+      "source": "https://www.curseforge.com/minecraft/mc-mods/another-furniture/files/7131795",
+      "url": "https://edge.forgecdn.net/files/7131/795/another_furniture-forge-1.20.1-3.0.4.jar",
+      "sha256": "421074f4dbb3fd8a5446c03378be70f14bd95feb56b8de7f992b89a5851a8c6d"
+    },
+    {
+      "id": "w2d",
+      "file": "w2d-1.2.8-1.20.1.jar",
+      "source": "https://www.curseforge.com/minecraft/mc-mods/warstuff-decorations/files/6238871",
+      "url": "https://edge.forgecdn.net/files/6238/871/w2d-1.2.8-1.20.1.jar",
+      "sha256": "fc4ce7f67d9cf979b73f573a3840d945b0185366a4aeb6714cd4f7352ac09f91"
+    },
+    {
+      "id": "wlc",
+      "file": "wlc-1.0.5-1.20.1.jar",
+      "source": "https://www.curseforge.com/minecraft/mc-mods/warstuff-legacy/files/6168019",
+      "url": "https://edge.forgecdn.net/files/6168/019/wlc-1.0.5-1.20.1.jar",
+      "sha256": "dce68196911b0b558e268964d9c9d573be18acd34f580acdb1c423bc1bea8dc4"
+    }
+  ]
+}

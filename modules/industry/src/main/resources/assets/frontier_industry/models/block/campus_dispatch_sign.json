@@ -1,0 +1,92 @@
+{
+  "textures": {
+    "particle": "frontier_industry:block/campus_dark",
+    "dark": "frontier_industry:block/campus_dark",
+    "dispatch": "frontier_industry:block/campus_dispatch"
+  },
+  "elements": [
+    {
+      "name": "part",
+      "from": [
+        0,
+        1,
+        13
+      ],
+      "to": [
+        16,
+        15,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#dispatch"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#dispatch"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            3,
+            14
+          ],
+          "texture": "#dark"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            3,
+            14
+          ],
+          "texture": "#dark"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            3
+          ],
+          "texture": "#dark"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            3
+          ],
+          "texture": "#dark"
+        }
+      }
+    }
+  ],
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "scale": [
+        0.65,
+        0.65,
+        0.65
+      ]
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "frontier_industry:block/campus_dispatch_screen"
+    },
+    "facing=east": {
+      "model": "frontier_industry:block/campus_dispatch_screen",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "frontier_industry:block/campus_dispatch_screen",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "frontier_industry:block/campus_dispatch_screen",
+      "y": 270
+    },
+    "facing=up": {
+      "model": "frontier_industry:block/campus_dispatch_screen",
+      "x": 90
+    },
+    "facing=down": {
+      "model": "frontier_industry:block/campus_dispatch_screen",
+      "x": 270
+    }
+  }
+}

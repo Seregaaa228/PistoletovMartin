@@ -13,23 +13,24 @@ public final class BlueprintLayoutChecks {
     public static Map<String, Boolean> run() {
         Map<String, Boolean> checks = new LinkedHashMap<>();
         BlockPos origin = new BlockPos(-31, 97, 22);
-        int[][] dimensions = {{23,25,21}, {11,8,11}, {15,9,15}, {17,10,17}, {15,11,15}, {15,13,19}};
+        int[][] dimensions = {{31,25,27}, {17,10,17}, {21,13,21}, {27,14,25}, {23,13,21}, {23,17,29}, {21,14,21}};
+        int checkedVersion=4;
         for (SiteType type : SiteType.values()) {
-            BlueprintBounds b = Blueprint.bounds(type, Blueprint.CURRENT_VERSION);
+            BlueprintBounds b = Blueprint.bounds(type, checkedVersion);
             int[] expected = dimensions[type.ordinal()];
             checks.put("blueprint " + type + " declared dimensions", b.width() == expected[0] && b.height() == expected[1] && b.depth() == expected[2]);
-            Map<BlockPos, BlockState> map = Blueprint.blocks(type, origin, Blueprint.CURRENT_VERSION);
+            Map<BlockPos, BlockState> map = Blueprint.blocks(type, origin, checkedVersion);
             checks.put("blueprint " + type + " contains every block", map.keySet().stream().allMatch(p -> b.contains(p.getX() - origin.getX(), p.getY() - origin.getY(), p.getZ() - origin.getZ())));
-            checks.put("blueprint " + type + " visible controller", map.get(Blueprint.controller(type, origin, Blueprint.CURRENT_VERSION)).equals(IndustryContent.controller(type).defaultBlockState()));
+            checks.put("blueprint " + type + " visible controller", map.get(Blueprint.controller(type, origin, checkedVersion)).equals(IndustryContent.controller(type).defaultBlockState()));
             boolean corridor = true;
             for (int z = b.minZ(); z <= 0; z++) for (int y = 1; y <= 2; y++) corridor &= !map.containsKey(origin.offset(0, y, z));
             checks.put("blueprint " + type + " two high entrance corridor", corridor);
             boolean foundation = true;
             for (int x = b.minX(); x <= b.maxX(); x++) for (int z = b.minZ(); z <= b.maxZ(); z++) foundation &= map.containsKey(origin.offset(x, 0, z));
             checks.put("blueprint " + type + " continuous foundation", foundation);
-            BlockPos controllerApproach = Blueprint.controller(type, origin, Blueprint.CURRENT_VERSION).offset(0, 0, -1);
+            BlockPos controllerApproach = Blueprint.controller(type, origin, checkedVersion).offset(0, 0, -1);
             checks.put("blueprint " + type + " controller reachable from apron", !map.containsKey(controllerApproach) && !map.containsKey(controllerApproach.above()) && map.containsKey(controllerApproach.below()));
-            Map<BlockPos, BlockState> critical = Blueprint.criticalBlocks(type, origin, Blueprint.CURRENT_VERSION);
+            Map<BlockPos, BlockState> critical = Blueprint.criticalBlocks(type, origin, checkedVersion);
             checks.put("blueprint " + type + " critical machinery is physical", critical.entrySet().stream().allMatch(e -> e.getValue() != null && e.getValue().equals(map.get(e.getKey()))));
             Map<BlockPos, BlockState> legacy = Blueprint.blocks(type, origin, Blueprint.LEGACY_VERSION);
             checks.put("blueprint " + type + " original 0.2 map unchanged", legacy.equals(original(type, origin)));

@@ -13,6 +13,7 @@ public final class IndustryMod {
     public static final String ID = "frontier_industry";
     public IndustryMod() {
         var bus = FMLJavaModLoadingContext.get().getModEventBus();
+        dev.frontier.industry.buildings.FunctionalBuildings.init();
         net.minecraftforge.fml.ModLoadingContext.get().registerConfig(net.minecraftforge.fml.config.ModConfig.Type.SERVER,IndustryConfig.SPEC);
         IndustryContent.register(bus);
         dev.frontier.industry.repair.RepairContent.register(bus);
