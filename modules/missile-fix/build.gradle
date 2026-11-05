@@ -50,3 +50,10 @@ tasks.register('missilePenetrationTest', JavaExec) {
     mainClass = 'dev.frontier.flamingofix.MissilePenetrationTest'
 }
 tasks.named('check').configure { dependsOn 'missilePenetrationTest' }
+tasks.register('missileCruiseSim', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.flamingofix.MissileCruiseSim'
+    systemProperty 'missileSim.debug', System.getProperty('missileSim.debug', 'false')
+}
+tasks.named('check').configure { dependsOn 'missileCruiseSim' }
