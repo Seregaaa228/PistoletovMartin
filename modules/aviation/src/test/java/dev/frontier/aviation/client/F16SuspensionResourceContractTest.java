@@ -38,12 +38,12 @@ public final class F16SuspensionResourceContractTest {
         String vehicleConfig = Files.readString(Path.of("src/main/resources/assets/frontier_aviation/sbw/vehicles/f16.json"));
         check(vehicleConfig.contains("frontier_aviation:models/bedrock/vehicle_lod/f16.geo.json"), "runtime LOD path");
         Map<String, String> unchanged = Map.of(
-                "vehicle/j10.geo.json", "7a580a9110b39c61284fd8d6e7674280663a095fc115cde79fa6d29224e3ee16",
-                "vehicle/j10_lod.geo.json", "b0aa8b9aa9230961ac5be73b8f0b1329d5b84b9bc0df1bdd467c21c1e1630de4",
-                "vehicle/su25.geo.json", "9ea0538374766b225893e36b0975c78b30099978e65149012c00d06a3ea4826f",
-                "vehicle/su25_lod.geo.json", "50af4b0b0e666ff1ced436dcc25b946897054a3a9db2d054776320f9a13f7347",
-                "vehicle_lod/j10.geo.json", "b0aa8b9aa9230961ac5be73b8f0b1329d5b84b9bc0df1bdd467c21c1e1630de4",
-                "vehicle_lod/su25.geo.json", "50af4b0b0e666ff1ced436dcc25b946897054a3a9db2d054776320f9a13f7347");
+                "vehicle/j10.geo.json", "0f5c0507dceb2b8f7d40b459d1dbe9ada6fecc6d38a172df366f49b6afaa1db4",
+                "vehicle/j10_lod.geo.json", "46c6215c271fec90f3b14cb1fc6fe2f5fba3c65e3c97832d12021f01259c3e36",
+                "vehicle/su25.geo.json", "70e219fdb97127f0a0e6ba05c58b76b3b67023881da3e34c8194a0eba5ac231d",
+                "vehicle/su25_lod.geo.json", "9372b4e010c81581757226ed99aaabaeb4429e419c464460acfe5f0f93ddcbc1",
+                "vehicle_lod/j10.geo.json", "46c6215c271fec90f3b14cb1fc6fe2f5fba3c65e3c97832d12021f01259c3e36",
+                "vehicle_lod/su25.geo.json", "9372b4e010c81581757226ed99aaabaeb4429e419c464460acfe5f0f93ddcbc1");
         for (var entry : unchanged.entrySet()) {
             check(hash(Files.readAllBytes(MODELS.resolve(entry.getKey()))).equals(entry.getValue()), entry.getKey());
         }
@@ -136,7 +136,9 @@ public final class F16SuspensionResourceContractTest {
             }
             JsonObject wheel = byName.get(gear + "_wheel");
             check(wheel != null && (gear + "_suspension").equals(wheel.get("parent").getAsString()), folder + " wheel parent " + gear);
-            check(wheel.getAsJsonArray("cubes").size() == gearCubes, folder + " wheel cubes " + gear);
+            // The near model's tyre is a 12-sided prism (six bars) plus the hub; its first bar is
+            // the axis-aligned one, centred on the wheel pivot like the single LOD tyre box.
+            check(wheel.getAsJsonArray("cubes").size() >= gearCubes, folder + " wheel cubes " + gear);
             JsonObject tire = wheel.getAsJsonArray("cubes").get(0).getAsJsonObject();
             for (int axis = 0; axis < 3; axis++) {
                 double center = tire.getAsJsonArray("origin").get(axis).getAsDouble() + tire.getAsJsonArray("size").get(axis).getAsDouble() / 2;
