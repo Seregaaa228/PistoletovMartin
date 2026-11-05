@@ -24,6 +24,17 @@ public final class GroundHandling {
     /** Settling back onto the gear after a bounce or a wing-low landing (deg/tick). */
     public static final float SETTLE_RATE = 3;
     private static final float SETTLE_FRACTION = .4f, SNAP = .05f;
+    /**
+     * A block surface this far (blocks) under the gear footprint still counts as the jet
+     * being on its wheels. The server and every client take every ground decision from
+     * this band (position and terrain only) instead of native onGround, which each side
+     * sets from its own last move (and clients also from server move packets), so near a
+     * block edge or after a position correction the two sides disagreed and corrected each
+     * other while taxiing. The band also covers a slab drop, so such a hop does not flip
+     * the jet between ground and air handling for a tick. Below a full block: a real
+     * 1-block drop is still a hop (FlightControlModel.taxiHop) and a take-off still leaves.
+     */
+    public static final double CONTACT_BAND = .55;
 
     public record Attitude(float pitch, float roll) {}
 

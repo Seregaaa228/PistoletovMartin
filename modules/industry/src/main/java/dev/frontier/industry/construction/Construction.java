@@ -22,10 +22,15 @@ import net.minecraft.world.level.block.state.BlockState;
 /** A saved placement cursor is a compact journal over the immutable versioned blueprint. */
 public final class Construction {
     private Construction() {}
-    private static final Map<String,List<Map.Entry<BlockPos,BlockState>>> PLANS=new HashMap<>();
+    // Relative (origin-free) layouts depend only on type and blueprintVersion (which also encodes
+    // the rotation), so they are shared by all sites, bounded by the finite set of type/version
+    // pairs, and can never go stale: origin and placement cursor are applied live on each use.
+    private static final Map<String,List<Map.Entry<BlockPos,BlockState>>> PLANS=new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<String,Map<BlockPos,Integer>> PLAN_ORDER=new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<String,Map<BlockPos,BlockState>> FINISHED=new java.util.concurrent.ConcurrentHashMap<>();
+    private static String layoutKey(Site site){return site.type.name()+":"+site.blueprintVersion;}
     public static List<Map.Entry<BlockPos,BlockState>> plan(Site site) {
-        String key=site.type.name()+":"+site.blueprintVersion;
-        var relative=PLANS.computeIfAbsent(key,k->{
+        var relative=PLANS.computeIfAbsent(layoutKey(site),k->{
             var list=new ArrayList<>(Blueprint.blocks(site.type,BlockPos.ZERO,site.blueprintVersion).entrySet());
             list.sort(Comparator.<Map.Entry<BlockPos,BlockState>>comparingInt(e->stage(site,e))
                 .thenComparingInt(e->e.getKey().getY()).thenComparingInt(e->e.getKey().getZ()).thenComparingInt(e->e.getKey().getX()));
@@ -43,12 +48,36 @@ public final class Construction {
         }
         return e.getKey().getY()>=5?2:1;
     }
+    private static Map<BlockPos,BlockState> finished(Site site) {
+        return FINISHED.computeIfAbsent(layoutKey(site),k->Collections.unmodifiableMap(new LinkedHashMap<>(
+            dev.frontier.industry.architecture.FactoryDetailUpgrade.expected(site.type,BlockPos.ZERO,site.blueprintVersion))));
+    }
+    /**
+     * Blocks repair and health checks expect right now, relative to site.origin: the placed part of
+     * the plan while constructing, the finished layout afterwards. Shared and immutable — offset by
+     * site.origin, never modify. No per-call blueprint rebuild.
+     */
+    public static Collection<Map.Entry<BlockPos,BlockState>> repairEntries(Site site) {
+        if(!site.constructing)return finished(site).entrySet();
+        var plan=plan(site);
+        return plan.subList(0,Math.max(0,Math.min(site.constructionCursor,plan.size())));
+    }
+    /** O(1) expected state at a world position, or null when the site does not (yet) expect a block there. */
+    public static BlockState expectedAt(Site site,BlockPos pos) {
+        BlockPos local=pos.subtract(site.origin);
+        if(!site.constructing)return finished(site).get(local);
+        var plan=plan(site);
+        Integer index=PLAN_ORDER.computeIfAbsent(layoutKey(site),k->{
+            var order=new HashMap<BlockPos,Integer>(plan.size()*2);
+            for(int i=0;i<plan.size();i++)order.put(plan.get(i).getKey(),i);
+            return Map.copyOf(order);
+        }).get(local);
+        return index!=null&&index<site.constructionCursor?plan.get(index).getValue():null;
+    }
+    /** Absolute copy of {@link #repairEntries}; for rare callers that need world positions as a map. */
     public static Map<BlockPos,BlockState> repairBlocks(Site site) {
-        if(!site.constructing)return dev.frontier.industry.architecture.FactoryDetailUpgrade.expected(site);
-        Map<BlockPos,BlockState> result=new LinkedHashMap<>();var plan=plan(site);
-        for(int i=0;i<Math.min(site.constructionCursor,plan.size());i++) {
-            var entry=plan.get(i);result.put(site.origin.offset(entry.getKey()),entry.getValue());
-        }
+        Map<BlockPos,BlockState> result=new LinkedHashMap<>();
+        for(var entry:repairEntries(site))result.put(site.origin.offset(entry.getKey()),entry.getValue());
         return result;
     }
     public static UUID start(ServerPlayer player,Site site) {
@@ -138,11 +167,12 @@ public final class Construction {
             }
         }
     }
+    /** Same block, and equal shape-defining properties; states a block changes by itself are ignored. */
     public static boolean equivalent(BlockState actual,BlockState expected){
+        if(actual==expected)return true;
         if(!actual.is(expected.getBlock()))return false;
         for(var property:expected.getProperties()){
-            String name=property.getName();
-            if(Set.of("powered","lit","north","south","east","west","up","down","mounted","shape").contains(name))continue;
+            if(ConstructionRules.selfChanging(property.getName()))continue;
             if(!actual.getValue(property).equals(expected.getValue(property)))return false;
         }
         return true;
@@ -182,7 +212,7 @@ public final class Construction {
         var simulated=new net.minecraft.world.entity.player.Inventory(player);
         simulated.load(player.getInventory().save(new net.minecraft.nbt.ListTag()));
         for(ItemStack stack:returns)if(!simulated.add(stack.copy())){IndustryEngine.tell(player,"Освободи место для возврата комплекта/ремнабора");return;}
-        for(var e:blocks.entrySet())if(level.getBlockEntity(e.getKey())==null&&level.getBlockState(e.getKey()).equals(e.getValue()))level.setBlock(e.getKey(),Blocks.AIR.defaultBlockState(),Block.UPDATE_ALL);
+        for(var e:blocks.entrySet())if(level.getBlockEntity(e.getKey())==null&&equivalent(level.getBlockState(e.getKey()),e.getValue()))level.setBlock(e.getKey(),Blocks.AIR.defaultBlockState(),Block.UPDATE_ALL);
         var data=IndustryData.get(player.server);release(player.server,data,site);site.constructing=false;site.repairKit=false;site.repairRequested=false;site.repairProgress=0;data.sites.remove(site.id);data.setDirty();
         for(ItemStack stack:returns)player.getInventory().add(stack);
         player.closeContainer();IndustryEngine.tell(player,refund?"Стройка отменена, комплект возвращён":"Стройка отменена; начатый комплект израсходован");
@@ -194,7 +224,8 @@ public final class Construction {
     public static boolean generated(ServerLevel level,BlockPos pos,BlockState state) {
         UUID id=IndustryEngine.siteAt(level,pos);var data=IndustryData.get(level.getServer());Site site=id==null?null:data.sites.get(id);
         if(site==null||site.blueprintVersion<3)return false;
-        BlockState expected=repairBlocks(site).get(pos);
+        // Called per broken block (an explosion breaks hundreds in one tick): O(1) lookup, no rebuild.
+        BlockState expected=expectedAt(site,pos);
         return expected!=null&&state.is(expected.getBlock());
     }
 }

@@ -19,6 +19,7 @@ import numpy as np
 from PIL import Image
 
 FACES = ('north', 'south', 'east', 'west', 'up', 'down')
+LOFT_REACH = 0.15   # px a loft segment's hidden end reaches into a larger neighbour (> its 0.12 px end inset)
 
 
 def rot_matrix(rotation):
@@ -308,13 +309,20 @@ class Model:
             z0, z1 = a[0], b[0]
             vals = [(a[i] + b[i]) / 2 for i in range(1, 7)]
             segs.append((z0, z1, *vals))
+        def bigger(s, t):
+            return s[4] > t[4] + 0.3 or s[5] > t[5] + 0.3
+
         cubes = []
         for i, s in enumerate(segs):
             prev = segs[i - 1] if i else None
             nxt = segs[i + 1] if i + 1 < len(segs) else None
-            front = prev is None or s[4] > prev[4] + 0.3 or s[5] > prev[5] + 0.3
-            back = nxt is None or s[4] > nxt[4] + 0.3 or s[5] > nxt[5] + 0.3
-            cubes += self.section(bone, s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], mat=mat, lod=lod,
+            front = prev is None or bigger(s, prev)
+            back = nxt is None or bigger(s, nxt)
+            # A larger neighbour shows its end face and steps that face's outer blocks back by up to
+            # 0.12 px (see section); reach into it with this hidden end so no hairline slit opens.
+            z0 = s[0] - (LOFT_REACH if prev is not None and not front and bigger(prev, s) else 0.0)
+            z1 = s[1] + (LOFT_REACH if nxt is not None and not back and bigger(nxt, s) else 0.0)
+            cubes += self.section(bone, z0, z1, s[2], s[3], s[4], s[5], s[6], s[7], mat=mat, lod=lod,
                                   ends=(front, back), top_mat=top_mat, skip_bottom=skip_bottom, round_=round_)
         return cubes
 

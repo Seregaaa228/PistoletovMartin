@@ -12,6 +12,7 @@ def main():
     classes = [
         ('energy/EnergyLedger.java', 'energy/GridConnection.java', 'energy/EnergyLedgerTest.java'),
         ('repair/RepairRules.java', 'repair/RepairRulesTest.java'),
+        ('construction/ConstructionRules.java', 'construction/ConstructionRulesTest.java'),
         ('client/ui/UiViewport.java', 'client/ui/UiViewportTest.java'),
         ('client/ui/UiPage.java', 'client/ui/UiPageTest.java'),
         ('client/ui/TooltipBounds.java', 'client/ui/TooltipBoundsTest.java'),

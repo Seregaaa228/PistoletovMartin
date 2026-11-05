@@ -2,6 +2,9 @@ package dev.frontier.aviation;
 
 import com.atsuishio.superbwarfare.client.model.entity.VehicleModelInstance;
 import com.atsuishio.superbwarfare.client.renderer.entity.GeoVehicleRenderer;
+import com.atsuishio.superbwarfare.data.vehicle_skin.SkinInfo;
+import com.atsuishio.superbwarfare.data.vehicle_skin.VehicleSkin;
+import com.atsuishio.superbwarfare.entity.vehicle.VehicleModelEntry;
 import com.github.mcmodderanchor.simplebedrockmodel.v2.common.model.runtime.BoneState;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -24,6 +27,9 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /** Uses SBW's cached baked models and its distance-based LOD selector. */
 public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
@@ -46,7 +52,28 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
     private static BakedBedrockModel kabBaked;
     private static BakedModelInstance kabInstance;
 
+    /** Copies of SBW's LOD entries carrying a skin texture: source entry, then skin texture. */
+    private final Map<VehicleModelEntry, Map<ResourceLocation, VehicleModelEntry>> skinnedLod = new WeakHashMap<>();
+
     public AircraftRenderer(EntityRendererProvider.Context context) { super(context); }
+
+    /**
+     * SBW applies the sprayed vehicle skin to the near model only, so beyond the 96-block LOD
+     * boundary a jet would fall back to its default paint. The near and LOD models share one atlas
+     * layout (art/realistic packs both into each texture), so the skin texture fits the LOD model:
+     * hand SBW a copy of the LOD entry that carries it. Model instance and distance stay shared.
+     */
+    @Override
+    public VehicleModelEntry getCurrentModelEntry(PoseStack pose, Su24mEntity plane) {
+        VehicleModelEntry entry = super.getCurrentModelEntry(pose, plane);
+        if (entry == null || !entry.isLOD()) return entry;
+        SkinInfo skin = VehicleSkin.getSkin(plane);
+        String name = skin == null ? null : skin.getTexture();
+        ResourceLocation texture = name == null ? null : ResourceLocation.tryParse(name);
+        if (texture == null || texture.equals(entry.getTexture())) return entry;
+        return skinnedLod.computeIfAbsent(entry, key -> new HashMap<>(4)).computeIfAbsent(texture,
+            key -> entry.copy(entry.getInstance(), key, entry.getEmissiveTexture(), entry.getLodDistance()));
+    }
 
     @Override
     public void transformCustomModelPart(Su24mEntity plane, VehicleModelInstance instance,
@@ -108,13 +135,14 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
             rotateSurface(instance, "f16_elevator_right", 25 * axes.pitch(), false);
             rotateSurface(instance, "f16_airbrake_left", -55 * state.airBrake(), true);
             rotateSurface(instance, "f16_airbrake_right", 55 * state.airBrake(), true);
-            for (String name : GEAR) {
-                BoneState suspension = instance.getBone(name + "_suspension");
-                if (suspension != null) suspension.y = suspension.definition().bindY() + state.compression();
-                BoneState wheel = instance.getBone(name + "_wheel");
-                if (wheel != null) wheel.rotation.rotateX(
-                    name.equals("gear_nose") ? state.noseWheelAngle() : state.mainWheelAngle());
-            }
+        }
+        // Shock absorbers and wheel spin: all three jets carry *_suspension / *_wheel under each leg.
+        for (String name : GEAR) {
+            BoneState suspension = instance.getBone(name + "_suspension");
+            if (suspension != null) suspension.y = suspension.definition().bindY() + state.compression();
+            BoneState wheel = instance.getBone(name + "_wheel");
+            if (wheel != null) wheel.rotation.rotateX(
+                name.equals("gear_nose") ? state.noseWheelAngle() : state.mainWheelAngle());
         }
         // Opaque low-poly canopy remains visible externally, while the local
         // first-person pilot gets a clear runway/HUD rather than its inner faces.
@@ -123,6 +151,10 @@ public final class AircraftRenderer extends GeoVehicleRenderer<Su24mEntity> {
                 && mc.options.getCameraType().isFirstPerson();
         BoneState windscreen = instance.getBone("windscreen");
         if (windscreen != null) windscreen.visible = !cockpitView;
+        // Su-25: the pilot's instrument panel, drawn closer to the shared eye point; the windscreen
+        // bone carries the outside view's copy in place under the glass.
+        BoneState cockpitPanel = instance.getBone("cockpit_panel");
+        if (cockpitPanel != null) cockpitPanel.visible = cockpitView;
         BoneState canopy = instance.getBone("canopy");
         if (canopy != null) {
             canopy.visible = !cockpitView;

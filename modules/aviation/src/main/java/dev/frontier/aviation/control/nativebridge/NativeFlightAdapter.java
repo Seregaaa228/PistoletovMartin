@@ -23,7 +23,37 @@ public final class NativeFlightAdapter implements NativeFlightAccess {
     private record Applied(long tick, FlightOutput output) {}
     private final Map<Entity, Applied> applied = new WeakHashMap<>();
     private final Map<Entity, Long> corrected = new WeakHashMap<>();
+    private record Contact(long tick, double x, double y, double z, boolean value) {}
+    private final Map<Entity, Contact> contacts = new WeakHashMap<>();
     private NativeFlightAdapter() {}
+
+    /**
+     * Whether the wheels are on the ground, for every ground decision of the flight model
+     * (sampled caps, wheel brakes, tyre grip, gear stance). Our jets use the terrain band
+     * {@link GroundHandling#CONTACT_BAND} under their footprint, so the server and the
+     * client prediction decide alike; other aircraft keep native onGround.
+     */
+    public static boolean onGear(VehicleEntity v) {
+        if (!AircraftCatalog.dynamics(entityId(v)).active()) return v.onGround();
+        return INSTANCE.gearContact(v);
+    }
+    private boolean gearContact(VehicleEntity v) {
+        long tick = v.level().getGameTime();
+        double x = v.getX(), y = v.getY(), z = v.getZ();
+        synchronized (applied) {
+            Contact last = contacts.get(v);
+            if (last != null && last.tick == tick && last.x == x && last.y == y && last.z == z) return last.value;
+        }
+        // A thin slab from the bottom of the box down through the band; inset sideways so a
+        // wall merely touching the box is not ground. Blocks only: they are identical on both
+        // sides, interpolated entity positions are not.
+        var box = v.getBoundingBox();
+        var band = new net.minecraft.world.phys.AABB(box.minX + .01, box.minY - GroundHandling.CONTACT_BAND, box.minZ + .01,
+            box.maxX - .01, box.minY + .01, box.maxZ - .01);
+        boolean value = v.level().getBlockCollisions(v, band).iterator().hasNext();
+        synchronized (applied) { contacts.put(v, new Contact(tick, x, y, z, value)); }
+        return value;
+    }
 
     @Override public boolean supports(Entity entity) {
         if (!(entity instanceof VehicleEntity)) return false;
@@ -69,7 +99,7 @@ public final class NativeFlightAdapter implements NativeFlightAccess {
         FlightEnvironment environment = sampleNative(info, new NativeReadings(tick,
             finite((float) v.getDeltaMovement().length(), 0),
             finite((float) v.getDeltaMovement().dot(v.getViewVector(1)), 0),
-            v.onGround(), profile(entity).kind() == FlightKind.HELICOPTER, emergency(v),
+            onGear(v), profile(entity).kind() == FlightKind.HELICOPTER, emergency(v),
             v.getRoll(), v.getXRot(), v.getSynchedPropellerRot(), v.getHoverMode(), v.getPower(),
             v.getMainEngineDamaged(), v.getMaxEnergy(), v.getEnergy()));
         String id = entityId(v);
@@ -208,16 +238,17 @@ public final class NativeFlightAdapter implements NativeFlightAccess {
         v.setUpInputDown(false); v.setDownInputDown(output.secondaryBrake() || output.brake() && profile(entity).kind() == FlightKind.AIRCRAFT);
         v.setSprintInputDown(output.boost()); v.setDeltaRot(0);
         if (starting) playStart(v);
-        if (output.brake() && (v.onGround() || profile(entity).kind() == FlightKind.HELICOPTER)) {
+        boolean wheels = onGear(v);
+        if (output.brake() && (wheels || profile(entity).kind() == FlightKind.HELICOPTER)) {
             var motion = v.getDeltaMovement();
             FlightDynamics dynamics = AircraftCatalog.dynamics(entityId(v));
-            if (v.onGround() && dynamics.active() && profile(entity).kind() == FlightKind.AIRCRAFT) {
+            if (wheels && dynamics.active() && profile(entity).kind() == FlightKind.AIRCRAFT) {
                 // Our jets: wheel brakes with a sensible deceleration instead of a 20% cut per tick.
                 double ground = Math.hypot(motion.x, motion.z);
                 double scale = ground > 1.0e-6 ? GroundHandling.brake(ground, dynamics) / ground : 0;
                 v.setDeltaMovement(motion.multiply(scale, 1, scale));
             } else {
-                v.setDeltaMovement(motion.multiply(v.onGround() ? .8 : .92, 1, v.onGround() ? .8 : .92));
+                v.setDeltaMovement(motion.multiply(wheels ? .8 : .92, 1, wheels ? .8 : .92));
             }
         }
     }
@@ -235,7 +266,7 @@ public final class NativeFlightAdapter implements NativeFlightAccess {
             if (java.util.Objects.equals(corrected.get(vehicle), tick)) return;
             corrected.put(vehicle, tick);
         }
-        if (vehicle.onGround()) {
+        if (onGear(vehicle)) {
             // Tyres hold the jet on its heading: remove most of the sideways ground speed,
             // keep the forward roll. Native ground friction alone lets it skid in turns.
             var motion = vehicle.getDeltaMovement();
@@ -260,13 +291,14 @@ public final class NativeFlightAdapter implements NativeFlightAccess {
     /**
      * Replaces native terrain compat for our jets on the wheels: settle onto the gear stance
      * (level wings, gear stance pitch), keeping a pilot's nose-up rotation above rotation
-     * speed. Deterministic from attitude and speed, so both sides agree. False: native runs.
+     * speed. Deterministic from attitude, speed and the terrain contact band (not the
+     * per-side native onGround flag), so both sides agree. False: native runs.
      */
     public static boolean settleOnGear(VehicleEntity v) {
         String id = entityId(v);
         var performance = AircraftCatalog.performance(id);
         if (performance.isEmpty() || !AircraftCatalog.dynamics(id).active()) return false;
-        if (!v.onGround() || emergency(v) || v.isInFluidType()) return false;
+        if (emergency(v) || v.isInFluidType() || !INSTANCE.gearContact(v)) return false;
         var motion = v.getDeltaMovement();
         float rotation = v.isNoGravity() ? 0 : performance.get().stallSpeed() * GroundHandling.ROTATION_FRACTION;
         var settled = GroundHandling.settle(v.getXRot(), v.getRoll(), (float) Math.hypot(motion.x, motion.z),
@@ -338,8 +370,8 @@ public final class NativeFlightAdapter implements NativeFlightAccess {
         }
     }
     public boolean controls(Entity entity) { return FlightNativeHooks.manages(entity) && output(entity) != null; }
-    public void clear(Entity entity) { synchronized (applied) { applied.remove(entity); corrected.remove(entity); } }
-    public void clear() { synchronized (applied) { applied.clear(); corrected.clear(); } }
+    public void clear(Entity entity) { synchronized (applied) { applied.remove(entity); corrected.remove(entity); contacts.remove(entity); } }
+    public void clear() { synchronized (applied) { applied.clear(); corrected.clear(); contacts.clear(); } }
     public static boolean emergency(VehicleEntity v) { return v.isWreck() || v.getHealth() <= v.getMaxHealth() * .1f; }
     /** Our jets keep their gear stance on the wheels (settleOnGear), so native ground pitch writers stay out. */
     public boolean allowAngle(VehicleEntity v) {

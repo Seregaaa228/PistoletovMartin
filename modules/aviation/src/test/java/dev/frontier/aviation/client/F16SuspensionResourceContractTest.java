@@ -17,15 +17,39 @@ import java.util.HexFormat;
 import java.util.Map;
 import java.util.TreeMap;
 
-/** Checks that both rendered models retain the animated gear and control surfaces. */
+/**
+ * Checks that both rendered models retain the animated gear and control surfaces. Every owned
+ * jet (Su-25, F-16, J-10) carries the same gear_*, gear_*_suspension, gear_*_wheel hierarchy.
+ */
 public final class F16SuspensionResourceContractTest {
     private static final Path MODELS = Path.of("src/main/resources/assets/frontier_aviation/models/bedrock");
+    private static final Path ANIMATIONS = Path.of("src/main/resources/assets/frontier_aviation/animations/bedrock");
+    private static final String[] JETS = {"su25", "f16", "j10"};
     private static final String[] GEARS = {"gear_nose", "gear_main_l", "gear_main_r"};
     private static final String[] SURFACES = {"f16_aileron_left", "f16_aileron_right",
             "f16_elevator_left", "f16_elevator_right", "f16_rudder"};
 
     public static void main(String[] args) throws Exception {
         checkPreservedBones();
+        for (String jet : JETS) {
+            check(Files.mismatch(ANIMATIONS.resolve("vehicle/" + jet + ".animation.json"),
+                    ANIMATIONS.resolve("vehicle_lod/" + jet + ".animation.json")) == -1, jet + " LOD animation bones");
+            checkGearBound(jet);
+            for (String folder : new String[]{"vehicle", "vehicle_lod"}) {
+                checkGearModel(jet, folder);
+                checkBakedGear(jet, folder);
+            }
+            check(Files.mismatch(MODELS.resolve("vehicle/" + jet + "_lod.geo.json"),
+                    MODELS.resolve("vehicle_lod/" + jet + ".geo.json")) == -1, jet + " authoring LOD matches runtime LOD");
+            String config = Files.readString(Path.of("src/main/resources/assets/frontier_aviation/sbw/vehicles/" + jet + ".json"));
+            check(config.contains("frontier_aviation:models/bedrock/vehicle_lod/" + jet + ".geo.json"), jet + " runtime LOD path");
+        }
+        // Su-25 cockpit-view instrument panel (AircraftRenderer shows it in first person only).
+        check(Files.readString(ANIMATIONS.resolve("vehicle/su25.animation.json")).contains("\"cockpit_panel\""),
+                "baker must retain su25 cockpit_panel");
+        JsonObject panel = bones(MODELS.resolve("vehicle/su25.geo.json"), "su25").get("cockpit_panel");
+        check(panel != null && panel.has("cubes") && !panel.getAsJsonArray("cubes").isEmpty(), "su25 cockpit_panel geometry");
+        check(bones(MODELS.resolve("vehicle_lod/su25.geo.json"), "su25 lod").containsKey("cockpit_panel"), "su25 LOD cockpit_panel bone");
         check(Files.mismatch(Path.of("src/main/resources/assets/frontier_aviation/animations/bedrock/vehicle/f16.animation.json"),
                 Path.of("src/main/resources/assets/frontier_aviation/animations/bedrock/vehicle_lod/f16.animation.json")) == -1,
                 "LOD listener receives matching animation bones");
@@ -38,12 +62,12 @@ public final class F16SuspensionResourceContractTest {
         String vehicleConfig = Files.readString(Path.of("src/main/resources/assets/frontier_aviation/sbw/vehicles/f16.json"));
         check(vehicleConfig.contains("frontier_aviation:models/bedrock/vehicle_lod/f16.geo.json"), "runtime LOD path");
         Map<String, String> unchanged = Map.of(
-                "vehicle/j10.geo.json", "0f5c0507dceb2b8f7d40b459d1dbe9ada6fecc6d38a172df366f49b6afaa1db4",
-                "vehicle/j10_lod.geo.json", "46c6215c271fec90f3b14cb1fc6fe2f5fba3c65e3c97832d12021f01259c3e36",
-                "vehicle/su25.geo.json", "70e219fdb97127f0a0e6ba05c58b76b3b67023881da3e34c8194a0eba5ac231d",
-                "vehicle/su25_lod.geo.json", "9372b4e010c81581757226ed99aaabaeb4429e419c464460acfe5f0f93ddcbc1",
-                "vehicle_lod/j10.geo.json", "46c6215c271fec90f3b14cb1fc6fe2f5fba3c65e3c97832d12021f01259c3e36",
-                "vehicle_lod/su25.geo.json", "9372b4e010c81581757226ed99aaabaeb4429e419c464460acfe5f0f93ddcbc1");
+                "vehicle/j10.geo.json", "7aa325e98c06de3f6e526378c55427c7a56ed0b5c5b8ea9a2a854d93492eaa56",
+                "vehicle/j10_lod.geo.json", "38df5b9e95daa28b4ab326297552e8ce87f32ec2ba2484ab6ff6bfcf62335866",
+                "vehicle/su25.geo.json", "0a4f1baab665403b590e90e4b042413d88bba413ab2447bb3719bf160ab30855",
+                "vehicle/su25_lod.geo.json", "485107dd8dac1687472fbaa9d3820335624682c8622ff846898420795baf0b6c",
+                "vehicle_lod/j10.geo.json", "38df5b9e95daa28b4ab326297552e8ce87f32ec2ba2484ab6ff6bfcf62335866",
+                "vehicle_lod/su25.geo.json", "485107dd8dac1687472fbaa9d3820335624682c8622ff846898420795baf0b6c");
         for (var entry : unchanged.entrySet()) {
             check(hash(Files.readAllBytes(MODELS.resolve(entry.getKey()))).equals(entry.getValue()), entry.getKey());
         }
@@ -66,6 +90,78 @@ public final class F16SuspensionResourceContractTest {
         }
         check(bones.has("canopy"), "baker must retain canopy");
         for (int i = 1; i <= 2; i++) check(bones.has("dummy_0_1_" + i), "baker must retain missile mount " + i);
+    }
+
+    /** SBW's baker drops bones its animation file does not name; Java could not move them. */
+    private static void checkGearBound(String jet) throws Exception {
+        JsonObject animations = JsonParser.parseString(Files.readString(ANIMATIONS.resolve("vehicle/" + jet + ".animation.json")))
+                .getAsJsonObject().getAsJsonObject("animations");
+        JsonObject bones = animations.getAsJsonObject("animation.frontier_aviation.bind").getAsJsonObject("bones");
+        for (String gear : GEARS)
+            for (String suffix : new String[] {"", "_suspension", "_wheel"})
+                check(bones.has(gear + suffix), jet + " baker must retain " + gear + suffix);
+    }
+
+    /**
+     * Gear hierarchy body > gear_* > gear_*_suspension > gear_*_wheel; the wheel's first cube is the
+     * axis-aligned tyre bar, centred on the wheel pivot, standing on the ground (y = 0), and its
+     * radius is the one the wheel-spin code turns the wheel with.
+     */
+    private static void checkGearModel(String jet, String folder) throws Exception {
+        Map<String, JsonObject> byName = bones(MODELS.resolve(folder + "/" + jet + ".geo.json"), jet + " " + folder);
+        F16WheelSpin spin = F16WheelSpin.forAircraft(jet);
+        for (String gear : GEARS) {
+            String where = jet + " " + folder + " " + gear;
+            JsonObject leg = byName.get(gear), suspension = byName.get(gear + "_suspension"), wheel = byName.get(gear + "_wheel");
+            check(leg != null && suspension != null && wheel != null, where + " bones");
+            check(leg.has("parent") && "body".equals(leg.get("parent").getAsString()), where + " gear parent");
+            check(suspension.has("parent") && gear.equals(suspension.get("parent").getAsString()), where + " suspension parent");
+            check(wheel.has("parent") && (gear + "_suspension").equals(wheel.get("parent").getAsString()), where + " wheel parent");
+            check(leg.has("cubes") && !leg.getAsJsonArray("cubes").isEmpty(), where + " fixed leg geometry");
+            check(wheel.has("cubes") && !wheel.getAsJsonArray("cubes").isEmpty(), where + " wheel geometry");
+            JsonObject tire = wheel.getAsJsonArray("cubes").get(0).getAsJsonObject();
+            check(!tire.has("rotation") || isZero(tire.getAsJsonArray("rotation")), where + " tyre bar is axis-aligned");
+            JsonArray pivot = wheel.getAsJsonArray("pivot");
+            for (int axis = 0; axis < 3; axis++) {
+                double center = tire.getAsJsonArray("origin").get(axis).getAsDouble() + tire.getAsJsonArray("size").get(axis).getAsDouble() / 2;
+                check(Math.abs(center - pivot.get(axis).getAsDouble()) < 1e-4, where + " wheel pivot");
+            }
+            check(Math.abs(tire.getAsJsonArray("origin").get(1).getAsDouble()) < 1e-4, where + " tyre stands on the ground");
+            double radius = tire.getAsJsonArray("size").get(1).getAsDouble() / 2;
+            check(Math.abs(radius / 16 - spin.radius(gear.equals("gear_nose"))) < 1e-4, where + " wheel-spin radius");
+        }
+    }
+
+    private static void checkBakedGear(String jet, String folder) throws Exception {
+        Gson gson = GsonUtil.CLIENT_GSON;
+        BedrockAnimationFile file = gson.fromJson(Files.readString(ANIMATIONS.resolve(folder + "/" + jet + ".animation.json")),
+                BedrockAnimationFile.class);
+        BedrockModelPOJO model = gson.fromJson(Files.readString(MODELS.resolve(folder + "/" + jet + ".geo.json")), BedrockModelPOJO.class);
+        var instance = BakedBedrockModel.bake(model, BakerOptions.ofAnimationFile(file)).createInstance();
+        for (String gear : GEARS) {
+            var parent = instance.getBone(gear);
+            var suspension = instance.getBone(gear + "_suspension");
+            var wheel = instance.getBone(gear + "_wheel");
+            check(parent != null && suspension != null && wheel != null, jet + " " + folder + " baked " + gear);
+            check(suspension.parentIndex() == parent.index(), jet + " " + folder + " baked suspension hierarchy " + gear);
+            check(wheel.parentIndex() == suspension.index(), jet + " " + folder + " baked wheel hierarchy " + gear);
+        }
+    }
+
+    private static Map<String, JsonObject> bones(Path path, String where) throws Exception {
+        JsonObject model = JsonParser.parseString(Files.readString(path)).getAsJsonObject();
+        Map<String, JsonObject> byName = new TreeMap<>();
+        for (JsonElement element : model.getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject().getAsJsonArray("bones")) {
+            JsonObject bone = element.getAsJsonObject();
+            String name = bone.get("name").getAsString();
+            check(byName.put(name, bone) == null, where + " duplicate bone " + name);
+        }
+        return byName;
+    }
+
+    private static boolean isZero(JsonArray values) {
+        for (JsonElement value : values) if (Math.abs(value.getAsDouble()) > 1e-9) return false;
+        return true;
     }
 
     private static void checkBakedModel(String folder) throws Exception {

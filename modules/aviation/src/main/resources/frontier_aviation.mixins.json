@@ -10,6 +10,7 @@
     "FlightSu24Throttle",
     "F16MissileFire",
     "F16InventoryLimit",
+    "StationMagazineLimit",
     "F16QuickMoveLimit",
     "F16StormStoreLimit",
     "F16WireHoming",

@@ -26,7 +26,35 @@
             0
           ]
         },
+        "gear_nose_suspension": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_nose_wheel": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
         "gear_main_l": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_main_l_suspension": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_main_l_wheel": {
           "rotation": [
             0,
             0,
@@ -40,7 +68,28 @@
             0
           ]
         },
+        "gear_main_r_suspension": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_main_r_wheel": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
         "windscreen": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "cockpit_panel": {
           "rotation": [
             0,
             0,

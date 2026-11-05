@@ -114,6 +114,37 @@ public final class StoreLoadout {
         return accepted;
     }
 
+    /**
+     * Rounds a native reload may move into this missile magazine. Each gun's Magazine is the
+     * most of that store the jet can hang (J-10: 2 large AAM, 2 wire AGM, 2 light AAM), not a
+     * share of the stations: the guns share them (J-10: the two inner pylons take either
+     * the AAM or the AGM) and the allocator above limits the combined load (J-10: four
+     * missiles and the belly store on five stations). Items in the jet's inventory are
+     * already part of that load, so moving them is never limited; only rounds from nowhere
+     * (a creative ammo box, which would fill every magazine to 2 + 2 + 2) need a free
+     * station. A save holding more than fits keeps what it has; nothing more is added.
+     */
+    public static int reloadLimit(VehicleEntity plane, com.atsuishio.superbwarfare.data.gun.GunData gun, int available) {
+        if (available <= 0 || plane.level().isClientSide || !supports(plane)) return available;
+        int index = -1;
+        for (int i = 0; i < StoreStations.GUNS.size(); i++) {
+            String name = StoreStations.GUNS.get(i);
+            if (carries(plane, name) && plane.getGunData(name) == gun) index = i;
+        }
+        if (index < 0) return available;
+        var item = ForgeRegistries.ITEMS.getValue(net.minecraft.resources.ResourceLocation.tryParse(AMMO.get(index)));
+        if (item == null) return available;
+        int held = 0;
+        var inventory = plane.getInventory();
+        for (int slot = 0; slot < inventory.getSlots(); slot++) {
+            ItemStack stack = inventory.getStackInSlot(slot);
+            if (stack.is(item)) held += Math.max(0, stack.getCount());
+        }
+        int extra = Math.min(StoreStations.MAX_STATIONS, Math.max(0, available - held));
+        int fresh = extra == 0 ? 0 : insertionLimit(plane, new ItemStack(item, extra));
+        return Math.min(available, held + fresh);
+    }
+
     /** Also guards КАБ loading: any tablet store needs a free rack station. */
     public static boolean canLoadStormShadow(Su24mEntity plane, int rack) {
         var layout = layout(plane);

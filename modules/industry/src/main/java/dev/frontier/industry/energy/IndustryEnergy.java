@@ -64,7 +64,7 @@ public final class IndustryEnergy {
     public static boolean criticalIntact(ServerLevel level, Site site) {
         if (site.type.isConsumer() || site.blueprintVersion == Blueprint.LEGACY_VERSION) return true;
         return Blueprint.criticalBlocks(site.type, site.origin, site.blueprintVersion).entrySet().stream()
-            .allMatch(entry -> level.hasChunkAt(entry.getKey()) && level.getBlockState(entry.getKey()).equals(entry.getValue()));
+            .allMatch(entry -> level.hasChunkAt(entry.getKey()) && dev.frontier.industry.construction.Construction.equivalent(level.getBlockState(entry.getKey()), entry.getValue()));
     }
 
     public static GridConnection network(IndustryData data, Site site) {

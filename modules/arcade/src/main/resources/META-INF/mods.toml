@@ -56,3 +56,10 @@ mandatory=true
 versionRange="[1.0.1]"
 ordering="AFTER"
 side="BOTH"
+
+[[dependencies.frontier_arcade_vehicles]]
+modId="tacz"
+mandatory=true
+versionRange="[1.1.8,1.2)"
+ordering="AFTER"
+side="BOTH"

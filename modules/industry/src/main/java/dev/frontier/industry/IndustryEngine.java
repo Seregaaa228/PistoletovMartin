@@ -561,9 +561,9 @@ public final class IndustryEngine {
     private static int restore(ServerLevel level, Site site) {
         if (site == null || !loaded(level, site)) return 0;
         int restored = 0;
-        for (var entry : Construction.repairBlocks(site).entrySet()) {
-            BlockPos pos = entry.getKey(); BlockState current = level.getBlockState(pos);
-            if (IndustryRules.repairMayReplace(current.equals(entry.getValue()), current.isAir(), level.getBlockEntity(pos) != null)
+        for (var entry : Construction.repairEntries(site)) {
+            BlockPos pos = site.origin.offset(entry.getKey()); BlockState current = level.getBlockState(pos);
+            if (IndustryRules.repairMayReplace(Construction.equivalent(current, entry.getValue()), current.isAir(), level.getBlockEntity(pos) != null)
                 && ClaimPermissions.allows(level, site.owner, site.team, pos) && level.setBlock(pos, entry.getValue(), Block.UPDATE_ALL)) restored++;
         }
         return restored;
@@ -742,12 +742,17 @@ public final class IndustryEngine {
     }
     public static void poll(ServerLevel level, Site site) {
         if (!loaded(level, site)) return;
-        Map<BlockPos, BlockState> blueprint = Construction.repairBlocks(site);
+        var blueprint = Construction.repairEntries(site);
+        var controllerBlock = IndustryContent.controller(site.type);
         site.total = blueprint.size(); site.matching = 0;
-        for (var entry : blueprint.entrySet()) if (level.getBlockState(entry.getKey()).equals(entry.getValue()) || site.blueprintVersion>=3 && level.getBlockState(entry.getKey()).is(entry.getValue().getBlock()) || entry.getValue().is(IndustryContent.controller(site.type)) && level.getBlockState(entry.getKey()).is(IndustryContent.controller(site.type))) site.matching++;
-        site.controller = level.getBlockState(Blueprint.controller(site.type, site.origin, site.blueprintVersion)).is(IndustryContent.controller(site.type));
+        // Doors opened, snow, water, redstone and reconnecting shapes are not damage (Construction.equivalent).
+        for (var entry : blueprint) {
+            BlockState expected = entry.getValue(), actual = level.getBlockState(site.origin.offset(entry.getKey()));
+            if (Construction.equivalent(actual, expected) || site.blueprintVersion>=3 && actual.is(expected.getBlock()) || expected.is(controllerBlock) && actual.is(controllerBlock)) site.matching++;
+        }
+        site.controller = level.getBlockState(Blueprint.controller(site.type, site.origin, site.blueprintVersion)).is(controllerBlock);
         site.machineryIntact = Blueprint.criticalBlocks(site.type, site.origin, site.blueprintVersion).entrySet().stream()
-            .allMatch(entry -> level.getBlockState(entry.getKey()).equals(entry.getValue()));
+            .allMatch(entry -> Construction.equivalent(level.getBlockState(entry.getKey()), entry.getValue()));
     }
     /** Only real, loaded, structurally working owned sites can become automatic power sources. */
     public static void autoConnect(ServerLevel level, IndustryData data, Site placed) {

@@ -24,7 +24,8 @@ ATLAS = 1024
 
 def skin_data(name, schemes):
     """SBW vehicle skins (data/<ns>/sbw/vehicle_skins/<vehicle>.json): the spray-can menu. The
-    first scheme is the default texture; SBW applies a skin to the near model only."""
+    first scheme is the default texture. SBW applies a skin to the near model only; AircraftRenderer
+    passes the skin to the LOD model too (both share the atlas layout)."""
     skins = []
     for k, (sid, title, desc) in enumerate(schemes):
         tex = name if k == 0 else '%s_%s' % (name, sid)

@@ -18,7 +18,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * Owns the single per-world F16 visual-state pass and lifecycle.
+ * Owns the single per-world visual-state pass and lifecycle for every owned jet (Su-25, F-16, J-10):
+ * control surfaces, air brake, suspension, wheel spin and canopy.
  * The tracked-plane set is maintained from join/leave events rather than a full
  * {@code entitiesForRendering()} scan every client tick, so cost stays O(active F16)
  * instead of O(every loaded entity) on busy worlds.
@@ -33,8 +34,13 @@ public final class F16VisualStateManager {
         final F16ControlSurfaces surfaces = new F16ControlSurfaces();
         final F16AirBrakeSmoothing airBrake = new F16AirBrakeSmoothing();
         final F16Suspension suspension = new F16Suspension();
-        final F16WheelSpin wheels = new F16WheelSpin();
+        final F16WheelSpin wheels;
         final F16AirBrakeSmoothing canopy = new F16AirBrakeSmoothing(0.12f);
+
+        Entry(AircraftProfile profile) {
+            wheels = F16WheelSpin.forAircraft(profile == null ? "" : profile.id);
+        }
+
         void update(Su24mEntity plane) {
             PilotCommand command = FlightClient.visualInput(plane);
             FlightState flightState = FlightClient.hasVisualPilot(plane) ? FlightClient.visualState(plane) : null;
@@ -63,7 +69,7 @@ public final class F16VisualStateManager {
     public static void join(EntityJoinLevelEvent event) {
         if (!event.getLevel().isClientSide()) return;
         if (event.getEntity() instanceof Su24mEntity plane && AircraftProfile.of(plane) != null)
-            STATES.putIfAbsent(plane, new Entry());
+            STATES.computeIfAbsent(plane, key -> new Entry(AircraftProfile.of(key)));
     }
 
     @SubscribeEvent

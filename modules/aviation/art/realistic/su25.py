@@ -12,7 +12,8 @@ store attachment at y 2.2, z -0.2.
 Moving parts are separate bones (parent body) modelled closed/neutral with the
 bone pivot on the hinge line (see the animated-parts contract): flap_*,
 aileron_*, elevator_*, rudder, the split wingtip airbrakes airbrake_*_upper/
-lower, canopy (right-sill hinge), gear legs and gear doors. The fixed
+lower, canopy (right-sill hinge), gear legs (with the F-16's *_suspension and
+*_wheel children) and gear doors. The fixed
 structure ends at each hinge line, so a deflected surface never opens a hole:
 every surface carries a 45-degree 'hinge nose' that fills the cove when it
 moves. Gear hinges sit inside the bays so that a leg turned 90 deg forward
@@ -28,7 +29,8 @@ from paint import (Decal, Painter, dilate, hatch, make_weather, outlined, rivet_
 
 NOSE = -130.24         # geo Z (px) of the probe tips: pilot eye at x 4.15 m
 M = 16.0
-LIFT = 0.75            # metres added to every real height
+DENSITY = 1.78         # atlas texels per px: the densest that still fits 1024x1024 (build_models steps 0.1 down)
+LIFT = 0.75           # metres added to every real height
 NOZZLE_X = 11.65
 
 # wing trailing-edge surfaces (metres outboard / aft of the probe tips)
@@ -42,6 +44,10 @@ RUDDER_X = 13.45           # vertical rudder hinge
 RUDDER_H = (0.25, 2.05)    # rudder span above the spine
 ELEV_X = 13.90             # elevator hinge (unswept)
 ELEV_ROOT = 0.34           # elevator inner end (outboard of the tail boom)
+# landing-gear wheels (px radii; the wheel-spin code uses the same radii)
+NOSE_WHEEL_R = 5.05        # 0.63 m nose tyre
+MAIN_WHEEL_R = 6.0         # 0.75 m main tyres
+MAIN_WHEEL_X = 8.45        # main tyre contact, ahead of the leg
 
 
 def Z(x):
@@ -65,6 +71,7 @@ def build(lod=False):
     # canopy opens up and over to the right: hinge on the right (-X) sill rail
     m.bone('canopy', 'body', (-7.9, sill + 0.2, Z(4.39)))
     m.bone('windscreen', 'body', (0, H(1.93), Z(3.08)))
+    m.bone('cockpit_panel', 'body', (0, sill, Z(3.76)))     # shown in the first-person cockpit view only
     for name in ('engine_l', 'engine_r'):
         m.bone(name)
     # retraction hinges (pivots) inside the bays; both legs fold forward.
@@ -74,6 +81,13 @@ def build(lod=False):
     m.bone('gear_main_l', 'body', main_gear)
     m.bone('gear_main_r', 'body', (-main_gear[0], main_gear[1], main_gear[2]))
     m.bone('gear_nose', 'body', nose_gear)
+    # sprung part and wheel, named like the F-16's: *_suspension slides up the leg, *_wheel spins
+    # about its axle (the wheel pivot is the tyre centre, the suspension pivot the tyre top)
+    for name, x in (('gear_main_l', main_gear[0]), ('gear_main_r', -main_gear[0])):
+        m.bone(name + '_suspension', name, (x, 2 * MAIN_WHEEL_R, Z(MAIN_WHEEL_X)))
+        m.bone(name + '_wheel', name + '_suspension', (x, MAIN_WHEEL_R, Z(MAIN_WHEEL_X)))
+    m.bone('gear_nose_suspension', 'gear_nose', (nose_gear[0], 2 * NOSE_WHEEL_R, nose_gear[2]))
+    m.bone('gear_nose_wheel', 'gear_nose_suspension', (nose_gear[0], NOSE_WHEEL_R, nose_gear[2]))
     m.bone('pylon_l', 'body', (33.6, 35.2, -3.2))
     m.bone('pylon_r', 'body', (-33.6, 35.2, -3.2))
 
@@ -127,20 +141,23 @@ def build(lod=False):
     # ---- cockpit: floor colour under the glass, seat, panel, HUD
     m.box('body', -7.4, 7.4, sill - 1.2, sill, Z(3.3), Z(5.15), 'cockpit')
     if full:
-        # instrument panel, coaming and HUD sit 6.6 px forward: the shared cockpit eye point
-        # then sees them at the F-16's distance
-        hs = -6.6
-        m.box('body', -6.2, 6.2, sill, sill + 5.0, Z(3.66) + hs, Z(3.86) + hs, 'panel')
-        m.box('body', -6.8, 6.8, sill + 4.6, sill + 5.6, Z(3.64) + hs, Z(3.92) + hs, 'antiglare')
-        m.box('body', -2.4, 2.4, sill + 5.6, sill + 8.0, Z(3.80) + hs, Z(3.84) + hs, 'hud')
+        # Instrument panel, coaming, HUD and dials. In the first-person cockpit view (bone
+        # cockpit_panel, shown only there) they sit 6.6 px forward: the shared cockpit eye point
+        # then sees them at the F-16's distance. Shifted that far they would stand out through the
+        # windscreen, so the outside view gets them in place under the glass (bone windscreen,
+        # hidden in the cockpit view).
+        for bone, hs in (('cockpit_panel', -6.6), ('windscreen', 0.0)):
+            m.box(bone, -6.2, 6.2, sill, sill + 5.0, Z(3.66) + hs, Z(3.86) + hs, 'panel')
+            m.box(bone, -6.8, 6.8, sill + 4.6, sill + 5.6, Z(3.64) + hs, Z(3.92) + hs, 'antiglare')
+            m.box(bone, -2.4, 2.4, sill + 5.6, sill + 8.0, Z(3.80) + hs, Z(3.84) + hs, 'hud')
+            m.box(bone, -5.8, 5.8, sill + 0.6, sill + 4.7, Z(3.86) + hs, Z(3.86) + hs + 0.25, 'dials')
+            m.box(bone, -1.2, 1.2, sill, sill + 3.0, Z(3.65) + hs, Z(3.85) + hs, 'panel')
         m.box('body', -4.4, 4.4, sill, sill + 2.0, Z(4.05), Z(4.6), 'seat')
         m.box('body', -4.0, 4.0, sill + 2.0, sill + 7.0, Z(4.42), Z(4.66), 'seat')
         m.box('body', -3.3, 3.3, sill + 6.0, sill + 8.4, Z(4.38), Z(4.68), 'seat_head')
-        # analogue dials on the panel face, centre stick, throttle quadrant (left)
-        m.box('body', -5.8, 5.8, sill + 0.6, sill + 4.7, Z(3.86) + hs, Z(3.86) + hs + 0.25, 'dials')
+        # centre stick, throttle quadrant (left)
         m.box('body', -0.45, 0.45, sill, sill + 4.6, Z(4.25), Z(4.37), 'panel')
         m.box('body', 5.6, 6.6, sill + 2.6, sill + 4.4, Z(3.95), Z(4.3), 'panel')
-        m.box('body', -1.2, 1.2, sill, sill + 3.0, Z(3.65) + hs, Z(3.85) + hs, 'panel')
         for sx in (-1, 1):
             m.box('body', sx * 5.6, sx * 7.4, sill, sill + 2.6, Z(3.6), Z(4.6), 'panel')
     # canopy top stands slightly proud of the spine so a seated player fits
@@ -191,7 +208,8 @@ def build(lod=False):
         # fill the V between nacelle and fuselage sides (top and bottom); stops
         # at the start of the flat nacelle bottom, where the main bay doors begin
         m.box(bone, side * 0.40 * M, side * 0.78 * M, H(1.04), H(2.20), Z(5.74), Z(8.5), 'skin')
-        m.box(bone, side * 0.40 * M, side * 1.0 * M, H(1.04), H(2.20), Z(8.5) - 0.3, Z(11.1), 'skin')
+        # (aft of the bays it reaches in to 0.28 m and closes the groove along the belly chamfer)
+        m.box(bone, side * 0.28 * M, side * 1.0 * M, H(1.04), H(2.20), Z(8.5) - 0.3, Z(11.1), 'skin')
         if full:   # ASO-2V chaff/flare dispensers on the nacelle top, ahead of the nozzle
             m.box(bone, side * 9.0, side * 14.6, H(2.06) - 0.6, H(2.06) + 0.7, Z(9.95), Z(10.55), 'dispenser')
             # engine-bay cooling scoops on the nacelle top
@@ -397,33 +415,39 @@ def _gear(m, nose, main, full):
     into the fuselage/nacelle; wheels are sized and placed to fit there."""
     # nose leg: 0.63 m wheel straight under the hinge
     nx, ny, nz = nose
+    nr, mr = NOSE_WHEEL_R, MAIN_WHEEL_R
+    # Fixed leg in gear_nose / gear_main_*; the fork, piston and torque link ride on *_suspension;
+    # tyre (first cube, centred on the wheel pivot) and hub turn on *_wheel.
+    nsus, nwheel = 'gear_nose_suspension', 'gear_nose_wheel'
     m.box('gear_nose', nx - 1.0, nx + 1.0, 6.0, ny, nz - 1.0, nz + 1.0, 'strut')
     if full:
-        m.prism('gear_nose', 'x', (nx, 5.05, nz), 5.05, 3.6, 'tire')
-        m.box('gear_nose', nx - 2.0, nx + 2.0, 3.6, 6.4, nz - 1.8, nz + 1.8, 'hub')
+        m.prism(nwheel, 'x', (nx, nr, nz), nr, 3.6, 'tire')
+        m.box(nwheel, nx - 2.0, nx + 2.0, 3.6, 6.4, nz - 1.8, nz + 1.8, 'hub')
         for sx in (-1, 1):       # fork cheeks and the chrome piston, torque link, taxi lights
-            m.box('gear_nose', nx + sx * 2.0, nx + sx * 2.45, 4.0, 10.6, nz - 1.2, nz + 1.2, 'strut')
-        m.box('gear_nose', nx - 1.15, nx + 1.15, 10.8, 15.2, nz - 1.15, nz + 1.15, 'chrome')
-        m.slab('gear_nose', (nx, 15.5, nz + 1.1), (nx, 11.4, nz + 1.9), 0.6, 0.6, 'strut')
+            m.box(nsus, nx + sx * 2.0, nx + sx * 2.45, 4.0, 10.6, nz - 1.2, nz + 1.2, 'strut')
+        m.box(nsus, nx - 1.15, nx + 1.15, 10.8, 15.2, nz - 1.15, nz + 1.15, 'chrome')
+        m.box(nsus, nx - 2.45, nx + 2.45, 10.6, 11.2, nz - 1.2, nz + 1.2, 'strut')      # fork crown
+        m.slab(nsus, (nx, 15.5, nz + 1.1), (nx, 11.4, nz + 1.9), 0.6, 0.6, 'strut')
         m.box('gear_nose', nx - 1.6, nx + 1.6, 19.0, 20.6, nz - 2.1, nz - 1.3, 'light_white')
     else:
-        m.box('gear_nose', nx - 1.8, nx + 1.8, 0.0, 10.1, nz - 5.05, nz + 5.05, 'tire')
-        m.box('gear_nose', nx - 2.4, nx + 2.4, 10.1, 11.0, nz - 5.6, nz + 3.6, 'skin')   # mudguard
+        m.box(nwheel, nx - 1.8, nx + 1.8, 0.0, 2 * nr, nz - nr, nz + nr, 'tire')
+        m.box(nsus, nx - 2.4, nx + 2.4, 10.1, 11.0, nz - 5.6, nz + 3.6, 'skin')   # mudguard
         m.box('gear_nose', nx - 1.5, nx + 1.5, 15.0, ny - 3.0, nz - 1.4, nz + 1.4, 'strut')  # oleo
     for side, bone in ((1, 'gear_main_l'), (-1, 'gear_main_r')):
         x, y, z = side * main[0], main[1], main[2]
+        sus, wheel = bone + '_suspension', bone + '_wheel'
         # vertical leg, short lever forward to the 0.75 m wheel (contact at x 8.45 m)
-        wz = Z(8.45)
+        wz = Z(MAIN_WHEEL_X)
         m.box(bone, x - 1.3, x + 1.3, 8.0, y, z - 1.3, z + 1.3, 'strut')
-        m.box(bone, x - 1.0, x + 1.0, 4.8, 8.6, wz - 1.0, z + 1.3, 'strut')
+        m.box(sus, x - 1.0, x + 1.0, 4.8, 8.6, wz - 1.0, z + 1.3, 'strut')
         if full:
-            m.prism(bone, 'x', (x, 6.0, wz), 6.0, 5.0, 'tire')
-            m.box(bone, x - 2.7, x + 2.7, 4.0, 8.0, wz - 2.0, wz + 2.0, 'hub')
-            m.prism(bone, 'x', (x, 6.0, wz), 1.0, 6.2, 'strut', n=4)                       # axle
-            m.box(bone, x - 1.4, x + 1.4, 8.3, 11.8, z - 1.4, z + 1.4, 'chrome')           # oleo piston
-            m.slab(bone, (x, 12.4, z + 1.5), (x, 8.9, z + 2.2), 0.6, 0.6, 'strut')        # torque link
+            m.prism(wheel, 'x', (x, mr, wz), mr, 5.0, 'tire')
+            m.box(wheel, x - 2.7, x + 2.7, 4.0, 8.0, wz - 2.0, wz + 2.0, 'hub')
+            m.prism(sus, 'x', (x, mr, wz), 1.0, 6.2, 'strut', n=4)                         # axle
+            m.box(sus, x - 1.4, x + 1.4, 8.3, 11.8, z - 1.4, z + 1.4, 'chrome')            # oleo piston
+            m.slab(sus, (x, 12.4, z + 1.5), (x, 8.9, z + 2.2), 0.6, 0.6, 'strut')         # torque link
         else:
-            m.box(bone, x - 2.5, x + 2.5, 0.0, 12.0, wz - 6.0, wz + 6.0, 'tire')
+            m.box(wheel, x - 2.5, x + 2.5, 0.0, 2 * mr, wz - mr, wz + mr, 'tire')
             m.box(bone, x - 1.8, x + 1.8, 12.0, y - 3.0, z - 1.8, z + 1.8, 'strut')
             m.box(bone, x - 0.6, x + 0.6, 12.0, y - 3.0, z - 3.2, z - 1.8, 'strut')     # drag strut
 

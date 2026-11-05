@@ -23,9 +23,10 @@ public final class FactoryDetailUpgrade {
             for(int x:new int[]{b.minX()+3,b.maxX()-3})for(int z:zs)for(int y=1;y<h-1;y++){var p=BuildingOrientation.rotate(new BlockPos(x,y,z),v);var s=map.get(p);if(s!=null&&s.is(Blocks.POLISHED_DEEPSLATE))map.put(p,BuildingOrientation.rotate(FunctionalBuildings.EQUIPMENT.get("steel_column").get().defaultBlockState(),v));}
         }
     }
-    public static Map<BlockPos,BlockState> expected(IndustryData.Site site){
-        var raw=Blueprint.blocks(site.type,site.origin,site.blueprintVersion);if(!site.type.isFactory()||site.blueprintVersion%100<6||site.blueprintVersion%100>=10)return raw;
-        var local=new LinkedHashMap<BlockPos,BlockState>();raw.forEach((p,s)->local.put(p.subtract(site.origin),s));change(local,site.type,site.blueprintVersion);var result=new LinkedHashMap<BlockPos,BlockState>();local.forEach((p,s)->result.put(site.origin.offset(p),s));return result;
+    public static Map<BlockPos,BlockState> expected(IndustryData.Site site){return expected(site.type,site.origin,site.blueprintVersion);}
+    public static Map<BlockPos,BlockState> expected(SiteType type,BlockPos origin,int version){
+        var raw=Blueprint.blocks(type,origin,version);if(!type.isFactory()||version%100<6||version%100>=10)return raw;
+        var local=new LinkedHashMap<BlockPos,BlockState>();raw.forEach((p,s)->local.put(p.subtract(origin),s));change(local,type,version);var result=new LinkedHashMap<BlockPos,BlockState>();local.forEach((p,s)->result.put(origin.offset(p),s));return result;
     }
     public static void cleanup(MinecraftServer server){
         if(server.getTickCount()%40!=0)return;int budget=192;var data=IndustryData.get(server);

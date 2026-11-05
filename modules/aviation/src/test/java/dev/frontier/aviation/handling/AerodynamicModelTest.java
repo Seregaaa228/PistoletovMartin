@@ -85,6 +85,9 @@ public final class AerodynamicModelTest {
         check(p == stance - GroundHandling.MAX_ROTATION, "never more than the tail-strike rotation");
         check(GroundHandling.settle(3, 0, 1.2f, rotation, stance).pitch() < 3, "never nose-down on the wheels even when fast");
         check(GroundHandling.settle(Float.NaN, Float.NaN, 0, rotation, stance).pitch() == stance, "non-finite attitude recovers");
+        // Contact band shared by server and client: covers a slab drop and small position
+        // corrections, but a full block drop is a hop and a take-off leaves the ground.
+        check(GroundHandling.CONTACT_BAND >= .5 && GroundHandling.CONTACT_BAND < 1, "gear contact band between a slab and a block");
     }
 
     private static void groundSteeringBrakesAndGrip() {

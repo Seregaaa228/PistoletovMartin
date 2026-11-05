@@ -174,7 +174,8 @@ def build(lod=False):
         m.box('body', -2.2, 2.2, sill + 5.6, sill + 7.6, Z(3.62), Z(3.66), 'hud')
         m.box('body', -4.2, 4.2, sill, sill + 1.8, Z(4.15), Z(4.75), 'seat')           # ACES II
         m.slab('body', (0, sill + 1.8, Z(4.75)), (0, sill + 8.4, Z(5.05)), 7.6, 1.2, 'seat')
-        m.box('body', -3.0, 3.0, sill + 7.6, sill + 10.0, Z(4.98), Z(5.25), 'seat_head')
+        # headrest top stays under the rounded canopy (sill + 10 px stood 0.8 px out of the glass)
+        m.box('body', -3.0, 3.0, sill + 7.6, sill + 9.0, Z(4.98), Z(5.25), 'seat_head')
         m.box('body', -0.9, 0.9, sill + 1.8, sill + 5.4, Z(4.85), Z(5.0), 'handle')
         # two MFDs and the up-front controls on the panel, side stick (right) and throttle (left)
         for sx in (-1, 1):

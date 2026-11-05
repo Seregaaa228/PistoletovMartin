@@ -38,6 +38,7 @@ public final class NativeFlightHooksContractTest {
             verifyMixin("FlightNativePersistence", read(sbw, V));
             verifyMixin("FlightSu24Throttle", su24);
             verifyMixin("FlightTomEngineSound", read(sbw, "com/atsuishio/superbwarfare/entity/vehicle/Tom6Entity"));
+            verifyMixin("StationMagazineLimit", read(sbw, "com/atsuishio/superbwarfare/data/gun/GunData"));
         }
         System.out.println("Native flight pinned bytecode contracts passed (not runtime acceptance)");
     }

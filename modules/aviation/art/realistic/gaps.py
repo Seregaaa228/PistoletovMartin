@@ -21,6 +21,9 @@ sys.path.insert(0, HERE)
 
 from kit import rot_matrix  # noqa: E402
 
+# Bones the renderer shows only in the first-person cockpit view, never from outside.
+COCKPIT_ONLY = {'cockpit_panel'}
+
 
 def corners(c):
     o, s = np.array(c.origin), np.array(c.size)
@@ -56,7 +59,7 @@ def voxelise(cubes, res):
 
 
 def find(model, res=0.5, width=2.0, min_vox=6):
-    cubes = list(model.cubes)
+    cubes = [c for c in model.cubes if c.bone not in COCKPIT_ONLY]
     solid, owner, lo = voxelise(cubes, res)
     air, n = ndimage.label(~solid)
     border = set(np.unique(np.concatenate([air[0].ravel(), air[-1].ravel(), air[:, 0].ravel(), air[:, -1].ravel(),

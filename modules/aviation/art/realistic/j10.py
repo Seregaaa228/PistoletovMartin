@@ -14,7 +14,8 @@ Animated bones (parent body, pivot on the hinge, modelled neutral/closed):
 elevon_left/right (wing TE aft of x 12.70), canard_left/right (pivot at 40 %
 root chord), rudder (swept hinge, pivot at mid height), airbrake_left/right
 (aft fuselage petals, vertical hinge at the front edge), canopy (rear hinge)
-and the fixed windscreen, gear_nose (folds aft), gear_main_l/r (fold forward)
+and the fixed windscreen, gear_nose (folds aft), gear_main_l/r (fold forward),
+each with the F-16's *_suspension and *_wheel children,
 and gear_door_nose_l/r, gear_door_left_l, gear_door_right_r.
 Deviation: the mains fold forward about X only, so they stand at +-0.89 m
 (track 1.78 m instead of 2.61 m) under fixed bay fairings beneath the wing
@@ -72,6 +73,7 @@ NOSE_PIVOT = (0.0, 33.0, Z(5.45))
 MAIN_X, MAIN_Y, MAIN_AXLE_Z = 14.2, 32.8, Z(9.95)
 MAIN_RAKE = 8.0                                    # deg, wheel ahead of the pivot
 WHEEL_R = 5.0                                      # main tyre radius (0.62 m tyre)
+NOSE_WHEEL_R = 4.4                                 # nose tyre radius (0.55 m tyre)
 MAIN_PIVOT_Z = MAIN_AXLE_Z + (MAIN_Y - WHEEL_R) * math.tan(math.radians(MAIN_RAKE))
 FAIR_Y0 = 26.6                                     # main bay fairing bottom
 NOSE_DOOR = (3.4, Z(5.45) - 3.16, Z(7.39))         # half width, z front, z rear
@@ -105,6 +107,13 @@ def build(lod=False):
     m.bone('gear_main_l', 'body', main)
     m.bone('gear_main_r', 'body', (-main[0], main[1], main[2]))
     m.bone('gear_nose', 'body', NOSE_PIVOT)
+    # sprung part and wheel, named like the F-16's: *_suspension slides up the leg, *_wheel spins
+    # about its axle (the wheel pivot is the tyre centre, the suspension pivot the tyre top)
+    for name, x in (('gear_main_l', main[0]), ('gear_main_r', -main[0])):
+        m.bone(name + '_suspension', name, (x, 2 * WHEEL_R, MAIN_AXLE_Z))
+        m.bone(name + '_wheel', name + '_suspension', (x, WHEEL_R, MAIN_AXLE_Z))
+    m.bone('gear_nose_suspension', 'gear_nose', (NOSE_PIVOT[0], 2 * NOSE_WHEEL_R, NOSE_PIVOT[2]))
+    m.bone('gear_nose_wheel', 'gear_nose_suspension', (NOSE_PIVOT[0], NOSE_WHEEL_R, NOSE_PIVOT[2]))
     nose_door_y = (H(1.16) if full else H(1.175)) - 0.15         # 0.15 px proud of the trunk belly
     nhw, nz0, nz1 = NOSE_DOOR
     m.bone('gear_door_nose_l', 'body', (nhw, nose_door_y + 0.225, (nz0 + nz1) / 2))
@@ -214,6 +223,8 @@ def build(lod=False):
            round_='bottom' if full else False)
     # fill the groove where the wider trunk meets the forward fuselage
     m.box('chin_intake', -11.0, 11.0, H(1.62), H(1.86), Z(3.95), Z(9.2), 'skin')
+    if full:   # ... and up into the smoothed fuselage's lower chamfer, ahead of the wing root
+        m.box('chin_intake', -11.0, 11.0, H(1.86) - 0.1, H(1.93), Z(3.95), Z(5.1), 'skin')
     m.box('chin_intake', -9.6, 9.6, H(1.24), H(1.80), Z(3.90), Z(3.98), 'intake')
     if full:
         # 'smile' lower lip swept forward, DSI bump on the forward fuselage underside
@@ -359,18 +370,23 @@ def _upright(c, base_y):
 def _gear(m, full, nose_door_y):
     # nose leg: vertical, folds 88 deg aft into the trunk; two doors on the trunk belly
     nx, ny, nz = NOSE_PIVOT
+    nr = NOSE_WHEEL_R
+    # Fixed leg in gear_nose / gear_main_*; the fork, piston and axle ride on *_suspension;
+    # tyre (first cube, centred on the wheel pivot) and hub turn on *_wheel.
+    nsus, nwheel = 'gear_nose_suspension', 'gear_nose_wheel'
     m.box('gear_nose', nx - 0.9, nx + 0.9, 4.4, ny, nz - 0.9, nz + 0.9, 'strut')
     if full:
-        m.prism('gear_nose', 'x', (nx, 4.4, nz), 4.4, 3.4, 'tire')
-        m.box('gear_nose', nx - 1.9, nx + 1.9, 3.0, 5.8, nz - 1.4, nz + 1.4, 'hub')
+        m.prism(nwheel, 'x', (nx, nr, nz), nr, 3.4, 'tire')
+        m.box(nwheel, nx - 1.9, nx + 1.9, 3.0, 5.8, nz - 1.4, nz + 1.4, 'hub')
         m.box('gear_nose', nx - 1.5, nx + 1.5, 13.0, ny - 2.0, nz - 1.5, nz + 1.5, 'strut')
-        m.box('gear_nose', nx - 1.1, nx + 1.1, 9.4, 13.2, nz - 1.1, nz + 1.1, 'chrome')
+        m.box(nsus, nx - 1.1, nx + 1.1, 9.4, 13.2, nz - 1.1, nz + 1.1, 'chrome')
+        m.box(nsus, nx - 2.3, nx + 2.3, 8.8, 9.6, nz - 1.0, nz + 1.0, 'strut')      # fork crown
         m.box('gear_nose', nx - 1.4, nx + 1.4, 17.0, 18.4, nz + 1.4, nz + 2.0, 'light_white')     # taxi lights
         for sx in (-1, 1):
-            m.box('gear_nose', nx + sx * 1.8, nx + sx * 2.3, 3.4, 9.0, nz - 1.0, nz + 1.0, 'strut')
+            m.box(nsus, nx + sx * 1.8, nx + sx * 2.3, 3.4, 9.0, nz - 1.0, nz + 1.0, 'strut')
     else:
-        m.box('gear_nose', nx - 1.7, nx + 1.7, 0.0, 8.8, nz - 4.4, nz + 4.4, 'tire')
-        m.box('gear_nose', nx - 2.4, nx + 2.4, 8.8, 9.6, nz - 4.0, nz + 3.0, 'strut')    # fork / mudguard
+        m.box(nwheel, nx - 1.7, nx + 1.7, 0.0, 2 * nr, nz - nr, nz + nr, 'tire')
+        m.box(nsus, nx - 2.4, nx + 2.4, 8.8, 9.6, nz - 4.0, nz + 3.0, 'strut')    # fork / mudguard
         m.box('gear_nose', nx - 0.5, nx + 0.5, 12.0, 20.0, nz - 2.6, nz - 1.5, 'strut')   # torque link
     hw, z0, z1 = NOSE_DOOR
     for name, sx in (('gear_door_nose_l', 1), ('gear_door_nose_r', -1)):
@@ -386,17 +402,18 @@ def _gear(m, full, nose_door_y):
         top = (x, y + 0.6, zp + 0.6 * math.tan(math.radians(MAIN_RAKE)))
         axle = (x, WHEEL_R, za)
         mid = tuple(top[i] + 0.55 * (axle[i] - top[i]) for i in range(3))
+        sus, wheel = name + '_suspension', name + '_wheel'
         m.slab(name, top, axle, 2.2, 2.2, 'strut')
         if full:
-            m.prism(name, 'x', (x, WHEEL_R, za), WHEEL_R, 4.6, 'tire')
+            m.prism(wheel, 'x', (x, WHEEL_R, za), WHEEL_R, 4.6, 'tire')
             low = tuple(top[i] + 0.82 * (axle[i] - top[i]) for i in range(3))
-            m.slab(name, mid, low, 2.6, 2.6, 'chrome')                      # oleo piston
+            m.slab(sus, mid, low, 2.6, 2.6, 'chrome')                       # oleo piston
             m.slab(name, top, mid, 3.2, 3.2, 'strut')
-            m.box(name, x - 2.5, x + 2.5, WHEEL_R - 2.0, WHEEL_R + 2.0, za - 1.7, za + 1.7, 'hub')
+            m.box(wheel, x - 2.5, x + 2.5, WHEEL_R - 2.0, WHEEL_R + 2.0, za - 1.7, za + 1.7, 'hub')
             m.slab(name, (x, y - 4.0, zp - 2.0), (x, y - 15.0, za - 1.0), 0.8, 0.8, 'strut')   # drag brace
-            m.prism(name, 'x', (x, WHEEL_R, za), 1.0, 5.4, 'strut', n=4)                      # axle
+            m.prism(sus, 'x', (x, WHEEL_R, za), 1.0, 5.4, 'strut', n=4)                       # axle
         else:
-            m.box(name, x - 2.3, x + 2.3, 0.0, 2 * WHEEL_R, za - WHEEL_R, za + WHEEL_R, 'tire')
+            m.box(wheel, x - 2.3, x + 2.3, 0.0, 2 * WHEEL_R, za - WHEEL_R, za + WHEEL_R, 'tire')
         door = 'gear_door_left_l' if side > 0 else 'gear_door_right_r'
         m.box(door, side * mx0, side * mx1, FAIR_Y0 - 0.15, FAIR_Y0 + 0.25, mz0, mz1, 'skin')
         if full:
