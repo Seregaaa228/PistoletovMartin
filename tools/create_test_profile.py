@@ -3,6 +3,7 @@
 from pathlib import Path
 import argparse,hashlib,json,shutil,uuid,zipfile
 from integration_libraries import verify_libraries, verify_unique_mod_ids
+from building_dependencies import verify_building_mods
 
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -33,13 +34,18 @@ def main():
     replacements={}
     additions=[]
     if not args.baseline:
-        replacements={p.name:p for p in (ROOT/'build/team-mods').glob('*.jar')}
         expected={n for n in lock if n.startswith('frontier-')}
-        if set(replacements)!=expected:raise RuntimeError('Build six modules first: python3 tools/build.py')
+        built=list((ROOT/'build/team-mods').glob('*.jar'))
+        replacements={p.name:p for p in built if p.name in expected}
+        industry=[p for p in built if p.name.startswith('frontier-industry-1.20.1-')]
+        baseline_industry=[n for n in expected if n.startswith('frontier-industry-1.20.1-')]
+        if len(industry)==1 and len(baseline_industry)==1:replacements[baseline_industry[0]]=industry[0]
+        if set(replacements)!=expected or len(built)!=len(expected):raise RuntimeError('Build six modules first: python3 tools/build.py')
         for path in replacements.values():
             with zipfile.ZipFile(path)as archive:
                 if archive.testzip()is not None:raise RuntimeError('Invalid built JAR: '+path.name)
         additions=[ROOT/'vendor/integration'/library['file'] for library in verify_libraries(ROOT)]
+        additions+=verify_building_mods()
     helpers=[]
     if args.test_helper:
         helper=ROOT/'modules/industry/build/integration-tests/frontier-integration-checks-pis-1.jar'
@@ -58,7 +64,9 @@ def main():
         if (ROOT/'instance'/name).is_dir():shutil.copytree(ROOT/'instance'/name,destination/name)
     for name in ['options.txt','README-RU.txt']:
         if (ROOT/'instance'/name).is_file():shutil.copy2(ROOT/'instance'/name,destination/name)
-    for name,path in replacements.items():shutil.copy2(path,destination/'mods'/name)
+    for name,path in replacements.items():
+        if path.name!=name:(destination/'mods'/name).unlink()
+        shutil.copy2(path,destination/'mods'/path.name)
     for path in additions:shutil.copy2(path,destination/'mods'/path.name)
     for path in helpers:shutil.copy2(path,destination/'mods'/path.name)
     for path in optional:shutil.copy2(path,destination/'mods'/path.name)

@@ -4,12 +4,7 @@ package dev.frontier.industry.construction;
 public final class ConstructionRules {
     private ConstructionRules() {}
     public static int duration(String type) {
-        return switch (type) {
-            case "SUBSTATION" -> 400;
-            case "DRONE_FACTORY", "EQUIPMENT_FACTORY" -> 600;
-            case "VEHICLE_FACTORY", "RESEARCH_CENTER" -> 800;
-            default -> 900;
-        };
+        return 300;
     }
     public static int quota(int cursor, int count, int tick, int duration, int budget) {
         if (count <= 0 || duration <= 0 || budget <= 0) return 0;

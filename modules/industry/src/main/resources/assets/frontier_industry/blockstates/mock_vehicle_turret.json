@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "frontier_industry:block/mock_vehicle_turret"
+    },
+    "facing=east": {
+      "model": "frontier_industry:block/mock_vehicle_turret",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "frontier_industry:block/mock_vehicle_turret",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "frontier_industry:block/mock_vehicle_turret",
+      "y": 270
+    },
+    "facing=up": {
+      "model": "frontier_industry:block/mock_vehicle_turret",
+      "x": 90
+    },
+    "facing=down": {
+      "model": "frontier_industry:block/mock_vehicle_turret",
+      "x": 270
+    }
+  }
+}

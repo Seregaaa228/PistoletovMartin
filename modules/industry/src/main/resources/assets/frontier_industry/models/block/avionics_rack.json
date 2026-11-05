@@ -1,0 +1,371 @@
+{
+  "textures": {
+    "particle": "frontier_industry:block/rework_steel",
+    "steel": "frontier_industry:block/rework_steel",
+    "dark": "frontier_industry:block/rework_dark",
+    "white": "frontier_industry:block/rework_white",
+    "blue": "frontier_industry:block/rework_blue",
+    "yellow": "frontier_industry:block/rework_yellow"
+  },
+  "elements": [
+    {
+      "name": "avionics_plinth",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        2,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#dark",
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ]
+        },
+        "south": {
+          "texture": "#dark",
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ]
+        },
+        "east": {
+          "texture": "#dark",
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ]
+        },
+        "west": {
+          "texture": "#dark",
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ]
+        },
+        "up": {
+          "texture": "#dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "avionics_enclosure",
+      "from": [
+        1,
+        2,
+        1
+      ],
+      "to": [
+        15,
+        15,
+        15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#white",
+          "uv": [
+            0,
+            0,
+            14,
+            13
+          ]
+        },
+        "south": {
+          "texture": "#white",
+          "uv": [
+            0,
+            0,
+            14,
+            13
+          ]
+        },
+        "east": {
+          "texture": "#white",
+          "uv": [
+            0,
+            0,
+            14,
+            13
+          ]
+        },
+        "west": {
+          "texture": "#white",
+          "uv": [
+            0,
+            0,
+            14,
+            13
+          ]
+        },
+        "up": {
+          "texture": "#white",
+          "uv": [
+            0,
+            0,
+            14,
+            14
+          ]
+        },
+        "down": {
+          "texture": "#white",
+          "uv": [
+            0,
+            0,
+            14,
+            14
+          ]
+        }
+      }
+    },
+    {
+      "name": "avionics_top",
+      "from": [
+        0,
+        15,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#steel",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "south": {
+          "texture": "#steel",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "east": {
+          "texture": "#steel",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "west": {
+          "texture": "#steel",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "up": {
+          "texture": "#steel",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#steel",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "test_board",
+      "from": [
+        2,
+        3,
+        -0.2
+      ],
+      "to": [
+        14,
+        13,
+        1
+      ],
+      "faces": {
+        "north": {
+          "texture": "#blue",
+          "uv": [
+            0,
+            0,
+            12,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#blue",
+          "uv": [
+            0,
+            0,
+            12,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#blue",
+          "uv": [
+            0,
+            0,
+            1.2,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#blue",
+          "uv": [
+            0,
+            0,
+            1.2,
+            10
+          ]
+        },
+        "up": {
+          "texture": "#blue",
+          "uv": [
+            0,
+            0,
+            12,
+            1.2
+          ]
+        },
+        "down": {
+          "texture": "#blue",
+          "uv": [
+            0,
+            0,
+            12,
+            1.2
+          ]
+        }
+      }
+    },
+    {
+      "name": "connector",
+      "from": [
+        3,
+        12,
+        -0.4
+      ],
+      "to": [
+        7,
+        14,
+        0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#yellow",
+          "uv": [
+            0,
+            0,
+            4,
+            2
+          ]
+        },
+        "south": {
+          "texture": "#yellow",
+          "uv": [
+            0,
+            0,
+            4,
+            2
+          ]
+        },
+        "east": {
+          "texture": "#yellow",
+          "uv": [
+            0,
+            0,
+            0.4,
+            2
+          ]
+        },
+        "west": {
+          "texture": "#yellow",
+          "uv": [
+            0,
+            0,
+            0.4,
+            2
+          ]
+        },
+        "up": {
+          "texture": "#yellow",
+          "uv": [
+            0,
+            0,
+            4,
+            0.4
+          ]
+        },
+        "down": {
+          "texture": "#yellow",
+          "uv": [
+            0,
+            0,
+            4,
+            0.4
+          ]
+        }
+      }
+    }
+  ],
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "scale": [
+        0.65,
+        0.65,
+        0.65
+      ]
+    }
+  }
+}

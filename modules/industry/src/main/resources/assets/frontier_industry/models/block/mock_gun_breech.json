@@ -1,0 +1,231 @@
+{
+  "textures": {
+    "particle": "frontier_industry:block/campus_dark",
+    "alloy": "frontier_industry:block/campus_alloy",
+    "olive": "frontier_industry:block/campus_olive",
+    "dark": "frontier_industry:block/campus_dark"
+  },
+  "elements": [
+    {
+      "name": "part",
+      "from": [
+        3,
+        2,
+        0
+      ],
+      "to": [
+        13,
+        13,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            10,
+            11
+          ],
+          "texture": "#olive"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            10,
+            11
+          ],
+          "texture": "#olive"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            11
+          ],
+          "texture": "#olive"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            11
+          ],
+          "texture": "#olive"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            10,
+            16
+          ],
+          "texture": "#olive"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            10,
+            16
+          ],
+          "texture": "#olive"
+        }
+      }
+    },
+    {
+      "name": "part",
+      "from": [
+        1,
+        5,
+        3
+      ],
+      "to": [
+        15,
+        10,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            14,
+            5
+          ],
+          "texture": "#dark"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            14,
+            5
+          ],
+          "texture": "#dark"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            11,
+            5
+          ],
+          "texture": "#dark"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            11,
+            5
+          ],
+          "texture": "#dark"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            14,
+            11
+          ],
+          "texture": "#dark"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            14,
+            11
+          ],
+          "texture": "#dark"
+        }
+      }
+    },
+    {
+      "name": "part",
+      "from": [
+        4,
+        13,
+        5
+      ],
+      "to": [
+        12,
+        15,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            8,
+            2
+          ],
+          "texture": "#alloy"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            8,
+            2
+          ],
+          "texture": "#alloy"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            8,
+            2
+          ],
+          "texture": "#alloy"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            8,
+            2
+          ],
+          "texture": "#alloy"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "#alloy"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "#alloy"
+        }
+      }
+    }
+  ],
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "scale": [
+        0.65,
+        0.65,
+        0.65
+      ]
+    }
+  }
+}

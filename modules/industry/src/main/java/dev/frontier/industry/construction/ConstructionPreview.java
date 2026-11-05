@@ -23,7 +23,7 @@ public final class ConstructionPreview {
         if(e.getStage()!=RenderLevelStageEvent.Stage.AFTER_PARTICLES)return;
         var mc=Minecraft.getInstance();if(mc.level==null||!ConstructionAccess.canBuild(mc.player)||mc.getCameraEntity()!=mc.player||mc.screen!=null||!(mc.hitResult instanceof BlockHitResult hit)){clear();return;}
         var type=IndustryContent.deployedType(mc.player.getMainHandItem());if(type==null)type=IndustryContent.deployedType(mc.player.getOffhandItem());if(type==null){clear();return;}
-        BlockPos origin=hit.getBlockPos().relative(hit.getDirection());var bounds=Blueprint.bounds(type);
+        BlockPos origin=hit.getBlockPos().relative(hit.getDirection());var bounds=dev.frontier.industry.buildings.client.BuildingClient.previewBounds(type);
         if(mc.level!=checkedLevel||!origin.equals(last)||type!=lastType||mc.player.tickCount-checked>=10){
             free=true;outer:for(int x=bounds.minX();x<=bounds.maxX();x++)for(int z=bounds.minZ();z<=bounds.maxZ();z++)for(int y=bounds.minY();y<=bounds.maxY();y++){
                 var pos=origin.offset(x,y,z);if(!mc.level.hasChunkAt(pos)||!mc.level.getWorldBorder().isWithinBounds(pos)||!mc.level.getBlockState(pos).isAir()){free=false;break outer;}

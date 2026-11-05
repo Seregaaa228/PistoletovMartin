@@ -14,14 +14,18 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /** Original industrial buildings. Version one is frozen for already saved sites. */
 public final class Blueprint {
-    public static final int LEGACY_VERSION = 1, CURRENT_VERSION = 3;
+    public static final int LEGACY_VERSION = 1, CURRENT_VERSION = 16;
     private static final Map<SiteType, Map<BlockPos, BlockState>> CURRENT = new EnumMap<>(SiteType.class);
     private static final Map<SiteType, Map<BlockPos, BlockState>> CRITICAL_V2 = new EnumMap<>(SiteType.class);
     private static final Map<SiteType, Map<BlockPos, BlockState>> CRITICAL_V3 = new EnumMap<>(SiteType.class);
+    private static final Map<Integer, Map<SiteType, Map<BlockPos, BlockState>>> CRITICAL_NEW = new java.util.HashMap<>();
     private Blueprint() {}
-    public static int savedVersion(int value) { return value == 2 || value == 3 ? value : LEGACY_VERSION; }
+    public static int savedVersion(int value) { return dev.frontier.industry.buildings.BuildingOrientation.applies(value) ? value : value >= 2 && value <= 5 ? value : LEGACY_VERSION; }
     public static BlueprintBounds bounds(SiteType type) { return bounds(type, CURRENT_VERSION); }
     public static BlueprintBounds bounds(SiteType type, int version) {
+        if (dev.frontier.industry.buildings.BuildingOrientation.applies(version)) return dev.frontier.industry.architecture.FinalIndustryArchitecture.bounds(type,version);
+        if (version >= 5) return dev.frontier.industry.architecture.OperationalArchitecture.bounds(type);
+        if (version >= 4) return dev.frontier.industry.architecture.SolidIndustryArchitecture.bounds(type);
         if (version == LEGACY_VERSION) {
             int r = type == SiteType.SUBSTATION ? 2 : 3;
             return new BlueprintBounds(-r, 0, -r, r, 4, r);
@@ -39,14 +43,18 @@ public final class Blueprint {
     public static int radius(SiteType type) { return radius(type, CURRENT_VERSION); }
     public static int radius(SiteType type, int version) { return bounds(type, version).radius(); }
     public static BlockPos entrance(SiteType type, BlockPos origin) { return entrance(type, origin, CURRENT_VERSION); }
-    public static BlockPos entrance(SiteType type, BlockPos origin, int version) { return origin.offset(0, 1, bounds(type, version).minZ()); }
+    public static BlockPos entrance(SiteType type, BlockPos origin, int version) { return dev.frontier.industry.buildings.BuildingOrientation.applies(version) ? dev.frontier.industry.architecture.FinalIndustryArchitecture.entrance(type,origin,version) : origin.offset(0, 1, bounds(type, version).minZ()); }
     public static BlockPos controller(SiteType type, BlockPos origin) { return controller(type, origin, CURRENT_VERSION); }
     public static BlockPos controller(SiteType type, BlockPos origin, int version) {
+        if(dev.frontier.industry.buildings.BuildingOrientation.applies(version))return dev.frontier.industry.architecture.FinalIndustryArchitecture.controller(type,origin,version);
         return version >= 2 ? origin.offset(type == SiteType.VEHICLE_FACTORY ? 4 : 2, 1, bounds(type, version).minZ() + (version>=3?4:2))
             : origin.offset(1, 1, -radius(type, version));
     }
     public static Map<BlockPos, BlockState> blocks(SiteType type, BlockPos origin) { return blocks(type, origin, CURRENT_VERSION); }
     public static Map<BlockPos, BlockState> blocks(SiteType type, BlockPos origin, int version) {
+        if(dev.frontier.industry.buildings.BuildingOrientation.applies(version))return dev.frontier.industry.architecture.FinalIndustryArchitecture.blocks(type,origin,version);
+        if(version>=5)return dev.frontier.industry.architecture.OperationalArchitecture.blocks(type,origin);
+        if(version>=4)return dev.frontier.industry.architecture.SolidIndustryArchitecture.blocks(type,origin);
         if(version>=3)return dev.frontier.industry.architecture.IndustryArchitecture.blocks(type,origin);
         if (version == LEGACY_VERSION) return legacy(type, origin);
         Map<BlockPos, BlockState> relative = CURRENT.computeIfAbsent(type, Blueprint::designed);
@@ -56,8 +64,17 @@ public final class Blueprint {
     }
     /** Destroying highlighted turbine or transformer cores breaks a new site's power circuit. */
     public static Map<BlockPos, BlockState> criticalBlocks(SiteType type, BlockPos origin, int version) {
+        if (dev.frontier.industry.buildings.BuildingOrientation.applies(version)) {
+            Map<SiteType, Map<BlockPos, BlockState>> cache = CRITICAL_NEW.computeIfAbsent(version, key -> new EnumMap<>(SiteType.class));
+            Map<BlockPos, BlockState> relative = cache.computeIfAbsent(type, key -> dev.frontier.industry.architecture.FinalIndustryArchitecture.criticalBlocks(key, BlockPos.ZERO, version));
+            Map<BlockPos, BlockState> result = new LinkedHashMap<>(relative.size());
+            relative.forEach((pos, state) -> result.put(origin.offset(pos), state));
+            return result;
+        }
         if (version == LEGACY_VERSION || type.isConsumer()) return Map.of();
-        Map<SiteType, Map<BlockPos, BlockState>> cache = version >= 3 ? CRITICAL_V3 : CRITICAL_V2;
+        Map<SiteType, Map<BlockPos, BlockState>> cache = version > 3
+            ? CRITICAL_NEW.computeIfAbsent(version, key -> new EnumMap<>(SiteType.class))
+            : version == 3 ? CRITICAL_V3 : CRITICAL_V2;
         Map<BlockPos, BlockState> relative = cache.computeIfAbsent(type, key -> criticalRelative(key, version));
         Map<BlockPos, BlockState> result = new LinkedHashMap<>(relative.size());
         relative.forEach((pos, state) -> result.put(origin.offset(pos), state));
@@ -78,7 +95,7 @@ public final class Blueprint {
         return Collections.unmodifiableMap(result);
     }
     private static Map<BlockPos, BlockState> designed(SiteType type) {
-        Layout b = new Layout(); BlueprintBounds f = bounds(type);
+        Layout b = new Layout(); BlueprintBounds f = bounds(type, 2);
         b.fill(f.minX(), 0, f.minZ(), f.maxX(), 0, f.maxZ(), "floor");
         b.ring(f.minX(), 0, f.minZ(), f.maxX(), f.maxZ(), "concrete");
         b.fill(-1, 0, f.minZ(), 1, 0, f.maxZ(), "concrete");

@@ -2,12 +2,14 @@ package dev.frontier.industry.engine;
 
 import dev.frontier.industry.SiteType;
 import dev.frontier.industry.IndustryCatalog;
+import dev.frontier.industry.buildings.OutputWarehouse;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -52,6 +54,10 @@ public final class IndustryData extends SavedData {
                 CompoundTag inventory = tag.getCompound("Inventory").copy();
                 inventory.putInt("Size", IndustryRules.SLOTS);
                 site.inventory.deserializeNBT(inventory);
+                CompoundTag containers = tag.getCompound("ContainerInventories");
+                site.loadContainerInventories(containers);
+                OutputWarehouse.ensureInventories(site);
+                site.outputMigrationAttempted = tag.getBoolean("OutputMigrationAttempted");
                 ListTag orders = tag.getList("Orders", Tag.TAG_COMPOUND);
                 for (int j = 0; j < Math.min(orders.size(), IndustryRules.MAX_QUEUE); j++) site.orders.add(Order.load(orders.getCompound(j)));
                 data.sites.put(site.id, site);
@@ -95,6 +101,8 @@ public final class IndustryData extends SavedData {
             tag.putInt("Energy", site.energy); tag.putInt("Burn", site.burn);
             tag.putBoolean("RepairRequested", site.repairRequested); tag.putInt("RepairProgress", site.repairProgress); tag.putBoolean("RepairKit", site.repairKit);
             tag.put("Inventory", site.inventory.serializeNBT());
+            tag.put("ContainerInventories", site.saveContainerInventories());
+             tag.putBoolean("OutputMigrationAttempted", site.outputMigrationAttempted);
             ListTag orders = new ListTag();
             for (Order order : site.orders) orders.add(order.save());
             tag.put("Orders", orders); sitesTag.add(tag);
@@ -119,11 +127,14 @@ public final class IndustryData extends SavedData {
     }
     public static int clamp(int value, int min, int max) { return Math.max(min, Math.min(max, value)); }
     public static final class Site {
+        private final IndustryData data;
         public final UUID id, owner;
         public final SiteType type;
         public final ResourceLocation dimension;
         public final BlockPos origin;
         public final ItemStackHandler inventory;
+        public final Map<Long, ItemStackHandler> containerInventories = new TreeMap<>();
+        public boolean outputMigrationAttempted;
         public final Deque<Order> orders = new ArrayDeque<>();
         public String team = "", status = "Ожидание";
         public UUID upstream;
@@ -136,6 +147,7 @@ public final class IndustryData extends SavedData {
         /** Derived each server tick; never saved as production truth. */
         public boolean operating;
         public Site(IndustryData data, UUID id, UUID owner, SiteType type, ResourceLocation dimension, BlockPos origin) {
+            this.data = data;
             this.id = id; this.owner = owner; this.type = type; this.dimension = dimension; this.origin = origin.immutable();
             this.inventory = new ItemStackHandler(IndustryRules.SLOTS) {
                 @Override protected void onContentsChanged(int slot) { data.setDirty(); }
@@ -146,6 +158,25 @@ public final class IndustryData extends SavedData {
             };
         }
         public boolean functional() { return !constructing && (blueprintVersion == Blueprint.LEGACY_VERSION || machineryIntact) && IndustryRules.functional(matching, total, controller, loaded); }
+        public ItemStackHandler containerInventory(long relative) {
+            return containerInventories.computeIfAbsent(relative, key -> new ItemStackHandler(IndustryRules.CONTAINER_SLOTS) {
+                @Override protected void onContentsChanged(int slot) { data.setDirty(); }
+            });
+        }
+        public CompoundTag saveContainerInventories() {
+            CompoundTag result = new CompoundTag();
+            result.putInt("Schema", IndustryRules.CONTAINER_SCHEMA);
+            for (var entry : containerInventories.entrySet()) result.put("P" + entry.getKey(), entry.getValue().serializeNBT());
+            return result;
+        }
+        public void loadContainerInventories(CompoundTag saved) {
+            containerInventories.clear();
+            for (String key : saved.getAllKeys()) if (key.startsWith("P")) try {
+                long relative = Long.parseLong(key.substring(1));
+                CompoundTag inventory = saved.getCompound(key).copy(); inventory.putInt("Size", IndustryRules.CONTAINER_SLOTS);
+                ItemStackHandler handler = containerInventory(relative); handler.deserializeNBT(inventory);
+            } catch (NumberFormatException ignored) { }
+        }
     }
     public static final class Order {
         public final String recipe;

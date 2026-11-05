@@ -75,7 +75,7 @@ public final class FactoryScreen extends AbstractContainerScreen<IndustryMenus.F
             button(12,66,40,"↑",()->{researchOffset=Math.max(0,researchOffset-4);rebuild();});
             button(304,66,40,"↓",()->{researchOffset=Math.min(4,researchOffset+4);rebuild();});
             button(12,198,158,"+ Учёный",()->send("research_staff","",1));
-            button(184,198,160,"Внести материалы",()->send("research_supply",selectedTechnology(),1));
+            button(184,198,160,"Внести материалы",()->send("research_supply",selectedTechnology(),0));
             button(12,220,332,"Начать исследование",()->send("research_start",selectedTechnology(),1));
         } else if (page == PRODUCTION) {
             query = widgets.add(IndustryWidgets.search(leftPos + 12, topPos + 66, 308, () -> filter, text -> {

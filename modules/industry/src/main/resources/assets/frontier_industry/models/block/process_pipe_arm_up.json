@@ -1,0 +1,177 @@
+{
+  "textures": {
+    "particle": "frontier_industry:block/steel",
+    "steel": "frontier_industry:block/steel",
+    "edge": "frontier_industry:block/steel_edge",
+    "white": "frontier_industry:block/white",
+    "dark": "frontier_industry:block/dark",
+    "screen": "frontier_industry:block/blue",
+    "brass": "frontier_industry:block/brass",
+    "floor": "frontier_industry:block/floor",
+    "panel": "frontier_industry:block/workshop_panel",
+    "wood": "frontier_industry:block/decor_wood",
+    "fabric": "frontier_industry:block/decor_fabric",
+    "leaves": "frontier_industry:block/decor_leaves",
+    "copper": "frontier_industry:block/pipe_copper",
+    "light": "frontier_industry:block/floor_light"
+  },
+  "elements": [
+    {
+      "from": [
+        5,
+        8,
+        5
+      ],
+      "to": [
+        11,
+        16,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#copper",
+          "uv": [
+            0,
+            0,
+            6,
+            8
+          ]
+        },
+        "south": {
+          "texture": "#copper",
+          "uv": [
+            0,
+            0,
+            6,
+            8
+          ]
+        },
+        "east": {
+          "texture": "#copper",
+          "uv": [
+            0,
+            0,
+            6,
+            8
+          ]
+        },
+        "west": {
+          "texture": "#copper",
+          "uv": [
+            0,
+            0,
+            6,
+            8
+          ]
+        },
+        "up": {
+          "texture": "#copper",
+          "uv": [
+            0,
+            0,
+            6,
+            6
+          ]
+        },
+        "down": {
+          "texture": "#copper",
+          "uv": [
+            0,
+            0,
+            6,
+            6
+          ]
+        }
+      },
+      "name": "pipe_to_face"
+    },
+    {
+      "from": [
+        3,
+        14,
+        3
+      ],
+      "to": [
+        13,
+        16,
+        13
+      ],
+      "faces": {
+        "north": {
+          "texture": "#brass",
+          "uv": [
+            0,
+            0,
+            10,
+            2
+          ]
+        },
+        "south": {
+          "texture": "#brass",
+          "uv": [
+            0,
+            0,
+            10,
+            2
+          ]
+        },
+        "east": {
+          "texture": "#brass",
+          "uv": [
+            0,
+            0,
+            10,
+            2
+          ]
+        },
+        "west": {
+          "texture": "#brass",
+          "uv": [
+            0,
+            0,
+            10,
+            2
+          ]
+        },
+        "up": {
+          "texture": "#brass",
+          "uv": [
+            0,
+            0,
+            10,
+            10
+          ]
+        },
+        "down": {
+          "texture": "#brass",
+          "uv": [
+            0,
+            0,
+            10,
+            10
+          ]
+        }
+      },
+      "name": "sealed_flange"
+    }
+  ],
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.55,
+        0.55,
+        0.55
+      ]
+    }
+  }
+}
