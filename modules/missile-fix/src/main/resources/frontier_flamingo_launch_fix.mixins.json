@@ -20,6 +20,7 @@
     "MissileImpactAccess",
     "MissilePenetrationBurst",
     "GroundedMissileTarget",
+    "MissileLeavesPassThrough",
     "VanillaServerEffects",
     "FarFlightPacketCadence",
     "NativeDomeFollowUp",
