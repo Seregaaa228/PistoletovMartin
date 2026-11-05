@@ -3,6 +3,7 @@ package dev.frontier.industry.engine;
 /** Small deterministic rules shared by live simulation and boundary tests. */
 public final class IndustryRules {
     public static final int INPUTS = 12, SLOTS = 24, REPAIR_TICKS = 1800;
+    public static final int CONTAINER_SLOTS = 9, CONTAINER_SCHEMA = 1;
     public static final int MAX_WORKERS = 64, MAX_TRANSFERS = 7, MAX_PRODUCTION = 12;
     public static final int LINK_RANGE = 128, INTERACT_RANGE = 12, REPAIR_RANGE = 8;
     public static final int GENERATION = 128, BUFFER = 32000, MAX_QUEUE = 16;

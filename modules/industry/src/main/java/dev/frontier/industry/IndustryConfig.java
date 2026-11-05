@@ -11,7 +11,7 @@ public final class IndustryConfig {
     static {
         var b = new ForgeConfigSpec.Builder();
         b.push("construction");
-        PLACEMENT_BUDGET = b.defineInRange("globalBlocksPerTick", 64, 8, 256);
+        PLACEMENT_BUDGET = b.defineInRange("globalBlocksPerTick", 256, 8, 2048);
         for (SiteType type:SiteType.values()) BUILD.put(type.name(),b.defineInRange(type.path()+"Seconds",ConstructionRules.duration(type.name())/20,1,3600));
         b.pop();b.push("research");
         for (var t:Technology.values()) {

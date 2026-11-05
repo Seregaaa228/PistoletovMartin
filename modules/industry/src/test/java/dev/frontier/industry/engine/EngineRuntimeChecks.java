@@ -82,7 +82,7 @@ public final class EngineRuntimeChecks {
         site.blueprintVersion = Blueprint.CURRENT_VERSION;
         Site newRoundTrip = IndustryData.load(data.save(new CompoundTag())).sites.get(id);
         check(result, "new building version persists without expanding old sites", newRoundTrip != null && newRoundTrip.blueprintVersion == Blueprint.CURRENT_VERSION
-            && Blueprint.bounds(newRoundTrip.type, newRoundTrip.blueprintVersion).width() == 15 && legacy != null && legacy.blueprintVersion == Blueprint.LEGACY_VERSION);
+            && Blueprint.bounds(newRoundTrip.type, newRoundTrip.blueprintVersion).width() == 51 && legacy != null && legacy.blueprintVersion == Blueprint.LEGACY_VERSION);
         if (legacy != null) { legacy.total = legacy.matching = 100; legacy.loaded = legacy.controller = true; legacy.machineryIntact = false; }
         if (newRoundTrip != null) { newRoundTrip.total = newRoundTrip.matching = 100; newRoundTrip.loaded = newRoundTrip.controller = true; newRoundTrip.machineryIntact = false; }
         check(result, "legacy integrity contract stays unchanged while new machinery damage stops grid", legacy != null && legacy.functional() && newRoundTrip != null && !newRoundTrip.functional());
