@@ -4,6 +4,7 @@
   "package": "dev.frontier.ifv.mixin.client",
   "compatibilityLevel": "JAVA_17",
   "client": [
+    "CreativeTabsScreenMixin",
     "LightBudgetMixin",
     "ExplosionBudgetMixin",
     "WreckParticleBudgetMixin",

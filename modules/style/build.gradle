@@ -11,3 +11,10 @@ tasks.register('wreckEffectTimelineTest', JavaExec) {
     mainClass = 'dev.frontier.ifv.client.WreckEffectTimelineTest'
 }
 tasks.named('check').configure { dependsOn 'wreckEffectTimelineTest' }
+
+tasks.register('catalogRuleCheck', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.ifv.catalog.CatalogRuleCheck'
+}
+tasks.named('check').configure { dependsOn 'catalogRuleCheck' }
