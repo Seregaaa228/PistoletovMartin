@@ -192,7 +192,7 @@ public final class FrontierNations {
                 give(p,new ItemStack(Items.EMERALD,64));give(p,new ItemStack(Items.COOKED_BEEF,64));
                 for(ResourceLocation id:ForgeRegistries.ITEMS.getKeys()) {
                     String path=id.getPath();
-                    boolean drone=id.getNamespace().equals("uncomplicatedfpv")&&(path.contains("fpv")||path.contains("mavic")||path.contains("shahed")||path.contains("radio"));
+                    boolean drone=id.getNamespace().equals("uncomplicatedfpv")&&(path.contains("fpv")||path.contains("mavic"));
                     boolean monitor=id.getNamespace().equals("superbwarfare")&&(path.equals("monitor")||path.equals("drone_monitor")||path.equals("tactical_radio"));
                     if(drone||monitor)give(p,new ItemStack(Objects.requireNonNull(ForgeRegistries.ITEMS.getValue(id))));
                 }

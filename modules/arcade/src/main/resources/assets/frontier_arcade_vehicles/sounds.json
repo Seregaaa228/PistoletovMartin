@@ -1,0 +1,13 @@
+{
+  "geranium_jet_engine": {
+    "sounds": [
+      {
+        "name": "superbwarfare:vehicle/a_10a/a_10a_engine",
+        "attenuation_distance": 96,
+        "pitch": 1.25,
+        "volume": 0.8,
+        "stream": true
+      }
+    ]
+  }
+}

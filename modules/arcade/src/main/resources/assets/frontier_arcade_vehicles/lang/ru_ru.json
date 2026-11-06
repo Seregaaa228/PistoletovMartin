@@ -27,11 +27,14 @@
   "gui.frontier_arcade_vehicles.station.refresh": "Обновить",
   "gui.frontier_arcade_vehicles.station.close": "Закрыть",
   "gui.frontier_arcade_vehicles.station.empty": "Нет аппаратов для станции",
-  "gui.frontier_arcade_vehicles.station.empty_hint": "Поставь свой ретранслятор или Герань-2 рядом.",
+  "gui.frontier_arcade_vehicles.station.empty_hint": "Поставь свой ретранслятор, Герань-2 или Шахед-136 рядом.",
   "gui.frontier_arcade_vehicles.station.offline": "НЕДОСТУПЕН",
   "gui.frontier_arcade_vehicles.station.kind_relay": "Самолёт-ретранслятор",
   "gui.frontier_arcade_vehicles.station.kind_recon": "Mavic · разведка",
   "gui.frontier_arcade_vehicles.station.distance": "%s м",
   "gui.frontier_arcade_vehicles.station.telemetry": "АКБ %s%% · СВ %s%%",
-  "gui.frontier_arcade_vehicles.station.kind_geranium": "Герань-2 · ударный самолёт"
+  "gui.frontier_arcade_vehicles.station.kind_geranium": "Герань-2 · реактивный ударный",
+  "item.frontier_arcade_vehicles.shahed_136_drone": "Шахед-136",
+  "entity.frontier_arcade_vehicles.shahed_136_drone": "Шахед-136",
+  "gui.frontier_arcade_vehicles.station.kind_shahed": "Шахед-136 · винтовой ударный"
 }

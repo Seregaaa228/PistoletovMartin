@@ -370,7 +370,8 @@ public final class ControlSessions {
             rememberNativeOwner(drone);
             RelayNetwork.LinkInfo link = RelayNetwork.linkInfo(drone, player.getEyePosition());
             boolean online = powered(drone) && link.connected();
-            result.add(new DroneEntry(drone.getUUID(), drone.getDisplayName().getString(), drone instanceof RelayEntity ? "relay" : "geranium",
+            result.add(new DroneEntry(drone.getUUID(), drone.getDisplayName().getString(), drone instanceof RelayEntity ? "relay"
+                : drone instanceof GeraniumEntity g && g.variant() == dev.frontier.arcade.geranium.GeraniumVariant.PROPELLER ? "shahed" : "geranium",
                 drone.position().distanceTo(Vec3.atCenterOf(station)), batteryPercent(drone),
                 (int)Math.round(Math.max(0, Math.min(1, link.quality())) * 100), online));
         }

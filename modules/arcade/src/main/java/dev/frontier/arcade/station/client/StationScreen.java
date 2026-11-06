@@ -144,6 +144,7 @@ public final class StationScreen extends AbstractContainerScreen<StationMenu> {
     private static String kindName(String kind) {
         String normalized = kind.toLowerCase(Locale.ROOT);
         if (normalized.contains("relay") || normalized.contains("ретранс")) return text("kind_relay").getString();
+        if (normalized.contains("shahed")) return text("kind_shahed").getString();
         if (normalized.contains("geranium")) return text("kind_geranium").getString();
         if (normalized.contains("mavic") || normalized.contains("recon")) return text("kind_recon").getString();
         return kind;

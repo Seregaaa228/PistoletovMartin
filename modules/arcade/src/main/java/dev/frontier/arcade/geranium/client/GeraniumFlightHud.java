@@ -4,7 +4,6 @@ import com.atsuishio.superbwarfare.init.ModKeyMappings;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.math.Axis;
 import dev.frontier.arcade.geranium.GeraniumEntity;
-import dev.frontier.arcade.geranium.GeraniumFlightModel;
 import java.util.Locale;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -41,8 +40,8 @@ public final class GeraniumFlightHud {
 
         graphics.fill(edge, edge, width - edge, edge + 22, PANEL);
         graphics.fill(edge, edge, edge + 2, edge + 22, ACCENT);
-        graphics.drawString(mc.font, "ГЕРАНЬ-2", edge + 8, edge + 7, TEXT, false);
-        boolean stall = target.isLaunched() && !lost && battery > 0 && GeraniumFlightModel.stallSpeed(target.flightSpeed());
+        graphics.drawString(mc.font, target.variant().title().toUpperCase(Locale.ROOT), edge + 8, edge + 7, TEXT, false);
+        boolean stall = target.isLaunched() && !lost && battery > 0 && target.flightProfile().stalled(target.flightSpeed());
         String phase = lost ? "НЕТ СВЯЗИ" : battery == 0 ? "НЕТ ПИТАНИЯ"
             : !target.isLaunched() ? "ГОТОВ К ПУСКУ" : stall ? "СВАЛИВАНИЕ" : "ПОЛЁТ";
         int phaseColor = lost || battery == 0 || stall ? DANGER : target.isLaunched() ? ACCENT : WARNING;
@@ -93,8 +92,8 @@ public final class GeraniumFlightHud {
         String control = keyName(ModKeyMappings.MOVE_FORWARD) + "/" + keyName(ModKeyMappings.MOVE_BACKWARD)
             + " газ  ·  " + keyName(ModKeyMappings.MOVE_LEFT) + "/" + keyName(ModKeyMappings.MOVE_RIGHT)
             + " крен  ·  Мышь крен/тангаж";
-        String actions = keyName(stabilize) + " ровно  ·  " + keyName(mc.options.keyUse)
-            + " выход  ·  " + keyName(ModKeyMappings.FIRE) + " подрыв";
+        String actions = keyName(stabilize) + " ровно  ·  " + keyName(mc.options.keyTogglePerspective) + " вид  ·  "
+            + keyName(mc.options.keyUse) + " выход  ·  " + keyName(ModKeyMappings.FIRE) + " подрыв";
         fittedCentered(graphics, control, centerX, footerY + 4, innerWidth - 12, TEXT);
         fittedCentered(graphics, actions, centerX, footerY + 15, innerWidth - 12, MUTED);
     }

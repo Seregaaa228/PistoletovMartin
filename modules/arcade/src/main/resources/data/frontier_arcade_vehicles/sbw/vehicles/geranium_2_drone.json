@@ -9,7 +9,7 @@
   "HasLowHealthWarning": false,
   "SendHitParticles": false,
   "VehicleContainerType": "Empty",
-  "EngineSound": "uncomplicatedfpv:shahed136_engine",
+  "EngineSound": "frontier_arcade_vehicles:geranium_jet_engine",
   "EngineInfo": {
     "EngineSoundVolume": 0.45
   }

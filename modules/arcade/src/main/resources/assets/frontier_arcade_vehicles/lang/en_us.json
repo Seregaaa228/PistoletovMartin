@@ -27,11 +27,14 @@
   "gui.frontier_arcade_vehicles.station.refresh": "Refresh",
   "gui.frontier_arcade_vehicles.station.close": "Close",
   "gui.frontier_arcade_vehicles.station.empty": "No aircraft for this station",
-  "gui.frontier_arcade_vehicles.station.empty_hint": "Place your relay plane or Geranium-2 nearby.",
+  "gui.frontier_arcade_vehicles.station.empty_hint": "Place your relay plane, Geranium-2 or Shahed-136 nearby.",
   "gui.frontier_arcade_vehicles.station.offline": "UNAVAILABLE",
   "gui.frontier_arcade_vehicles.station.kind_relay": "Airborne relay plane",
   "gui.frontier_arcade_vehicles.station.kind_recon": "Mavic · reconnaissance",
   "gui.frontier_arcade_vehicles.station.distance": "%s m",
   "gui.frontier_arcade_vehicles.station.telemetry": "BAT %s%% · RF %s%%",
-  "gui.frontier_arcade_vehicles.station.kind_geranium": "Geranium-2 · strike aircraft"
+  "gui.frontier_arcade_vehicles.station.kind_geranium": "Geranium-2 · jet strike aircraft",
+  "item.frontier_arcade_vehicles.shahed_136_drone": "Shahed-136",
+  "entity.frontier_arcade_vehicles.shahed_136_drone": "Shahed-136",
+  "gui.frontier_arcade_vehicles.station.kind_shahed": "Shahed-136 · propeller strike aircraft"
 }
