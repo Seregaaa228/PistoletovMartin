@@ -14,16 +14,18 @@ import ru.lavafrai.uncomplicatedfpv.registry.ModSounds;
  * variant is always derived from the entity type (saved Geranium-2 worlds stay the jet).
  */
 public enum GeraniumVariant {
-    JET("Герань-2", GeraniumFlightModel.Profile.JET, "geranium_2_jet"),
-    PROPELLER("Шахед-136", GeraniumFlightModel.Profile.PROPELLER, "geranium_2");
+    JET("Герань-2", GeraniumFlightModel.Profile.JET, "geranium_2_jet", 6000),
+    PROPELLER("Шахед-136", GeraniumFlightModel.Profile.PROPELLER, "geranium_2", 4000);
 
     private final String title;
+    private final double signalRange;
     private final GeraniumFlightModel.Profile profile;
     private final ResourceLocation model, animation;
     private final String idle, flight;
 
-    GeraniumVariant(String title, GeraniumFlightModel.Profile profile, String asset) {
+    GeraniumVariant(String title, GeraniumFlightModel.Profile profile, String asset, double signalRange) {
         this.title = title;
+        this.signalRange = signalRange;
         this.profile = profile;
         // GeckoLib queries these per rendered frame; resolve each resource once.
         this.model = new ResourceLocation(ArcadeVehicles.ID, "geo/" + asset + ".geo.json");
@@ -38,6 +40,11 @@ public enum GeraniumVariant {
 
     public String title() { return title; }
     public GeraniumFlightModel.Profile profile() { return profile; }
+    /**
+     * Station radio budget in blocks (UF's terrain and REB losses still apply on top). A full battery
+     * covers three to four times this distance at cruise: 3.3 min for the jet, 5.9 min for the Shahed.
+     */
+    public double signalRange() { return signalRange; }
     public ResourceLocation model() { return model; }
     public ResourceLocation animation() { return animation; }
     public String animationName(boolean engineRunning) { return engineRunning ? flight : idle; }

@@ -24,19 +24,12 @@ public final class RemoteDroneView {
     private record Watch(ServerLevel level, AddonDroneEntity drone, ChunkPos body) {}
     private record AirTicket(ServerLevel level, ChunkPos pos) {}
     private static final Map<UUID,Watch> WATCH = new HashMap<>();
-    private static final Set<RelayEntity> RELAYS = Collections.newSetFromMap(new IdentityHashMap<>());
-    private static final Map<UUID,AirTicket> AIR = new HashMap<>();
     private static final Set<dev.frontier.arcade.geranium.GeraniumEntity> GLIDERS = Collections.newSetFromMap(new IdentityHashMap<>());
-    private static final Map<UUID,AirTicket> GLIDE_TICKETS = new HashMap<>();
     private static final Set<AddonDroneEntity> MAVICS = Collections.newSetFromMap(new IdentityHashMap<>());
     private static final Map<UUID,AirTicket> MAVIC_TICKETS = new HashMap<>();
     private static final TicketType<UUID> MAVIC_FLIGHT = TicketType.create("frontier_mavic_flight", UUID::compareTo, 40);
-    private static final TicketType<UUID> GLIDE = TicketType.create("frontier_geranium_flight", UUID::compareTo, 40);
     private static final TicketType<UUID> BODY = TicketType.create("frontier_radio_body", UUID::compareTo, 40);
-    private static final TicketType<UUID> AIRCRAFT = TicketType.create("frontier_relay_aircraft", UUID::compareTo, 40);
     private RemoteDroneView() {}
-    public static long ownedCount(UUID owner){return RELAYS.stream().filter(r -> r.isAlive() && !r.isRemoved() && owner.equals(r.ownerId())).count();}
-    public static long totalCount(){return RELAYS.stream().filter(r -> r.isAlive() && !r.isRemoved()).count();}
     public static Vec3 center(ServerPlayer player) {
         Watch watch=WATCH.get(player.getUUID());
         return watch!=null && watch.level==player.level() && watch.drone.isAlive() && !watch.drone.isRemoved()
@@ -51,9 +44,8 @@ public final class RemoteDroneView {
         Entity entity=player.serverLevel().getEntity(id);
         if(!(entity instanceof AddonDroneEntity drone) || !entity.isAlive()
             || !player.getStringUUID().equals(drone.getEntityData().get(DroneEntity.CONTROLLER))
-            || entity.distanceToSqr(player)>1024d*1024d || drone.isSignalLost() || drone.getSignalQuality()<=0)return null;
+            || entity.distanceToSqr(player)>viewLimit(drone)*viewLimit(drone) || drone.isSignalLost() || drone.getSignalQuality()<=0)return null;
         if(drone instanceof dev.frontier.arcade.geranium.GeraniumEntity g && !g.ownedBy(player))return null;
-        if(drone instanceof RelayEntity relay && (!relay.ownedBy(player) || !relay.activeMonitor()))return null;
         if(!ControlSessions.authorizedInput(player,drone))return null;
         return drone;
     }
@@ -69,25 +61,24 @@ public final class RemoteDroneView {
         WATCH.put(player.getUUID(),new Watch(player.serverLevel(),drone,body));
         player.serverLevel().getChunkSource().addRegionTicket(BODY,body,3,player.getUUID());
         player.serverLevel().getChunkSource().move(player);
-        if(player.tickCount%10==0){var origin=drone.getOperatorPosition();if(origin==null)origin=player.getEyePosition();
-            dev.frontier.arcade.geranium.GeraniumNet.sendRadioStatus(player,drone.getUUID(),RelayNetwork.linkInfo(drone,origin).relayHops());}
     }
     @SubscribeEvent public static void join(EntityJoinLevelEvent event) {
         if(event.getLevel().isClientSide)return;
-        if(event.getEntity() instanceof RelayEntity relay)RELAYS.add(relay);
         if(event.getEntity() instanceof dev.frontier.arcade.geranium.GeraniumEntity g)GLIDERS.add(g);
         if(event.getEntity() instanceof AddonDroneEntity drone && isMavic(drone))MAVICS.add(drone);
     }
     @SubscribeEvent public static void leave(EntityLeaveLevelEvent event) {
         if(event.getLevel().isClientSide)return;
-        if(event.getEntity() instanceof RelayEntity relay){RELAYS.remove(relay);releaseAir(relay.getUUID());}
         if(event.getEntity() instanceof dev.frontier.arcade.geranium.GeraniumEntity g){GLIDERS.remove(g);releaseGlide(g.getUUID());}
         if(event.getEntity() instanceof AddonDroneEntity drone && isMavic(drone)){MAVICS.remove(drone);releaseMavic(drone.getUUID());}
     }
     private static boolean isMavic(AddonDroneEntity drone){return ControlSessions.isMavic(drone);}
     private static void releaseMavic(UUID id){AirTicket t=MAVIC_TICKETS.remove(id);if(t!=null)t.level.getChunkSource().removeRegionTicket(MAVIC_FLIGHT,t.pos,2,id);}
-    private static void releaseGlide(UUID id){AirTicket t=GLIDE_TICKETS.remove(id);if(t!=null)t.level.getChunkSource().removeRegionTicket(GLIDE,t.pos,2,id);}
-    private static void releaseAir(UUID id) {AirTicket t=AIR.remove(id);if(t!=null)t.level.getChunkSource().removeRegionTicket(AIRCRAFT,t.pos,3,id);}
+    private static void releaseGlide(UUID id){dev.frontier.arcade.geranium.FlightChunks.release(id);}
+    /** Strike aircraft fly their whole radio range; other units keep the former 1024-block camera limit. */
+    private static double viewLimit(AddonDroneEntity drone){
+        return drone instanceof dev.frontier.arcade.geranium.GeraniumEntity g ? g.signalRange()+64 : 1024d;
+    }
     @SubscribeEvent public static void tick(TickEvent.ServerTickEvent event) {
         if(event.phase!=TickEvent.Phase.START)return;
         // Closing the terminal releases the camera subscriptions, not an owned Mavic's current flight chunk.
@@ -112,29 +103,16 @@ public final class RemoteDroneView {
             if(!g.isAlive() || !g.isLaunched() || g.ownerId()==null || level.getPlayerByUUID(g.ownerId())==null
                 || gliderCounts.getOrDefault(g.ownerId(),0)>=8 || gliderTotal>=32){releaseGlide(g.getUUID());continue;}
             gliderCounts.merge(g.ownerId(),1,Integer::sum);gliderTotal++;
-            ChunkPos pos=g.chunkPosition();AirTicket old=GLIDE_TICKETS.get(g.getUUID());
-            if(old!=null && (old.level!=level || !old.pos.equals(pos)))releaseGlide(g.getUUID());
-            level.getChunkSource().addRegionTicket(GLIDE,pos,2,g.getUUID());GLIDE_TICKETS.put(g.getUUID(),new AirTicket(level,pos));
-        }
-        Map<UUID,Integer> counts=new HashMap<>();int total=0;
-        for(RelayEntity relay:RELAYS.stream().sorted(Comparator.comparing(Entity::getUUID)).toList()) {
-            if(relay.isRemoved() || !(relay.level() instanceof ServerLevel level)) {RELAYS.remove(relay);releaseAir(relay.getUUID());continue;}
-            if(relay.ownerId()==null || level.getPlayerByUUID(relay.ownerId())==null || !relay.shouldKeepFlightLoaded()){releaseAir(relay.getUUID());continue;}
-            if(counts.getOrDefault(relay.ownerId(),0)>=3 || total>=24){releaseAir(relay.getUUID());continue;}
-            counts.merge(relay.ownerId(),1,Integer::sum);total++;
-            ChunkPos pos=relay.chunkPosition();AirTicket old=AIR.get(relay.getUUID());
-            if(old!=null && (old.level!=level || !old.pos.equals(pos)))releaseAir(relay.getUUID());
-            level.getChunkSource().addRegionTicket(AIRCRAFT,pos,3,relay.getUUID());AIR.put(relay.getUUID(),new AirTicket(level,pos));
+            dev.frontier.arcade.geranium.FlightChunks.hold(level,g); // own chunk plus look-ahead along the path
         }
     }
     @SubscribeEvent public static void logout(PlayerEvent.PlayerLoggedOutEvent e) {
         Watch old=WATCH.remove(e.getEntity().getUUID());if(old!=null)old.level.getChunkSource().removeRegionTicket(BODY,old.body,3,e.getEntity().getUUID());
-        for(RelayEntity relay:List.copyOf(RELAYS))if(e.getEntity().getUUID().equals(relay.ownerId()))releaseAir(relay.getUUID());
         for(var g:List.copyOf(GLIDERS))if(e.getEntity().getUUID().equals(g.ownerId()))releaseGlide(g.getUUID());
         for(AddonDroneEntity mavic:List.copyOf(MAVICS))if(e.getEntity().getUUID().equals(ControlSessions.ownerId(mavic)))releaseMavic(mavic.getUUID());
     }
     @SubscribeEvent public static void stop(ServerStoppedEvent e){
         for(UUID id:List.copyOf(MAVIC_TICKETS.keySet()))releaseMavic(id);
-        MAVICS.clear();WATCH.clear();RELAYS.clear();AIR.clear();GLIDERS.clear();GLIDE_TICKETS.clear();
+        MAVICS.clear();WATCH.clear();GLIDERS.clear();dev.frontier.arcade.geranium.FlightChunks.clear();
     }
 }

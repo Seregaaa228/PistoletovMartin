@@ -18,11 +18,13 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 /**
  * Original Shahed UV/alpha and geometry, tinted only for our station aircraft: the jet Geranium-2 is
- * dark grey with a painted band, a metal nozzle and a hot core; the Shahed-136 keeps the original skin.
+ * dark grey with a painted band, a metal nozzle, a hot core and a short self-lit flame while the engine
+ * runs; the Shahed-136 keeps the original skin.
  * Added cubes sample the texture's white pixel, so their colour comes from here.
  */
 @Mixin(targets="ru.lavafrai.uncomplicatedfpv.client.renderer.AddonDroneRenderer",remap=false)
 public abstract class GeraniumRenderTint extends GeoEntityRenderer<AddonDroneEntity> {
+    private static final int FULL_BRIGHT = 0xF000F0;
     protected GeraniumRenderTint(EntityRendererProvider.Context context, GeoModel<AddonDroneEntity> model) { super(context,model); }
     @Redirect(
         method="renderRecursively(Lcom/mojang/blaze3d/vertex/PoseStack;Lru/lavafrai/uncomplicatedfpv/entity/AddonDroneEntity;Lsoftware/bernie/geckolib/cache/object/GeoBone;Lnet/minecraft/client/renderer/RenderType;Lnet/minecraft/client/renderer/MultiBufferSource;Lcom/mojang/blaze3d/vertex/VertexConsumer;ZFIIFFFF)V",
@@ -37,7 +39,11 @@ public abstract class GeraniumRenderTint extends GeoEntityRenderer<AddonDroneEnt
             switch (bone.getName()) {
                 case "geranium_lens" -> { red=.08f; green=.85f; blue=1f; }
                 case "nose_camera" -> { red=green=.14f; blue=.15f; }
-                case "jet_exhaust" -> { red=1f; green=.4f; blue=.1f; } // hot core, recessed in the nozzle ring
+                case "jet_exhaust" -> { red=1f; green=.4f; blue=.1f; light=FULL_BRIGHT; } // hot core, recessed in the nozzle ring
+                case "jet_flame" -> {
+                    if (!geranium.engineLit()) return; // no flame without thrust
+                    red=1f; green=.62f; blue=.18f; light=FULL_BRIGHT;
+                }
                 case "jet_nozzle" -> { red=green=.34f; blue=.36f; } // bare metal
                 case "jet_intake" -> { red=.27f; green=.28f; blue=.30f; }
                 case "jet_duct" -> { red=green=blue=.05f; }

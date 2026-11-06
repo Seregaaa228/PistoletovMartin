@@ -4,7 +4,6 @@ import com.atsuishio.superbwarfare.entity.vehicle.DroneEntity;
 import com.atsuishio.superbwarfare.init.ModItems;
 import com.atsuishio.superbwarfare.tools.EntityFindUtil;
 import dev.frontier.arcade.geranium.GeraniumEntity;
-import dev.frontier.arcade.relay.RelayEntity;
 import dev.frontier.arcade.control.ControlSessions;
 import java.util.function.Supplier;
 import net.minecraft.nbt.CompoundTag;

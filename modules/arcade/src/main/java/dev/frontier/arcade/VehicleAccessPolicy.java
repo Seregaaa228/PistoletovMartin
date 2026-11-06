@@ -27,8 +27,12 @@ public final class VehicleAccessPolicy {
     /** Mods intentionally removed from the pack; fallback if they are reinstalled. */
     public static final Set<String> REMOVED_MODS = Set.of("trajanstanks", "simpleplanes");
 
-    /** Uncomplicated FPV's coordinate Shahed and its radio; our hand-flown Shahed-136 replaces them. */
-    public static final Set<String> REPLACED_ITEMS = Set.of("uncomplicatedfpv:shahed136", "uncomplicatedfpv:radio");
+    /**
+     * Uncomplicated FPV's coordinate Shahed and its radio (our hand-flown Shahed-136 replaces them) and
+     * the relay plane, no longer needed at the strike aircraft's long radio range.
+     */
+    public static final Set<String> REPLACED_ITEMS = Set.of("uncomplicatedfpv:shahed136", "uncomplicatedfpv:radio",
+        "frontier_arcade_vehicles:relay_drone");
 
     private VehicleAccessPolicy() {}
 

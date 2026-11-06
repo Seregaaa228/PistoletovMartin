@@ -46,14 +46,20 @@ public final class GeraniumFlightModel {
                           float maxPitchRate, float pitchAccel, float levelPitchRate,
                           float thrust, float maxThrustAccel, float launchSpeed, float launchCruise,
                           float mouseFull, float expo, int energyPerTick, boolean legacyRoll) {
-        /** Jet Geranium-2: fast, still a gentle, rate-limited stick. */
-        public static final Profile JET = new Profile("jet", .5f, 1.6f, 1f, .38f, .15f, 2.2f,
-            40, 20, .9f, 3, .4f, 1, 3, 2.8f, 3.5f, 2.2f, .25f, 1.8f,
-            .06f, .05f, .5f, 1.2f, 9, .5f, 10, false);
-        /** Propeller Shahed-136: slower, softer engine, longer endurance. */
-        public static final Profile PROPELLER = new Profile("propeller", .3f, .8f, .5f, .22f, .08f, 1.4f,
-            35, 18, .45f, 2.4f, .3f, 1, 2.4f, 1.9f, 3.5f, 1.8f, .2f, 1.6f,
-            .035f, .022f, .36f, .7f, 9, .5f, 6, false);
+        /**
+         * Jet Geranium-2: 180-430 km/h (cruise 320), dives to 540 km/h; still a gentle, rate-limited
+         * stick. The turn gain keeps about 2.2 deg/tick at cruise (a turn radius near 120 blocks).
+         */
+        public static final Profile JET = new Profile("jet", 2.5f, 6f, 4.5f, 2f, 1.2f, 7.5f,
+            40, 20, 3.5f, 3, .4f, 1, 3, 11.8f, 3.2f, 2f, .25f, 1.8f,
+            .02f, .08f, 2.6f, 4.5f, 9, .5f, 16, false);
+        /**
+         * Propeller Shahed-136: 86-185 km/h (cruise 150), softer engine, longer endurance; about
+         * 2.6 deg/tick at cruise (a turn radius near 46 blocks).
+         */
+        public static final Profile PROPELLER = new Profile("propeller", 1.2f, 2.6f, 2.1f, .9f, .55f, 3.6f,
+            35, 18, 1.6f, 2.4f, .3f, 1, 2.4f, 7.8f, 3.5f, 1.8f, .2f, 1.6f,
+            .04f, .035f, 1.3f, 2.1f, 9, .5f, 9, false);
         /** The pre-jet tuning (instant linear stick, constant roll rate), kept for comparisons. */
         public static final Profile LEGACY = new Profile("legacy", .35f, 1f, .5f, .26f, .1f, 1.4f,
             40, 40, 0, 4, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, 3, 2.3f, 5, 2.5f, .5f, 2,
@@ -107,7 +113,7 @@ public final class GeraniumFlightModel {
         speed = profile.launchSpeed;
         pitchRate = 0;
         levelRequested = true; // level off by itself once the launch climb ends
-        velocityAlongNose(0);
+        velocityAlongNose(0, 1);
         return true;
     }
 
@@ -224,7 +230,9 @@ public final class GeraniumFlightModel {
         float thrust = clamp((cruise - speed) * profile.thrust, -profile.maxThrustAccel, profile.maxThrustAccel);
         float alongPath = GRAVITY_ALONG_PATH * (float) Math.sin(Math.toRadians(pitch));
         speed = clamp(speed + thrust + alongPath, 0, profile.maxDiveSpeed);
-        velocityAlongNose((1 - lift(speed)) * STALL_SINK);
+        float wing = lift(speed);
+        // A stalled wing cannot hold a climb: the climb fades with lift and the sink grows with the stall speed.
+        velocityAlongNose((1 - wing) * Math.max(STALL_SINK, profile.stallSpeed * .5f), wing);
     }
 
     /** Pitch rate toward an attitude; brakes within the pitch acceleration so the nose does not swing past it. */
@@ -280,11 +288,11 @@ public final class GeraniumFlightModel {
         speed = onGround ? 0 : (float) Math.min(profile.maxDiveSpeed, Math.sqrt(horizontal * horizontal + vy * vy));
     }
 
-    private void velocityAlongNose(float sink) {
+    private void velocityAlongNose(float sink, float climbLift) {
         double p = Math.toRadians(pitch), y = Math.toRadians(yaw);
-        double horizontal = Math.cos(p) * speed;
+        double horizontal = Math.cos(p) * speed, along = -Math.sin(p) * speed;
         vx = -Math.sin(y) * horizontal;
-        vy = -Math.sin(p) * speed - sink;
+        vy = (along > 0 ? along * climbLift : along) - sink;
         vz = Math.cos(y) * horizontal;
     }
 
@@ -304,7 +312,7 @@ public final class GeraniumFlightModel {
         keys = 0;
         spaceDown = false;
         clearMouse();
-        if (launched) velocityAlongNose(0); else vx = vy = vz = 0;
+        if (launched) velocityAlongNose(0, 1); else vx = vy = vz = 0;
     }
 
     public float yaw() { return yaw; }
