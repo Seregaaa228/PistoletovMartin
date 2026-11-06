@@ -28,6 +28,8 @@ public final class GeraniumNet {
         MinecraftForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> VIEW.remove(e.getEntity().getUUID()));
     }
     public static int viewDistance(UUID owner) { return VIEW.getOrDefault(owner, 2); }
+    /** The client's render distance in chunks, or the fallback until the client has reported it. */
+    public static int viewDistanceOr(UUID owner, int fallback) { return VIEW.getOrDefault(owner, fallback); }
     public static void sendView(int distance) { CHANNEL.sendToServer(new ViewDistance(Math.max(2,Math.min(32,distance)))); }
     public static void sendStabilize() { CHANNEL.sendToServer(new Stabilize()); }
     private record Stabilize() {

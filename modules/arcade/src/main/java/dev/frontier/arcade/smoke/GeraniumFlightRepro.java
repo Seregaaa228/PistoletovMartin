@@ -13,8 +13,6 @@ import dev.frontier.arcade.shop.NativeAviationCatalog;
 import dev.frontier.arcade.station.StationBlockEntity;
 import dev.frontier.arcade.station.StationContent;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -64,7 +62,7 @@ import net.minecraftforge.registries.ForgeRegistries;
  * The server pre-generates a corridor along +z (like the pre-baked map) and then places, binds and
  * logs four aircraft in turn: the jet Geranium-2 and the propeller Shahed-136 with the same scripted
  * stick (a small flick, a long full swipe, a reversal, the F5 chase view and screenshots), a jet at
- * full throttle down the corridor with server tick time, chunk, ticket and loopback traffic numbers
+ * full throttle down the corridor with server tick time, chunk and ticket counts and the pilot connection's traffic
  * (the host watches it pass as a spectator), and a Shahed released from the monitor towards terrain
  * that was never generated, which it must treat as a wall. Both sides log as "GREPRO S"/"GREPRO C";
  * the pilot also reports what creative tabs, JEI and the shop offer.
@@ -76,12 +74,20 @@ import net.minecraftforge.registries.ForgeRegistries;
 public final class GeraniumFlightRepro {
     static final int PHASE_TICKS = 280, LONG_TICKS = 900, EDGE_TICKS = 600, PHASES = 4;
     static final String[] PHASE_NAMES = {"jet", "shahed", "jet-long", "shahed-edge"};
+    /**
+     * -Dfrontier.geraniumReproTerrain=normal flies over default terrain (real chunk sizes) from a pad at
+     * y=180 and a shorter corridor; the flat world compresses chunks to almost nothing.
+     */
+    static final boolean NORMAL_TERRAIN = "normal".equals(System.getProperty("frontier.geraniumReproTerrain"));
+    static final int PAD_Y = NORMAL_TERRAIN ? 180 : 80;
     /** Pre-generated corridor in chunks: x within +-CORRIDOR_HALF, z from -CORRIDOR_HALF to CORRIDOR_END. */
-    static final int CORRIDOR_HALF = 13, CORRIDOR_END = 175, LONG_DISTANCE = 2400, PREGEN_PER_TICK = 120;
-    private static final BlockPos PAD = new BlockPos(0, 80, 0), DESK = new BlockPos(2, 81, -5);
+    static final int LONG_DISTANCE = NORMAL_TERRAIN ? 1200 : 2400, CORRIDOR_HALF = 13, CORRIDOR_END = LONG_DISTANCE / 16 + 25,
+        PREGEN_PER_TICK = NORMAL_TERRAIN ? 16 : 120; // keep ticks short enough that the LAN pilot does not time out
+    private static final BlockPos PAD = new BlockPos(0, PAD_Y, 0), DESK = new BlockPos(2, PAD_Y + 1, -5);
     private static boolean started, done, pregenerated;
     private static int ticks, phase = -1, phaseAge, pregenX = -CORRIDOR_HALF, pregenZ = -CORRIDOR_HALF, pregenCount;
-    private static long pregenStart, loBytes, loTick;
+    private static long pregenStart;
+    private static long[] meterBytes; private static int meterChunks, chunksToPilot; private static long meterTick;
     private static double tickSum, tickMax; private static int tickSamples, chunksMax, ticketsMax;
     private static int edgeCheck = -1; private static ChunkPos edgeLast;
     private static GeraniumEntity drone;
@@ -98,15 +104,40 @@ public final class GeraniumFlightRepro {
             d.getEnergy(), d.getRoll(1), d.getXRot(), d.getYRot());
     }
 
-    /** Bytes through the loopback interface (both directions of the LAN connection), or -1. */
-    static long loopbackBytes() {
+    /** Chunks the server sends to the pilot (ChunkWatchEvent.Watch fires once per chunk packet). */
+    @SubscribeEvent public static void chunkSent(net.minecraftforge.event.level.ChunkWatchEvent.Watch event) {
+        if (enabled() && event.getPlayer().getGameProfile().getName().equals(System.getProperty("frontier.geraniumReproPilot"))) chunksToPilot++;
+    }
+
+    /**
+     * {server to pilot, pilot to server} bytes of the LAN game connection from the kernel's TCP counters
+     * (loopback as a whole also carries every other local program), or null when unavailable.
+     */
+    static long[] pilotSocketBytes() {
+        String port = System.getProperty("frontier.geraniumReproLan");
+        if (port == null) return null;
         try {
-            for (String line : Files.readAllLines(Path.of("/proc/net/dev"))) {
-                String trimmed = line.trim();
-                if (trimmed.startsWith("lo:")) return Long.parseLong(trimmed.substring(3).trim().split("\\s+")[0]);
-            }
-        } catch (IOException | RuntimeException ignored) { }
-        return -1;
+            Process ss = new ProcessBuilder("ss", "-tinH", "state", "established", "( sport = :" + port + " )").redirectErrorStream(true).start();
+            String out = new String(ss.getInputStream().readAllBytes());
+            ss.waitFor();
+            var sent = java.util.regex.Pattern.compile("bytes_sent:(\\d+)").matcher(out);
+            var received = java.util.regex.Pattern.compile("bytes_received:(\\d+)").matcher(out);
+            return sent.find() && received.find() ? new long[] {Long.parseLong(sent.group(1)), Long.parseLong(received.group(1))} : null;
+        } catch (IOException | InterruptedException failure) {
+            return null;
+        }
+    }
+
+    private static void meterStart() { meterBytes = pilotSocketBytes(); meterChunks = chunksToPilot; meterTick = phaseAge; }
+
+    private static String meter() {
+        long[] now = pilotSocketBytes();
+        double seconds = Math.max(1, phaseAge - meterTick) / 20.0;
+        int chunks = chunksToPilot - meterChunks;
+        double toPilot = now == null || meterBytes == null ? -1 : (now[0] - meterBytes[0]) / 1024.0;
+        double fromPilot = now == null || meterBytes == null ? -1 : (now[1] - meterBytes[1]) / 1024.0;
+        return String.format(Locale.ROOT, "seconds=%.1f toPilotKBps=%.1f fromPilotKBps=%.1f chunksPerS=%.1f KBperChunk=%.2f",
+            seconds, toPilot / seconds, fromPilot / seconds, chunks / seconds, chunks == 0 ? 0 : toPilot / chunks);
     }
 
     @SubscribeEvent public static void serverTick(TickEvent.ServerTickEvent event) {
@@ -126,15 +157,15 @@ public final class GeraniumFlightRepro {
             level.getGameRules().getRule(GameRules.RULE_DOMOBSPAWNING).set(false, server);
             level.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(false, server);
             level.setDayTime(6000);
-            for (BlockPos pos : BlockPos.betweenClosed(-16, 80, -16, 16, 80, 16)) level.setBlockAndUpdate(pos, Blocks.STONE.defaultBlockState());
+            for (BlockPos pos : BlockPos.betweenClosed(-16, PAD_Y, -16, 16, PAD_Y, 16)) level.setBlockAndUpdate(pos, Blocks.STONE.defaultBlockState());
             player.setGameMode(GameType.CREATIVE);
-            player.teleportTo(level, .5, 81, -5.5, 0, 0);
+            player.teleportTo(level, .5, PAD_Y + 1, -5.5, 0, 0);
             level.setBlockAndUpdate(DESK, StationContent.GROUND_STATION.get().defaultBlockState());
             if (level.getBlockEntity(DESK) instanceof StationBlockEntity desk) desk.setOwner(player.getUUID());
             shopReport();
             // A relay left over in an old world must remove itself on its first tick.
             var relay = dev.frontier.arcade.relay.RelayContent.TYPE.get().create(level);
-            if (relay != null) { relay.setPos(6.5, 81, 6.5); level.addFreshEntity(relay); oldRelay = relay.getUUID(); }
+            if (relay != null) { relay.setPos(6.5, PAD_Y + 1, 6.5); level.addFreshEntity(relay); oldRelay = relay.getUUID(); }
             System.out.println("GREPRO S old relay spawned=" + (oldRelay != null));
             ticks = 0; pregenStart = System.nanoTime();
             return;
@@ -158,7 +189,7 @@ public final class GeraniumFlightRepro {
             if (!connected) { done = true; return; }
             lastRoll = drone.getRoll(1); lastYaw = drone.getYRot();
             if (phase == 2) for (ServerPlayer other : server.getPlayerList().getPlayers())
-                if (other != player) other.teleportTo(level, 24.5, 100, 1200.5, 180, 10); // an observer beside the corridor
+                if (other != player) other.teleportTo(level, 24.5, PAD_Y + 20, LONG_DISTANCE / 2 + .5, 180, 10); // an observer beside the corridor
             return;
         }
         if (phaseAge < 0) return;
@@ -176,7 +207,9 @@ public final class GeraniumFlightRepro {
             drone.activeMonitor(), roll - lastRoll, net.minecraft.util.Mth.wrapDegrees(yaw - lastYaw), tickMs, chunks, tickets, state(drone)));
         lastRoll = roll; lastYaw = yaw;
         if (phase == 2) {
-            if (phaseAge == 60) { loBytes = loopbackBytes(); loTick = phaseAge; }
+            if (phaseAge == 2) meterStart();
+            if (phaseAge == 18) System.out.println("GREPRO S ph=jet-long net on the pad " + meter());
+            if (phaseAge == 60) meterStart();
             if (phaseAge > 60) { tickSum += tickMs; tickMax = Math.max(tickMax, tickMs); tickSamples++; chunksMax = Math.max(chunksMax, chunks); ticketsMax = Math.max(ticketsMax, tickets); }
         }
         if (phase == 3 && phaseAge == 60) {
@@ -207,11 +240,8 @@ public final class GeraniumFlightRepro {
     }
 
     private static void longReport(net.minecraft.server.MinecraftServer server) {
-        long bytes = loopbackBytes();
-        double seconds = Math.max(1, phaseAge - loTick) / 20.0;
-        System.out.println(String.format(Locale.ROOT, "GREPRO S ph=jet-long summary seconds=%.1f tickAvgMs=%.2f tickMaxMs=%.2f chunksMax=%d ticketsMax=%d loopbackKBps=%.1f pilotPacketsPerS=%.1f",
-            seconds, tickSum / Math.max(1, tickSamples), tickMax, chunksMax, ticketsMax,
-            loBytes < 0 || bytes < 0 ? -1 : (bytes - loBytes) / 1024.0 / seconds,
+        System.out.println(String.format(Locale.ROOT, "GREPRO S ph=jet-long summary %s speed=%.2f tickAvgMs=%.2f tickMaxMs=%.2f chunksMax=%d ticketsMax=%d pilotPacketsPerS=%.1f",
+            meter(), drone == null ? 0 : drone.flightSpeed(), tickSum / Math.max(1, tickSamples), tickMax, chunksMax, ticketsMax,
             server.getPlayerList().getPlayers().stream().mapToDouble(p -> p.connection.connection.getAverageSentPackets()).max().orElse(-1)));
     }
 
@@ -227,7 +257,7 @@ public final class GeraniumFlightRepro {
 
     /** The real deployer item path, on the cleared pad. */
     private static GeraniumEntity place(ServerPlayer player, ServerLevel level, Item item, float yaw) {
-        player.teleportTo(level, .5, 81, -5.5, yaw, 0);
+        player.teleportTo(level, .5, PAD_Y + 1, -5.5, yaw, 0);
         ItemStack deployer = new ItemStack(item);
         player.setItemInHand(InteractionHand.MAIN_HAND, deployer);
         var hit = new BlockHitResult(Vec3.atCenterOf(PAD).add(0, .5, 0), Direction.UP, PAD, false);
@@ -275,7 +305,7 @@ public final class GeraniumFlightRepro {
                 mc.createWorldOpenFlows().createFreshLevel("Geranium-Repro",
                     new LevelSettings("Geranium Repro", GameType.CREATIVE, false, Difficulty.PEACEFUL, true, new GameRules(), WorldDataConfiguration.DEFAULT),
                     new WorldOptions(20261106L, false, false),
-                    registries -> registries.registryOrThrow(Registries.WORLD_PRESET).getOrThrow(WorldPresets.FLAT).createWorldDimensions());
+                    registries -> registries.registryOrThrow(Registries.WORLD_PRESET).getOrThrow(NORMAL_TERRAIN ? WorldPresets.NORMAL : WorldPresets.FLAT).createWorldDimensions());
             }
             if (mc.player == null || mc.level == null) return;
             String port = System.getProperty("frontier.geraniumReproLan");
@@ -298,6 +328,8 @@ public final class GeraniumFlightRepro {
                 }
                 // The station session restores the pre-session perspective once its link leaves the hand.
                 if (sinceExit >= 0 && ++sinceExit == 10) System.out.println("GREPRO C ph=" + name() + " after exit camera=" + mc.options.getCameraType() + " chase=" + GeraniumClient.chaseView());
+                // Back at the body, every chunk the client renders must have arrived (no holes after a narrowed camera).
+                if (sinceExit == 40) System.out.println("GREPRO C ph=" + name() + " after exit missingWithinRender=" + missing(mc, mc.player.blockPosition(), mc.options.renderDistance().get()));
                 ModKeyMappings.MOVE_SPACE.setDown(false); ModKeyMappings.MOVE_FORWARD.setDown(false);
                 // The released Shahed still needs its owner online until it reaches the wall.
                 if (phases >= PHASES - 1 && ++idle > 600 && System.getProperty("frontier.geraniumReproKeep") == null) mc.stop();
@@ -315,9 +347,9 @@ public final class GeraniumFlightRepro {
             if (scripted ? age == 100 || age == 135 || age == 160 || age == 185 : phases == 2 && (age == 140 || age == 200))
                 shot(mc, name() + "-" + age + "-" + (GeraniumClient.chaseView() ? "chase" : "nose"));
             if (!scripted) {
-                if (age % 10 == 0) System.out.println(String.format(Locale.ROOT, "GREPRO C ph=%s t=%d pos=%s speed=%.3f chase=%s clientChunks=%d fps=%d rxPackets=%.1f",
+                if (age % 10 == 0) System.out.println(String.format(Locale.ROOT, "GREPRO C ph=%s t=%d pos=%s speed=%.3f chase=%s clientChunks=%d missingInner=%d fps=%d rxPackets=%.1f",
                     name(), age, v(drone.position()), drone.flightSpeed(), GeraniumClient.chaseView(), mc.level.getChunkSource().getLoadedChunksCount(),
-                    mc.getFps(), mc.getConnection().getConnection().getAverageReceivedPackets()));
+                    missing(mc, drone.blockPosition(), mc.options.renderDistance().get() - 2), mc.getFps(), mc.getConnection().getConnection().getAverageReceivedPackets()));
                 return;
             }
             var camera = mc.gameRenderer.getMainCamera();
@@ -339,6 +371,14 @@ public final class GeraniumFlightRepro {
                 System.out.println(String.format(Locale.ROOT, "GREPRO C observer seen dist=%.1f rendered=%s lagBlocks=%.2f pos=%s",
                     distance, seen.shouldRenderAtSqrDistance(distance * distance), lag, v(seen.position())));
             }
+        }
+
+        /** Chunks within radius of the given position that the client does not hold. */
+        private static int missing(Minecraft mc, BlockPos at, int radius) {
+            int cx = at.getX() >> 4, cz = at.getZ() >> 4, missing = 0;
+            for (int dx = -radius; dx <= radius; dx++) for (int dz = -radius; dz <= radius; dz++)
+                if (!mc.level.getChunkSource().hasChunk(cx + dx, cz + dz)) missing++;
+            return missing;
         }
 
         private static String name() { return phases < 0 ? "none" : PHASE_NAMES[Math.min(phases, PHASES - 1)]; }
