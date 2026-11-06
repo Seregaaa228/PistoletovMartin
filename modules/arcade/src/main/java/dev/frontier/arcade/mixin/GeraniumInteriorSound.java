@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import ru.lavafrai.uncomplicatedfpv.entity.AddonDroneEntity;
 import ru.lavafrai.uncomplicatedfpv.registry.ModSounds;
 
-/** Selects the original Shahed engine only for this variant's existing native monitor audio. */
+/** Monitor engine audio per aircraft: our jet loop for the Geranium-2, the original motor for the Shahed-136. */
 @Mixin(targets = "ru.lavafrai.uncomplicatedfpv.entity.AddonDroneEntity$ClientAudio$InteriorSound", remap = false)
 public abstract class GeraniumInteriorSound {
     /* The field read occurs before super(); a static redirect captures only the
@@ -27,6 +27,6 @@ public abstract class GeraniumInteriorSound {
         require = 1
     )
     private static RegistryObject<SoundEvent> frontier$geraniumInteriorEngine(AddonDroneEntity drone) {
-        return drone instanceof GeraniumEntity ? ModSounds.SHAHED136_ENGINE : ModSounds.FPV_DRONE_ENGINE_INT;
+        return drone instanceof GeraniumEntity geranium ? geranium.variant().engineSound() : ModSounds.FPV_DRONE_ENGINE_INT;
     }
 }

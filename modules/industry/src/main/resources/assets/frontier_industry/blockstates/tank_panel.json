@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "frontier_industry:block/tank_panel"
+    },
+    "facing=east": {
+      "model": "frontier_industry:block/tank_panel",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "frontier_industry:block/tank_panel",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "frontier_industry:block/tank_panel",
+      "y": 270
+    },
+    "facing=up": {
+      "model": "frontier_industry:block/tank_panel",
+      "x": 90
+    },
+    "facing=down": {
+      "model": "frontier_industry:block/tank_panel",
+      "x": 270
+    }
+  }
+}

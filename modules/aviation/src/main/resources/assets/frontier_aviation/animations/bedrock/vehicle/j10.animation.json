@@ -19,7 +19,28 @@
             0
           ]
         },
+        "windscreen": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
         "gear_nose": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_nose_suspension": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_nose_wheel": {
           "rotation": [
             0,
             0,
@@ -33,7 +54,112 @@
             0
           ]
         },
+        "gear_main_l_suspension": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_main_l_wheel": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
         "gear_main_r": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_main_r_suspension": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_main_r_wheel": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_door_nose_l": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_door_nose_r": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_door_left_l": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "gear_door_right_r": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "elevon_left": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "elevon_right": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "canard_left": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "canard_right": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "rudder": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "airbrake_left": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "airbrake_right": {
           "rotation": [
             0,
             0,

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Original Frontier worker/press source meshes. Export PNG, Gecko4 JSON and editable Blockbench files.
+"""Original Frontier press source mesh. Export PNG, Gecko4 JSON and an editable Blockbench file.
+
+The worker is no longer a GeckoLib model: it renders as a vanilla villager with the
+overlay from art/worker/worker_outfit.py.
 
 Standard library only. Run from any directory; output stays in this module.
 """
@@ -21,30 +24,6 @@ def cube(name, origin, size, color):
     return {"name": name, "origin": origin, "size": size, "color": color}
 
 
-WORKER = [
-    {"name": "root", "pivot": [0, 0, 0]},
-    {"name": "body", "parent": "root", "pivot": [0, 12, 0], "cubes": [
-        cube("coat", [-4, 12, -2], [8, 11, 4], [56, 84, 102]),
-        cube("vest", [-4.2, 14, -2.2], [8.4, 7, 4.4], [218, 151, 47])]},
-    {"name": "head", "parent": "body", "pivot": [0, 23, 0], "cubes": [
-        cube("face", [-4, 23, -4], [8, 8, 8], [185, 139, 103]),
-        cube("helmet", [-4.5, 29, -4.5], [9, 2.5, 9], [224, 177, 55])]},
-    {"name": "left_arm", "parent": "body", "pivot": [-5, 22, 0], "cubes": [
-        cube("left_sleeve", [-7, 12, -2], [3, 10, 4], [56, 84, 102]),
-        cube("left_glove", [-7, 10, -2], [3, 2, 4], [90, 78, 58])]},
-    {"name": "right_arm", "parent": "body", "pivot": [5, 22, 0], "cubes": [
-        cube("right_sleeve", [4, 12, -2], [3, 10, 4], [56, 84, 102]),
-        cube("right_glove", [4, 10, -2], [3, 2, 4], [90, 78, 58])]},
-    {"name": "left_leg", "parent": "root", "pivot": [-2, 12, 0], "cubes": [
-        cube("left_trouser", [-4, 2, -2], [4, 10, 4], [45, 59, 70]),
-        cube("left_boot", [-4, 0, -3], [4, 2, 5], [48, 43, 36])]},
-    {"name": "right_leg", "parent": "root", "pivot": [2, 12, 0], "cubes": [
-        cube("right_trouser", [0, 2, -2], [4, 10, 4], [45, 59, 70]),
-        cube("right_boot", [0, 0, -3], [4, 2, 5], [48, 43, 36])]},
-    {"name": "tool", "parent": "right_arm", "pivot": [5.5, 11, 0], "cubes": [
-        cube("wrench_handle", [5, 7, -1], [1, 6, 1], [152, 160, 161]),
-        cube("wrench_head", [4, 6, -1], [3, 1, 1], [152, 160, 161])]}
-]
 PRESS = [
     {"name": "root", "pivot": [0, 0, 0], "cubes": [
         cube("base", [-7, 0, -7], [14, 2, 14], [49, 66, 72]),
@@ -57,20 +36,6 @@ PRESS = [
         cube("ram_plate", [-4, 8, -4], [8, 2, 8], [188, 132, 47])]}
 ]
 
-WORKER_ANIMATIONS = {
-    "animation.worker.idle": {"loop": True, "animation_length": 2, "bones": {
-        "head": {"rotation": {"0.0": [0, -2, 0], "1.0": [0, 2, 0], "2.0": [0, -2, 0]}}}},
-    "animation.worker.walk": {"loop": True, "animation_length": 1, "bones": {
-        "left_leg": {"rotation": {"0.0": [25, 0, 0], "0.5": [-25, 0, 0], "1.0": [25, 0, 0]}},
-        "right_leg": {"rotation": {"0.0": [-25, 0, 0], "0.5": [25, 0, 0], "1.0": [-25, 0, 0]}},
-        "left_arm": {"rotation": {"0.0": [-18, 0, 0], "0.5": [18, 0, 0], "1.0": [-18, 0, 0]}},
-        "right_arm": {"rotation": {"0.0": [18, 0, 0], "0.5": [-18, 0, 0], "1.0": [18, 0, 0]}}}},
-    "animation.worker.repair": {"loop": True, "animation_length": 1, "bones": {
-        "body": {"rotation": [5, 0, 0]},
-        "head": {"rotation": [12, 0, 0]},
-        "left_arm": {"rotation": [-58, 0, -10]},
-        "right_arm": {"rotation": {"0.0": [-65, 0, 10], "0.5": [-85, 0, 10], "1.0": [-65, 0, 10]}}}}
-}
 PRESS_ANIMATIONS = {
     "animation.press.stop": {"loop": True, "animation_length": 1, "bones": {"ram": {"position": [0, 0, 0]}}},
     "animation.press.work": {"loop": True, "animation_length": 1.5, "bones": {
@@ -108,9 +73,6 @@ def export(name, bones, animations, texture_directory):
                 for px in range(x, x + width):
                     shade = -10 if (px + py) % 11 == 0 else 0
                     pixels[py][px] = [max(0, min(255, c + shade)) for c in original["color"]]
-            if original["name"] == "face":
-                for eye in (2, 5):
-                    pixels[y + 11][x + 8 + eye] = [30, 34, 36]
             uv = [x, y]
             bone.setdefault("cubes", []).append({"origin": original["origin"], "size": original["size"], "uv": uv})
             element_id = identifier(name + "/" + original["name"])
@@ -156,19 +118,18 @@ def export(name, bones, animations, texture_directory):
     files = {
         ASSETS / "geo" / (name + ".geo.json"): {"format_version": "1.12.0", "minecraft:geometry": [{
             "description": {"identifier": "geometry." + name, "texture_width": SIZE, "texture_height": SIZE,
-                "visible_bounds_width": 2 if name == "worker" else 1.5, "visible_bounds_height": 2.5 if name == "worker" else 1.5,
-                "visible_bounds_offset": [0, 1 if name == "worker" else .5, 0]}, "bones": geometry}]},
+                "visible_bounds_width": 1.5, "visible_bounds_height": 1.5,
+                "visible_bounds_offset": [0, .5, 0]}, "bones": geometry}]},
         ASSETS / "animations" / (name + ".animation.json"): {"format_version": "1.8.0", "animations": animations},
         ART / (name + ".bbmodel"): bbmodel}
     for path, value in files.items():
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    path = ASSETS / "textures" / texture_directory / ("worker.png" if name == "worker" else "press_workstation.png")
+    path = ASSETS / "textures" / texture_directory / "press_workstation.png"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(texture)
 
 
 if __name__ == "__main__":
-    export("worker", WORKER, WORKER_ANIMATIONS, "entity")
     export("press", PRESS, PRESS_ANIMATIONS, "block")
-    print("Exported two original models, five animations, two textures and editable Blockbench sources")
+    print("Exported the original press model, two animations, its texture and editable Blockbench source")

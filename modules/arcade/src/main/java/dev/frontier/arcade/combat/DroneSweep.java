@@ -27,33 +27,58 @@ public final class DroneSweep {
             if (!drone.level().hasChunk(x, z)) return false;
         return true;
     }
+    /** Each target is tested as a still snapshot of its current pose. */
     public static HitResult trace(Entity drone, Vec3 from, Vec3 to, Predicate<Entity> target) {
-        if (!WarheadRules.sweepLength(from.distanceToSqr(to)) || !loadedPath(drone, from, to)) return null;
-        HitResult closest = drone.level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, drone));
-        Vec3 end = closest.getType() == HitResult.Type.BLOCK ? closest.getLocation() : to;
-        double distance = from.distanceToSqr(end);
+        return trace(drone, from, to, target, false);
+    }
+    /**
+     * @param targetFrame test each target in its own moving frame: the drone path starts offset by the
+     * target's displacement over its last server tick and ends at the drone's end point, against the
+     * target's current pose. Both snapshots of a jet (3-5 blocks a tick) can otherwise straddle a slow
+     * drone, and a hovering drone, which has no own path, is then still struck by a passing vehicle.
+     */
+    public static HitResult trace(Entity drone, Vec3 from, Vec3 to, Predicate<Entity> target, boolean targetFrame) {
+        double own = from.distanceToSqr(to);
+        boolean moving = WarheadRules.sweepLength(own);
+        if (!(moving || targetFrame && WarheadRules.hoverLength(own)) || !loadedPath(drone, from, to)) return null;
+        HitResult closest = moving ? drone.level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, drone)) : null;
+        if (closest != null && closest.getType() != HitResult.Type.BLOCK) closest = null;
+        Vec3 end = closest != null ? closest.getLocation() : to;
+        double reach = MAX_VEHICLE_REACH + (targetFrame ? WarheadRules.MAX_TARGET_STEP : 0);
         AABB ordinaryPath = new AABB(from, end).inflate(.25);
-        for (Entity entity : drone.level().getEntities(drone, new AABB(from, end).inflate(MAX_VEHICLE_REACH),
-                entity -> (entity instanceof OBBEntity || entity.getBoundingBox().intersects(ordinaryPath))
+        AABB ordinaryReach = targetFrame ? ordinaryPath.inflate(WarheadRules.MAX_TARGET_STEP) : ordinaryPath;
+        double best = Double.POSITIVE_INFINITY; // fraction along each target's relative path; all end at `end`
+        for (Entity entity : drone.level().getEntities(drone, new AABB(from, end).inflate(reach),
+                entity -> (entity instanceof OBBEntity || moving && entity.getBoundingBox().intersects(ordinaryReach))
                         && target.test(entity))) {
+            Vec3 start = targetFrame ? from.add(step(entity)) : from;
+            double path = start.distanceToSqr(end);
+            // A still drone keeps its old contact rules for people and slow vehicles.
+            if (!moving && !(entity instanceof OBBEntity && WarheadRules.hoverContact(path))) continue;
             Vec3 point = null;
             if (entity instanceof OBBEntity obb && !obb.getOBBs().isEmpty()) {
                 for (var part : obb.getOBBs()) {
-                    if (part.contains(from)) { point = from; break; }
-                    var hit = part.inflate(.15).clip(new Vector3d(from.x, from.y, from.z), new Vector3d(end.x, end.y, end.z));
+                    if (part.contains(start)) { point = start; break; }
+                    var hit = part.inflate(.15).clip(new Vector3d(start.x, start.y, start.z), new Vector3d(end.x, end.y, end.z));
                     if (hit.isPresent()) {
                         var p = hit.get(); Vec3 candidate = new Vec3(p.x, p.y, p.z);
-                        if (point == null || from.distanceToSqr(candidate) < from.distanceToSqr(point)) point = candidate;
+                        if (point == null || start.distanceToSqr(candidate) < start.distanceToSqr(point)) point = candidate;
                     }
                 }
             } else {
                 var box = entity.getBoundingBox().inflate(.15);
-                point = box.contains(from) ? from : box.clip(from, end).orElse(null);
+                if (!box.intersects(new AABB(start, end).inflate(.25))) continue;
+                point = box.contains(start) ? start : box.clip(start, end).orElse(null);
             }
-            if (point != null && from.distanceToSqr(point) <= distance) {
-                closest = new EntityHitResult(entity, point); distance = from.distanceToSqr(point);
-            }
+            if (point == null) continue;
+            double fraction = path > 1e-12 ? Math.sqrt(start.distanceToSqr(point) / path) : 0;
+            if (fraction <= best) { closest = new EntityHitResult(entity, point); best = fraction; }
         }
-        return closest.getType() == HitResult.Type.MISS ? null : closest;
+        return closest;
+    }
+    /** The target's last tick of movement; teleports, placement and invalid motion stand still. */
+    static Vec3 step(Entity entity) {
+        double dx = entity.getX() - entity.xo, dy = entity.getY() - entity.yo, dz = entity.getZ() - entity.zo;
+        return WarheadRules.targetStep(dx, dy, dz) ? new Vec3(dx, dy, dz) : Vec3.ZERO;
     }
 }

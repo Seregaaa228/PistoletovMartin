@@ -12,12 +12,14 @@ def main():
     classes = [
         ('energy/EnergyLedger.java', 'energy/GridConnection.java', 'energy/EnergyLedgerTest.java'),
         ('repair/RepairRules.java', 'repair/RepairRulesTest.java'),
+        ('construction/ConstructionRules.java', 'construction/ConstructionRulesTest.java'),
         ('client/ui/UiViewport.java', 'client/ui/UiViewportTest.java'),
         ('client/ui/UiPage.java', 'client/ui/UiPageTest.java'),
         ('client/ui/TooltipBounds.java', 'client/ui/TooltipBoundsTest.java'),
         ('client/FactoryUiState.java', 'client/FactoryUiStateTest.java'),
         ('CatalogChunks.java', 'CatalogChunksTest.java'),
         ('CatalogChunks.java', 'client/CatalogChunkAssembly.java', 'client/CatalogChunkAssemblyTest.java'),
+        ('combat/CombatRules.java', 'combat/CombatRulesTest.java'),
     ]
     output = ROOT / 'build/contract-checks'
     output.mkdir(parents=True, exist_ok=True)

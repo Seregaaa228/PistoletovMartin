@@ -34,16 +34,16 @@ public final class GeraniumFlightHud {
         double speed = Math.max(0, target.flightSpeed()) * 72;
         double range = Math.max(0, target.flightRange());
         double limit = Math.max(1, target.signalRange());
-        boolean relayed = dev.frontier.arcade.relay.RelayClient.hopCount(target.getUUID()) > 0;
         int throttle = Mth.clamp(target.throttlePercent(), 0, 100);
         boolean lost = target.isSignalLost() || signal <= 0;
 
         graphics.fill(edge, edge, width - edge, edge + 22, PANEL);
         graphics.fill(edge, edge, edge + 2, edge + 22, ACCENT);
-        graphics.drawString(mc.font, "ГЕРАНЬ-2", edge + 8, edge + 7, TEXT, false);
+        graphics.drawString(mc.font, target.variant().title().toUpperCase(Locale.ROOT), edge + 8, edge + 7, TEXT, false);
+        boolean stall = target.isLaunched() && !lost && battery > 0 && target.flightProfile().stalled(target.flightSpeed());
         String phase = lost ? "НЕТ СВЯЗИ" : battery == 0 ? "НЕТ ПИТАНИЯ"
-            : !target.isLaunched() ? "ГОТОВ К ПУСКУ" : speed < 32 ? "РАЗГОН" : "ПОЛЁТ";
-        int phaseColor = lost || battery == 0 ? DANGER : target.isLaunched() ? ACCENT : WARNING;
+            : !target.isLaunched() ? "ГОТОВ К ПУСКУ" : stall ? "СВАЛИВАНИЕ" : "ПОЛЁТ";
+        int phaseColor = lost || battery == 0 || stall ? DANGER : target.isLaunched() ? ACCENT : WARNING;
         graphics.drawString(mc.font, phase, width - edge - 8 - mc.font.width(phase), edge + 7, phaseColor, false);
 
         int meterY = edge + 29;
@@ -68,31 +68,31 @@ public final class GeraniumFlightHud {
         }
         metric(graphics, width - edge - metricWidth, metricY, metricWidth, "ВЫСОТА", heightAboveGround);
         fittedCentered(graphics, "ГАЗ " + throttle + "%", edge + metricWidth / 2, metricY + 35, metricWidth, MUTED);
-        fittedCentered(graphics, relayed ? Math.round(range) + " м" : Math.round(range) + " / " + Math.round(limit) + " м",
-            width - edge - metricWidth / 2, metricY + 35, metricWidth, relayed ? (signal <= 20 ? WARNING : ACCENT) : range > limit * .8 ? WARNING : MUTED);
+        fittedCentered(graphics, Math.round(range) + " / " + Math.round(limit) + " м",
+            width - edge - metricWidth / 2, metricY + 35, metricWidth, range > limit * .8 ? WARNING : MUTED);
         if (!compact) {
             fittedCentered(graphics, "ОТ ОПЕРАТОРА", width - edge - metricWidth / 2, metricY + 48, metricWidth, MUTED);
         }
 
-        attitude(graphics, centerX, centerY, target.getBodyPitch(partial), target.getRoll(partial), compact);
+        attitude(graphics, centerX, centerY, target.flightPitch(partial), target.getRoll(partial), compact);
         int footerY = height - edge - 27;
         if (!target.isLaunched()) {
             String launch = keyName(ModKeyMappings.MOVE_SPACE) + " — ПУСК ВПЕРЁД";
             int launchWidth = Math.min(innerWidth, mc.font.width(launch) + 18);
             graphics.fill(centerX - launchWidth / 2, footerY - 19, centerX + launchWidth / 2, footerY - 4, PANEL);
             fittedCentered(graphics, launch, centerX, footerY - 15, launchWidth - 10, WARNING);
-        } else if (signal <= 25 || (!relayed && range > limit * .85) || battery <= 15) {
-            String warning = lost ? "СВЯЗЬ ПОТЕРЯНА" : battery <= 15 ? "НИЗКИЙ ЗАРЯД"
-                : !relayed && range > limit * .85 ? "ПРЕДЕЛ ДАЛЬНОСТИ" : "СЛАБЫЙ СИГНАЛ";
+        } else if (stall || signal <= 25 || range > limit * .85 || battery <= 15) {
+            String warning = lost ? "СВЯЗЬ ПОТЕРЯНА" : stall ? "МАЛАЯ СКОРОСТЬ: ГАЗ, НОС ВНИЗ" : battery <= 15 ? "НИЗКИЙ ЗАРЯД"
+                : range > limit * .85 ? "ПРЕДЕЛ ДАЛЬНОСТИ" : "СЛАБЫЙ СИГНАЛ";
             fittedCentered(graphics, warning, centerX, footerY - 15, innerWidth - 20, DANGER);
         }
 
         graphics.fill(edge, footerY, width - edge, height - edge, PANEL);
         String control = keyName(ModKeyMappings.MOVE_FORWARD) + "/" + keyName(ModKeyMappings.MOVE_BACKWARD)
             + " газ  ·  " + keyName(ModKeyMappings.MOVE_LEFT) + "/" + keyName(ModKeyMappings.MOVE_RIGHT)
-            + " курс  ·  Мышь наклон";
-        String actions = keyName(stabilize) + " ровно  ·  " + keyName(mc.options.keyUse)
-            + " выход  ·  " + keyName(ModKeyMappings.FIRE) + " подрыв";
+            + " крен  ·  Мышь крен/тангаж";
+        String actions = keyName(stabilize) + " ровно  ·  " + keyName(mc.options.keyTogglePerspective) + " вид  ·  "
+            + keyName(mc.options.keyUse) + " выход  ·  " + keyName(ModKeyMappings.FIRE) + " подрыв";
         fittedCentered(graphics, control, centerX, footerY + 4, innerWidth - 12, TEXT);
         fittedCentered(graphics, actions, centerX, footerY + 15, innerWidth - 12, MUTED);
     }

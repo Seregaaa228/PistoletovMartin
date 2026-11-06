@@ -87,6 +87,7 @@
   "frontier_arcade_vehicles:ground_station": "recon",
   "frontier_arcade_vehicles:pocket_controller": "recon",
   "frontier_arcade_vehicles:relay_drone": "aviation",
+  "frontier_arcade_vehicles:shahed_136_drone": "aviation",
   "frontier_arcade_vehicles:station_link": "recon",
   "frontier_arcade_vehicles:uav_camera": "recon",
   "frontier_aviation:f16": "aviation",

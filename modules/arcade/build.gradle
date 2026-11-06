@@ -1,6 +1,12 @@
 version = '1.7.0'
 base { archivesName = 'frontier-arcade-vehicles' }
-sourceSets.main.java.exclude 'dev/frontier/arcade/smoke/**'
+// Smoke harnesses stay out of the release JAR. -PgeraniumRepro adds only the opt-in
+// GeraniumFlightRepro (still inert without -Dfrontier.geraniumRepro=true) for a test profile.
+def geraniumRepro = project.hasProperty('geraniumRepro')
+sourceSets.main.java.exclude { element ->
+    def path = element.relativePath.pathString
+    path.startsWith('dev/frontier/arcade/smoke/') && !(geraniumRepro && path == 'dev/frontier/arcade/smoke/GeraniumFlightRepro.java')
+}
 tasks.named('jar', Jar).configure {
     manifest.attributes 'MixinConfigs': 'frontier_arcade_vehicles.mixins.json'
     from('LICENSE.txt') { into 'META-INF'; rename { 'LICENSE.frontier-arcade' } }
@@ -12,3 +18,18 @@ tasks.register('warheadRulesTest', JavaExec) {
     mainClass = 'dev.frontier.arcade.combat.WarheadRulesTest'
 }
 tasks.named('check').configure { dependsOn 'warheadRulesTest' }
+
+
+tasks.register('vehicleBallisticsTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.arcade.balance.VehicleBallisticsTest'
+}
+tasks.named('check').configure { dependsOn 'vehicleBallisticsTest' }
+
+tasks.register('geraniumFlightModelTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.arcade.geranium.GeraniumFlightModelTest'
+}
+tasks.named('check').configure { dependsOn 'geraniumFlightModelTest' }

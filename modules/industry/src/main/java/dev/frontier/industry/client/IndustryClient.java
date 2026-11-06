@@ -50,7 +50,7 @@ public final class IndustryClient {
         net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(IndustryContent.structure("glass"), net.minecraft.client.renderer.RenderType.translucent());
     }); }
     @SubscribeEvent public static void renderers(EntityRenderersEvent.RegisterRenderers e) {
-        e.registerEntityRenderer(IndustryContent.WORKER.get(), dev.frontier.industry.client.repair.WorkerGeoRenderer::new);
+        e.registerEntityRenderer(IndustryContent.WORKER.get(), dev.frontier.industry.client.repair.WorkerVillagerRenderer::new);
     }
 
     @Mod.EventBusSubscriber(modid = IndustryMod.ID, value = Dist.CLIENT)

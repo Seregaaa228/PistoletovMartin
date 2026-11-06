@@ -56,7 +56,8 @@ public final class IndustryNet {
             }
             String icon = display.save(new net.minecraft.nbt.CompoundTag()).toString();
             // Preserve TaCZ/vehicle identity tags for native item rendering, with a bounded display-only payload.
-            if (icon.length() <= 4096 && icon.length() <= iconBudget) { row.addProperty("icon", icon); iconBudget -= icon.length(); }
+            int iconBytes = CatalogChunks.utf8Bytes(icon); // Network limits count UTF-8 bytes, not chars.
+            if (iconBytes <= 4096 && iconBytes <= iconBudget) { row.addProperty("icon", icon); iconBudget -= iconBytes; }
             row.addProperty("outputCount", output.getCount());
             JsonArray materials = new JsonArray();
             for (ItemStack stack : r.cost()) {

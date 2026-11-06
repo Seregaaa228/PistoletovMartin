@@ -24,6 +24,9 @@ import net.minecraftforge.network.NetworkHooks;
 
 import javax.annotation.Nullable;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /** A physical, persistent emplacement. Its ammunition is server-owned stock, never a client counter. */
@@ -56,7 +59,8 @@ public final class LauncherEntity extends Entity {
     public boolean ownedBy(ServerPlayer player) { return owner != null && owner.equals(player.getUUID()) && player.level() == level(); }
     public void setActive(boolean active) { entityData.set(ACTIVE, active); revision++; }
     public Vec3 muzzle() { return position().add(0, 2.75, 0); }
-    public int defenseRange() { return kind() == Kind.S300 ? 128 : kind() == Kind.S400 ? 176 : 192; }
+    public int defenseRange() { return defenseRange(kind()); }
+    private static int defenseRange(Kind kind) { return kind == Kind.S300 ? 128 : kind == Kind.S400 ? 176 : 192; }
     @Override public boolean isPickable() { return isAlive(); }
     @Override public boolean canBeCollidedWith() { return isAlive(); }
     @Override public boolean isPushable() { return false; }
@@ -165,9 +169,17 @@ public final class LauncherEntity extends Entity {
         super.tick(); setDeltaMovement(Vec3.ZERO);
         if (level().isClientSide || !(level() instanceof ServerLevel server)) return;
         if (operator != null && server.getEntity(operator) instanceof LivingEntity living && (living.getVehicle() != this || !living.isAlive())) releaseOperator();
-        if (kind() == Kind.BALLISTIC || !active() || tickCount % 5 != 0 || ammunition() <= 0 || !ready()) return;
-        Entity target = server.getEntities(this, getBoundingBox().inflate(defenseRange()), this::canTarget)
-                .stream().filter(candidate -> !alreadyEngaged(server, candidate)).min(Comparator.comparingDouble(this::distanceToSqr)).orElse(null);
+        Kind kind = kind();
+        if (kind == Kind.BALLISTIC || !active() || tickCount % 5 != 0 || ammunition() <= 0 || !ready()) return;
+        int range = defenseRange(kind);
+        List<Entity> candidates = server.getEntities(this, getBoundingBox().inflate(range),
+                candidate -> canTarget(server, kind, range, candidate, true) && lowIrDetected(range, candidate));
+        if (candidates.isEmpty()) return;
+        // One interceptor query per scan (not one per candidate): targets our own or an allied
+        // launcher's interceptor is already homing on are skipped.
+        Set<UUID> engaged = engagedTargets(server, range);
+        Entity target = candidates.stream().filter(candidate -> !engaged.contains(candidate.getUUID()))
+                .min(Comparator.comparingDouble(this::distanceToSqr)).orElse(null);
         if (target == null) return;
         InterceptorEntity interceptor = CombatContent.INTERCEPTOR.get().create(server);
         if (interceptor == null) return;
@@ -175,19 +187,43 @@ public final class LauncherEntity extends Entity {
         long snapshot = revision;
         if (!reserve(1, snapshot)) return;
         if (!server.addFreshEntity(interceptor)) { restoreReservation(1); return; }
-        readyAt = level().getGameTime() + (kind() == Kind.PATRIOT ? 30 : 45); shotsFired++; revision++;
+        readyAt = level().getGameTime() + (kind == Kind.PATRIOT ? 30 : 45); shotsFired++; revision++;
     }
+    /** Exact, uncached relation check (used by status/fixtures right after diplomacy changes). */
     public boolean canTarget(Entity candidate) {
-        if (!(level() instanceof ServerLevel server) || !candidate.isAlive() || !server.hasChunkAt(candidate.blockPosition())
-                || candidate.distanceToSqr(this) > (double) defenseRange() * defenseRange()) return false;
-        if (candidate instanceof BallisticMissileEntity) return kind() == Kind.PATRIOT && CombatOwnership.hostile(server, owner, candidate);
-        // S300/S400 and Patriot all handle ordinary tagged aircraft. No vanilla arrow, ground vehicle or player targeting.
-        return kind() != Kind.BALLISTIC && candidate.getType().is(CombatContent.AIR_TARGETS)
-                && !candidate.onGround() && CombatOwnership.hostile(server, owner, candidate);
+        if (!(level() instanceof ServerLevel server)) return false;
+        Kind kind = kind();
+        return canTarget(server, kind, defenseRange(kind), candidate, false);
     }
-    private boolean alreadyEngaged(ServerLevel server, Entity target) {
-        return !server.getEntitiesOfClass(InterceptorEntity.class, getBoundingBox().inflate(defenseRange()),
-                shot -> owner != null && owner.equals(shot.ownerUUID()) && target.getUUID().equals(shot.targetUUID())).isEmpty();
+    /** Cheapest checks first: type/tag, distance, then chunk ticking state, then the relation lookup. */
+    private boolean canTarget(ServerLevel server, Kind kind, int range, Entity candidate, boolean cachedRelations) {
+        boolean typeOk = candidate instanceof BallisticMissileEntity ? kind == Kind.PATRIOT
+                // S300/S400 and Patriot all handle ordinary tagged aircraft. No vanilla arrow, ground vehicle or player targeting.
+                : kind != Kind.BALLISTIC && candidate.getType().is(CombatContent.AIR_TARGETS) && !candidate.onGround();
+        if (!typeOk || !candidate.isAlive() || candidate.distanceToSqr(this) > (double) range * range
+                // A target outside simulation distance is frozen and the interceptor could not fly there.
+                || !CombatOperations.entityTicking(server, candidate.blockPosition())) return false;
+        return cachedRelations ? CombatOwnership.hostileCached(server, owner, candidate) : CombatOwnership.hostile(server, owner, candidate);
+    }
+    /** Only low-IR types (glide bombs) are filtered: no engine heat plume to cue on. Others pass unchanged. */
+    private boolean lowIrDetected(int range, Entity candidate) {
+        if (!candidate.getType().is(CombatContent.LOW_IR_TARGETS)) return true;
+        boolean detected = CombatRules.lowIrDetected(candidate.distanceToSqr(this), range, random.nextFloat());
+        LOGGER.debug("Low-IR target {} at {} blocks: {} by {} site", candidate.getUUID(),
+                Math.round(Math.sqrt(candidate.distanceToSqr(this))), detected ? "detected" : "not detected", kind());
+        return detected;
+    }
+    private static final org.slf4j.Logger LOGGER = com.mojang.logging.LogUtils.getLogger();
+    /** Targets that our own or an allied launcher's interceptor is already homing on. */
+    private Set<UUID> engagedTargets(ServerLevel server, int range) {
+        if (owner == null) return Set.of();
+        Set<UUID> engaged = new HashSet<>();
+        for (InterceptorEntity shot : server.getEntitiesOfClass(InterceptorEntity.class, getBoundingBox().inflate(range),
+                shot -> shot.targetUUID() != null && shot.ownerUUID() != null))
+            if (!engaged.contains(shot.targetUUID())
+                    && (owner.equals(shot.ownerUUID()) || CombatOwnership.sameTeamCached(server, owner, shot.ownerUUID())))
+                engaged.add(shot.targetUUID());
+        return engaged;
     }
     @Override public void remove(RemovalReason reason) { if (reason.shouldDestroy() && !level().isClientSide) releaseOperator(); super.remove(reason); }
     @Override protected void readAdditionalSaveData(CompoundTag tag) {

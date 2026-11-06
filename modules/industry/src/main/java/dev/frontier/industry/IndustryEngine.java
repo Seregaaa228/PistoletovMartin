@@ -17,6 +17,7 @@ import dev.frontier.industry.engine.IndustryRules;
 import dev.frontier.industry.engine.IndustryState;
 import dev.frontier.industry.energy.IndustryEnergy;
 import dev.frontier.industry.engine.StockTransactions;
+import dev.frontier.industry.buildings.OutputWarehouse;
 import dev.frontier.industry.engine.NativeRecruitCustody;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -105,7 +106,7 @@ public final class IndustryEngine {
             IndustryCatalog.Recipe currentRecipe = productionRecipe(current, site.type);
             // An idle or jammed factory must not hoard a whole battery before its neighbours get a turn.
             if (path && currentRecipe != null && site.liveProduction > 0 && current.progress < currentRecipe.ticks()
-                && StockTransactions.outputFits(site.inventory, currentRecipe.output()))
+                && OutputWarehouse.outputFits(level(server,site), site, currentRecipe.output()))
                 moveEnergy(data, substation, site, Math.max(0, currentRecipe.fePerTick() - site.energy));
             site.powered = path && (site.energy > 0 || substation.energy > 0 || plant.energy > 0 || plant.burn > 0);
             if (!path) { site.status = IndustryEnergy.network(data, site).reason(); continue; }
@@ -137,7 +138,7 @@ public final class IndustryEngine {
             tell(player, "Достигнут предел промышленных объектов"); return null;
         }
         Site site = new Site(data, UUID.randomUUID(), player.getUUID(), type, level.dimension().location(), origin);
-        site.blueprintVersion = Blueprint.CURRENT_VERSION;
+        site.blueprintVersion = dev.frontier.industry.buildings.BuildingOrientation.forPlayer(player);
         site.team = player.getTeam() == null ? "" : player.getTeam().getName();
         if (distance(site, player.getX(), player.getY(), player.getZ()) > 64 || !loaded(level, site)) {
             tell(player, "Нужна свободная загруженная площадка рядом с игроком"); return null;
@@ -488,9 +489,10 @@ public final class IndustryEngine {
         if (order.reserved && order.paidRecipe(site.type) == null) {
             order.reserve(recipe); data.setDirty();
         }
-        if (!StockTransactions.outputFits(site.inventory, recipe.output())) { site.status = "Выход заполнен — пауза без потери материалов"; return; }
+        if (!site.outputMigrationAttempted) migrateLegacyOutputs(server, data, site);
+        if (!OutputWarehouse.outputFits(level(server,site), site, recipe.output())) { site.status = "Выход заполнен — пауза без потери материалов"; return; }
         // A paid, finished unit survives output congestion/restart. Inserting it does not charge twice.
-        if (order.reserved && order.progress >= recipe.ticks()) { complete(data, site, order, recipe); return; }
+        if (order.reserved && order.progress >= recipe.ticks()) { complete(server, data, site, order, recipe); return; }
         if (site.liveProduction < 1) { site.status = "Нет живых назначенных рабочих рядом"; return; }
         if (site.energy < recipe.fePerTick()) { site.status = "Недостаточно FE"; site.powered = false; return; }
         if (!order.reserved) {
@@ -507,10 +509,27 @@ public final class IndustryEngine {
         order.progress = Math.min(recipe.ticks(), order.progress + Math.min(site.liveProduction, 4));
         site.operating = true;
         site.status = "Производство: " + recipe.title(); data.setDirty();
-        if (order.progress >= recipe.ticks()) complete(data, site, order, recipe);
+        if (order.progress >= recipe.ticks()) complete(server, data, site, order, recipe);
     }
-    private static void complete(IndustryData data, Site site, Order order, IndustryCatalog.Recipe recipe) {
-        if (!StockTransactions.putOutputs(site.inventory, recipe.output())) { site.status = "Выход заполнен"; return; }
+    private static void migrateLegacyOutputs(MinecraftServer server, IndustryData data, Site site) {
+        if (site.outputMigrationAttempted) return;
+        OutputWarehouse.ensureInventories(site);
+        // With no physical containers the legacy inventory remains authoritative;
+        // inserting it into itself and then clearing the source would destroy stock.
+        if (site.containerInventories.isEmpty()) return;
+        boolean complete = true;
+        for (int slot = IndustryRules.INPUTS; slot < IndustryRules.SLOTS; slot++) {
+            ItemStack stack = site.inventory.getStackInSlot(slot).copy();
+            if (stack.isEmpty()) continue;
+            boolean moved = OutputWarehouse.putOutputs(level(server,site), site, stack);
+            if (moved) site.inventory.setStackInSlot(slot, ItemStack.EMPTY);
+            else complete = false;
+        }
+        site.outputMigrationAttempted = complete;
+        data.setDirty();
+    }
+    private static void complete(MinecraftServer server, IndustryData data, Site site, Order order, IndustryCatalog.Recipe recipe) {
+        if (!OutputWarehouse.putOutputs(level(server,site), site, recipe.output())) { site.status = "Выход заполнен"; return; }
         order.quantity--; order.progress = 0; order.clearReservation();
         if (order.quantity == 0) site.orders.removeFirst();
         data.setDirty();
@@ -542,9 +561,9 @@ public final class IndustryEngine {
     private static int restore(ServerLevel level, Site site) {
         if (site == null || !loaded(level, site)) return 0;
         int restored = 0;
-        for (var entry : Construction.repairBlocks(site).entrySet()) {
-            BlockPos pos = entry.getKey(); BlockState current = level.getBlockState(pos);
-            if (IndustryRules.repairMayReplace(current.equals(entry.getValue()), current.isAir(), level.getBlockEntity(pos) != null)
+        for (var entry : Construction.repairEntries(site)) {
+            BlockPos pos = site.origin.offset(entry.getKey()); BlockState current = level.getBlockState(pos);
+            if (IndustryRules.repairMayReplace(Construction.equivalent(current, entry.getValue()), current.isAir(), level.getBlockEntity(pos) != null)
                 && ClaimPermissions.allows(level, site.owner, site.team, pos) && level.setBlock(pos, entry.getValue(), Block.UPDATE_ALL)) restored++;
         }
         return restored;
@@ -723,12 +742,17 @@ public final class IndustryEngine {
     }
     public static void poll(ServerLevel level, Site site) {
         if (!loaded(level, site)) return;
-        Map<BlockPos, BlockState> blueprint = Construction.repairBlocks(site);
+        var blueprint = Construction.repairEntries(site);
+        var controllerBlock = IndustryContent.controller(site.type);
         site.total = blueprint.size(); site.matching = 0;
-        for (var entry : blueprint.entrySet()) if (level.getBlockState(entry.getKey()).equals(entry.getValue()) || site.blueprintVersion>=3 && level.getBlockState(entry.getKey()).is(entry.getValue().getBlock()) || entry.getValue().is(IndustryContent.controller(site.type)) && level.getBlockState(entry.getKey()).is(IndustryContent.controller(site.type))) site.matching++;
-        site.controller = level.getBlockState(Blueprint.controller(site.type, site.origin, site.blueprintVersion)).is(IndustryContent.controller(site.type));
+        // Doors opened, snow, water, redstone and reconnecting shapes are not damage (Construction.equivalent).
+        for (var entry : blueprint) {
+            BlockState expected = entry.getValue(), actual = level.getBlockState(site.origin.offset(entry.getKey()));
+            if (Construction.equivalent(actual, expected) || site.blueprintVersion>=3 && actual.is(expected.getBlock()) || expected.is(controllerBlock) && actual.is(controllerBlock)) site.matching++;
+        }
+        site.controller = level.getBlockState(Blueprint.controller(site.type, site.origin, site.blueprintVersion)).is(controllerBlock);
         site.machineryIntact = Blueprint.criticalBlocks(site.type, site.origin, site.blueprintVersion).entrySet().stream()
-            .allMatch(entry -> level.getBlockState(entry.getKey()).equals(entry.getValue()));
+            .allMatch(entry -> Construction.equivalent(level.getBlockState(entry.getKey()), entry.getValue()));
     }
     /** Only real, loaded, structurally working owned sites can become automatic power sources. */
     public static void autoConnect(ServerLevel level, IndustryData data, Site placed) {

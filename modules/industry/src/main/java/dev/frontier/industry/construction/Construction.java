@@ -22,10 +22,15 @@ import net.minecraft.world.level.block.state.BlockState;
 /** A saved placement cursor is a compact journal over the immutable versioned blueprint. */
 public final class Construction {
     private Construction() {}
-    private static final Map<String,List<Map.Entry<BlockPos,BlockState>>> PLANS=new HashMap<>();
+    // Relative (origin-free) layouts depend only on type and blueprintVersion (which also encodes
+    // the rotation), so they are shared by all sites, bounded by the finite set of type/version
+    // pairs, and can never go stale: origin and placement cursor are applied live on each use.
+    private static final Map<String,List<Map.Entry<BlockPos,BlockState>>> PLANS=new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<String,Map<BlockPos,Integer>> PLAN_ORDER=new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<String,Map<BlockPos,BlockState>> FINISHED=new java.util.concurrent.ConcurrentHashMap<>();
+    private static String layoutKey(Site site){return site.type.name()+":"+site.blueprintVersion;}
     public static List<Map.Entry<BlockPos,BlockState>> plan(Site site) {
-        String key=site.type.name()+":"+site.blueprintVersion;
-        var relative=PLANS.computeIfAbsent(key,k->{
+        var relative=PLANS.computeIfAbsent(layoutKey(site),k->{
             var list=new ArrayList<>(Blueprint.blocks(site.type,BlockPos.ZERO,site.blueprintVersion).entrySet());
             list.sort(Comparator.<Map.Entry<BlockPos,BlockState>>comparingInt(e->stage(site,e))
                 .thenComparingInt(e->e.getKey().getY()).thenComparingInt(e->e.getKey().getZ()).thenComparingInt(e->e.getKey().getX()));
@@ -43,12 +48,36 @@ public final class Construction {
         }
         return e.getKey().getY()>=5?2:1;
     }
+    private static Map<BlockPos,BlockState> finished(Site site) {
+        return FINISHED.computeIfAbsent(layoutKey(site),k->Collections.unmodifiableMap(new LinkedHashMap<>(
+            dev.frontier.industry.architecture.FactoryDetailUpgrade.expected(site.type,BlockPos.ZERO,site.blueprintVersion))));
+    }
+    /**
+     * Blocks repair and health checks expect right now, relative to site.origin: the placed part of
+     * the plan while constructing, the finished layout afterwards. Shared and immutable — offset by
+     * site.origin, never modify. No per-call blueprint rebuild.
+     */
+    public static Collection<Map.Entry<BlockPos,BlockState>> repairEntries(Site site) {
+        if(!site.constructing)return finished(site).entrySet();
+        var plan=plan(site);
+        return plan.subList(0,Math.max(0,Math.min(site.constructionCursor,plan.size())));
+    }
+    /** O(1) expected state at a world position, or null when the site does not (yet) expect a block there. */
+    public static BlockState expectedAt(Site site,BlockPos pos) {
+        BlockPos local=pos.subtract(site.origin);
+        if(!site.constructing)return finished(site).get(local);
+        var plan=plan(site);
+        Integer index=PLAN_ORDER.computeIfAbsent(layoutKey(site),k->{
+            var order=new HashMap<BlockPos,Integer>(plan.size()*2);
+            for(int i=0;i<plan.size();i++)order.put(plan.get(i).getKey(),i);
+            return Map.copyOf(order);
+        }).get(local);
+        return index!=null&&index<site.constructionCursor?plan.get(index).getValue():null;
+    }
+    /** Absolute copy of {@link #repairEntries}; for rare callers that need world positions as a map. */
     public static Map<BlockPos,BlockState> repairBlocks(Site site) {
-        if(!site.constructing)return Blueprint.blocks(site.type,site.origin,site.blueprintVersion);
-        Map<BlockPos,BlockState> result=new LinkedHashMap<>();var plan=plan(site);
-        for(int i=0;i<Math.min(site.constructionCursor,plan.size());i++) {
-            var entry=plan.get(i);result.put(site.origin.offset(entry.getKey()),entry.getValue());
-        }
+        Map<BlockPos,BlockState> result=new LinkedHashMap<>();
+        for(var entry:repairEntries(site))result.put(site.origin.offset(entry.getKey()),entry.getValue());
         return result;
     }
     public static UUID start(ServerPlayer player,Site site) {
@@ -88,26 +117,14 @@ public final class Construction {
         if(!autoAssign(player.server,data,site,true)){hireBuilder(player);autoAssign(player.server,data,site,true);}
     }
     private static boolean autoAssign(MinecraftServer server,IndustryData data,Site site,boolean anyFree) {
-        if(builder(server,data,site)!=null)return true;
-        for(Worker worker:data.workers.values()) {
-            if(!worker.active()||worker.site!=null||!worker.owner.equals(site.owner)||!worker.dimension.equals(site.dimension)||(!anyFree&&!worker.role.equals("builder")))continue;
-            var entity=IndustryEngine.find(server,worker.id);
-            if(!(entity instanceof WorkerEntity npc)||!npc.isAlive()||npc.isPassenger()||IndustryEngine.busy(npc)||npc.blockPosition().distSqr(site.origin)>128*128)continue;
-            worker.site=site.id;worker.role="builder";IndustryEngine.initialize(npc,worker);data.setDirty();return true;
-        }
-        return false;
+        return dev.frontier.industry.buildings.ConstructionCrew.assign(server,data,site,anyFree);
     }
     private static WorkerEntity builder(MinecraftServer server,IndustryData data,Site site) {
-        for(Worker w:data.workers.values())if(w.active()&&site.id.equals(w.site)&&w.owner.equals(site.owner)&&w.role.equals("builder")) {
-            var e=IndustryEngine.find(server,w.id);
-            if(e instanceof WorkerEntity npc && npc.isAlive()&&!npc.isPassenger()&&!IndustryEngine.busy(npc)
-                && npc.level().dimension().location().equals(site.dimension)&&IndustryEngine.owned(npc,site.owner)
-                && npc.getPersistentData().getString("frontierIndustryRole").equals("builder"))return npc;
-        }
-        return null;
+        return dev.frontier.industry.buildings.ConstructionCrew.current(server,data,site);
     }
     public static void tick(MinecraftServer server) {
         var data=IndustryData.get(server);int budget=IndustryConfig.PLACEMENT_BUDGET.get();
+        dev.frontier.industry.buildings.ConstructionCrew.dispatch(server,data);
         // Rotating start avoids starving later sites when many bases build concurrently.
         var sites=new ArrayList<>(data.sites.values());if(!sites.isEmpty())Collections.rotate(sites,-Math.floorMod(server.getTickCount(),sites.size()));
         for(Site site:sites)if(site.constructing) {
@@ -124,45 +141,51 @@ public final class Construction {
             if(npc.distanceToSqr(point.getX()+.5,point.getY(),point.getZ()+.5)>9){site.status="Строитель идёт к площадке";continue;}
             var plan=plan(site);int next=ConstructionRules.advance(site.constructionTicks,site.constructionDuration,true);
             int target=(int)((long)plan.size()*next/Math.max(1,site.constructionDuration));
-            int quota=ConstructionRules.quota(site.constructionCursor,plan.size(),next,site.constructionDuration,Math.min(24,budget));
+            int quota=ConstructionRules.quota(site.constructionCursor,plan.size(),next,site.constructionDuration,budget);
             boolean blocked=false;
             for(int n=0;n<quota;n++) {
                 var e=plan.get(site.constructionCursor);BlockPos pos=site.origin.offset(e.getKey());
-                if(!level.getBlockState(pos).isAir()||!ClaimPermissions.allows(level,site.owner,site.team,pos)||!level.noCollision(npc,new net.minecraft.world.phys.AABB(pos))){
+                var actual=level.getBlockState(pos);
+                if(equivalent(actual,e.getValue())){site.constructionCursor++;data.setDirty();continue;}
+                // noCollision also checks adjacent oversized model shapes: a rack below the roof
+                // used to permanently prevent its empty roof voxel from being installed.
+                if(!actual.isAir()||!ClaimPermissions.allows(level,site.owner,site.team,pos)||!level.getEntities(npc,new net.minecraft.world.phys.AABB(pos),entity->entity instanceof net.minecraft.world.entity.LivingEntity&&entity.isAlive()&&!entity.isSpectator()).isEmpty()){
                     site.status="Стройка: освободи место или права на "+pos.toShortString();blocked=true;break;
                 }
                 if(!level.setBlock(pos,e.getValue(),Block.UPDATE_ALL)){site.status="Не удалось установить строительный блок";blocked=true;break;}
                 site.constructionCursor++;site.matching++;site.total++;budget--;data.setDirty();
             }
             if(blocked)continue;
+            if(site.constructionCursor<target){site.status="Стройка: очередь установки блоков — пауза";continue;}
             if(site.constructionCursor>=target){site.constructionTicks=next;data.setDirty();}
             if(server.getTickCount()%20==0)npc.swing(InteractionHand.MAIN_HAND);
             site.status="Стройка: "+Math.min(100,100*site.constructionTicks/Math.max(1,site.constructionDuration))+"% · "+Math.max(0,(site.constructionDuration-site.constructionTicks+19)/20)+" с";
             if(site.constructionTicks>=site.constructionDuration && site.constructionCursor>=plan.size()) {
+                BlockPos missing=firstMissing(level,site);
+                if(missing!=null){site.status="Стройка: не хватает обязательного блока "+missing.toShortString();continue;}
                 site.constructing=false;release(server,data,site);IndustryEngine.poll(level,site);IndustryEngine.autoConnect(level,data,site);site.status="Строительство завершено";data.setDirty();
             }
         }
     }
-    public static boolean workerTick(WorkerEntity entity) {
-        if(!(entity.level() instanceof ServerLevel level))return false;
-        var data=IndustryData.get(level.getServer());var worker=data.workers.get(entity.getUUID());
-        if(worker==null||!worker.role.equals("builder"))return false;
-        Site site=worker.site==null?null:data.sites.get(worker.site);
-        if(site==null||!site.constructing)return false;
-        BlockPos point=workPoint(level,site);
-        if(point!=null && entity.tickCount%20==0) {
-            if(entity.distanceToSqr(point.getX()+.5,point.getY(),point.getZ()+.5)>4)entity.getNavigation().moveTo(point.getX()+.5,point.getY(),point.getZ()+.5,1.0);
-            else entity.getNavigation().stop();
+    /** Same block, and equal shape-defining properties; states a block changes by itself are ignored. */
+    public static boolean equivalent(BlockState actual,BlockState expected){
+        if(actual==expected)return true;
+        if(!actual.is(expected.getBlock()))return false;
+        for(var property:expected.getProperties()){
+            if(ConstructionRules.selfChanging(property.getName()))continue;
+            if(!actual.getValue(property).equals(expected.getValue(property)))return false;
         }
         return true;
     }
-    private static BlockPos workPoint(ServerLevel level,Site site) {
-        var bounds=Blueprint.bounds(site.type,site.blueprintVersion);
-        int x=site.constructionTicks<site.constructionDuration/3?-3:site.constructionTicks<site.constructionDuration*2/3?3:0;
-        for(int y:new int[]{0,1,-1,2,-2}) {
-            BlockPos p=site.origin.offset(x,y,bounds.minZ()-1);if(safe(level,p))return p;
-        }
+    public static BlockPos firstMissing(ServerLevel level,Site site){
+        for(var e:plan(site)){var p=site.origin.offset(e.getKey());if(!equivalent(level.getBlockState(p),e.getValue()))return p;}
         return null;
+    }
+    public static boolean workerTick(WorkerEntity entity) {
+        return dev.frontier.industry.buildings.ConstructionCrew.navigate(entity);
+    }
+    private static BlockPos workPoint(ServerLevel level,Site site) {
+        return dev.frontier.industry.buildings.ConstructionCrew.workPoint(level,site);
     }
     private static boolean safe(ServerLevel level,BlockPos p) {
         return level.hasChunkAt(p)&&level.getWorldBorder().isWithinBounds(p)&&level.getBlockState(p).getCollisionShape(level,p).isEmpty()
@@ -170,7 +193,7 @@ public final class Construction {
     }
     private static void release(MinecraftServer server,IndustryData data,Site site) {
         for(var w:data.workers.values())if(site.id.equals(w.site)&&w.role.equals("builder")) {
-            w.site=null;var e=IndustryEngine.find(server,w.id);if(e instanceof WorkerEntity npc){IndustryEngine.initialize(npc,w);npc.getNavigation().stop();}
+            w.site=null;var e=IndustryEngine.find(server,w.id);if(e instanceof WorkerEntity npc){dev.frontier.industry.buildings.ConstructionCrew.restore(npc);IndustryEngine.initialize(npc,w);npc.getNavigation().stop();}
         }
     }
     public static void cancel(ServerPlayer player,Site site) {
@@ -189,7 +212,7 @@ public final class Construction {
         var simulated=new net.minecraft.world.entity.player.Inventory(player);
         simulated.load(player.getInventory().save(new net.minecraft.nbt.ListTag()));
         for(ItemStack stack:returns)if(!simulated.add(stack.copy())){IndustryEngine.tell(player,"Освободи место для возврата комплекта/ремнабора");return;}
-        for(var e:blocks.entrySet())if(level.getBlockEntity(e.getKey())==null&&level.getBlockState(e.getKey()).equals(e.getValue()))level.setBlock(e.getKey(),Blocks.AIR.defaultBlockState(),Block.UPDATE_ALL);
+        for(var e:blocks.entrySet())if(level.getBlockEntity(e.getKey())==null&&equivalent(level.getBlockState(e.getKey()),e.getValue()))level.setBlock(e.getKey(),Blocks.AIR.defaultBlockState(),Block.UPDATE_ALL);
         var data=IndustryData.get(player.server);release(player.server,data,site);site.constructing=false;site.repairKit=false;site.repairRequested=false;site.repairProgress=0;data.sites.remove(site.id);data.setDirty();
         for(ItemStack stack:returns)player.getInventory().add(stack);
         player.closeContainer();IndustryEngine.tell(player,refund?"Стройка отменена, комплект возвращён":"Стройка отменена; начатый комплект израсходован");
@@ -201,7 +224,8 @@ public final class Construction {
     public static boolean generated(ServerLevel level,BlockPos pos,BlockState state) {
         UUID id=IndustryEngine.siteAt(level,pos);var data=IndustryData.get(level.getServer());Site site=id==null?null:data.sites.get(id);
         if(site==null||site.blueprintVersion<3)return false;
-        BlockState expected=repairBlocks(site).get(pos);
+        // Called per broken block (an explosion breaks hundreds in one tick): O(1) lookup, no rebuild.
+        BlockState expected=expectedAt(site,pos);
         return expected!=null&&state.is(expected.getBlock());
     }
 }

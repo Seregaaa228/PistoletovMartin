@@ -22,6 +22,17 @@ public final class CombatRules {
     public static double arcOffset(double progress, double distance) {
         return 4.0 * progress * (1.0 - progress) * arcHeight(distance);
     }
+    /**
+     * Low-IR targets (unpowered glide bombs): no engine plume for an IR-cued interceptor to key on,
+     * so a site only picks one up inside part of its range, and then only on some scans.
+     */
+    public static final double LOW_IR_RANGE_FACTOR = 0.5;
+    public static final float LOW_IR_DETECTION_CHANCE = 0.15F;
+    /** {@code roll} is a uniform [0,1) draw made once per scan for this candidate. */
+    public static boolean lowIrDetected(double distanceSqr, int range, float roll) {
+        double reach = range * LOW_IR_RANGE_FACTOR;
+        return distanceSqr <= reach * reach && roll < LOW_IR_DETECTION_CHANCE;
+    }
     public static boolean hostile(UUID owner, UUID candidate, boolean sameTeam) {
         return owner != null && candidate != null && !owner.equals(candidate) && !sameTeam;
     }

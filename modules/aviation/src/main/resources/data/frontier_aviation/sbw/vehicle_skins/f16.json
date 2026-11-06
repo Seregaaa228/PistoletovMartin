@@ -1,0 +1,25 @@
+{
+  "Skins": [
+    {
+      "Id": "standard",
+      "Name": "Hill Gray II",
+      "Description": "Двухцветный серый камуфляж ВВС США",
+      "Texture": "frontier_aviation:textures/bedrock/vehicle/f16.png",
+      "Priority": 1
+    },
+    {
+      "Id": "aggressor",
+      "Name": "Aggressor Splinter",
+      "Description": "Синий «осколочный» камуфляж эскадрильи агрессоров",
+      "Texture": "frontier_aviation:textures/bedrock/vehicle/f16_aggressor.png",
+      "Priority": 2
+    },
+    {
+      "Id": "desert",
+      "Name": "Desert Aggressor",
+      "Description": "Песочно-коричневый камуфляж агрессоров",
+      "Texture": "frontier_aviation:textures/bedrock/vehicle/f16_desert.png",
+      "Priority": 3
+    }
+  ]
+}

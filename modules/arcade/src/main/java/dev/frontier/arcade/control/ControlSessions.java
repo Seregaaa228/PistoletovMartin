@@ -6,7 +6,6 @@ import com.atsuishio.superbwarfare.item.misc.MonitorItem;
 import dev.frontier.arcade.ArcadeVehicles;
 import dev.frontier.arcade.geranium.GeraniumEntity;
 import dev.frontier.arcade.mixin.AddonControlAccess;
-import dev.frontier.arcade.relay.RelayEntity;
 import dev.frontier.arcade.relay.RelayNetwork;
 import dev.frontier.arcade.station.StationBlockEntity;
 import java.util.ArrayList;
@@ -27,6 +26,7 @@ import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -59,9 +59,9 @@ public final class ControlSessions {
             || stack.getItem() == ModItems.MONITOR.get());
     }
     public static boolean isStationLink(ItemStack stack) { return !stack.isEmpty() && stack.getItem() instanceof StationLinkItem; }
-    /** Retained API name: the desktop now lists the two large aircraft, regardless of their payload role. */
+    /** Retained API name: the desktop lists the station strike aircraft, regardless of their payload role. */
     public static boolean isRecon(AddonDroneEntity drone) { return isStationAircraft(drone); }
-    public static boolean isStationAircraft(AddonDroneEntity drone) { return drone instanceof RelayEntity || drone instanceof GeraniumEntity; }
+    public static boolean isStationAircraft(AddonDroneEntity drone) { return drone instanceof GeraniumEntity; }
     public static boolean isMavic(AddonDroneEntity drone) {
         String id = typeId(drone);
         return id.equals("uncomplicatedfpv:mavic_drone_no_drop") || id.equals("uncomplicatedfpv:mavic_drone_with_drop");
@@ -74,7 +74,6 @@ public final class ControlSessions {
     }
     private static String typeId(Entity entity) { return String.valueOf(ForgeRegistries.ENTITY_TYPES.getKey(entity.getType())); }
     public static UUID ownerId(AddonDroneEntity drone) {
-        if (drone instanceof RelayEntity relay) return relay.ownerId();
         if (drone instanceof GeraniumEntity geranium) return geranium.ownerId();
         if (drone.getPersistentData().hasUUID(OWNER)) return drone.getPersistentData().getUUID(OWNER);
         return parseId(drone.getEntityData().get(DroneEntity.CONTROLLER));
@@ -95,7 +94,6 @@ public final class ControlSessions {
     }
     public static boolean isPowered(AddonDroneEntity drone) {
         if (!alive(drone)) return false;
-        if (drone instanceof RelayEntity) return drone.getEnergy() >= RelayEntity.ENERGY_PER_TICK;
         if (drone instanceof GeraniumEntity) return drone.getEnergy() > 0;
         return unsupportedNativeBattery(drone) || drone.getEnergy() > 0;
     }
@@ -369,7 +367,7 @@ public final class ControlSessions {
             rememberNativeOwner(drone);
             RelayNetwork.LinkInfo link = RelayNetwork.linkInfo(drone, player.getEyePosition());
             boolean online = powered(drone) && link.connected();
-            result.add(new DroneEntry(drone.getUUID(), drone.getDisplayName().getString(), drone instanceof RelayEntity ? "relay" : "geranium",
+            result.add(new DroneEntry(drone.getUUID(), drone.getDisplayName().getString(), drone instanceof GeraniumEntity g && g.variant() == dev.frontier.arcade.geranium.GeraniumVariant.PROPELLER ? "shahed" : "geranium",
                 drone.position().distanceTo(Vec3.atCenterOf(station)), batteryPercent(drone),
                 (int)Math.round(Math.max(0, Math.min(1, link.quality())) * 100), online));
         }
@@ -436,6 +434,23 @@ public final class ControlSessions {
         if (isStationLink(player.containerMenu.getCarried())) player.containerMenu.setCarried(ItemStack.EMPTY);
         if (player.containerMenu != player.inventoryMenu && isStationLink(player.inventoryMenu.getCarried())) player.inventoryMenu.setCarried(ItemStack.EMPTY);
     }
+    /**
+     * Sessionless variant of {@link #removeHidden}. Every Inventory slot (main, armour, offhand) is ticked
+     * by Inventory.tick, where StationLinkItem.inventoryTick deletes a link without a matching session
+     * token in this same player tick. Only slots that are never item-ticked are scanned here: an open
+     * container, the 2x2 crafting grid and its result, and the carried stack.
+     */
+    private static void removeStrayOutsideInventory(ServerPlayer player) {
+        if (player.containerMenu != player.inventoryMenu) {
+            for (var slot : player.containerMenu.slots) if (isStationLink(slot.getItem())) slot.set(ItemStack.EMPTY);
+            if (isStationLink(player.containerMenu.getCarried())) player.containerMenu.setCarried(ItemStack.EMPTY);
+        }
+        for (int index = InventoryMenu.RESULT_SLOT; index < InventoryMenu.CRAFT_SLOT_END; index++) {
+            var slot = player.inventoryMenu.slots.get(index);
+            if (isStationLink(slot.getItem())) slot.set(ItemStack.EMPTY);
+        }
+        if (isStationLink(player.inventoryMenu.getCarried())) player.inventoryMenu.setCarried(ItemStack.EMPTY);
+    }
     private static void restoreOriginal(ServerPlayer player) {
         if (!hasSession(player) || !player.isAlive()) return;
         CompoundTag ledger = session(player); ItemStack original = ItemStack.of(ledger.getCompound("Original"));
@@ -460,9 +475,13 @@ public final class ControlSessions {
         if (hasSession(player)) {
             if (!player.isAlive()) { session(player).putBoolean("Recovering", true); removeHidden(player); }
             else if (!stationActive(player) || !player.getMainHandItem().getOrCreateTag().getBoolean("Using")) disconnectStation(player);
-        } else removeHidden(player);
+        } else removeStrayOutsideInventory(player);
         ItemStack held = player.getMainHandItem();
-        if (isMonitor(held)) monitorTick(held, player.level(), player, player.getInventory().selected, true);
+        // Pocket/station terminals and PAIR-tagged SBW monitors already run monitorTick from their own
+        // inventoryTick later in this same player tick. Only an untagged SBW monitor needs this call:
+        // it migrates a legacy LinkedDrone pair to PAIR before the native inventoryTick can act on it.
+        if (held.getItem() == ModItems.MONITOR.get() && (held.getTag() == null || !held.getTag().hasUUID(PAIR)))
+            monitorTick(held, player.level(), player, player.getInventory().selected, true);
         UUID previous = VIEWED.get(player.getUUID());
         if (previous != null && (!isMonitor(held) || held.getTag() == null || !held.getTag().getBoolean("Using"))) {
             AddonDroneEntity drone = find(player, previous); if (drone != null && owns(player, drone)) drone.endRemoteControl(player);

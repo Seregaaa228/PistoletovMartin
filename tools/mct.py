@@ -13,4 +13,6 @@ if not CLI.is_file():
 environment = dict(os.environ, MCT_HOME=str(ROOT / 'vendor/mc-pilot/home'),
                    MCT_CACHE_DIR=str(ROOT / 'vendor/mc-pilot/cache'))
 node = os.environ.get('MCT_NODE', 'node')
-raise SystemExit(subprocess.run([node, str(CLI), *sys.argv[1:]], cwd=ROOT, env=environment).returncode)
+# Real path: the CLI only runs when argv[1] equals its own (symlink-resolved) module URL,
+# and vendor/mc-pilot is a symlink in worktrees.
+raise SystemExit(subprocess.run([node, str(CLI.resolve()), *sys.argv[1:]], cwd=ROOT, env=environment).returncode)

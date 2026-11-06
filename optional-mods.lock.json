@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "mods": {
+    "caps_awim_tactical_equipment": {
+      "name": "CAPS_Awim's Tactical Equipment",
+      "version": "3.0",
+      "minecraft": "1.20.1",
+      "loader": "forge",
+      "modId": "tacteq",
+      "file": "caps-awim-tactical-equipment-3.0-forge-1.20.1.jar",
+      "sha256": "870c1603f1d9c6ec2a942b1b701edb01faebc5c4c5bef6567bba1986d18643cf",
+      "bytes": 13976837,
+      "source": "https://modrinth.com/mod/caps_awim%60s-tactical-equipment-1.20.1-1.16.5",
+      "download": "https://cdn.modrinth.com/data/R38aKAma/versions/wBS5Yi9n/CAPS_Awim%60s%20Tactical%20Equipment%20v3.0%201.20.1.jar",
+      "license": "All Rights Reserved (Modrinth listing); JAR declares Academic Free License v3.0"
+    }
+  }
+}

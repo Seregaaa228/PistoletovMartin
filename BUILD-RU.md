@@ -129,7 +129,7 @@ python3 tools/run_dedicated_observations.py run-server run-owner run-foreign
 |---|---|
 | arcade | `frontier-arcade-vehicles-1.7.0.jar` |
 | nations | `frontier-nations-1.20.1-0.1.2-alpha.jar` |
-| industry | `frontier-industry-1.20.1-0.4.0.jar` |
+| industry | `frontier-industry-1.20.1-0.4.1.jar` |
 | style | `frontier-arcade-style-1.1.0.jar` |
 | aviation | `frontier-light-aviation-1.1.0.jar` |
 | missile-fix | `frontier-flamingo-launch-fix-1.3.0.jar` |

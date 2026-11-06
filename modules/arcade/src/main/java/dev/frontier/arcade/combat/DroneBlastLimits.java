@@ -3,6 +3,7 @@ package dev.frontier.arcade.combat;
 import com.atsuishio.superbwarfare.tools.CustomExplosion;
 import dev.frontier.arcade.ArcadeVehicles;
 import dev.frontier.arcade.geranium.GeraniumEntity;
+import java.util.Set;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.level.ExplosionEvent;
@@ -14,12 +15,13 @@ import ru.lavafrai.uncomplicatedfpv.entity.FpvDroneEntity;
 /** Exclude the one direct-hit target from splash; native damage and PvP policy still apply. */
 @Mod.EventBusSubscriber(modid = ArcadeVehicles.ID)
 public final class DroneBlastLimits {
-    private record DirectImpact(Entity source, Entity target) { }
+    /** @param damaged living targets FpvExplosion already hurt: no second, native splash for them */
+    private record DirectImpact(Entity source, Entity target, Set<Entity> damaged) { }
     private static final ThreadLocal<DirectImpact> DIRECT_TARGET = new ThreadLocal<>();
     private DroneBlastLimits() { }
-    static void explode(FpvDroneEntity source, Vec3 point, Entity warhead, Entity attacker, float damage, float radius, Entity direct) {
+    static void explode(FpvDroneEntity source, Vec3 point, Entity warhead, Entity attacker, float damage, float radius, Entity direct, Set<Entity> damaged) {
         DirectImpact previous = DIRECT_TARGET.get();
-        DIRECT_TARGET.set(new DirectImpact(source, direct));
+        DIRECT_TARGET.set(new DirectImpact(source, direct, damaged));
         try { new CustomExplosion.Builder(source).position(point).source(warhead).attacker(attacker).damage(damage).radius(radius).destroyBlock(true).explode(); }
         finally { if (previous == null) DIRECT_TARGET.remove(); else DIRECT_TARGET.set(previous); }
     }
@@ -32,7 +34,8 @@ public final class DroneBlastLimits {
         boolean fpv = source instanceof FpvDroneEntity;
         if (!fpv && !(source instanceof GeraniumEntity)) return;
         DirectImpact direct = DIRECT_TARGET.get();
-        if (fpv && direct != null && direct.source() == source && direct.target() != null)
-            event.getAffectedEntities().remove(direct.target());
+        if (!fpv || direct == null || direct.source() != source) return;
+        if (direct.target() != null) event.getAffectedEntities().remove(direct.target());
+        if (!direct.damaged().isEmpty()) event.getAffectedEntities().removeAll(direct.damaged());
     }
 }

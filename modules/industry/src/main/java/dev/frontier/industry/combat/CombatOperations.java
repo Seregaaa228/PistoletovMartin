@@ -30,7 +30,7 @@ public final class CombatOperations {
         if (count < 1 || count > CombatRules.MAX_SALVO || !Double.isFinite(target.lengthSqr())) return LaunchResult.failure("count");
         BlockPos targetBlock = BlockPos.containing(target);
         if (target.y < level.getMinBuildHeight() || target.y >= level.getMaxBuildHeight()
-                || !level.getWorldBorder().isWithinBounds(targetBlock) || !level.hasChunkAt(targetBlock)) return LaunchResult.failure("target_unloaded");
+                || !level.getWorldBorder().isWithinBounds(targetBlock) || !entityTicking(level, targetBlock)) return LaunchResult.failure("target_unloaded");
         List<LauncherEntity> ready = level.getEntitiesOfClass(LauncherEntity.class, player.getBoundingBox().inflate(32),
                         station -> station.kind() == LauncherEntity.Kind.BALLISTIC && station.ownedBy(player)
                                 && station.distanceToSqr(player) <= 32D * 32D && station.ready() && station.ammunition() > 0)
@@ -96,7 +96,13 @@ public final class CombatOperations {
             }
         }
     }
-    /** Checks every touched chunk in a short segment without asking the world to load one. */
+    /**
+     * Checks every touched chunk in a short segment without asking the world to load one. A chunk must
+     * be loaded AND inside simulation distance: chunks out to view distance stay loaded, but ServerLevel
+     * only ticks entities where DistanceManager.inEntityTickingRange holds (the same gate vanilla uses
+     * in ServerLevel.tick). A missile routed through a loaded-but-not-ticking chunk would freeze there and
+     * then be discarded by its own staleness check with the ammunition already spent.
+     */
     public static boolean loadedSegment(ServerLevel level, Vec3 start, Vec3 end) {
         if (!Double.isFinite(start.lengthSqr()) || !Double.isFinite(end.lengthSqr())) return false;
         int minX = net.minecraft.util.Mth.floor(Math.min(start.x, end.x)) >> 4;
@@ -104,9 +110,15 @@ public final class CombatOperations {
         int minZ = net.minecraft.util.Mth.floor(Math.min(start.z, end.z)) >> 4;
         int maxZ = net.minecraft.util.Mth.floor(Math.max(start.z, end.z)) >> 4;
         if (maxX - minX > 2 || maxZ - minZ > 2) return false;
+        var chunks = level.getChunkSource();
+        var distance = chunks.chunkMap.getDistanceManager();
         for (int x = minX; x <= maxX; x++) for (int z = minZ; z <= maxZ; z++)
-            if (!level.getChunkSource().hasChunk(x, z)) return false;
+            if (!chunks.hasChunk(x, z) || !distance.inEntityTickingRange(net.minecraft.world.level.ChunkPos.asLong(x, z))) return false;
         return true;
+    }
+    /** True when entities at this position actually tick (loaded and within simulation distance). */
+    public static boolean entityTicking(ServerLevel level, BlockPos pos) {
+        return level.hasChunkAt(pos) && level.getChunkSource().chunkMap.getDistanceManager().inEntityTickingRange(net.minecraft.world.level.ChunkPos.asLong(pos));
     }
     public static Component failureMessage(String reason) { return Component.translatable("combat.frontier_industry.failure." + reason); }
 }

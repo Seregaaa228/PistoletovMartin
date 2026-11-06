@@ -152,6 +152,21 @@ def expand(arguments: list, values: dict) -> list[str]:
     return result
 
 
+def samples_only_jfc(destination: Path) -> Path:
+    """The JDK's default JFR settings with every event off except Java and native stack
+    samples (10 ms) and garbage collections: cheap enough to keep running while playing,
+    enough to see a freeze."""
+    java = Path(os.path.realpath(subprocess.run(['which', 'java'], capture_output=True, text=True, check=True).stdout.strip()))
+    settings = (java.parents[1] / 'lib/jfr/default.jfc').read_text()
+    settings = re.sub(r'(<setting name="enabled"[^>]*>)true(</setting>)', r'\1false\2', settings)
+    for event in ('jdk.ExecutionSample', 'jdk.NativeMethodSample', 'jdk.GarbageCollection', 'jdk.GCPhasePause'):
+        block = re.compile(r'(<event name="' + re.escape(event) + r'">.*?</event>)', re.S)
+        settings = block.sub(lambda match: re.sub(r'>false<', '>true<', re.sub(
+            r'(<setting name="period"[^>]*>)[^<]*', r'\g<1>10 ms', match.group(1)), count=1), settings)
+    destination.write_text(settings)
+    return destination
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('profile', type=Path)
@@ -162,9 +177,27 @@ def main() -> int:
     parser.add_argument('--username', default='Pis1Tester')
     parser.add_argument('--benchmark-only', action='store_true')
     parser.add_argument('--skip-benchmark', action='store_true', help='Debug gameplay/screens first, omitting the lengthy timing phases')
+    parser.add_argument('--memory', default='3G', help='Java heap, e.g. 12G for a play session with Distant Horizons')
+    parser.add_argument('--gpu', choices=('default', 'nvidia'), default='default',
+                        help='nvidia: render on the discrete NVIDIA GPU of a PRIME (hybrid graphics) laptop')
+    parser.add_argument('--quick-play-world', help='Join this singleplayer world directly (Quick Play)')
+    parser.add_argument('--quick-play-server', help='Join this local host:port directly (Quick Play)')
+    parser.add_argument('--flight-bench', metavar='X,Y,Z,YAW',
+                        help='Fly the opt-in flight benchmark from this point; the client quits when done')
+    parser.add_argument('--flight-bench-ticks', type=int, default=1800, help='Measured window of the flight benchmark')
+    parser.add_argument('--flight-bench-hold', type=int, default=0, help='Hold at the route start this many seconds instead')
+    parser.add_argument('--flight-bench-shots', action='store_true', help='Screenshots during the measured window')
+    parser.add_argument('--property', action='append', default=[], metavar='frontier.KEY=VALUE',
+                        help='Extra frontier.* system property for a diagnostic run (repeatable)')
+    parser.add_argument('--task-budget-ab', action='store_true',
+                        help='Log flight frame times with the client task budget switched on/off every 10 s')
+    parser.add_argument('--jfr-ring', type=Path, metavar='FILE.jfr',
+                        help='Keep the last 5 minutes of stack samples and write them here when the game exits')
     args = parser.parse_args()
+    # Judged by the project path, which may be a link to a local data disk.
+    inside = Path(os.path.abspath(args.profile))
     profile = args.profile.resolve()
-    if not profile.is_relative_to(ROOT) or profile.is_relative_to(ROOT / 'instance'):
+    if not inside.is_relative_to(ROOT) or inside.is_relative_to(ROOT / 'instance'):
         raise ValueError('Test profile must be inside this project, outside instance')
     run = json.loads((profile / 'test-profile.json').read_text())
     if run.get('worldsCopied') is not False or not re.fullmatch(r'[A-Za-z0-9_-]{8,64}', run['runId']):
@@ -189,19 +222,53 @@ def main() -> int:
                   '-Dfrontier.pis1Restart=' + str(args.restart).lower(),
                   '-Dfrontier.pis1BenchmarkOnly=' + str(args.benchmark_only).lower(),
                   '-Dfrontier.pis1SkipBenchmark=' + str(args.skip_benchmark).lower()]
+    if args.flight_bench:
+        if not re.fullmatch(r'-?\d+,-?\d+,-?\d+,-?\d+(\.\d+)?', args.flight_bench):
+            raise ValueError('Use --flight-bench x,y,z,yaw')
+        properties.append('-Dfrontier.flightBench=' + args.flight_bench)
+        properties.append('-Dfrontier.flightBenchTicks=' + str(args.flight_bench_ticks))
+        properties.append('-Dfrontier.flightBenchHold=' + str(args.flight_bench_hold))
+        properties.append('-Dfrontier.flightBenchShots=' + str(args.flight_bench_shots).lower())
+    for prop in args.property:
+        if not re.fullmatch(r'frontier\.[A-Za-z0-9.]+=[A-Za-z0-9.,_-]*', prop):
+            raise ValueError('Only frontier.* diagnostic properties: ' + prop)
+        properties.append('-D' + prop)
+    if args.task_budget_ab:
+        properties += ['-Dfrontier.flightPerformance=true', '-Dfrontier.taskBudgetAB=true']
     if args.server:
         properties.append('-Dfrontier.pis1Server=' + args.server + ':' + str(args.port))
-    command = ['java', '-Xmx3G', '-Xms512M', *properties,
+    if not re.fullmatch(r'[1-9][0-9]?G', args.memory):
+        raise ValueError('Use a heap such as 3G or 12G')
+    # A concurrent collector for a large play heap (Distant Horizons warns that G1 stutters;
+    # ZGC's generational mode needs Java 21, Shenandoah is in Java 17).
+    tuning = [] if args.memory == '3G' else ['-XX:+UseShenandoahGC', '-XX:+AlwaysPreTouch', '-XX:+DisableExplicitGC']
+    if args.jfr_ring:
+        tuning.append('-XX:StartFlightRecording=name=ring,maxage=5m,disk=true,dumponexit=true,settings='
+                      + str(samples_only_jfc(profile / 'frontier-samples.jfc')) + ',filename=' + str(args.jfr_ring.resolve()))
+        # Shenandoah's pacing stalls allocating threads outside Java code, so JFR samples miss them.
+        tuning.append('-Xlog:gc:file=' + str(args.jfr_ring.resolve().with_suffix('.gc.log')) + ':uptime,time')
+    command = ['java', '-Xmx' + args.memory, '-Xms' + ('512M' if args.memory == '3G' else '4G'), *tuning, *properties,
                *expand(vanilla['arguments']['jvm'] + forge['arguments']['jvm'], values),
                forge['mainClass'], *expand(vanilla['arguments']['game'] + forge['arguments']['game'], values),
                '--width', '1280', '--height', '720']
+    if args.quick_play_world:
+        command += ['--quickPlaySingleplayer', args.quick_play_world]
+    if args.quick_play_server:
+        if args.quick_play_server.rsplit(':', 1)[0] not in {'localhost', '127.0.0.1'}:
+            raise ValueError('Quick Play is limited to a local test server')
+        command += ['--quickPlayMultiplayer', args.quick_play_server]
     if args.server:
         if args.server not in {'localhost', '127.0.0.1', '::1'}:
             raise ValueError('Only a local isolated test server is supported')
         # The helper performs ConnectScreen from the guarded title-screen path.
         # Vanilla 1.20.1 silently ignores the removed --server/--port options.
+    environment = dict(os.environ)
+    if args.gpu == 'nvidia':
+        # NVIDIA PRIME render offload: the game draws on the discrete GPU, not the iGPU.
+        environment.update({'__NV_PRIME_RENDER_OFFLOAD': '1', '__GLX_VENDOR_LIBRARY_NAME': 'nvidia',
+                            '__VK_LAYER_NV_optimus': 'NVIDIA_only'})
     print('Launching isolated offline test client: ' + profile.name, flush=True)
-    return subprocess.run(command, cwd=profile, check=False).returncode
+    return subprocess.run(command, cwd=profile, check=False, env=environment).returncode
 
 
 if __name__ == '__main__':

@@ -1,0 +1,100 @@
+{
+  "variants": {
+    "facing=north,line=0,powered=false": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 0
+    },
+    "facing=north,line=0,powered=true": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 0
+    },
+    "facing=north,line=1,powered=false": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 0
+    },
+    "facing=north,line=1,powered=true": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 0
+    },
+    "facing=north,line=2,powered=false": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 0
+    },
+    "facing=north,line=2,powered=true": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 0
+    },
+    "facing=east,line=0,powered=false": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 90
+    },
+    "facing=east,line=0,powered=true": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 90
+    },
+    "facing=east,line=1,powered=false": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 90
+    },
+    "facing=east,line=1,powered=true": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 90
+    },
+    "facing=east,line=2,powered=false": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 90
+    },
+    "facing=east,line=2,powered=true": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 90
+    },
+    "facing=south,line=0,powered=false": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 180
+    },
+    "facing=south,line=0,powered=true": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 180
+    },
+    "facing=south,line=1,powered=false": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 180
+    },
+    "facing=south,line=1,powered=true": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 180
+    },
+    "facing=south,line=2,powered=false": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 180
+    },
+    "facing=south,line=2,powered=true": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 180
+    },
+    "facing=west,line=0,powered=false": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 270
+    },
+    "facing=west,line=0,powered=true": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 270
+    },
+    "facing=west,line=1,powered=false": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 270
+    },
+    "facing=west,line=1,powered=true": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 270
+    },
+    "facing=west,line=2,powered=false": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 270
+    },
+    "facing=west,line=2,powered=true": {
+      "model": "frontier_industry:block/line_controller",
+      "y": 270
+    }
+  }
+}

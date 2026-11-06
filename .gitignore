@@ -6,6 +6,8 @@ modules/*/logs/
 vendor/
 run/
 run-*/
+# Profiles kept on a data disk and linked into the project
+/run-*
 **/run/
 __pycache__/
 *.pyc

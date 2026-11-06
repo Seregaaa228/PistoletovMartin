@@ -1,5 +1,5 @@
 [construction]
-globalBlocksPerTick = 64
+globalBlocksPerTick = 256
 substationSeconds = 20
 drone_factorySeconds = 30
 equipment_factorySeconds = 30

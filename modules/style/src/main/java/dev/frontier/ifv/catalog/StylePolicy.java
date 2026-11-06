@@ -35,6 +35,14 @@ public final class StylePolicy {
 
     public static final Set<String> KEPT_GUN_PATHS = Set.of("rpg", "igla_9k38", "repair_tool");
     public static final Set<String> REMOVED_MODS = Set.of("trajanstanks", "simpleplanes");
+    /**
+     * Items replaced by our own content: Uncomplicated FPV's coordinate-flown Shahed and the radio
+     * that only programs it (the hand-flown Shahed-136 comes from the ground station instead), and
+     * the relay plane, which the strike aircraft's long radio range made unnecessary.
+     * Their registrations, placed entities and saved paid Industry queues stay intact.
+     */
+    public static final Set<String> REPLACED_ITEMS = Set.of("uncomplicatedfpv:shahed136", "uncomplicatedfpv:radio",
+        "frontier_arcade_vehicles:relay_drone");
 
     // Diagnostic flags are passive observations for the isolated acceptance harness.
     public static volatile boolean arcadeEntityHookSeen;
@@ -73,7 +81,7 @@ public final class StylePolicy {
         if (stack == null || stack.isEmpty()) return false;
         Item item = stack.getItem();
         ResourceLocation itemId = ForgeRegistries.ITEMS.getKey(item);
-        if (itemId != null && REMOVED_MODS.contains(itemId.getNamespace())) return true;
+        if (itemId != null && (REMOVED_MODS.contains(itemId.getNamespace()) || REPLACED_ITEMS.contains(itemId.toString()))) return true;
         if (blockedGun(item, itemId)) return true;
         if (item instanceof SpawnEggItem egg) {
             EntityType<?> type = egg.getType(stack.getTag());
@@ -104,7 +112,7 @@ public final class StylePolicy {
     public static boolean blockedOffer(String offerId) {
         ResourceLocation id = offerId == null ? null : ResourceLocation.tryParse(offerId);
         if (id == null) return true;
-        if (blockedEntity(id)) return true;
+        if (blockedEntity(id) || REPLACED_ITEMS.contains(id.toString())) return true;
         return blockedGun(ForgeRegistries.ITEMS.getValue(id), id);
     }
 

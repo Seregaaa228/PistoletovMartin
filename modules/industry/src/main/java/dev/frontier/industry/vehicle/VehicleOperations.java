@@ -30,9 +30,11 @@ import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -343,8 +345,10 @@ public final class VehicleOperations {
         }
         for (Class<?> type = npc.getClass(); type != null; type = type.getSuperclass()) {
             if (!type.getName().equals("com.talhanation.recruits.entities.AbstractRecruitEntity")) continue;
+            Method isOwned = RECRUIT_IS_OWNED.get(type).orElse(null), ownerId = RECRUIT_OWNER.get(type).orElse(null);
+            if (isOwned == null || ownerId == null) return false;
             try {
-                return Boolean.TRUE.equals(type.getMethod("getIsOwned").invoke(npc)) && owner.equals(type.getMethod("getOwnerUUID").invoke(npc));
+                return Boolean.TRUE.equals(isOwned.invoke(npc)) && owner.equals(ownerId.invoke(npc));
             } catch (ReflectiveOperationException | LinkageError ignored) { return false; }
         }
         return false;
@@ -363,15 +367,32 @@ public final class VehicleOperations {
             && craft.getControllingPassenger() == npc && craft.getPassengers().size() == 1 && !ROUTES.containsKey(craft.getUUID());
     }
 
+    /**
+     * Public-method lookup resolved once per runtime class; "absent" is cached too, so route ticks on
+     * boats/tanks without a native owner API never re-throw NoSuchMethodException.
+     */
+    private static ClassValue<Optional<Method>> publicMethod(String name) {
+        return new ClassValue<>() {
+            @Override protected Optional<Method> computeValue(Class<?> type) {
+                try { return Optional.of(type.getMethod(name)); }
+                catch (NoSuchMethodException | SecurityException | LinkageError absent) { return Optional.empty(); }
+            }
+        };
+    }
+    private static final List<ClassValue<Optional<Method>>> NATIVE_OWNER = List.of(publicMethod("getOwnerUUID"), publicMethod("getOwnerUuid"));
+    private static final ClassValue<Optional<Method>> RECRUIT_IS_OWNED = publicMethod("getIsOwned");
+    private static final ClassValue<Optional<Method>> RECRUIT_OWNER = publicMethod("getOwnerUUID");
+
     private static boolean nativeOwnershipAgrees(Entity craft, UUID expected) {
         // Honor the installed mod's ownership API when present, in addition to our persistent claim.
-        for (String name : new String[]{"getOwnerUUID", "getOwnerUuid"}) {
+        for (ClassValue<Optional<Method>> lookup : NATIVE_OWNER) {
+            Method method = lookup.get(craft.getClass()).orElse(null);
+            if (method == null) continue;
             try {
-                Object result = craft.getClass().getMethod(name).invoke(craft);
+                Object result = method.invoke(craft);
                 if (result instanceof Optional<?> optional) result = optional.orElse(null);
                 if (result != null && (!(result instanceof UUID uuid) || !expected.equals(uuid))) return false;
-            } catch (NoSuchMethodException absent) { }
-            catch (ReflectiveOperationException | LinkageError failure) { return false; }
+            } catch (ReflectiveOperationException | LinkageError failure) { return false; }
         }
         return true;
     }

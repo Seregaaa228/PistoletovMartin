@@ -27,6 +27,13 @@ public final class VehicleAccessPolicy {
     /** Mods intentionally removed from the pack; fallback if they are reinstalled. */
     public static final Set<String> REMOVED_MODS = Set.of("trajanstanks", "simpleplanes");
 
+    /**
+     * Uncomplicated FPV's coordinate Shahed and its radio (our hand-flown Shahed-136 replaces them) and
+     * the relay plane, no longer needed at the strike aircraft's long radio range.
+     */
+    public static final Set<String> REPLACED_ITEMS = Set.of("uncomplicatedfpv:shahed136", "uncomplicatedfpv:radio",
+        "frontier_arcade_vehicles:relay_drone");
+
     private VehicleAccessPolicy() {}
 
     public static boolean isBlocked(String entityId) {
@@ -52,7 +59,7 @@ public final class VehicleAccessPolicy {
     public static boolean isBlocked(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
         ResourceLocation itemId = ForgeRegistries.ITEMS.getKey(stack.getItem());
-        if (itemId != null && REMOVED_MODS.contains(itemId.getNamespace())) return true;
+        if (itemId != null && (REMOVED_MODS.contains(itemId.getNamespace()) || REPLACED_ITEMS.contains(itemId.toString()))) return true;
         if (stack.getItem() instanceof SpawnEggItem egg && isBlocked(egg.getType(stack.getTag()))) return true;
 
         CompoundTag root = stack.getTag();

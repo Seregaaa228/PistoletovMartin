@@ -1,0 +1,14 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+[[mods]]
+modId="frontier_flight_tilt_test"
+version="1"
+displayName="Frontier isolated flight tilt test"
+description="Explicitly enabled helper for a fresh test profile."
+[[dependencies.frontier_flight_tilt_test]]
+modId="frontier_aviation"
+mandatory=true
+versionRange="[1.1.0]"
+ordering="AFTER"
+side="BOTH"

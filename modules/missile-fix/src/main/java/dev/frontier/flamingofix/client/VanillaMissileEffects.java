@@ -9,7 +9,12 @@ import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.ParticleStatus;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -39,7 +44,12 @@ public final class VanillaMissileEffects {
 
     private static void particle(Minecraft mc,SimpleParticleType type,Vec3 p,Vec3 velocity,boolean burst) {
         ParticleStatus setting=mc.options.particles().get();
-        int limit=burst?(setting==ParticleStatus.MINIMAL?24:96):(setting==ParticleStatus.MINIMAL?8:32);
+        particle(mc,(ParticleOptions)type,p,velocity,burst);
+    }
+
+    private static void particle(Minecraft mc,ParticleOptions type,Vec3 p,Vec3 velocity,boolean burst) {
+        ParticleStatus setting=mc.options.particles().get();
+        int limit=burst?(setting==ParticleStatus.MINIMAL?24:160):(setting==ParticleStatus.MINIMAL?8:32);
         if((burst?burstParticles:trailParticles)>=limit)return;
         if(type==ParticleTypes.EXPLOSION_EMITTER && emitters>=4)return;
         if(burst)burstParticles++;else trailParticles++;
@@ -115,8 +125,12 @@ public final class VanillaMissileEffects {
         Vec3 position=new Vec3(event.x(),event.y()+.8,event.z());
         Minecraft mc=ready(position);if(mc==null)return;
         double distance=position.distanceToSqr(mc.gameRenderer.getMainCamera().getPosition());
+        boolean airburst="AIRBURST".equals(event.warhead());
+        boolean small=airburst || "shaped_charge".equals(event.warhead());
+        // Interceptor airbursts keep the plain burst; every ground blast gets its missile's look.
+        var style=airburst?null:BlastFireball.style(MissileKind.byId(event.kind()),event.warhead());
+        if(style!=null)styled(mc,event,position,style,distance);
         if(distance>192*192)return;
-        boolean small="AIRBURST".equals(event.warhead()) || "shaped_charge".equals(event.warhead());
         particle(mc,ParticleTypes.EXPLOSION_EMITTER,position,Vec3.ZERO,true);
         if(distance>96*96)return;
         int count=small?12:32;
@@ -132,6 +146,43 @@ public final class VanillaMissileEffects {
             particle(mc,ParticleTypes.LARGE_SMOKE,p,velocity,true);
             if(i%3==0)particle(mc,ParticleTypes.FLAME,p,velocity.scale(.6),true);
             if(i<4)particle(mc,ParticleTypes.EXPLOSION,p,Vec3.ZERO,true);
+        }
+    }
+
+    /** Extra flashes over the crater, flying debris and, for a small warhead, sparks; BlastFireball does the rest. */
+    private static void styled(Minecraft mc,DeepStrikeNetwork.BlastEffect event,Vec3 position,BlastFireball.Style style,double distance) {
+        // Felt even beyond the drawn range: a far strategic burst still rocks the camera a little.
+        BlastShake.add(style.radius(),distance,mc.level.getGameTime(),event.seed());
+        if(distance>(double)style.visible()*style.visible())return;
+        BlastFireball.add(position.add(0,-.8,0),style,mc.level.getGameTime(),event.seed());
+        float radius=style.radius();
+        // A deep rumble under DeepStrike's own blast sound: heard further for a bigger blast.
+        if(radius>=10) {
+            float volume=Math.min(16,radius/4);
+            mc.level.playLocalSound(position.x,position.y,position.z,net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE,
+                net.minecraft.sounds.SoundSource.BLOCKS,volume,style.mushroom()?.45f:.6f,true);
+            if(style.mushroom())mc.level.playLocalSound(position.x,position.y,position.z,net.minecraft.sounds.SoundEvents.LIGHTNING_BOLT_THUNDER,
+                net.minecraft.sounds.SoundSource.WEATHER,16,.5f,true);
+        }
+        var random=net.minecraft.util.RandomSource.create(event.seed()^0x5DEECE66DL);
+        int flashes=radius<10?0:3;
+        for(int i=0;i<flashes;i++) {
+            double angle=random.nextDouble()*Math.PI*2,offset=radius*(.3+.4*random.nextDouble());
+            particle(mc,ParticleTypes.EXPLOSION_EMITTER,position.add(Math.cos(angle)*offset,random.nextDouble()*2,Math.sin(angle)*offset),Vec3.ZERO,true);
+        }
+        double near=style.mushroom()?256:128;
+        if(distance>near*near)return;
+        if(radius<10) {
+            for(int i=0;i<6;i++)particle(mc,ParticleTypes.LAVA,position,Vec3.ZERO,true);
+        }
+        BlockState ground=mc.level.getBlockState(BlockPos.containing(position).below());
+        if(ground.isAir())ground=Blocks.DIRT.defaultBlockState();
+        var debris=new BlockParticleOption(ParticleTypes.BLOCK,ground);
+        int pieces=radius<10?12:radius<25?40:radius<40?60:120;
+        double fling=radius<10?.35:radius<25?.6:radius<40?.9:1.4;
+        for(int i=0;i<pieces;i++) {
+            double angle=random.nextDouble()*Math.PI*2,speed=.2+random.nextDouble()*fling;
+            particle(mc,debris,position.add(0,.5,0),new Vec3(Math.cos(angle)*speed,.4+random.nextDouble()*fling,Math.sin(angle)*speed),true);
         }
     }
 

@@ -1,0 +1,25 @@
+{
+  "Skins": [
+    {
+      "Id": "standard",
+      "Name": "PLAAF Grey",
+      "Description": "Серо-голубая окраска J-10C",
+      "Texture": "frontier_aviation:textures/bedrock/vehicle/j10.png",
+      "Priority": 1
+    },
+    {
+      "Id": "digital",
+      "Name": "Digital Camo",
+      "Description": "Пиксельный серо-голубой камуфляж",
+      "Texture": "frontier_aviation:textures/bedrock/vehicle/j10_digital.png",
+      "Priority": 2
+    },
+    {
+      "Id": "display",
+      "Name": "Display Team",
+      "Description": "Бело-красная окраска пилотажной группы",
+      "Texture": "frontier_aviation:textures/bedrock/vehicle/j10_display.png",
+      "Priority": 3
+    }
+  ]
+}

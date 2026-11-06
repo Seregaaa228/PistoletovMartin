@@ -1,0 +1,65 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "frontier_industry:block/coolant_pipe_core"
+      }
+    },
+    {
+      "when": {
+        "mounted": "true"
+      },
+      "apply": {
+        "model": "frontier_industry:block/coolant_pipe_bracket"
+      }
+    },
+    {
+      "when": {
+        "north": "true"
+      },
+      "apply": {
+        "model": "frontier_industry:block/coolant_pipe_arm_north"
+      }
+    },
+    {
+      "when": {
+        "south": "true"
+      },
+      "apply": {
+        "model": "frontier_industry:block/coolant_pipe_arm_south"
+      }
+    },
+    {
+      "when": {
+        "east": "true"
+      },
+      "apply": {
+        "model": "frontier_industry:block/coolant_pipe_arm_east"
+      }
+    },
+    {
+      "when": {
+        "west": "true"
+      },
+      "apply": {
+        "model": "frontier_industry:block/coolant_pipe_arm_west"
+      }
+    },
+    {
+      "when": {
+        "up": "true"
+      },
+      "apply": {
+        "model": "frontier_industry:block/coolant_pipe_arm_up"
+      }
+    },
+    {
+      "when": {
+        "down": "true"
+      },
+      "apply": {
+        "model": "frontier_industry:block/coolant_pipe_arm_down"
+      }
+    }
+  ]
+}

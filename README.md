@@ -30,6 +30,23 @@ python3 tools/create_test_profile.py ../Frontier-Nations-test
 Forge47.4.0. Для копии исходной принятой сборки добавьте `--baseline`. Скрипт
 отказывается перезаписывать существующую папку и не запускает игру сам.
 
+### Дополнительная тактическая броня
+
+CAPS_Awim's Tactical Equipment v3.0 для Forge 1.20.1 закреплён отдельно
+в `optional-mods.lock.json`. Это сторонний мод: его JAR не хранится в Git,
+а исходный принятый набор из 27 модов остаётся неизменным. Для загрузки точной
+версии с проверкой SHA-256 и добавления её в новый тестовый профиль:
+
+```sh
+python tools/fetch_optional_mods.py
+python tools/create_test_profile.py ../Frontier-Nations-test --tactical-gear
+```
+
+Для профиля с собственными модулями сначала выполните `python tools/build.py`.
+Дополнение требует проверки в игре. При игре на сервере установите ту же
+версию на клиенте и сервере; GeckoLib уже присутствует в исходном наборе.
+`--baseline` сохраняет точную исходную копию и несовместим с `--tactical-gear`.
+
 ## Проверка перед передачей
 
 Выполняйте команды из корня проекта с JDK 17. Базовый маршрут проверки:
@@ -54,11 +71,14 @@ Offline-сборка возможна только при уже заполне�
 
 ## Состав
 
+Промышленные здания, отдельный склад готовой продукции и установка нужного
+декора описаны в [инструкции по зданиям](docs/INDUSTRIAL-BUILDINGS-RU.md).
+
 | Каталог | Назначение |
 |---|---|
-| `modules/arcade` | Герань-2, ретранслятор, пульты, баланс и совместимость техники; 1.7.0 |
+| `modules/arcade` | Герань-2, Шахед-136, наземная станция, пульты, баланс и совместимость техники; 1.7.0 |
 | `modules/nations` | Страны, границы, политическая карта и совместимость Recruits; 0.1.2-alpha |
-| `modules/industry` | Заводы, электричество, ремонт, строительство, исследования и КПК; 0.4.0 |
+| `modules/industry` | Заводы, электричество, ремонт, строительство, исследования и КПК; 0.4.1 |
 | `modules/style` | Единые модели, иконки, облегчённые эффекты и фильтрация каталогов; 1.1.0 |
 | `modules/aviation` | Собственные самолёты и правила взаимодействия вооружений; 1.1.0 |
 | `modules/missile-fix` | Исправление запуска Flamingo и облегчённые эффекты ракет; 1.3.0 |
@@ -72,6 +92,42 @@ Offline-сборка возможна только при уже заполне�
 `instance-files.lock.json` фиксирует переданный профиль. В комплект не включены
 аккаунты лаунчера, пользовательские миры, сохранённые серверы, личные карты и
 рабочие журналы игры.
+
+## Third-party mods used in Frontier Nations
+
+The accepted Minecraft 1.20.1 / Forge 47.4.0 profile includes these third-party
+mods. Versions refer to the pinned JAR files, not necessarily the latest releases.
+
+| Mod | Pinned version |
+|---|---|
+| Architectury | 9.2.14 |
+| Cloth Config | 11.1.136 |
+| Curios API | 5.14.1 |
+| DeepStrike | 0.9.0 |
+| Embeddium | 0.3.31 |
+| FerriteCore | 6.0.1 |
+| GeckoLib | 4.8.4 |
+| Just Enough Items (JEI) | 15.56.0.205 |
+| Kotlin for Forge | 4.12.0 |
+| Mob Player Animator | 1.3.3 |
+| ModernFix | 5.27.89 |
+| Player Animator | 1.0.2-rc1 |
+| Villager Recruits | 1.15.2 |
+| Recruits: Living Villages | 1.1.0 |
+| Superb Recruits | 1.115 |
+| Superb Warfare | 0.8.9.1-hotfix (993063bed) |
+| Timeless & Classics Guns: Zero (TaCZ) | 1.1.8-hotfix2 |
+| Uncomplicated FPV | 1.0.1 |
+| Xaero's Minimap | 26.6.0 |
+| Xaero's World Map | 1.47.0 |
+
+The profile also contains six Frontier-developed modules listed above and the
+Recruits/TaCZ compatibility patch `1.022-frontier.1`. The complete 27-JAR
+inventory, source links and declared licenses are recorded in
+[modpack-manifest.json](modpack-manifest.json); file hashes are recorded in
+[modpack.lock.json](modpack.lock.json). Additional PIS-1 integrations described
+below are separate from this accepted profile. This inventory documents which
+mods are included; it is not a count of users or downloads.
 
 ## Интеграции PIS-1
 

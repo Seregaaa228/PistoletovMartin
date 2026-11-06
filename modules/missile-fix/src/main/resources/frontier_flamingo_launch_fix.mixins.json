@@ -15,7 +15,19 @@
     "LazyMissileTerrainMesh",
     "DeferredMissileTerrainContact",
     "GraphitePhysicalBlast",
-    "VanillaServerEffects"
+    "MissileBlastLog",
+    "MissileBlastScale",
+    "MissileImpactAccess",
+    "MissilePenetrationBurst",
+    "GroundedMissileTarget",
+    "LauncherGroundedTarget",
+    "LauncherPlanningLevel",
+    "MissileCruisePlan",
+    "MissileLeavesPassThrough",
+    "VanillaServerEffects",
+    "FarFlightPacketCadence",
+    "NativeDomeFollowUp",
+    "NativeDefenseEngagement"
   ],
   "client": [
     "VanillaContrails",
@@ -30,7 +42,9 @@
     "NativePatriotContact",
     "LightweightPatriotBodies",
     "LightweightPatriotBursts",
-    "VanillaGuidedExhaust"
+    "VanillaGuidedExhaust",
+    "SmoothFastProjectileMotion",
+    "FastFlightUiLines"
   ],
   "injectors": {
     "defaultRequire": 1
