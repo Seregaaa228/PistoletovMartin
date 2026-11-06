@@ -6,7 +6,6 @@ import com.atsuishio.superbwarfare.item.misc.MonitorItem;
 import dev.frontier.arcade.ArcadeVehicles;
 import dev.frontier.arcade.geranium.GeraniumEntity;
 import dev.frontier.arcade.mixin.AddonControlAccess;
-import dev.frontier.arcade.relay.RelayEntity;
 import dev.frontier.arcade.relay.RelayNetwork;
 import dev.frontier.arcade.station.StationBlockEntity;
 import java.util.ArrayList;
@@ -60,9 +59,9 @@ public final class ControlSessions {
             || stack.getItem() == ModItems.MONITOR.get());
     }
     public static boolean isStationLink(ItemStack stack) { return !stack.isEmpty() && stack.getItem() instanceof StationLinkItem; }
-    /** Retained API name: the desktop now lists the two large aircraft, regardless of their payload role. */
+    /** Retained API name: the desktop lists the station strike aircraft, regardless of their payload role. */
     public static boolean isRecon(AddonDroneEntity drone) { return isStationAircraft(drone); }
-    public static boolean isStationAircraft(AddonDroneEntity drone) { return drone instanceof RelayEntity || drone instanceof GeraniumEntity; }
+    public static boolean isStationAircraft(AddonDroneEntity drone) { return drone instanceof GeraniumEntity; }
     public static boolean isMavic(AddonDroneEntity drone) {
         String id = typeId(drone);
         return id.equals("uncomplicatedfpv:mavic_drone_no_drop") || id.equals("uncomplicatedfpv:mavic_drone_with_drop");
@@ -75,7 +74,6 @@ public final class ControlSessions {
     }
     private static String typeId(Entity entity) { return String.valueOf(ForgeRegistries.ENTITY_TYPES.getKey(entity.getType())); }
     public static UUID ownerId(AddonDroneEntity drone) {
-        if (drone instanceof RelayEntity relay) return relay.ownerId();
         if (drone instanceof GeraniumEntity geranium) return geranium.ownerId();
         if (drone.getPersistentData().hasUUID(OWNER)) return drone.getPersistentData().getUUID(OWNER);
         return parseId(drone.getEntityData().get(DroneEntity.CONTROLLER));
@@ -96,7 +94,6 @@ public final class ControlSessions {
     }
     public static boolean isPowered(AddonDroneEntity drone) {
         if (!alive(drone)) return false;
-        if (drone instanceof RelayEntity) return drone.getEnergy() >= RelayEntity.ENERGY_PER_TICK;
         if (drone instanceof GeraniumEntity) return drone.getEnergy() > 0;
         return unsupportedNativeBattery(drone) || drone.getEnergy() > 0;
     }
@@ -370,8 +367,7 @@ public final class ControlSessions {
             rememberNativeOwner(drone);
             RelayNetwork.LinkInfo link = RelayNetwork.linkInfo(drone, player.getEyePosition());
             boolean online = powered(drone) && link.connected();
-            result.add(new DroneEntry(drone.getUUID(), drone.getDisplayName().getString(), drone instanceof RelayEntity ? "relay"
-                : drone instanceof GeraniumEntity g && g.variant() == dev.frontier.arcade.geranium.GeraniumVariant.PROPELLER ? "shahed" : "geranium",
+            result.add(new DroneEntry(drone.getUUID(), drone.getDisplayName().getString(), drone instanceof GeraniumEntity g && g.variant() == dev.frontier.arcade.geranium.GeraniumVariant.PROPELLER ? "shahed" : "geranium",
                 drone.position().distanceTo(Vec3.atCenterOf(station)), batteryPercent(drone),
                 (int)Math.round(Math.max(0, Math.min(1, link.quality())) * 100), online));
         }

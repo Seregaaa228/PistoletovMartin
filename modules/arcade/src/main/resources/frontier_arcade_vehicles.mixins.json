@@ -15,8 +15,6 @@
     "GeraniumNativePacketGuard",
     "RemoteDroneChunks",
     "RemoteDroneTracking",
-    "RelaySignalModel",
-    "RelaySignalRules",
     "ItemStackMonitorCompatibility",
     "AddonControlAccess",
     "AddonControlLifecycle",

@@ -182,6 +182,7 @@ public final class NativeAviationCatalog {
         equipment(map, "uncomplicatedfpv:reb_mini", "Малый РЭБ", 64);
         equipment(map, "frontier_arcade_vehicles:geranium_2_drone", "Герань-2: чёрный Шахед FPV", 160);
         equipment(map, "frontier_arcade_vehicles:shahed_136_drone", "Шахед-136: винтовой, с наземной станции", 128);
+        // Hidden by the style policy (the strike aircraft's range replaces it); kept so saved paid queues resolve.
         equipment(map, "frontier_arcade_vehicles:relay_drone", "Связист: самолёт-ретранслятор", 192);
         equipment(map, "frontier_arcade_vehicles:uav_camera", "Камера БПЛА", 16);
         return Collections.unmodifiableMap(map);

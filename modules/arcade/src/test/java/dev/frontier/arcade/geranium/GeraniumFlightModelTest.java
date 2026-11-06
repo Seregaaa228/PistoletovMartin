@@ -33,6 +33,7 @@ public final class GeraniumFlightModelTest {
             lowSpeedBankLimit(p);
         }
         jetOutrunsPropeller();
+        realisticSpeedsStayControllable();
         smootherThanLegacy();
         System.out.println("GeraniumFlightModelTest: " + checks + " checks passed");
     }
@@ -161,13 +162,13 @@ public final class GeraniumFlightModelTest {
     }
 
     private static void offMonitorFliesLevel(Profile p) {
-        GeraniumFlightModel m = cruising(p, 30, .7f, .5f);
-        m.restore(0, 30, -30, .7f, .5f, 200, true);
+        GeraniumFlightModel m = cruising(p, 30, p.cruiseSpeed(), .5f);
+        m.restore(0, 30, -30, p.cruiseSpeed(), .5f, 200, true);
         m.input((short) (W | D)); m.mouse(15, 15);
         for (int t = 0; t < 60; t++) m.tick(false, true);
         require(Math.abs(m.pitch()) < .05 && Math.abs(m.roll()) < 1e-3, p, "off-monitor: wings and nose level");
         require(Math.abs(m.vy()) < 1e-3 && m.speed() > p.stallSpeed(), p, "off-monitor: level powered cruise");
-        GeraniumFlightModel climbing = cruising(p, -30, .7f, .5f);
+        GeraniumFlightModel climbing = cruising(p, -30, p.cruiseSpeed(), .5f);
         for (int t = 0; t < 60; t++) climbing.tick(false, true);
         require(Math.abs(climbing.pitch()) < .05, p, "off-monitor: no endless climb");
         float heading = climbing.yaw(); climbing.tick(false, true);
@@ -189,8 +190,14 @@ public final class GeraniumFlightModelTest {
     private static void stallSinksAndRecovers(Profile p) {
         GeraniumFlightModel m = cruising(p, 0, p.stallSpeed() + .14f, 0);
         boolean stalled = false, sank = false;
-        for (int t = 0; t < 30; t++) { m.mouse(0, -20); m.tick(true, true); }
-        for (int t = 0; t < 200; t++) {
+        // Hold the climb until the wing gives up (faster aircraft bleed speed over more ticks).
+        for (int t = 0, stalledTicks = 0; t < 400 && stalledTicks < 60; t++) {
+            if (p.stalled(m.speed())) stalledTicks++;
+            m.mouse(0, -20); m.tick(true, true);
+            stalled |= p.stalled(m.speed());
+            sank |= m.vy() < -.05;
+        }
+        for (int t = 0; t < 300; t++) {
             m.mouse(0, 0); m.tick(true, true);
             stalled |= p.stalled(m.speed());
             sank |= m.vy() < -.05;
@@ -220,16 +227,16 @@ public final class GeraniumFlightModelTest {
     }
 
     private static void repoweredFallContinuesAlongNose(Profile p) {
-        GeraniumFlightModel m = cruising(p, 0, .5f, .5f);
+        GeraniumFlightModel m = cruising(p, 0, p.cruiseSpeed(), .5f);
         for (int t = 0; t < 12; t++) m.tick(false, false, false, m.vx(), m.vy(), m.vz());
         float fall = m.speed();
         m.tick(true, true);
         double length = Math.sqrt(m.vx() * m.vx() + m.vy() * m.vy() + m.vz() * m.vz());
-        require(Math.abs(length - m.speed()) < 1e-3 && Math.abs(m.speed() - fall) < .06, p, "regained link keeps the fall energy along the nose");
+        require(Math.abs(length - m.speed()) < 1e-3 && Math.abs(m.speed() - fall) < p.maxThrustAccel() + .04, p, "regained link keeps the fall energy along the nose");
     }
 
     private static void malformedInputAndRestore(Profile p) {
-        GeraniumFlightModel m = cruising(p, 0, .5f, .5f);
+        GeraniumFlightModel m = cruising(p);
         m.mouse(Double.NaN, Double.POSITIVE_INFINITY); m.tick(true, true);
         require(Math.abs(m.roll()) < 1e-6 && Math.abs(m.pitch()) < 1e-6, p, "non-finite mouse is ignored");
         m.mouse(1e9, -1e9); m.tick(true, true);
@@ -303,12 +310,31 @@ public final class GeraniumFlightModelTest {
         Profile jet = Profile.JET, prop = Profile.PROPELLER;
         require(jet.maxSpeed() > prop.maxSpeed() * 1.5f && jet.cruiseSpeed() > prop.cruiseSpeed() && jet.maxDiveSpeed() > prop.maxDiveSpeed(),
             jet, "jet is much faster than the propeller Shahed");
-        require(jet.thrust() > prop.thrust() && jet.maxThrustAccel() > prop.maxThrustAccel(), jet, "jet accelerates harder");
+        require(jet.maxThrustAccel() > prop.maxThrustAccel() * 2, jet, "jet accelerates harder");
         require(jet.energyPerTick() > prop.energyPerTick(), jet, "jet burns more energy");
         GeraniumFlightModel a = cruising(jet), b = cruising(prop);
         double da = 0, db = 0;
         for (int t = 0; t < 200; t++) { a.input(W); b.input(W); a.tick(true, true); b.tick(true, true); da += a.speed(); db += b.speed(); }
-        require(da > db * 1.6, jet, "jet covers more ground at full throttle: " + da + " vs " + db);
+        require(da > db * 1.4, jet, "jet covers more ground at full throttle: " + da + " vs " + db);
+    }
+
+    /** 1 block/tick = 72 km/h. Strike aircraft stay below our fighters; turns still fit a combat area. */
+    private static void realisticSpeedsStayControllable() {
+        Profile jet = Profile.JET, prop = Profile.PROPELLER;
+        require(prop.maxSpeed() * 72 >= 140 && prop.maxSpeed() * 72 <= 160, prop, "Shahed-136 tops out at 140-160 km/h");
+        // Su-25/J-10/F-16 fly about 190/240/260 km/h at full throttle and 260/320/340 km/h on afterburner
+        // (SBW thrust 0.047 * power * SpeedRate against v * (0.0016 + 0.001768 v^2) drag).
+        require(jet.maxSpeed() * 72 >= 220 && jet.maxSpeed() * 72 < 255, jet, "jet Geranium-2 tops out below the F-16");
+        require(jet.maxDiveSpeed() * 72 < 320, jet, "even diving the jet stays below a fighter on afterburner");
+        for (Profile p : List.of(jet, prop)) {
+            GeraniumFlightModel m = cruising(p);
+            float turned = 0;
+            for (int t = 0; t < 100; t++) { m.input(D); float before = m.yaw(); m.tick(true, true); if (t >= 40) turned += wrapped(m.yaw() - before); }
+            float rate = (float) Math.toRadians(turned / 60);
+            float radius = p.cruiseSpeed() / rate;
+            require(radius > 30 && radius < 150, p, "full-bank turn radius at cruise: " + radius);
+            require(p.minSpeed() > p.stallSpeed() && p.launchSpeed() > p.stallSpeed(), p, "idle and launch speeds fly");
+        }
     }
 
     /**

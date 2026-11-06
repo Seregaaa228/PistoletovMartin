@@ -33,10 +33,11 @@ import ru.lavafrai.uncomplicatedfpv.entity.AddonDroneEntity;
 public final class GeraniumEntity extends AddonDroneEntity {
     private static final ResourceLocation TEXTURE = new ResourceLocation("uncomplicatedfpv", "textures/entity/shahed136.png");
     public static final int BATTERY = 64000;
-    public static final double MAX_RANGE = 256;
+    /** Observers draw the aircraft up to this far (scaled by the entity distance setting); UF draws every drone at any range. */
+    private static final double RENDER_DISTANCE = 192;
+    /** Ticks an aircraft waits in front of a chunk that is still loading before treating it as a wall. */
+    private static final int MAX_BLOCKED_TICKS = 40;
     public static final float NOSE_Y = .097f, NOSE_Z = 2.2025f;
-    /** Jet nozzle exit of geo/geranium_2_jet (y 5.75 px, z 23.2 px behind the model origin). */
-    private static final float NOZZLE_Y = 5.75f / 16, NOZZLE_Z = -23.2f / 16;
     private static final EntityDataAccessor<Optional<UUID>> OWNER = SynchedEntityData.defineId(GeraniumEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private static final EntityDataAccessor<Boolean> LAUNCHED = SynchedEntityData.defineId(GeraniumEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> SPEED = SynchedEntityData.defineId(GeraniumEntity.class, EntityDataSerializers.FLOAT);
@@ -48,8 +49,8 @@ public final class GeraniumEntity extends AddonDroneEntity {
     private static final EntityDataAccessor<Float> FLIGHT_ROLL = SynchedEntityData.defineId(GeraniumEntity.class, EntityDataSerializers.FLOAT);
     private GeraniumFlightModel flight;
     private boolean detonated, airborne;
-    private int controlledTicks;
-    private Vec3 lastNose, lastNozzle;
+    private int controlledTicks, blockedTicks;
+    private Vec3 lastNose;
     public GeraniumEntity(EntityType<? extends DroneEntity> type, Level level) {
         super(type, level);
         // Client position, attitude and nose camera come from the native SBW lerp in baseTick.
@@ -65,7 +66,11 @@ public final class GeraniumEntity extends AddonDroneEntity {
     public void setOwner(UUID owner) { entityData.set(OWNER, Optional.of(owner)); getPersistentData().putUUID("frontierIndustryVehicleOwner", owner); }
     public double signalRange() {
         if (level().isClientSide || getServer() == null) return entityData.get(LINK_RANGE);
-        return MAX_RANGE;
+        return variant().signalRange();
+    }
+    @Override public boolean shouldRenderAtSqrDistance(double distance) {
+        double limit = RENDER_DISTANCE * getViewScale();
+        return distance < limit * limit;
     }
     @Override public void registerControllers(software.bernie.geckolib.core.animation.AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new software.bernie.geckolib.core.animation.AnimationController<>(this, "propeller", 0, state -> {
@@ -78,6 +83,8 @@ public final class GeraniumEntity extends AddonDroneEntity {
     public GeraniumFlightModel.Profile flightProfile() { return variant().profile(); }
     private GeraniumFlightModel flight() { if (flight == null) flight = new GeraniumFlightModel(flightProfile(), getYRot(), getXRot()); return flight; }
     public boolean isLaunched() { return entityData.get(LAUNCHED); }
+    /** Client render state: launched and under power (the jet's nozzle flame). */
+    public boolean engineLit() { return isLaunched() && engineRunning(); }
     public int throttlePercent() { return Math.round(entityData.get(THROTTLE) * 100); }
     public double flightSpeed() { return entityData.get(SPEED); }
     public double flightRange() { return entityData.get(LINK_DISTANCE); }
@@ -175,7 +182,27 @@ public final class GeraniumEntity extends AddonDroneEntity {
             setPower(0); setNoGravity(false); resetControlInputs();
             setDeltaMovement(onGround() ? new Vec3(0, -.06, 0) : getDeltaMovement().multiply(.98, 1, .98).add(0, -.06, 0));
         }
+        if (state.launched() && !aheadLoaded()) return;
         setYRot(state.yaw()); setXRot(state.pitch()); setBodyXRot(state.pitch()); setZRot(state.roll()); syncFlight();
+    }
+    /**
+     * Unloaded terrain is never flown through as air, and flying never makes the server generate new
+     * terrain: a new chunk is entered only when its neighbourhood is generated and it is entity-ticking.
+     * A chunk that is still loading holds the aircraft briefly; never-generated terrain, the world
+     * border or a load that does not arrive in two seconds is a wall.
+     */
+    private boolean aheadLoaded() {
+        if (!(level() instanceof net.minecraft.server.level.ServerLevel server)) return true;
+        net.minecraft.core.BlockPos at = net.minecraft.core.BlockPos.containing(position().add(getDeltaMovement()));
+        boolean sameChunk = (at.getX() >> 4) == chunkPosition().x && (at.getZ() >> 4) == chunkPosition().z;
+        Boolean enterable = sameChunk ? Boolean.TRUE : FlightChunks.enterable(server, at);
+        if (Boolean.TRUE.equals(enterable) && server.isPositionEntityTicking(at)) { blockedTicks = 0; return true; }
+        if (Boolean.FALSE.equals(enterable) || ++blockedTicks > MAX_BLOCKED_TICKS) {
+            detonate(nosePosition(1));
+            return false;
+        }
+        setDeltaMovement(Vec3.ZERO);
+        return true;
     }
     @Override public void baseTick() {
         if (!level().isClientSide && (activeMonitor() || isLaunched())) {
@@ -197,7 +224,7 @@ public final class GeraniumEntity extends AddonDroneEntity {
         // original Shahed attitude after its shared networking/monitor work.
         setYRot(entityData.get(FLIGHT_YAW)); setXRot(entityData.get(FLIGHT_PITCH));
         setBodyXRot(entityData.get(FLIGHT_PITCH)); setZRot(entityData.get(FLIGHT_ROLL));
-        if (level().isClientSide) { exhaustTrail(); return; }
+        if (level().isClientSide) return;
         if (activeMonitor()) controlledTicks++;
         if (isLaunched() && flight().flightTicks() >= 20) airborne = true;
         Vec3 nose = nosePosition(1);
@@ -230,24 +257,11 @@ public final class GeraniumEntity extends AddonDroneEntity {
     }
     /** Same body-yaw/pitch/roll transformation as the native monitor camera, translated to the nose lens. */
     public Vec3 nosePosition(float partial) { return bodyPoint(0, NOSE_Y, NOSE_Z, partial); }
-    /** A point of the airframe (blocks; +z forward, as the rendered model) in the world. */
-    public Vec3 bodyPoint(float x, float y, float z, float partial) {
+    private Vec3 bodyPoint(float x, float y, float z, float partial) {
         Vector3f offset = new Vector3f(x, y, z).rotateZ((float)Math.toRadians(getRoll(partial)))
             .rotateX((float)Math.toRadians(flightPitch(partial))).rotateY((float)Math.toRadians(-getYaw(partial)));
         double px = xo + (getX() - xo) * partial, py = yo + (getY() - yo) * partial, pz = zo + (getZ() - zo) * partial;
         return new Vec3(px + offset.x, py + offset.y, pz + offset.z);
-    }
-    /** Client only: a thin smoke trail from the jet nozzle while the engine runs, filled in between ticks. */
-    private void exhaustTrail() {
-        if (variant() != GeraniumVariant.JET || !isLaunched() || !engineRunning()) { lastNozzle = null; return; }
-        Vec3 nozzle = bodyPoint(0, NOZZLE_Y, NOZZLE_Z, 1);
-        if (lastNozzle != null && lastNozzle.distanceToSqr(nozzle) < 36) {
-            for (int i = 1; i <= 2; i++) {
-                Vec3 at = lastNozzle.lerp(nozzle, i / 2.0);
-                level().addParticle(net.minecraft.core.particles.ParticleTypes.SMOKE, at.x, at.y, at.z, 0, 0, 0);
-            }
-        }
-        lastNozzle = nozzle;
     }
     @Override protected boolean enterSignalLostState(ServerPlayer controller) { handleSignalLoss(controller); prepareSignalLostFallTick(); return false; }
     @Override protected void tickSignalLostState(ServerPlayer controller) { prepareSignalLostFallTick(); }

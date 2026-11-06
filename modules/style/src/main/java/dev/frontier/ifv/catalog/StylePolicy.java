@@ -37,10 +37,12 @@ public final class StylePolicy {
     public static final Set<String> REMOVED_MODS = Set.of("trajanstanks", "simpleplanes");
     /**
      * Items replaced by our own content: Uncomplicated FPV's coordinate-flown Shahed and the radio
-     * that only programs it (the hand-flown Shahed-136 comes from the ground station instead).
+     * that only programs it (the hand-flown Shahed-136 comes from the ground station instead), and
+     * the relay plane, which the strike aircraft's long radio range made unnecessary.
      * Their registrations, placed entities and saved paid Industry queues stay intact.
      */
-    public static final Set<String> REPLACED_ITEMS = Set.of("uncomplicatedfpv:shahed136", "uncomplicatedfpv:radio");
+    public static final Set<String> REPLACED_ITEMS = Set.of("uncomplicatedfpv:shahed136", "uncomplicatedfpv:radio",
+        "frontier_arcade_vehicles:relay_drone");
 
     // Diagnostic flags are passive observations for the isolated acceptance harness.
     public static volatile boolean arcadeEntityHookSeen;
