@@ -175,11 +175,13 @@ public final class NativeAviationCatalog {
         equipment(map, "uncomplicatedfpv:mavic_drone_no_drop", "Mavic: разведывательный", 64);
         equipment(map, "uncomplicatedfpv:mavic_drone_with_drop", "Mavic: со сбросом", 96);
         equipment(map, "uncomplicatedfpv:fpv_drone", "FPV: ударный", 64);
+        // Hidden by the style policy (replaced by the hand-flown Shahed-136); kept so saved paid queues resolve.
         equipment(map, "uncomplicatedfpv:shahed136", "Шахед-136", 128);
         equipment(map, "uncomplicatedfpv:radio", "Радиостанция Шахеда", 16);
         equipment(map, "uncomplicatedfpv:reb", "Стационарный РЭБ", 96);
         equipment(map, "uncomplicatedfpv:reb_mini", "Малый РЭБ", 64);
         equipment(map, "frontier_arcade_vehicles:geranium_2_drone", "Герань-2: чёрный Шахед FPV", 160);
+        equipment(map, "frontier_arcade_vehicles:shahed_136_drone", "Шахед-136: винтовой, с наземной станции", 128);
         equipment(map, "frontier_arcade_vehicles:relay_drone", "Связист: самолёт-ретранслятор", 192);
         equipment(map, "frontier_arcade_vehicles:uav_camera", "Камера БПЛА", 16);
         return Collections.unmodifiableMap(map);

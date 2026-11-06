@@ -1,5 +1,6 @@
 package dev.frontier.arcade.geranium;
 
+import com.atsuishio.superbwarfare.event.ClientEventHandler;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.frontier.arcade.ArcadeClientTicks;
 import dev.frontier.arcade.ArcadeVehicles;
@@ -11,6 +12,9 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
@@ -28,7 +32,12 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.lwjgl.glfw.GLFW;
 import ru.lavafrai.uncomplicatedfpv.client.renderer.AddonDroneRenderer;
 
-/** Scoped to the owner's Geranium monitor. Other native drones keep their own HUD and camera. */
+/**
+ * Scoped to the owner's Geranium/Shahed monitor. Other native drones keep their own HUD and camera.
+ * During a flight F5 switches between the nose camera and a smoothed chase view behind the
+ * aircraft. The vanilla perspective is left as the station session set it (see StationClient),
+ * so it never cycles to a front view and comes back unchanged after the flight.
+ */
 @Mod.EventBusSubscriber(modid = ArcadeVehicles.ID, value = Dist.CLIENT)
 public final class GeraniumClient {
     private static final ResourceLocation MONITOR = new ResourceLocation("superbwarfare", "monitor");
@@ -39,6 +48,13 @@ public final class GeraniumClient {
     private static GeraniumEntity resolvedTarget;
     private static long resolvedTick = Long.MIN_VALUE;
     private static Object resolvedLevel;
+    /** Chase view chosen with F5 for the current flight; every flight starts on the nose camera. */
+    private static boolean chase;
+    private static final double CHASE_DISTANCE = 7.5, CHASE_HEIGHT = 2.4, CHASE_LOOK_AHEAD = 6;
+    private static final float CHASE_SMOOTHING = .2f, CHASE_MIN_PITCH = -45, CHASE_MAX_PITCH = 60;
+    private static int chaseEntity = -1;
+    private static float chaseYaw, chasePitch;
+    private static long chaseNanos;
 
     private static final IKeyConflictContext FLIGHT_CONTEXT = new IKeyConflictContext() {
         @Override public boolean isActive() { return Minecraft.getInstance().screen == null && currentTarget() != null; }
@@ -74,6 +90,7 @@ public final class GeraniumClient {
         if (event.phase != TickEvent.Phase.END) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
+            chase = false;
             playerSession = null;
             lastView = -1;
             resolvedTarget = null;
@@ -92,6 +109,24 @@ public final class GeraniumClient {
         GeraniumEntity target = currentTarget();
         if (requested && mc.screen == null && target != null && target.isLaunched()) GeraniumNet.sendStabilize();
     }
+
+    /** Before vanilla's key handling in this tick: F5 belongs to the flight view while flying. */
+    @SubscribeEvent
+    public static void perspectiveKey(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.START) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (currentTarget() == null) {
+            if (chase) { chase = false; chaseEntity = -1; }
+            return;
+        }
+        while (mc.options.keyTogglePerspective.consumeClick()) {
+            chase = !chase;
+            chaseEntity = -1;
+        }
+    }
+
+    /** True while the pilot has chosen the chase view with F5. */
+    public static boolean chaseView() { return chase && currentTarget() != null; }
 
     /** Resolved once per client tick and shared by camera, HUD, overlays and key contexts. */
     public static GeraniumEntity currentTarget() {
@@ -126,6 +161,10 @@ public final class GeraniumClient {
         GeraniumEntity target = currentTarget();
         if (target == null || !cameraAvailable) return;
         float partial = (float) event.getPartialTick();
+        // SBW adds its own drone roll to the view in GameRenderer.renderLevel (after this event, on top
+        // of event.getRoll()); this view sets the whole roll itself, so the bank is drawn once.
+        ClientEventHandler.cameraRoll = 0;
+        if (chaseView()) { chase(event, target, partial); return; }
         Vec3 point = target.nosePosition(partial);
         try {
             POSITION.invoke(event.getCamera(), point.x, point.y, point.z);
@@ -133,6 +172,41 @@ public final class GeraniumClient {
             event.setYaw(target.getYaw(partial));
             event.setPitch(target.flightPitch(partial));
             event.setRoll(target.getRoll(partial));
+        } catch (ReflectiveOperationException | RuntimeException failure) {
+            cameraAvailable = false;
+        }
+    }
+
+    /**
+     * Behind and above the aircraft along its smoothed heading and pitch, looking a little ahead of
+     * it; pulled in where terrain would block the view. The horizon stays level.
+     */
+    private static void chase(ViewportEvent.ComputeCameraAngles event, GeraniumEntity target, float partial) {
+        long now = System.nanoTime();
+        float yaw = target.getYaw(partial), pitch = Mth.clamp(target.flightPitch(partial), CHASE_MIN_PITCH, CHASE_MAX_PITCH);
+        if (chaseEntity != target.getId()) {
+            chaseEntity = target.getId();
+            chaseYaw = yaw;
+            chasePitch = pitch;
+        } else {
+            float seconds = Mth.clamp((now - chaseNanos) / 1e9f, 0, .25f);
+            float follow = 1 - (float) Math.exp(-seconds / CHASE_SMOOTHING);
+            chaseYaw = Mth.wrapDegrees(chaseYaw + Mth.wrapDegrees(yaw - chaseYaw) * follow);
+            chasePitch += (pitch - chasePitch) * follow;
+        }
+        chaseNanos = now;
+        Vec3 centre = target.getPosition(partial).add(0, target.getBbHeight() * .5, 0);
+        Vec3 heading = Vec3.directionFromRotation(chasePitch, chaseYaw);
+        Vec3 wanted = centre.subtract(heading.scale(CHASE_DISTANCE)).add(0, CHASE_HEIGHT, 0);
+        var hit = target.level().clip(new ClipContext(centre, wanted, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, target));
+        Vec3 eye = hit.getType() == HitResult.Type.MISS ? wanted
+            : hit.getLocation().add(centre.subtract(hit.getLocation()).normalize().scale(.3));
+        Vec3 look = centre.add(heading.scale(CHASE_LOOK_AHEAD)).subtract(eye);
+        try {
+            POSITION.invoke(event.getCamera(), eye.x, eye.y, eye.z);
+            event.setYaw((float) Math.toDegrees(Math.atan2(-look.x, look.z)));
+            event.setPitch((float) Math.toDegrees(Math.atan2(-look.y, Math.sqrt(look.x * look.x + look.z * look.z))));
+            event.setRoll(0);
         } catch (ReflectiveOperationException | RuntimeException failure) {
             cameraAvailable = false;
         }
@@ -156,6 +230,7 @@ public final class GeraniumClient {
         @SubscribeEvent
         public static void renderers(EntityRenderersEvent.RegisterRenderers event) {
             event.registerEntityRenderer(GeraniumContent.TYPE.get(), AddonDroneRenderer<GeraniumEntity>::new);
+            event.registerEntityRenderer(GeraniumContent.SHAHED_TYPE.get(), AddonDroneRenderer<GeraniumEntity>::new);
         }
 
         @SubscribeEvent
