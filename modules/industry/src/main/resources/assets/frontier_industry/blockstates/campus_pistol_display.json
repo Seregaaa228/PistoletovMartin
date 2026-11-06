@@ -14,14 +14,6 @@
     "facing=west": {
       "model": "frontier_industry:block/campus_pistol_display",
       "y": 270
-    },
-    "facing=up": {
-      "model": "frontier_industry:block/campus_pistol_display",
-      "x": 90
-    },
-    "facing=down": {
-      "model": "frontier_industry:block/campus_pistol_display",
-      "x": 270
     }
   }
 }

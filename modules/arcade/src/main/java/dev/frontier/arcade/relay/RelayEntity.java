@@ -55,7 +55,11 @@ public final class RelayEntity extends AddonDroneEntity {
     private double launchY;
     private Vec3 previousPosition;
 
-    public RelayEntity(EntityType<? extends DroneEntity> type, Level level) { super(type, level); }
+    public RelayEntity(EntityType<? extends DroneEntity> type, Level level) {
+        super(type, level);
+        // Flown from the station camera like the Geranium: keep Entity Culling from skipping its client ticks.
+        noCulling = true;
+    }
     @Override protected void defineSynchedData() {
         super.defineSynchedData(); entityData.define(OWNER, Optional.empty()); entityData.define(ACTIVE, false);
         entityData.define(LAUNCHED, false); entityData.define(ORBIT, false);

@@ -48,7 +48,14 @@ public final class GeraniumEntity extends AddonDroneEntity {
     private boolean detonated, airborne;
     private int controlledTicks;
     private Vec3 lastNose;
-    public GeraniumEntity(EntityType<? extends DroneEntity> type, Level level) { super(type, level); }
+    public GeraniumEntity(EntityType<? extends DroneEntity> type, Level level) {
+        super(type, level);
+        // Client position, attitude and nose camera come from the native SBW lerp in baseTick.
+        // The pilot's camera sits ahead of the nose, so the body is never in its own view frustum;
+        // Entity Culling's tick culling (shipped to players, honours this vanilla flag) would then
+        // skip every client tick and freeze the aircraft at its launch pad while the HUD data moves.
+        noCulling = true;
+    }
     @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(OWNER, Optional.empty());
         entityData.define(LAUNCHED, false); entityData.define(SPEED, 0f); entityData.define(THROTTLE, GeraniumFlightModel.DEFAULT_THROTTLE);
         entityData.define(LINK_RANGE, 16f); entityData.define(LINK_DISTANCE, 0f);
