@@ -36,6 +36,36 @@ public final class AircraftSystemsFixture {
             MinecraftForge.EVENT_BUS.register(new FlightTraceScenario.ClientRecorder());
             MinecraftForge.EVENT_BUS.register(new FireFpsScenario.FrameRecorder());
             MinecraftForge.EVENT_BUS.register(new ObserverRollScenario.Recorder());
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            MinecraftForge.EVENT_BUS.register(new SeekClientRecorder());
+        }
+    }
+
+    @SubscribeEvent public void livingHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        TesterFix.livingHurt(event);
+    }
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+    public void detonate(net.minecraftforge.event.level.ExplosionEvent.Detonate event) {
+        TesterFix.detonate(event);
+    }
+
+    /** Tester-fix scenarios: one command each, with its own tick budget. */
+    private void testerFix(com.mojang.brigadier.builder.LiteralArgumentBuilder<net.minecraft.commands.CommandSourceStack> command,
+                           String name, int budget,
+                           java.util.function.Function<net.minecraft.server.level.ServerPlayer, TesterFix.Scenario> make) {
+        command.then(Commands.literal(name).executes(context -> {
+            var source = context.getSource();
+            if (step != null || !FreshSystemsProfile.authorized(source.getServer())) return 0;
+            try {
+                var scenario = make.apply(source.getPlayerOrException());
+                begin(name, scenario::tick, scenario::result);
+                limit = budget;
+            } catch (RuntimeException | LinkageError | com.mojang.brigadier.exceptions.CommandSyntaxException error) {
+                startFailure(name, error);
+            }
+            return 1;
+        }));
     }
 
     @SubscribeEvent public void commands(RegisterCommandsEvent event) {
@@ -286,6 +316,15 @@ public final class AircraftSystemsFixture {
             } catch (RuntimeException | LinkageError error) { startFailure("visual_loadout", error); }
             return 1;
         }));
+        testerFix(command, "tf_cannon_f16", 3000, p -> new TesterFix.CannonTargets(p, dev.frontier.aviation.AircraftProfile.F16, -1200, 0));
+        testerFix(command, "tf_cannon_su25", 3000, p -> new TesterFix.CannonTargets(p, dev.frontier.aviation.AircraftProfile.SU25, -1200, 300));
+        testerFix(command, "tf_cannon_j10", 3000, p -> new TesterFix.CannonTargets(p, dev.frontier.aviation.AircraftProfile.J10, -1200, 600));
+        testerFix(command, "tf_kab", 9500, p -> new TesterFix.KabCraters(p, false));
+        testerFix(command, "tf_kab_1500", 9500, p -> new TesterFix.KabCraters(p, true));
+        testerFix(command, "tf_midair", 2200, TesterFix.MidAir::new);
+        testerFix(command, "tf_fpv", 1400, TesterFix.FpvJets::new);
+        testerFix(command, "tf_seek", 800, TesterFix.SeekSelf::new);
+        testerFix(command, "tf_worker", 1000, TesterFix.WorkerLook::new);
         event.getDispatcher().register(command);
     }
 

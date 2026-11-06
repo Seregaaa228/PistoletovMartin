@@ -21,7 +21,8 @@ import time
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
-SCENARIOS = ('aim0', 'aim1', 'aim2', 'aim3', 'destruction', 'npc', 'air_to_air', 'ground_homing', 'moving_ground_homing', 'gesture', 'gear', 'gear_su25', 'gear_j10', 'seed_wreck', 'restart_wreck', 'visual_loadout', 'tablet', 'tablet_f16', 'kab_envelope', 'deploy', 'creative_tab', 'trace_su25', 'trace_f16', 'trace_j10', 'maneuver_su25', 'maneuver_f16', 'maneuver_j10', 'cannon_range', 'cannon_range_unloaded', 'fire_fps', 'observer_roll', 'cockpit_views', 'net_flight')
+SCENARIOS = ('aim0', 'aim1', 'aim2', 'aim3', 'destruction', 'npc', 'air_to_air', 'ground_homing', 'moving_ground_homing', 'gesture', 'gear', 'gear_su25', 'gear_j10', 'seed_wreck', 'restart_wreck', 'visual_loadout', 'tablet', 'tablet_f16', 'kab_envelope', 'deploy', 'creative_tab', 'trace_su25', 'trace_f16', 'trace_j10', 'maneuver_su25', 'maneuver_f16', 'maneuver_j10', 'cannon_range', 'cannon_range_unloaded', 'fire_fps', 'observer_roll', 'cockpit_views', 'net_flight',
+             'tf_cannon_f16', 'tf_cannon_su25', 'tf_cannon_j10', 'tf_kab', 'tf_kab_1500', 'tf_midair', 'tf_fpv', 'tf_seek', 'tf_worker')
 # Su-25 tablet panel controls (GlideBombTabletPanel layout) for this runner's 1280x720
 # window at GUI scale 2. DeepStrike draws its tablet in a virtual space scaled by
 # UiViewport.scale() = min(1.2 / 2, 640 / 1000, 360 / 600) = 0.6, i.e. 1067x600; MC Pilot
@@ -44,6 +45,7 @@ def main() -> int:
     parser.add_argument('--resume-profile', type=Path, help='Restart a profile created by this runner; never a user profile')
     parser.add_argument('--baseline-aviation', action='store_true', help='Use the frozen pre-change aviation JAR to seed a real old wreck')
     parser.add_argument('--reload', action='store_true', help='Complete a real datapack reload before scenarios')
+    parser.add_argument('--keep-going', action='store_true', help='Record failed scenarios and continue with the next one')
     parser.add_argument('--extra-mods', type=Path, nargs='+', default=[],
                         help='Extra project-local mod JARs for this run only (e.g. candidate performance mods)')
     args = parser.parse_args()
@@ -119,7 +121,9 @@ def main() -> int:
                                   text=True, capture_output=True, timeout=timeout)
         if response.returncode:
             raise RuntimeError('MC Pilot ' + ' '.join(parts[:2]) + ': ' + response.stdout[-1200:] + response.stderr[-1200:])
-        data = json.loads(response.stdout)
+        try: data = json.loads(response.stdout)
+        except json.JSONDecodeError as failure:
+            raise RuntimeError('MC Pilot returned no JSON: ' + response.stdout[-400:] + response.stderr[-400:]) from failure
         if not data.get('success') or not data.get('data', {}).get('success'):
             raise RuntimeError('MC Pilot failed: ' + response.stdout[-1200:])
         return data['data']['data']
@@ -211,13 +215,28 @@ def main() -> int:
             update('running actual scenario ' + scenario)
             for progress_file in ('aircraft-gesture-progress.json', 'aircraft-gear-progress.json', 'aircraft-gear-captured.txt',
                                   'aircraft-visual-progress.json', 'aircraft-visual-captured.txt', 'aircraft-visual-brake.txt', 'aircraft-render-state.json', 'aircraft-visual-client.json',
-                                  'aircraft-tablet-progress.json', 'aircraft-tablet-inspected.txt', 'aircraft-tablet-crater.txt'):
+                                  'aircraft-tablet-progress.json', 'aircraft-tablet-inspected.txt', 'aircraft-tablet-crater.txt',
+                                  'aircraft-action.json', 'aircraft-action-done.txt', 'aircraft-seek-request.json', 'aircraft-seek-client.json'):
                 (profile / progress_file).unlink(missing_ok=True)
             command('aircraft_check ' + scenario)
             performed = set()
-            deadline = time.monotonic() + (330 if scenario == 'kab_envelope' else 150)
+            deadline = time.monotonic() + (330 if scenario == 'kab_envelope' else 900 if scenario.startswith('tf_') else 150)
             while time.monotonic() < deadline:
                 if client.poll() is not None: raise RuntimeError('Test client exited during ' + scenario)
+                action_path = profile / 'aircraft-action.json'
+                if action_path.exists():
+                    try: request = json.loads(action_path.read_text())
+                    except json.JSONDecodeError: request = {}
+                    key = 'action:%s' % request.get('seq')
+                    if request.get('runId') == manifest['runId'] and key not in performed:
+                        performed.add(key)
+                        # Generic real client input for tester-fix scenarios.
+                        for kind, value in request.get('actions', []):
+                            if kind == 'key': call(['input', 'key', 'press', value])
+                            elif kind == 'sleep': time.sleep(float(value))
+                            elif kind == 'shot': call(['screenshot', '--output', str(profile / (value + '.png'))])
+                            elif kind == 'tp': command('tp @s ' + value)
+                        (profile / 'aircraft-action-done.txt').write_text('%s:%s' % (manifest['runId'], request.get('seq')))
                 gesture_progress = profile / 'aircraft-gesture-progress.json'
                 if scenario == 'gesture' and gesture_progress.exists():
                     try: progress = json.loads(gesture_progress.read_text())
@@ -428,7 +447,9 @@ def main() -> int:
                                 call(['input', 'key', 'up', 'space'])
                                 call(['input', 'key', 'press', 'F5']); call(['input', 'key', 'press', 'F5'])
                             result.setdefault('results', {})[scenario] = record
-                            if not record.get('pass'): raise RuntimeError(scenario + ' failed: ' + json.dumps(record))
+                            if not record.get('pass'):
+                                if not args.keep_going: raise RuntimeError(scenario + ' failed: ' + json.dumps(record))
+                                result.setdefault('failed', []).append(scenario)
                             break
                     except json.JSONDecodeError:
                         pass
