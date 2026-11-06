@@ -42,7 +42,7 @@ public enum GeraniumVariant {
     public GeraniumFlightModel.Profile profile() { return profile; }
     /**
      * Station radio budget in blocks (UF's terrain and REB losses still apply on top). A full battery
-     * covers three to four times this distance at cruise: 3.3 min for the jet, 5.9 min for the Shahed.
+     * covers two to three times this distance at cruise: 4.1 min for the jet, 5.9 min for the Shahed.
      */
     public double signalRange() { return signalRange; }
     public ResourceLocation model() { return model; }

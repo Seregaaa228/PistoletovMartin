@@ -315,14 +315,17 @@ public final class GeraniumFlightModelTest {
         GeraniumFlightModel a = cruising(jet), b = cruising(prop);
         double da = 0, db = 0;
         for (int t = 0; t < 200; t++) { a.input(W); b.input(W); a.tick(true, true); b.tick(true, true); da += a.speed(); db += b.speed(); }
-        require(da > db * 1.6, jet, "jet covers more ground at full throttle: " + da + " vs " + db);
+        require(da > db * 1.4, jet, "jet covers more ground at full throttle: " + da + " vs " + db);
     }
 
-    /** 1 block/tick = 72 km/h. Real-world speeds, and turns that still fit a combat area. */
+    /** 1 block/tick = 72 km/h. Strike aircraft stay below our fighters; turns still fit a combat area. */
     private static void realisticSpeedsStayControllable() {
         Profile jet = Profile.JET, prop = Profile.PROPELLER;
-        require(prop.maxSpeed() * 72 >= 150 && prop.maxSpeed() * 72 <= 190, prop, "Shahed-136 tops out at 150-190 km/h");
-        require(jet.maxSpeed() * 72 >= 288 && jet.maxSpeed() * 72 <= 432, jet, "jet Geranium-2 tops out at 290-430 km/h");
+        require(prop.maxSpeed() * 72 >= 140 && prop.maxSpeed() * 72 <= 160, prop, "Shahed-136 tops out at 140-160 km/h");
+        // Su-25/J-10/F-16 fly about 190/240/260 km/h at full throttle and 260/320/340 km/h on afterburner
+        // (SBW thrust 0.047 * power * SpeedRate against v * (0.0016 + 0.001768 v^2) drag).
+        require(jet.maxSpeed() * 72 >= 220 && jet.maxSpeed() * 72 < 255, jet, "jet Geranium-2 tops out below the F-16");
+        require(jet.maxDiveSpeed() * 72 < 320, jet, "even diving the jet stays below a fighter on afterburner");
         for (Profile p : List.of(jet, prop)) {
             GeraniumFlightModel m = cruising(p);
             float turned = 0;

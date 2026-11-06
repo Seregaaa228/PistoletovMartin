@@ -47,19 +47,20 @@ public final class GeraniumFlightModel {
                           float thrust, float maxThrustAccel, float launchSpeed, float launchCruise,
                           float mouseFull, float expo, int energyPerTick, boolean legacyRoll) {
         /**
-         * Jet Geranium-2: 180-430 km/h (cruise 320), dives to 540 km/h; still a gentle, rate-limited
-         * stick. The turn gain keeps about 2.2 deg/tick at cruise (a turn radius near 120 blocks).
+         * Jet Geranium-2: 120-240 km/h (cruise 190), dives to 300 km/h, below our fighters (the F-16
+         * reaches about 260 km/h at full throttle, all three outrun it on afterburner); still a gentle,
+         * rate-limited stick. The turn gain keeps about 2.3 deg/tick at cruise (a turn radius near 65 blocks).
          */
-        public static final Profile JET = new Profile("jet", 2.5f, 6f, 4.5f, 2f, 1.2f, 7.5f,
-            40, 20, 3.5f, 3, .4f, 1, 3, 11.8f, 3.2f, 2f, .25f, 1.8f,
-            .02f, .08f, 2.6f, 4.5f, 9, .5f, 16, false);
+        public static final Profile JET = new Profile("jet", 1.7f, 3.3f, 2.6f, 1.4f, .9f, 4.2f,
+            40, 20, 2.2f, 3, .4f, 1, 3, 7.1f, 3.2f, 2f, .25f, 1.8f,
+            .035f, .06f, 1.8f, 2.6f, 9, .5f, 13, false);
         /**
-         * Propeller Shahed-136: 86-185 km/h (cruise 150), softer engine, longer endurance; about
-         * 2.6 deg/tick at cruise (a turn radius near 46 blocks).
+         * Propeller Shahed-136: 72-150 km/h (cruise 120), softer engine, longer endurance; about
+         * 2.6 deg/tick at cruise (a turn radius near 37 blocks).
          */
-        public static final Profile PROPELLER = new Profile("propeller", 1.2f, 2.6f, 2.1f, .9f, .55f, 3.6f,
-            35, 18, 1.6f, 2.4f, .3f, 1, 2.4f, 7.8f, 3.5f, 1.8f, .2f, 1.6f,
-            .04f, .035f, 1.3f, 2.1f, 9, .5f, 9, false);
+        public static final Profile PROPELLER = new Profile("propeller", 1f, 2.1f, 1.7f, .75f, .45f, 3f,
+            35, 18, 1.3f, 2.4f, .3f, 1, 2.4f, 6.3f, 3.5f, 1.8f, .2f, 1.6f,
+            .04f, .028f, 1f, 1.7f, 9, .5f, 9, false);
         /** The pre-jet tuning (instant linear stick, constant roll rate), kept for comparisons. */
         public static final Profile LEGACY = new Profile("legacy", .35f, 1f, .5f, .26f, .1f, 1.4f,
             40, 40, 0, 4, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, 3, 2.3f, 5, 2.5f, .5f, 2,
