@@ -49,6 +49,31 @@ public final class F16MissileHookContractTest {
                 .filter(insn -> insn instanceof MethodInsnNode call && call.owner.equals(wireOwner)
                     && call.name.equals("mediumTrail") && call.desc.equals("()V")).count();
             if (trailCalls != 1) throw new AssertionError("wire guidance hook anchor changed");
+            // HumanWeaponSeeking shadows these fields and replaces notFriendly with an
+            // own-vehicle filter: the vehicle seeker relies on notFriendly to skip the
+            // pilot's own aircraft (it is built without excludeSelf).
+            String builder = "com/atsuishio/superbwarfare/tools/SeekTool$Builder";
+            ClassNode seek = new ClassNode();
+            try (var input = file.getInputStream(file.getJarEntry(builder + ".class"))) {
+                new ClassReader(input).accept(seek, 0);
+            }
+            if (seek.fields.stream().noneMatch(f -> f.name.equals("entity") && f.desc.equals("Lnet/minecraft/world/entity/Entity;"))
+                    || seek.fields.stream().noneMatch(f -> f.name.equals("filters") && f.desc.equals("Ljava/util/List;"))
+                    || seek.methods.stream().noneMatch(m -> m.name.equals("notFriendly") && m.desc.equals("()L" + builder + ";")))
+                throw new AssertionError("SeekTool.Builder shadow targets changed");
+            ClassNode client = new ClassNode();
+            try (var input = file.getInputStream(file.getJarEntry("com/atsuishio/superbwarfare/event/ClientEventHandler.class"))) {
+                new ClassReader(input).accept(client, 0);
+            }
+            boolean vehicleSeeker = client.methods.stream().anyMatch(method -> {
+                boolean noVehicle = false, notFriendly = false;
+                for (var insn : method.instructions) if (insn instanceof MethodInsnNode call && call.owner.equals(builder)) {
+                    noVehicle |= call.name.equals("noVehicle");
+                    notFriendly |= call.name.equals("notFriendly");
+                }
+                return noVehicle && notFriendly;
+            });
+            if (!vehicleSeeker) throw new AssertionError("native vehicle seeker no longer filters through notFriendly");
         }
         // Tablet racks (GlideBombPylon, F16StormStoreLimit): an owned jet's launch point comes
         // from pylonPosition, which DeepStrike's launch must still call.

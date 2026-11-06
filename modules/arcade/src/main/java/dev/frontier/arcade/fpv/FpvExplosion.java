@@ -1,5 +1,6 @@
 package dev.frontier.arcade.fpv;
 
+import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity;
 import java.util.HashSet;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
@@ -36,6 +37,9 @@ public final class FpvExplosion {
                         && (!(entity instanceof Player player) || (!player.isSpectator() && !player.isCreative()))
                         && entity.getBoundingBox().distanceToSqr(center) <= 4.0D)) {
             damaged.add(target);
+            // SBW turns any hit on enclosed crew into a hit on their vehicle, which already takes this
+            // warhead (direct hit or native splash). Keep them out of both instead of hitting it twice.
+            if (target.getVehicle() instanceof VehicleEntity hull && hull.isEnclosed(target)) continue;
             double distance = Math.sqrt(target.getBoundingBox().distanceToSqr(center));
             float damageFraction = (float) (0.75D - 0.25D * distance);
             float damage = (target instanceof Player ? target.getMaxHealth() : 20.0F) * damageFraction;

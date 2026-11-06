@@ -1,6 +1,8 @@
 package dev.frontier.aviation.weapons;
 
 import com.atsuishio.superbwarfare.entity.projectile.SmallCannonShellEntity;
+import com.atsuishio.superbwarfare.world.phys.EntityResult;
+import com.atsuishio.superbwarfare.world.phys.ExtendedEntityRayTraceResult;
 import dev.frontier.aviation.LightAviation;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -15,11 +17,9 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
@@ -120,8 +120,7 @@ public final class CannonShells {
         BlockHitResult block = level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY,
             owner != null ? owner : shell.plane));
         Vec3 end = block.getType() == HitResult.Type.MISS ? to : block.getLocation();
-        EntityHitResult entity = ProjectileUtil.getEntityHitResult(level, shell.plane, from, end,
-            new AABB(from, end).inflate(1), target -> hittable(shell, target), 0.3F);
+        ExtendedEntityRayTraceResult entity = entityHit(level, shell, from, end);
         HitResult hit = entity != null ? entity : block.getType() == HitResult.Type.MISS ? null : block;
         if (hit == null) {
             shell.position = to;
@@ -148,6 +147,28 @@ public final class CannonShells {
             }
         }
         return loaded;
+    }
+
+    /**
+     * The nearest entity on the segment, as SBW's own shell path scan sees it: oriented
+     * boxes and hit parts for vehicles, head/leg shots and lag compensation for players.
+     * SBW dispatches an entity hit only for its extended result, so a plain vanilla
+     * EntityHitResult made every aircraft round that met a vehicle, mob or player vanish
+     * with no damage and no blast, while block hits still worked.
+     */
+    private static ExtendedEntityRayTraceResult entityHit(ServerLevel level, Shell shell, Vec3 from, Vec3 end) {
+        EntityResult nearest = null;
+        double best = Double.MAX_VALUE;
+        for (Entity target : level.getEntities(shell.plane, new AABB(from, end).inflate(1), candidate -> hittable(shell, candidate))) {
+            EntityResult result = shell.entity.getHitResult(target, from, end);
+            if (result == null) continue;
+            double distance = result.getHitPos().distanceToSqr(from);
+            if (distance < best) {
+                best = distance;
+                nearest = result;
+            }
+        }
+        return nearest == null ? null : new ExtendedEntityRayTraceResult(nearest);
     }
 
     private static boolean hittable(Shell shell, Entity target) {

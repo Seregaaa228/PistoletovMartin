@@ -77,7 +77,7 @@ public final class GeraniumEntity extends AddonDroneEntity {
     public void stabilizeFlight() { if (!level().isClientSide && activeMonitor() && isLaunched()) flight().stabilize(); }
     private void syncFlight() {
         var state = flight(); entityData.set(LAUNCHED, state.launched()); entityData.set(THROTTLE, state.throttle());
-        entityData.set(SPEED, (float)getDeltaMovement().length());
+        entityData.set(SPEED, state.launched() ? state.speed() : 0f);
         entityData.set(FLIGHT_YAW, state.yaw()); entityData.set(FLIGHT_PITCH, state.pitch()); entityData.set(FLIGHT_ROLL, state.roll());
     }
     @Override public void processInput(short keys) {
@@ -91,6 +91,8 @@ public final class GeraniumEntity extends AddonDroneEntity {
     public UUID ownerId() { return entityData.get(OWNER).orElse(null); }
     public boolean ownedBy(Player player) { return player != null && player.getUUID().equals(ownerId()); }
     @Override public float getYaw(float partial) { return net.minecraft.util.Mth.rotLerp(partial, yRotO, getYRot()); }
+    /** Full linear pitch between ticks. Native getBodyPitch(partial) covers only 60% of each step and then jumps. */
+    public float flightPitch(float partial) { return net.minecraft.util.Mth.lerp(partial, xRotO, getXRot()); }
     @Override public net.minecraft.sounds.SoundEvent getEngineSound() { return ru.lavafrai.uncomplicatedfpv.registry.ModSounds.SHAHED136_ENGINE.get(); }
     @Override public float getMaxHealth() { return 8f; }
     @Override public ResourceLocation getModelResource() { return MODEL; }
@@ -147,12 +149,16 @@ public final class GeraniumEntity extends AddonDroneEntity {
         var state = flight();
         boolean powered = getEnergy() > 0 && !isSignalLost() && radioOrigin() != null && ownerId() != null && level().getPlayerByUUID(ownerId()) != null;
         boolean control = activeMonitor() && powered;
-        state.tick(control, powered);
+        Vec3 motion = getDeltaMovement();
+        state.tick(control, powered, onGround(), motion.x, motion.y, motion.z);
         if (state.launched() && powered) {
-            // Original Shahed updateFlight: accelerate by .05, turn by 1.5 degrees,
-            // and move strictly along the nose. Parent VehicleEntity moves once.
-            setDeltaMovement(Vec3.directionFromRotation(state.pitch(), state.yaw()).scale(state.speed()));
+            // Fixed-wing model: velocity along the nose (plus stall sink). Parent VehicleEntity moves once.
+            setDeltaMovement(new Vec3(state.vx(), state.vy(), state.vz()));
             setNoGravity(true); setPower(.07f + .13f * state.throttle()); consumeEnergy(ENERGY_PER_TICK);
+        } else if (state.launched()) {
+            // Engine, radio or owner lost: ballistic fall from the actual motion, nose follows the fall line.
+            setPower(0); setNoGravity(false); resetControlInputs();
+            setDeltaMovement(new Vec3(state.vx(), state.vy(), state.vz()));
         } else {
             setPower(0); setNoGravity(false); resetControlInputs();
             setDeltaMovement(onGround() ? new Vec3(0, -.06, 0) : getDeltaMovement().multiply(.98, 1, .98).add(0, -.06, 0));
@@ -213,7 +219,7 @@ public final class GeraniumEntity extends AddonDroneEntity {
     /** Same body-yaw/pitch/roll transformation as the native monitor camera, translated to the nose lens. */
     public Vec3 nosePosition(float partial) {
         Vector3f offset = new Vector3f(0, NOSE_Y, NOSE_Z).rotateZ((float)Math.toRadians(getRoll(partial)))
-            .rotateX((float)Math.toRadians(getBodyPitch(partial))).rotateY((float)Math.toRadians(-getYaw(partial)));
+            .rotateX((float)Math.toRadians(flightPitch(partial))).rotateY((float)Math.toRadians(-getYaw(partial)));
         double px = xo + (getX() - xo) * partial, py = yo + (getY() - yo) * partial, pz = zo + (getZ() - zo) * partial;
         return new Vec3(px + offset.x, py + offset.y, pz + offset.z);
     }

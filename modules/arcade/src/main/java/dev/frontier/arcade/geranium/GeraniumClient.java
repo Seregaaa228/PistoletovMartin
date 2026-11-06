@@ -131,7 +131,7 @@ public final class GeraniumClient {
             POSITION.invoke(event.getCamera(), point.x, point.y, point.z);
             // The nose camera follows the actual airframe, rather than a separate quadcopter gimbal.
             event.setYaw(target.getYaw(partial));
-            event.setPitch(target.getBodyPitch(partial));
+            event.setPitch(target.flightPitch(partial));
             event.setRoll(target.getRoll(partial));
         } catch (ReflectiveOperationException | RuntimeException failure) {
             cameraAvailable = false;

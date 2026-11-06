@@ -33,7 +33,7 @@ public final class GeraniumItem extends Item {
     @Override public void appendHoverText(ItemStack stack, Level level, List<Component> lines, TooltipFlag flags) {
         lines.add(Component.literal("Чёрный ударный БПЛА с носовой FPV-камерой"));
         lines.add(Component.literal("Поставь на землю и выбери на наземной станции"));
-        lines.add(Component.literal("SPACE — запуск; мышь — курс/тангаж; W/S — газ; A/D — поворот"));
-        lines.add(Component.literal("F6 — выровнять; ЛКМ — подрыв; Shift+ПКМ до взлёта — подобрать"));
+        lines.add(Component.literal("SPACE — запуск; мышь — крен/тангаж; A/D — крен; W/S — газ"));
+        lines.add(Component.literal("F6 — выровнять; ЛКМ — подрыв; Shift+ПКМ на земле — подобрать"));
     }
 }

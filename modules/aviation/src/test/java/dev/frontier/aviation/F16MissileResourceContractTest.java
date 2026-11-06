@@ -96,6 +96,9 @@ public final class F16MissileResourceContractTest {
         check(weapon.getAsJsonObject("SeekWeaponInfo").get("OnlyLockEntity").getAsBoolean()
                 && !weapon.getAsJsonObject("SeekWeaponInfo").get("OnlyLockBlock").getAsBoolean(),
             name + " locks entities through the aircraft sight");
+        check(weapon.getAsJsonObject("SeekWeaponInfo").get("SeekDirection")
+                .equals(weapon.getAsJsonObject("ShootPos").get("ShootDirectionForHud")),
+            name + " seeker cone follows the HUD sight the server validates, not the free camera");
         check(weapon.get("Crosshair").getAsString().equals("@AirCraftCommon")
                 && weapon.get("CrosshairZooming").getAsString().equals("@AirCraftCommon"),
             name + " uses the aircraft reticle");
@@ -123,9 +126,19 @@ public final class F16MissileResourceContractTest {
         for (var name : weapons.keySet()) {
             if (name.equals("Cannon")) continue;
             JsonObject weapon = weapons.getAsJsonObject(name), reference = f16.getAsJsonObject(name);
-            for (String key : new String[]{"Projectile", "AmmoType", "SeekWeaponInfo", "Magazine", "RPM", "Name",
+            for (String key : new String[]{"Projectile", "AmmoType", "Magazine", "RPM", "Name",
                     "DefaultFireMode", "AvailableFireModes", "Crosshair", "CrosshairZooming", "Damage"})
                 check(weapon.get(key).equals(reference.get(key)), id + " " + name + " " + key + " matches the F-16");
+            // The seeker matches the F-16 except its axis, which is each jet's own HUD sight.
+            JsonObject seek = weapon.getAsJsonObject("SeekWeaponInfo").deepCopy(), referenceSeek =
+                reference.getAsJsonObject("SeekWeaponInfo").deepCopy();
+            JsonObject ownSight = weapon.getAsJsonObject("ShootPos");
+            if (seek.get("OnlyLockEntity") != null && seek.get("OnlyLockEntity").getAsBoolean())
+                check(seek.get("SeekDirection").equals(ownSight.get("ShootDirectionForHud")),
+                    id + " " + name + " seeker follows its own HUD sight");
+            seek.remove("SeekDirection");
+            referenceSeek.remove("SeekDirection");
+            check(seek.equals(referenceSeek), id + " " + name + " SeekWeaponInfo matches the F-16");
             check(!weapon.has("ProjectileDummyInfo"), id + " " + name + " is drawn from the station table");
             JsonObject shoot = weapon.getAsJsonObject("ShootPos");
             JsonObject own = cannon.getAsJsonObject("ShootPos");

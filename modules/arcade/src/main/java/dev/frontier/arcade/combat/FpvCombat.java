@@ -1,6 +1,7 @@
 package dev.frontier.arcade.combat;
 
 import com.atsuishio.superbwarfare.data.CustomData;
+import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity;
 import com.atsuishio.superbwarfare.init.ModDamageTypes;
 import com.atsuishio.superbwarfare.tools.DamageHandler;
 import dev.frontier.arcade.control.ControlSessions;
@@ -34,14 +35,25 @@ public final class FpvCombat {
             drone.setDeltaMovement(Vec3.ZERO); return true; // Unknown terrain is never treated as empty space.
         }
         if (drone.onGround() && movement.y <= 0 && movement.horizontalDistanceSqr() < .0025) return false;
-        var hit = DroneSweep.trace(drone, from, from.add(movement), target -> impactTarget(drone, target));
+        // In each target's moving frame: a jet passes a slow or hovering FPV between two snapshots.
+        var hit = DroneSweep.trace(drone, from, from.add(movement), target -> impactTarget(drone, target), true);
         if (hit == null) return false;
         detonate(drone, hit.getLocation(), hit instanceof EntityHitResult entityHit ? entityHit.getEntity() : null);
         return true;
     }
-    public static void detonate(FpvDroneEntity drone, Vec3 point, Entity directTarget) {
+    /**
+     * A crew member in an enclosed seat (a jet's pilot, a tank's crew) sits inside the hull: striking
+     * them strikes the vehicle, which SBW also makes absorb every hit on them. Open seats stay exposed.
+     */
+    public static Entity struckBody(FpvDroneEntity drone, Entity struck) {
+        if (struck instanceof LivingEntity crew && crew.getVehicle() instanceof VehicleEntity hull
+                && hull.isEnclosed(crew) && impactTarget(drone, hull)) return hull;
+        return struck;
+    }
+    public static void detonate(FpvDroneEntity drone, Vec3 point, Entity struck) {
         if (!(drone.level() instanceof ServerLevel level) || drone.isRemoved()
             || !((Object)drone instanceof DroneImpactState state) || !state.frontier$claimImpact()) return;
+        Entity directTarget = struck == null ? null : struckBody(drone, struck);
         ControlSessions.rememberNativeOwner(drone);
         var owner = ControlSessions.ownerId(drone);
         String payloadId = com.atsuishio.superbwarfare.entity.vehicle.DroneEntity.getItemId(drone.getCurrentItem());

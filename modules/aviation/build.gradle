@@ -26,6 +26,12 @@ tasks.register('sweptAircraftMotionTest', JavaExec) {
     mainClass = 'dev.frontier.aviation.impact.SweptAircraftMotionTest'
 }
 tasks.named('check').configure { dependsOn 'aircraftImpactRulesTest', 'cannonImpactRulesTest', 'sweptAircraftBoxTest', 'sweptAircraftMotionTest' }
+tasks.register('midAirCollisionTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.aviation.impact.MidAirCollisionTest'
+}
+tasks.named('check').configure { dependsOn 'midAirCollisionTest' }
 
 def flightChecks = [
     aircraftCatalogTest: 'dev.frontier.aviation.aircraft.AircraftCatalogTest',
@@ -113,6 +119,12 @@ tasks.register('kabResourceContractTest', JavaExec) {
     workingDir project.projectDir
 }
 tasks.named('check').configure { dependsOn 'kabResourceContractTest' }
+tasks.register('kabPenetrationTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.aviation.weapons.KabPenetrationTest'
+}
+tasks.named('check').configure { dependsOn 'kabPenetrationTest' }
 
 // Explicit opt-in fixture; not part of production JAR or releaseJars.
 sourceSets {

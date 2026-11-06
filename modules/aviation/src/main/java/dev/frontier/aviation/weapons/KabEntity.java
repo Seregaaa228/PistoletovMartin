@@ -1,13 +1,18 @@
 package dev.frontier.aviation.weapons;
 
 import com.atsuishio.superbwarfare.client.animation.entity.BasicProjectileAnimationInstance;
+import com.atsuishio.superbwarfare.config.server.ExplosionConfig;
 import com.atsuishio.superbwarfare.entity.projectile.BasicGeoProjectileEntity;
 import com.atsuishio.superbwarfare.entity.projectile.MissileProjectile;
 import com.atsuishio.superbwarfare.init.ModItems;
 import com.atsuishio.superbwarfare.init.ModSounds;
+import com.atsuishio.superbwarfare.tools.CustomExplosion;
+import com.atsuishio.superbwarfare.tools.ParticleTool;
 import com.atsuishio.superbwarfare.tools.RangeTool;
 import com.github.mcmodderanchor.simplebedrockmodel.v2.common.model.runtime.BakedModelInstance;
 import java.util.UUID;
+import dev.frontier.aviation.LightAviation;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -17,11 +22,18 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.event.level.ExplosionEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.common.Mod;
 
 /**
  * KAB-500-class guided glide bomb. Unpowered: it leaves the pylon with the
@@ -71,6 +83,12 @@ public class KabEntity extends MissileProjectile implements BasicGeoProjectileEn
     private boolean whistling;
     private boolean flying;
     private int variant;
+    /** Velocity this tick's move started with: SBW resolves the hit inside it. */
+    private Vec3 flightVelocity = Vec3.ZERO;
+    /** Set only while SBW resolves a terrain hit, so causeExplode knows to arm the delayed fuze. */
+    private Vec3 terrainImpact;
+    /** The penetrator charge is exploding: its Detonate recipients are cleared (blocks only). */
+    private boolean penetrating;
 
     public KabEntity(EntityType<? extends KabEntity> type, Level level) {
         super(type, level);
@@ -96,13 +114,83 @@ public class KabEntity extends MissileProjectile implements BasicGeoProjectileEn
 
     public int variant() { return variant; }
 
+    /** A terrain hit (SBW: afterHitBlock -> destroyBlock -> causeExplode); entity hits never arm the fuze. */
+    @Override public void afterHitBlock(BlockHitResult hit) {
+        terrainImpact = hit.getLocation();
+        try {
+            super.afterHitBlock(hit);
+        } finally {
+            terrainImpact = null;
+        }
+    }
+
     @Override public void causeExplode(Vec3 at) {
+        Vec3 impact = terrainImpact;
+        terrainImpact = null;
+        // The run is measured on the terrain the store actually struck, before its own blast.
+        Vec3 burst = impact != null && !getExploded() && level() instanceof ServerLevel server
+            ? penetration(server, at) : null;
         super.causeExplode(at);
         if (level() instanceof ServerLevel server) KabImpact.broadcast(server, at, variant, FAR_EFFECT_RANGE);
+        if (burst != null) penetratorCharge(burst);
+    }
+
+    /** Where the delayed fuze fires along the flight path, or null when the run is too short. */
+    private Vec3 penetration(ServerLevel server, Vec3 at) {
+        if (!hasExplosionDestroy() || !ExplosionConfig.EXPLOSION_DESTROY.get()) return null;
+        Vec3 velocity = flightVelocity.lengthSqr() > 1.0E-6 ? flightVelocity : getDeltaMovement();
+        Vec3 direction = finite(velocity) && velocity.lengthSqr() > 1.0E-6 ? velocity.normalize() : new Vec3(0, -1, 0);
+        double depth = KabPenetration.depth(PylonOrdnance.KABS.get(variant).radius(),
+            step -> resistance(server, at.add(direction.scale((step + 0.5) * KabPenetration.STEP))));
+        return KabPenetration.bursts(depth) ? at.add(direction.scale(depth)) : null;
+    }
+
+    private static double resistance(ServerLevel server, Vec3 point) {
+        BlockPos pos = BlockPos.containing(point);
+        if (!server.isInWorldBounds(pos) || !server.hasChunkAt(pos)) return Double.NaN;
+        BlockState state = server.getBlockState(pos);
+        if (state.isAir()) return 0;
+        if (state.getBlock() instanceof LiquidBlock) return KabPenetration.FLUID_RESISTANCE;
+        float hardness = state.getDestroySpeed(server, pos);
+        if (hardness < 0) return Double.NaN;
+        // Grass, flowers, torches and other non-colliding blocks do not slow the store.
+        return state.getCollisionShape(server, pos).isEmpty() ? 0 : hardness;
+    }
+
+    /**
+     * Second, block-breaking charge where the store stopped. It goes through the same native
+     * explosion as the surface blast, so claims, SBW's power-over-hardness rule and its
+     * delayed block waves apply alike (the run itself never passes obsidian-class or
+     * unbreakable blocks). Only its entity recipients are dropped (PenetratorRecipients):
+     * damage to troops and vehicles stays the surface blast's.
+     */
+    private void penetratorCharge(Vec3 burst) {
+        PylonOrdnance.Kab kab = PylonOrdnance.KABS.get(variant);
+        penetrating = true;
+        try {
+            new CustomExplosion.Builder(this).attacker(getOwner()).damage(kab.blastDamage())
+                .radius(KabPenetration.burstRadius(kab.radius())).position(burst).destroyBlock(true)
+                .withParticleType(ParticleTool.ParticleType.MINI).explode();
+        } finally {
+            penetrating = false;
+        }
+    }
+
+    /** The penetrator charge breaks blocks only; the surface blast already hit everyone nearby. */
+    @Mod.EventBusSubscriber(modid = LightAviation.ID)
+    public static final class PenetratorRecipients {
+        private PenetratorRecipients() {}
+
+        @SubscribeEvent(priority = EventPriority.HIGHEST)
+        public static void detonate(ExplosionEvent.Detonate event) {
+            if (event.getExplosion().getDirectSourceEntity() instanceof KabEntity bomb && bomb.penetrating)
+                event.getAffectedEntities().clear();
+        }
     }
 
     @Override public void tick() {
         if (!level().isClientSide && !released) release();
+        flightVelocity = getDeltaMovement();
         if (level().isClientSide && !flying) {
             flying = true;
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> dev.frontier.aviation.client.KabFlySound.startAirflow(this));

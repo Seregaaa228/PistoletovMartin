@@ -183,7 +183,7 @@
       "Velocity": 1.05,
       "ProjectileLife": 3600,
       "SeekWeaponInfo": {
-        "SeekDirection": "ClientCamera",
+        "SeekDirection": [0, -0.03, 1],
         "SeekRange": 256,
         "SeekAngle": 20,
         "SeekTime": 10,
@@ -268,7 +268,7 @@
       "Velocity": 1.05,
       "ProjectileLife": 3600,
       "SeekWeaponInfo": {
-        "SeekDirection": "ClientCamera",
+        "SeekDirection": [0, -0.03, 1],
         "SeekRange": 256,
         "SeekAngle": 20,
         "SeekTime": 10,

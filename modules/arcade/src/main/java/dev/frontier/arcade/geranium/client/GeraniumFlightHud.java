@@ -4,6 +4,7 @@ import com.atsuishio.superbwarfare.init.ModKeyMappings;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.math.Axis;
 import dev.frontier.arcade.geranium.GeraniumEntity;
+import dev.frontier.arcade.geranium.GeraniumFlightModel;
 import java.util.Locale;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -41,9 +42,10 @@ public final class GeraniumFlightHud {
         graphics.fill(edge, edge, width - edge, edge + 22, PANEL);
         graphics.fill(edge, edge, edge + 2, edge + 22, ACCENT);
         graphics.drawString(mc.font, "ГЕРАНЬ-2", edge + 8, edge + 7, TEXT, false);
+        boolean stall = target.isLaunched() && !lost && battery > 0 && GeraniumFlightModel.stallSpeed(target.flightSpeed());
         String phase = lost ? "НЕТ СВЯЗИ" : battery == 0 ? "НЕТ ПИТАНИЯ"
-            : !target.isLaunched() ? "ГОТОВ К ПУСКУ" : speed < 32 ? "РАЗГОН" : "ПОЛЁТ";
-        int phaseColor = lost || battery == 0 ? DANGER : target.isLaunched() ? ACCENT : WARNING;
+            : !target.isLaunched() ? "ГОТОВ К ПУСКУ" : stall ? "СВАЛИВАНИЕ" : "ПОЛЁТ";
+        int phaseColor = lost || battery == 0 || stall ? DANGER : target.isLaunched() ? ACCENT : WARNING;
         graphics.drawString(mc.font, phase, width - edge - 8 - mc.font.width(phase), edge + 7, phaseColor, false);
 
         int meterY = edge + 29;
@@ -74,15 +76,15 @@ public final class GeraniumFlightHud {
             fittedCentered(graphics, "ОТ ОПЕРАТОРА", width - edge - metricWidth / 2, metricY + 48, metricWidth, MUTED);
         }
 
-        attitude(graphics, centerX, centerY, target.getBodyPitch(partial), target.getRoll(partial), compact);
+        attitude(graphics, centerX, centerY, target.flightPitch(partial), target.getRoll(partial), compact);
         int footerY = height - edge - 27;
         if (!target.isLaunched()) {
             String launch = keyName(ModKeyMappings.MOVE_SPACE) + " — ПУСК ВПЕРЁД";
             int launchWidth = Math.min(innerWidth, mc.font.width(launch) + 18);
             graphics.fill(centerX - launchWidth / 2, footerY - 19, centerX + launchWidth / 2, footerY - 4, PANEL);
             fittedCentered(graphics, launch, centerX, footerY - 15, launchWidth - 10, WARNING);
-        } else if (signal <= 25 || (!relayed && range > limit * .85) || battery <= 15) {
-            String warning = lost ? "СВЯЗЬ ПОТЕРЯНА" : battery <= 15 ? "НИЗКИЙ ЗАРЯД"
+        } else if (stall || signal <= 25 || (!relayed && range > limit * .85) || battery <= 15) {
+            String warning = lost ? "СВЯЗЬ ПОТЕРЯНА" : stall ? "МАЛАЯ СКОРОСТЬ: ГАЗ, НОС ВНИЗ" : battery <= 15 ? "НИЗКИЙ ЗАРЯД"
                 : !relayed && range > limit * .85 ? "ПРЕДЕЛ ДАЛЬНОСТИ" : "СЛАБЫЙ СИГНАЛ";
             fittedCentered(graphics, warning, centerX, footerY - 15, innerWidth - 20, DANGER);
         }
@@ -90,7 +92,7 @@ public final class GeraniumFlightHud {
         graphics.fill(edge, footerY, width - edge, height - edge, PANEL);
         String control = keyName(ModKeyMappings.MOVE_FORWARD) + "/" + keyName(ModKeyMappings.MOVE_BACKWARD)
             + " газ  ·  " + keyName(ModKeyMappings.MOVE_LEFT) + "/" + keyName(ModKeyMappings.MOVE_RIGHT)
-            + " курс  ·  Мышь наклон";
+            + " крен  ·  Мышь крен/тангаж";
         String actions = keyName(stabilize) + " ровно  ·  " + keyName(mc.options.keyUse)
             + " выход  ·  " + keyName(ModKeyMappings.FIRE) + " подрыв";
         fittedCentered(graphics, control, centerX, footerY + 4, innerWidth - 12, TEXT);

@@ -94,6 +94,28 @@ public abstract class F16MissileFire extends VehicleEntity implements F16Missile
         }
     }
 
+    /**
+     * The native seeker cone has its apex at the pilot's camera. The third-person
+     * aircraft camera sits about 30 blocks behind the HUD origin, so a lock at the
+     * edge of that cone is wider than the same sector seen from the HUD origin and
+     * would be refused after the lock tone. Accept the sector from the configured
+     * camera point too; range and line of sight are still measured from the HUD origin.
+     */
+    @Unique private boolean aviation$inSeekerCone(LivingEntity pilot, Vec3 from, Vec3 point, Vec3 ray,
+                                                  double range, double sector) {
+        if (!(from.distanceToSqr(point) <= range * range)) return false;
+        var seats = computed().seats();
+        int index = getSeatIndex(pilot);
+        if (index < 0 || index >= seats.size()) return false;
+        var camera = seats.get(index).getCameraPos();
+        if (camera == null || !camera.getUseAircraftCamera() || camera.getAircraftCameraPos() == null) return false;
+        Vec3 local = camera.getAircraftCameraPos();
+        var world = getTransformFromString("Vehicle").transformPosition(new org.joml.Vector3d(local.x, local.y, local.z));
+        Vec3 apex = new Vec3(world.x, world.y, world.z);
+        return WeaponAimResolver.finite(apex)
+            && WeaponAimResolver.canResolvePoint(apex, point, ray, range + apex.distanceTo(from), sector);
+    }
+
     @Unique private void aviation$launch(LivingEntity pilot, Vec3 claimed) {
         aviation$fireMissiles(pilot, 1, claimed);
     }
@@ -125,7 +147,8 @@ public abstract class F16MissileFire extends VehicleEntity implements F16Missile
             var victim = serverLevel.getEntity(trackedEntity);
             if (victim == null || !victim.isAlive() || victim.getRootVehicle() == getRootVehicle()) return false;
             Vec3 point = victim.getBoundingBox().getCenter();
-            if (!WeaponAimResolver.canResolvePoint(from, point, ray, range, sector)) return false;
+            if (!WeaponAimResolver.canResolvePoint(from, point, ray, range, sector)
+                    && !aviation$inSeekerCone(pilot, from, point, ray, range, sector)) return false;
             aim = WeaponAimResolver.resolve(level(), pilot, from, point.subtract(from), Math.min(range, from.distanceTo(point) + 1));
             if (aim.isEmpty() || !aim.get().entity().filter(trackedEntity::equals).isPresent()) return false;
         }
