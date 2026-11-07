@@ -110,12 +110,35 @@ public final class F16MissileTriggerClient {
         }
     }
 
-    /** SBW's own seeker lock first, else an entity directly under the reticle; never for block-only seekers. */
+    /**
+     * SBW's own seeker lock first; for an air-to-air seeker, else the contact the seeker is
+     * already tracking in its cone (SBW picks it every tick, closest to the sight, never our own
+     * aircraft), so a missile homes without pixel-exact aim; else an entity under the reticle.
+     * Never for block-only seekers. The server re-checks the cone and line of sight.
+     */
     private static UUID trackedTarget(VehicleEntity vehicle, GunData gun, WeaponAimResult aim) {
-        if (gun.get(GunProp.SEEK_WEAPON_INFO).getOnlyLockBlock()) return null;
+        var seek = gun.get(GunProp.SEEK_WEAPON_INFO);
+        if (seek.getOnlyLockBlock()) return null;
         Entity locked = ClientEventHandler.lockingEntityVehicle;
-        if (locked != null && locked.isAlive() && !locked.isRemoved() && locked.level() == vehicle.level()
-                && locked.getRootVehicle() != vehicle.getRootVehicle()) return locked.getUUID();
+        if (usable(vehicle, locked)) return locked.getUUID();
+        Entity candidate = ClientEventHandler.nearestEntityVehicle;
+        if (seek.getOnlyLockEntity() && usable(vehicle, candidate)) return candidate.getUUID();
         return aim == null || aim.kind() != WeaponAimResult.Kind.ENTITY ? null : aim.entity().orElse(null);
+    }
+
+    private static boolean usable(VehicleEntity vehicle, Entity target) {
+        return target != null && target.isAlive() && !target.isRemoved() && target.level() == vehicle.level()
+            && target.getRootVehicle() != vehicle.getRootVehicle();
+    }
+
+    /**
+     * True while the pilot's selected weapon is an air-to-air seeker. DeepStrike's tablet and
+     * SBW's seek lock share the X key; with an AAM selected X belongs to the lock.
+     */
+    public static boolean airToAirSelected() {
+        VehicleEntity vehicle = FlightClient.controlledEntity();
+        if (vehicle == null || !handlesNative()) return false;
+        var gun = vehicle.getGunData(vehicle.getGunName(0));
+        return gun != null && gun.get(GunProp.SEEK_WEAPON_INFO).getOnlyLockEntity();
     }
 }

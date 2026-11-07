@@ -36,6 +36,8 @@ import net.minecraftforge.registries.ForgeRegistries;
 public final class ManualMissileShots {
     public static final String DIRECT_AIM = "frontierAircraftDirectAim";
     public static final String LOCKED_WIRE = "frontierAircraftLockedWire";
+    /** Proximity fuse radius (blocks) of an air-to-air missile launched by our aircraft. */
+    public static final String AAM_FUSE = "frontierAircraftAamFuse";
     private record Ticket(UUID vehicle, UUID pilot, long epoch, String gun, Vec3 target, Vec3 ray, UUID trackedEntity, long tick, int station) {}
     private static final class Frame {
         final Ticket ticket;
@@ -140,6 +142,12 @@ public final class ManualMissileShots {
         if (!(event.getLevel() instanceof ServerLevel)) return;
         var frame = FRAMES.get().peek();
         if (frame == null || frame.ticket == null || frame.parameters == null) return;
+        if (event.getEntity() instanceof MissileProjectile aam && aam.getOwner() != null
+                && (aam.getOwner().getUUID().equals(frame.ticket.pilot()) || aam.getOwner().getUUID().equals(frame.ticket.vehicle()))) {
+            // Entity-seeking air-to-air rounds get a proximity fuse (AircraftMissileFuse).
+            if (frame.ticket.gun().equals("AAMissile")) aam.getPersistentData().putFloat(AAM_FUSE, 4.0F);
+            else if (frame.ticket.gun().equals("LightAAMissile")) aam.getPersistentData().putFloat(AAM_FUSE, 3.0F);
+        }
         if (event.getEntity() instanceof MissileProjectile projectile && frame.ticket.station() >= 0) {
             var owner = projectile.getOwner();
             var vehicle = ((ServerLevel) event.getLevel()).getEntity(frame.ticket.vehicle());

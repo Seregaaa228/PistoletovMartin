@@ -325,6 +325,15 @@ public final class AircraftSystemsFixture {
         testerFix(command, "tf_fpv", 1400, TesterFix.FpvJets::new);
         testerFix(command, "tf_seek", 800, TesterFix.SeekSelf::new);
         testerFix(command, "tf_worker", 1000, TesterFix.WorkerLook::new);
+        // Air-to-air missile against a manoeuvring vulnerable target: real client lock + click.
+        var F16 = dev.frontier.aviation.AircraftProfile.F16;
+        var J10 = dev.frontier.aviation.AircraftProfile.J10;
+        var SU25 = dev.frontier.aviation.AircraftProfile.SU25;
+        testerFix(command, "aam_f16_jet", 900, p -> new AamHitScenario(p, F16, "aamissile", "frontier_aviation:f16", 2.5));
+        testerFix(command, "aam_f16_light_heli", 900, p -> new AamHitScenario(p, F16, "light_aamissile", "superbwarfare:mi_28", 1.0));
+        testerFix(command, "aam_j10_jet", 900, p -> new AamHitScenario(p, J10, "aamissile", "frontier_aviation:su25", 2.5));
+        testerFix(command, "aam_j10_light_drone", 900, p -> new AamHitScenario(p, J10, "light_aamissile", "frontier_arcade_vehicles:geranium_2_drone", 2.0));
+        testerFix(command, "aam_su25_light_jet", 900, p -> new AamHitScenario(p, SU25, "light_aamissile", "frontier_aviation:j10", 2.5));
         event.getDispatcher().register(command);
     }
 

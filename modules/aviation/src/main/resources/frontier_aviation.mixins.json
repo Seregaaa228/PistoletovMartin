@@ -34,7 +34,8 @@
     "ManualIronDomePackets",
     "ManualIronDomeLaunch",
     "GlideBombPylon",
-    "GlideBombOrdnanceRouting"
+    "GlideBombOrdnanceRouting",
+    "AircraftMissileFuse"
   ],
   "client": [
     "F16MissileWindowActive",
@@ -57,7 +58,8 @@
     "ClientTaskBudgetHook",
     "ClientSkyLightSourcesSkip",
     "BedrockModelPartCulling",
-    "TextureWarmupHook"
+    "TextureWarmupHook",
+    "AircraftSeekKey"
   ],
   "injectors": {
     "defaultRequire": 1

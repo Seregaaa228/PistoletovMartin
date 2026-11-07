@@ -74,6 +74,39 @@ public final class F16MissileHookContractTest {
                 return noVehicle && notFriendly;
             });
             if (!vehicleSeeker) throw new AssertionError("native vehicle seeker no longer filters through notFriendly");
+            // F16MissileTriggerClient fires at the seeker's current candidate when not locked.
+            if (client.fields.stream().noneMatch(f -> f.name.equals("nearestEntityVehicle") && f.desc.equals("Lnet/minecraft/world/entity/Entity;")))
+                throw new AssertionError("SBW seeker candidate field changed");
+            // AircraftMissileFuse: injects at the tail of MissileProjectile's tick and bursts
+            // through SBW's own public hit path.
+            ClassNode missile = new ClassNode(), fast = new ClassNode();
+            try (var input = file.getInputStream(file.getJarEntry("com/atsuishio/superbwarfare/entity/projectile/MissileProjectile.class"))) {
+                new ClassReader(input).accept(missile, 0);
+            }
+            try (var input = file.getInputStream(file.getJarEntry("com/atsuishio/superbwarfare/entity/projectile/FastThrowableProjectile.class"))) {
+                new ClassReader(input).accept(fast, 0);
+            }
+            if (missile.methods.stream().noneMatch(m -> m.name.equals("m_8119_") && m.desc.equals("()V")))
+                throw new AssertionError("MissileProjectile tick anchor changed");
+            for (String signature : new String[]{"performDamage(Lnet/minecraft/world/entity/Entity;FZ)V",
+                    "afterHitEntity(Lnet/minecraft/world/phys/EntityHitResult;)V"}) {
+                String name = signature.substring(0, signature.indexOf('('));
+                String descriptor = signature.substring(signature.indexOf('('));
+                if (fast.methods.stream().noneMatch(m -> m.name.equals(name) && m.desc.equals(descriptor) && (m.access & Opcodes.ACC_PUBLIC) != 0))
+                    throw new AssertionError("SBW projectile hit path changed: " + signature);
+            }
+        }
+        // AircraftSeekKey: DeepStrike's console key opens the aircraft tablet through exactly one call.
+        try (JarFile dsm = new JarFile(Path.of("instance/mods/dsm-0.9.0.jar").toFile())) {
+            ClassNode screen = new ClassNode();
+            try (var input = dsm.getInputStream(dsm.getJarEntry("dev/sbw/deepstrike/client/PatriotDefenseScreen.class"))) {
+                new ClassReader(input).accept(screen, 0);
+            }
+            MethodNode tick = screen.methods.stream().filter(m -> m.name.equals("clientTick")).findFirst().orElseThrow();
+            long opens = java.util.stream.StreamSupport.stream(tick.instructions.spliterator(), false)
+                .filter(insn -> insn instanceof MethodInsnNode call && call.owner.equals("dev/sbw/deepstrike/client/Su24mScreen")
+                    && call.name.equals("open") && call.desc.equals("(I)V")).count();
+            if (opens != 1) throw new AssertionError("DeepStrike console key no longer opens the aircraft tablet through Su24mScreen.open");
         }
         // Tablet racks (GlideBombPylon, F16StormStoreLimit): an owned jet's launch point comes
         // from pylonPosition, which DeepStrike's launch must still call.
