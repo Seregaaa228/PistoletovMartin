@@ -48,6 +48,14 @@ public final class ArtilleryBlast {
     private static final double LAUNCH_SIGHT = 384;
     private static final int MAX_ECHOES = 1024;
     private static final ResourceLocation ROCKET_FIRE = new ResourceLocation("superbwarfare", "medium_rocket_fire");
+    /** DeepStrike's heavy launch as heard from the middle distance and from far off. */
+    private static final ResourceLocation LAUNCH_MID = new ResourceLocation("deepstrike", "entity.missile.launch_mid");
+    private static final ResourceLocation LAUNCH_FAR = new ResourceLocation("deepstrike", "entity.missile.launch_far");
+    /** Beyond this the far launch sound is used. */
+    private static final double MID_LAUNCH = 400;
+    /** A salvo reaches each listener as a ripple, not forty stacked copies: one roar per player per this many ticks. */
+    private static final int ROAR_GAP = 3;
+    private static final java.util.Map<UUID, Long> LAST_ROAR = new java.util.HashMap<>();
     private static final List<Echo> ECHOES = new ArrayList<>();
 
     /** A sound on its way to one listener: a burst's boom, or a rocket launch's roar. */
@@ -145,14 +153,19 @@ public final class ArtilleryBlast {
         play(player, SoundEvents.LIGHTNING_BOLT_THUNDER, source, volume * 0.7f, 0.65f + 0.2f * near, seed);
     }
 
-    /** A distant rocket launch: SBW's own rocket report, lower and quieter with distance, from its direction. */
+    /** A distant rocket launch: DeepStrike's heavy launch at mid or far range, quieter with distance, from its direction. */
     private static void roar(ServerPlayer player, Echo echo) {
+        long now = echo.level.getGameTime();
+        Long last = LAST_ROAR.get(player.getUUID());
+        if (last != null && now - last < ROAR_GAP) return;
+        LAST_ROAR.put(player.getUUID(), now);
         Vec3 ear = player.getEyePosition();
         Vec3 toward = echo.blast.subtract(ear);
         Vec3 source = toward.lengthSqr() < 1.0E-6 ? ear : ear.add(toward.normalize().scale(2));
         float near = (float) (1 - echo.distance / HEARING);
-        SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(ROCKET_FIRE);
-        play(player, sound != null ? sound : SoundEvents.FIREWORK_ROCKET_LAUNCH, source, 0.25f + 0.5f * near, 0.6f + 0.25f * near,
+        SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(echo.distance < MID_LAUNCH ? LAUNCH_MID : LAUNCH_FAR);
+        if (sound == null) sound = ForgeRegistries.SOUND_EVENTS.getValue(ROCKET_FIRE);
+        play(player, sound != null ? sound : SoundEvents.FIREWORK_ROCKET_LAUNCH, source, 0.35f + 0.55f * near, 0.9f + 0.15f * near,
             player.getRandom().nextLong());
     }
 
@@ -164,5 +177,6 @@ public final class ArtilleryBlast {
     @SubscribeEvent
     public static void stopping(ServerStoppingEvent event) {
         ECHOES.clear();
+        LAST_ROAR.clear();
     }
 }

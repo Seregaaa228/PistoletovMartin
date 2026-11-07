@@ -32,6 +32,10 @@ public final class ArtilleryTracersClient {
     private static final java.util.Set<MediumRocketEntity> LAUNCHED = java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>());
     /** Distance from a rocket leaving the tube to the back of the Grad's pack, where the backblast comes out. */
     private static final double PACK_LENGTH = 4.6;
+    /** Launch flashes at the tube mouth: where and when, drawn by RocketJets for a few ticks. */
+    record Flash(Vec3 at, long born) { }
+    static final int FLASH_TICKS = 4;
+    static final List<Flash> FLASHES = new ArrayList<>();
 
     private static final class Tracer {
         final int id;
@@ -74,14 +78,29 @@ public final class ArtilleryTracersClient {
             if (motion.lengthSqr() < 0.25 || rocket.position().distanceToSqr(camera) > FLAME_SIGHT_SQ) return false;
             Vec3 ahead = motion.normalize();
             if (rocket.tickCount < 6 && LAUNCHED.add(rocket)) {
-                Vec3 rear = rocket.position().subtract(ahead.scale(PACK_LENGTH + rocket.tickCount * motion.length()));
-                for (int i = 0; i < 14; i++) {
-                    Vec3 v = ahead.scale(-0.45 - random.nextDouble() * 0.5).add(random.nextGaussian() * 0.06, random.nextGaussian() * 0.06, random.nextGaussian() * 0.06);
-                    level.addParticle(i % 3 == 0 ? ParticleTypes.LAVA : ParticleTypes.FLAME, true, rear.x, rear.y, rear.z, v.x, v.y, v.z);
+                Vec3 mouth = rocket.position().subtract(ahead.scale(rocket.tickCount * motion.length()));
+                Vec3 rear = mouth.subtract(ahead.scale(PACK_LENGTH));
+                FLASHES.add(new Flash(mouth, level.getGameTime()));
+                // The jet blows out of the back of the pack: fire, sparks and hot smoke streaming rearwards.
+                for (int i = 0; i < 22; i++) {
+                    Vec3 v = ahead.scale(-0.5 - random.nextDouble() * 0.7).add(random.nextGaussian() * 0.08, random.nextGaussian() * 0.06, random.nextGaussian() * 0.08);
+                    level.addParticle(i % 4 == 0 ? ParticleTypes.LAVA : i % 4 == 1 ? ParticleTypes.SMALL_FLAME : ParticleTypes.FLAME, true,
+                        rear.x, rear.y, rear.z, v.x, v.y, v.z);
                 }
-                for (int i = 0; i < 8; i++) {
-                    Vec3 v = ahead.scale(-0.15 - random.nextDouble() * 0.2).add(random.nextGaussian() * 0.04, 0.03 + random.nextDouble() * 0.04, random.nextGaussian() * 0.04);
+                for (int i = 0; i < 10; i++) {
+                    Vec3 v = ahead.scale(-0.2 - random.nextDouble() * 0.25).add(random.nextGaussian() * 0.05, 0.02 + random.nextDouble() * 0.05, random.nextGaussian() * 0.05);
                     level.addParticle(ParticleTypes.LARGE_SMOKE, true, rear.x, rear.y, rear.z, v.x, v.y, v.z);
+                }
+                // A slow, lingering cloud that builds up round the launcher over a salvo.
+                for (int i = 0; i < 2; i++) {
+                    double dx = random.nextGaussian() * 2.5, dz = random.nextGaussian() * 2.5;
+                    level.addAlwaysVisibleParticle(ParticleTypes.CAMPFIRE_COSY_SMOKE, true, rear.x + dx, rear.y - 1 + random.nextDouble(),
+                        rear.z + dz, random.nextGaussian() * 0.01, 0.015, random.nextGaussian() * 0.01);
+                }
+                // A white smoke streak from the mouth along the first stretch of flight.
+                for (int i = 0; i < 6; i++) {
+                    Vec3 at = mouth.add(ahead.scale(i * 1.5));
+                    level.addParticle(ParticleTypes.CLOUD, true, at.x, at.y, at.z, random.nextGaussian() * 0.02, 0.01, random.nextGaussian() * 0.02);
                 }
             } else {
                 LAUNCHED.add(rocket);
@@ -98,21 +117,27 @@ public final class ArtilleryTracersClient {
             if (rocket.isRemoved()) continue;
             Vec3 motion = rocket.getDeltaMovement();
             if (motion.lengthSqr() < 0.25) continue;
-            sink.accept(rocket.getPosition(partial), motion.normalize(), rocket.getId());
+            sink.accept(rocket.getPosition(partial), motion.normalize(), rocket.getId(), rocket.tickCount + partial);
         }
         for (Tracer tracer : TRACERS)
-            if (tracer.rocket) sink.accept(tracer.previous.lerp(tracer.position, partial), tracer.velocity.normalize(), tracer.id);
+            if (tracer.rocket) sink.accept(tracer.previous.lerp(tracer.position, partial), tracer.velocity.normalize(), tracer.id, 1000);
     }
 
-    interface JetSink { void accept(Vec3 position, Vec3 direction, int seed); }
+    /** {@code age}: ticks since launch, for the brighter boost phase of a fresh rocket. */
+    interface JetSink { void accept(Vec3 position, Vec3 direction, int seed, float age); }
 
     @SubscribeEvent
     public static void tick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || TRACERS.isEmpty() && ROCKETS.isEmpty()) return;
+        if (event.phase != TickEvent.Phase.END) return;
         var mc = Minecraft.getInstance();
         var level = mc.level;
         if (level == null || mc.isPaused()) return;
         Vec3 camera = mc.gameRenderer.getMainCamera().getPosition();
+        FLASHES.removeIf(flash -> level.getGameTime() - flash.born > FLASH_TICKS);
+        if (TRACERS.isEmpty() && ROCKETS.isEmpty()) {
+            FlightSounds.update(java.util.List.of(), camera);
+            return;
+        }
         flames(level, camera);
         TRACERS.removeIf(tracer -> {
             Vec3 from = tracer.position;
@@ -136,11 +161,16 @@ public final class ArtilleryTracersClient {
             }
             return false;
         });
+        java.util.List<FlightSounds.Round> rounds = new ArrayList<>(TRACERS.size());
+        for (Tracer tracer : TRACERS) rounds.add(new FlightSounds.Round(tracer.id, tracer.position, tracer.velocity, tracer.rocket));
+        FlightSounds.update(rounds, camera);
     }
 
     @SubscribeEvent
     public static void loggedOut(ClientPlayerNetworkEvent.LoggingOut event) {
         TRACERS.clear();
         ROCKETS.clear();
+        FLASHES.clear();
+        FlightSounds.clear();
     }
 }

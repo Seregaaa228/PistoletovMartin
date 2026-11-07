@@ -45,23 +45,32 @@ public final class RocketJets {
             RenderType type = hot ? RenderType.lightning() : RenderType.debugQuads();
             VertexConsumer out = buffers.getBuffer(type);
             boolean[] any = {false};
-            ArtilleryTracersClient.forEachJet(partial, (position, direction, seed) -> {
+            ArtilleryTracersClient.forEachJet(partial, (position, direction, seed, age) -> {
                 Vec3 nozzle = position.subtract(direction.scale(NOZZLE));
                 double distanceSq = nozzle.distanceToSqr(camera);
                 if (distanceSq > SIGHT_SQ) return;
                 Vec3 at = nozzle.subtract(camera);
                 // Flicker: each rocket breathes on its own phase.
                 float flicker = 0.85f + 0.15f * (float) Math.sin(time * 2.7 + seed * 1.3) + 0.08f * (float) Math.sin(time * 7.1 + seed);
+                // Boost: the first half second the motor burns long and fierce, then settles to cruise.
+                float boost = 1 + 0.8f * Math.max(0, 1 - age / 10);
                 if (hot) {
                     // Far away the glow keeps a readable size on screen.
                     float grow = (float) Math.max(1, Math.sqrt(distanceSq) / 96);
-                    glow(out, m, at, 0.22f * grow * flicker);
-                    if (distanceSq <= PLUME_SQ) plume(out, m, at, direction, 1.4f * flicker, 0.14f, 255, 225, 150, 150);
+                    glow(out, m, at, 0.22f * grow * flicker * boost);
+                    if (distanceSq <= PLUME_SQ) plume(out, m, at, direction, 1.4f * flicker * boost, 0.14f * boost, 255, 225, 150, 150);
                 } else if (distanceSq <= PLUME_SQ) {
-                    plume(out, m, at, direction, 3.4f * flicker, 0.32f, 255, 110, 20, 210);
+                    plume(out, m, at, direction, 3.4f * flicker * boost, 0.32f * boost, 255, 110, 20, 210);
                 }
                 any[0] = true;
             });
+            if (hot) for (var flash : ArtilleryTracersClient.FLASHES) {
+                // The launch flash at the tube mouth: big and white, gone in a few ticks.
+                float fade = 1 - (time - flash.born()) / ArtilleryTracersClient.FLASH_TICKS;
+                if (fade <= 0 || flash.at().distanceToSqr(camera) > SIGHT_SQ) continue;
+                glow(out, m, flash.at().subtract(camera), 1.6f * fade + 0.4f);
+                any[0] = true;
+            }
             if (any[0]) buffers.endBatch(type);
         }
     }
