@@ -54,5 +54,8 @@
   "item.frontier_arcade_vehicles.vehicle_deploy": "Техника: быстрый спавн",
   "item.frontier_arcade_vehicles.vehicle_deploy.named": "%s",
   "item.frontier_arcade_vehicles.vehicle_deploy.hint": "ПКМ по земле — техника сразу на месте, без контейнера и лома",
-  "message.frontier_arcade_vehicles.vehicle_deploy.no_room": "Мало места: выбери ровную площадку"
+  "message.frontier_arcade_vehicles.vehicle_deploy.no_room": "Мало места: выбери ровную площадку",
+  "entity.frontier_arcade_vehicles.msta_s": "2С19 «Мста-С»",
+  "entity.frontier_arcade_vehicles.bohdana": "2С22 «Богдана»",
+  "entity.frontier_arcade_vehicles.grad": "БМ-21 «Град»"
 }

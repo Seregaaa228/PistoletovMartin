@@ -62,41 +62,59 @@
       "predicate": {
         "frontier_arcade_vehicles:vehicle": 0.1
       },
-      "model": "frontier_arcade_vehicles:item/vehicle_deploy/tow"
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/msta_s"
     },
     {
       "predicate": {
         "frontier_arcade_vehicles:vehicle": 0.11
       },
-      "model": "frontier_arcade_vehicles:item/vehicle_deploy/lav_ad"
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/bohdana"
     },
     {
       "predicate": {
         "frontier_arcade_vehicles:vehicle": 0.12
       },
-      "model": "frontier_arcade_vehicles:item/vehicle_deploy/hpj_11"
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/grad"
     },
     {
       "predicate": {
         "frontier_arcade_vehicles:vehicle": 0.13
       },
-      "model": "frontier_arcade_vehicles:item/vehicle_deploy/ah_6"
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/tow"
     },
     {
       "predicate": {
         "frontier_arcade_vehicles:vehicle": 0.14
       },
-      "model": "frontier_arcade_vehicles:item/vehicle_deploy/mi_28"
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/lav_ad"
     },
     {
       "predicate": {
         "frontier_arcade_vehicles:vehicle": 0.15
       },
-      "model": "frontier_arcade_vehicles:item/vehicle_deploy/speedboat"
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/hpj_11"
     },
     {
       "predicate": {
         "frontier_arcade_vehicles:vehicle": 0.16
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/ah_6"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.17
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/mi_28"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.18
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/speedboat"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.19
       },
       "model": "frontier_arcade_vehicles:item/vehicle_deploy/tiny_speedboat"
     }

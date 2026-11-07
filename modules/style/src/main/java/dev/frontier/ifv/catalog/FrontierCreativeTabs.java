@@ -29,11 +29,16 @@ public final class FrontierCreativeTabs {
     private static final Set<String> SOURCES = Set.of("superbwarfare", "deepstrike", "uncomplicatedfpv", "tacz", "tacteq", "frontier_arcade_vehicles", "frontier_industry", "frontier_aviation", "frontier_nations");
     /** The arcade module's quick-deploy item, looked up by name so this module does not depend on it. */
     private static final ResourceLocation DEPLOY_ITEM = new ResourceLocation("frontier_arcade_vehicles", "vehicle_deploy");
-    /** Mirrors the arcade module's VehicleDeploy.ORDER: the SBW vehicles it has icons for, in catalog order. */
+    /** Mirrors the arcade module's VehicleDeploy.ORDER: the vehicles it has icons for, in catalog order. */
     private static final List<String> DEPLOY_ORDER = List.of(
-            "t_90a", "m_1a_2", "ztz_99a", "yx_100", "prism_tank",
-            "bmp_2", "bradley", "lav_25", "plz_05", "tow",
-            "lav_ad", "hpj_11", "ah_6", "mi_28", "speedboat", "tiny_speedboat");
+            "superbwarfare:t_90a", "superbwarfare:m_1a_2", "superbwarfare:ztz_99a", "superbwarfare:yx_100",
+            "superbwarfare:prism_tank", "superbwarfare:bmp_2", "superbwarfare:bradley", "superbwarfare:lav_25",
+            "superbwarfare:plz_05", "frontier_arcade_vehicles:msta_s", "frontier_arcade_vehicles:bohdana",
+            "frontier_arcade_vehicles:grad", "superbwarfare:tow", "superbwarfare:lav_ad", "superbwarfare:hpj_11",
+            "superbwarfare:ah_6", "superbwarfare:mi_28", "superbwarfare:speedboat", "superbwarfare:tiny_speedboat");
+    /** Our own vehicles: no SBW crate to replace, so the catalog adds their quick-deploy items itself. */
+    private static final List<String> OWN_VEHICLES = List.of(
+            "frontier_arcade_vehicles:msta_s", "frontier_arcade_vehicles:bohdana", "frontier_arcade_vehicles:grad");
     private static CreativeModeTab.ItemDisplayParameters cachedParameters;
     private static Map<Group, Set<ItemStack>> cached;
 
@@ -63,7 +68,7 @@ public final class FrontierCreativeTabs {
         TABS.register("catalog_0_quick_vehicles", () -> CreativeModeTab.builder()
                 .title(Component.literal("Frontier · Вся техника — сразу в бой"))
                 .icon(() -> {
-                    ItemStack icon = deployStack("plz_05");
+                    ItemStack icon = deployStack("superbwarfare:plz_05");
                     return icon.isEmpty() ? new ItemStack(Items.MINECART) : icon;
                 })
                 .displayItems((parameters, output) -> output.acceptAll(quickVehicles(contents(parameters))))
@@ -95,6 +100,10 @@ public final class FrontierCreativeTabs {
                 groups.get(classify(copy, shownId, tabId)).add(copy);
             }
         }
+        for (String vehicle : OWN_VEHICLES) {
+            ItemStack deploy = deployStack(vehicle);
+            if (!deploy.isEmpty()) groups.get(Group.VEHICLES).add(deploy);
+        }
         for (Group group : Group.values()) groups.put(group, deployFirst(groups.get(group)));
         cachedParameters = parameters;
         cached = groups;
@@ -110,23 +119,23 @@ public final class FrontierCreativeTabs {
         copy.setCount(1);
         CompoundTag crate = stack.getTagElement("BlockEntityTag");
         ResourceLocation vehicle = crate == null ? null : ResourceLocation.tryParse(crate.getString("EntityType"));
-        if (vehicle == null || !vehicle.getNamespace().equals("superbwarfare") || !DEPLOY_ORDER.contains(vehicle.getPath())) return copy;
-        ItemStack deploy = deployStack(vehicle.getPath());
+        if (vehicle == null || !DEPLOY_ORDER.contains(vehicle.toString())) return copy;
+        ItemStack deploy = deployStack(vehicle.toString());
         return deploy.isEmpty() ? copy : deploy;
     }
 
-    private static ItemStack deployStack(String vehiclePath) {
+    private static ItemStack deployStack(String vehicle) {
         Item item = ForgeRegistries.ITEMS.getValue(DEPLOY_ITEM);
         if (item == null || item == Items.AIR) return ItemStack.EMPTY;
         ItemStack stack = new ItemStack(item);
-        stack.getOrCreateTag().putString("Vehicle", "superbwarfare:" + vehiclePath);
+        stack.getOrCreateTag().putString("Vehicle", vehicle);
         return stack;
     }
 
     private static int deployIndex(ItemStack stack) {
         if (!DEPLOY_ITEM.equals(ForgeRegistries.ITEMS.getKey(stack.getItem())) || !stack.hasTag()) return -1;
         ResourceLocation vehicle = ResourceLocation.tryParse(stack.getTag().getString("Vehicle"));
-        return vehicle == null ? -1 : DEPLOY_ORDER.indexOf(vehicle.getPath());
+        return vehicle == null ? -1 : DEPLOY_ORDER.indexOf(vehicle.toString());
     }
 
     /** Quick-deploy vehicles lead their tab, in catalog order; the rest keep their source order. */

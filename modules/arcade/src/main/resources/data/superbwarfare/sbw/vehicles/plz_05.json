@@ -4,7 +4,7 @@
   "UpStep": 2.1,
   "TurretPos": [0, 1.93, -0.878],
   "TurretTurnSpeed": [2, 1.5],
-  "TurretPitchRange": [-3, 65],
+  "TurretPitchRange": [-3, 87],
   "BarrelPos": [0, 0.878, 0.965],
   "TurretControllerIndex": 1,
   "Seats": [
@@ -31,7 +31,7 @@
         "Direction": "Barrel"
       },
       "MinPitch": -3,
-      "MaxPitch": 65,
+      "MaxPitch": 87,
       "Sensitivity": [0.42, 0.55, 0.9],
       "Weapons": ["Main"],
       "DismountInfo": {

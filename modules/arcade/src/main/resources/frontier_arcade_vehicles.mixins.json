@@ -20,7 +20,8 @@
     "AddonControlLifecycle",
     "NativeMonitorReconnect",
     "ArtilleryShellChunks",
-    "ArtilleryShellBlast"
+    "ArtilleryShellBlast",
+    "ArtilleryRocketChunks"
   ],
   "client": [
     "GeraniumInteriorSound",

@@ -1,0 +1,9 @@
+{
+  "Animation": "superbwarfare:animations/bedrock/vehicle/plz_05.animation.json",
+  "Models": [
+    {
+      "Model": "frontier_arcade_vehicles:models/bedrock/vehicle/msta_s.geo.json",
+      "Texture": "frontier_arcade_vehicles:textures/bedrock/vehicle/msta_s.png"
+    }
+  ]
+}

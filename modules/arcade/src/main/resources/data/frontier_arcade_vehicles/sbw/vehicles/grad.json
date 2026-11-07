@@ -1,0 +1,642 @@
+{
+  "MaxHealth": 300,
+  "MaxEnergy": 5000000,
+  "UpStep": 2.1,
+  "TurretPos": [
+    0.0,
+    1.75,
+    -1.875
+  ],
+  "TurretTurnSpeed": [
+    2,
+    1.5
+  ],
+  "TurretPitchRange": [
+    -3,
+    87
+  ],
+  "BarrelPos": [
+    0.0,
+    0.4375,
+    -1.0625
+  ],
+  "TurretControllerIndex": 1,
+  "Seats": [
+    {
+      "Transform": "Vehicle",
+      "Position": [
+        0.656,
+        1.19,
+        2.19
+      ],
+      "RotateWithVehicle": true,
+      "MinPitch": -60,
+      "MaxPitch": 60,
+      "MinYaw": -95,
+      "MaxYaw": 95,
+      "DismountInfo": {
+        "Transform": "Vehicle",
+        "Position": [
+          2.5,
+          0.375,
+          2.656
+        ]
+      },
+      "HidePassenger": true
+    },
+    {
+      "HidePassenger": true,
+      "Transform": "Turret",
+      "Position": [
+        1.152,
+        0.234,
+        1.214
+      ],
+      "CameraPos": {
+        "Transform": "Barrel",
+        "ZoomPosition": [
+          0,
+          0.626,
+          1.526
+        ],
+        "Direction": "Barrel"
+      },
+      "MinPitch": -3,
+      "MaxPitch": 87,
+      "Sensitivity": [
+        0.42,
+        0.55,
+        0.9
+      ],
+      "Weapons": [
+        "Main"
+      ],
+      "DismountInfo": {
+        "Transform": "Vehicle",
+        "Position": [
+          0,
+          0.375,
+          -5
+        ]
+      },
+      "HasThermalImaging": true
+    },
+    {
+      "Transform": "Turret",
+      "Position": [
+        1.1525,
+        0.75,
+        -0.51145
+      ],
+      "CanRotateBody": true,
+      "RotateWithVehicle": true,
+      "MinPitch": -50,
+      "MaxPitch": 90,
+      "DismountInfo": {
+        "Transform": "Vehicle",
+        "Position": [
+          0,
+          0.375,
+          -5
+        ]
+      },
+      "HidePassenger": true
+    },
+    {
+      "Transform": "Turret",
+      "Position": [
+        -1.1525,
+        0.75,
+        -0.51145
+      ],
+      "CanRotateBody": true,
+      "RotateWithVehicle": true,
+      "MinPitch": -50,
+      "MaxPitch": 90,
+      "DismountInfo": {
+        "Transform": "Vehicle",
+        "Position": [
+          0,
+          0.375,
+          -5
+        ]
+      },
+      "HidePassenger": true
+    }
+  ],
+  "Weapons": {
+    "Main": {
+      "Icon": "superbwarfare:textures/overlay/vehicle/weapon/icons/he_shell.png",
+      "ShellType": "HE",
+      "DefaultFireMode": "Auto",
+      "AvailableFireModes": "Auto",
+      "Projectile": "superbwarfare:medium_rocket",
+      "Magazine": 40,
+      "EmptyReloadTime": 600,
+      "DefaultZoom": 3,
+      "Velocity": 16,
+      "Gravity": 0.05,
+      "ApDurability": 200,
+      "Damage": 200,
+      "ExplosionDamage": 420,
+      "ExplosionRadius": 16,
+      "RecoilTime": 42,
+      "RecoilForce": 0.2,
+      "ShootShake": [
+        3,
+        4,
+        12
+      ],
+      "Spread": 0,
+      "ProjectileLife": 800,
+      "ShootAnimationTime": 30,
+      "Crosshair": "@VehicleRuApc",
+      "CrosshairColor": "0x00ff66",
+      "Name": "item.superbwarfare.medium_rocket_he",
+      "SoundInfo": {
+        "Fire1P": "superbwarfare:medium_rocket_fire",
+        "Fire3P": "superbwarfare:medium_rocket_fire",
+        "Fire3PFar": "superbwarfare:plz_05_far",
+        "Fire3PVeryFar": "superbwarfare:plz_05_veryfar"
+      },
+      "SoundRadius": 32,
+      "AmmoType": [
+        "superbwarfare:medium_rocket_he"
+      ],
+      "ShootPos": {
+        "Transform": "Barrel",
+        "Positions": [
+          [
+            -0.9563,
+            0.2,
+            4.15
+          ],
+          [
+            -0.7438,
+            0.2,
+            4.15
+          ],
+          [
+            -0.5312,
+            0.2,
+            4.15
+          ],
+          [
+            -0.3188,
+            0.2,
+            4.15
+          ],
+          [
+            -0.1063,
+            0.2,
+            4.15
+          ],
+          [
+            0.1062,
+            0.2,
+            4.15
+          ],
+          [
+            0.3187,
+            0.2,
+            4.15
+          ],
+          [
+            0.5312,
+            0.2,
+            4.15
+          ],
+          [
+            0.7437,
+            0.2,
+            4.15
+          ],
+          [
+            0.9562,
+            0.2,
+            4.15
+          ],
+          [
+            -0.9563,
+            0.4125,
+            4.15
+          ],
+          [
+            -0.7438,
+            0.4125,
+            4.15
+          ],
+          [
+            -0.5312,
+            0.4125,
+            4.15
+          ],
+          [
+            -0.3188,
+            0.4125,
+            4.15
+          ],
+          [
+            -0.1063,
+            0.4125,
+            4.15
+          ],
+          [
+            0.1062,
+            0.4125,
+            4.15
+          ],
+          [
+            0.3187,
+            0.4125,
+            4.15
+          ],
+          [
+            0.5312,
+            0.4125,
+            4.15
+          ],
+          [
+            0.7437,
+            0.4125,
+            4.15
+          ],
+          [
+            0.9562,
+            0.4125,
+            4.15
+          ],
+          [
+            -0.9563,
+            0.625,
+            4.15
+          ],
+          [
+            -0.7438,
+            0.625,
+            4.15
+          ],
+          [
+            -0.5312,
+            0.625,
+            4.15
+          ],
+          [
+            -0.3188,
+            0.625,
+            4.15
+          ],
+          [
+            -0.1063,
+            0.625,
+            4.15
+          ],
+          [
+            0.1062,
+            0.625,
+            4.15
+          ],
+          [
+            0.3187,
+            0.625,
+            4.15
+          ],
+          [
+            0.5312,
+            0.625,
+            4.15
+          ],
+          [
+            0.7437,
+            0.625,
+            4.15
+          ],
+          [
+            0.9562,
+            0.625,
+            4.15
+          ],
+          [
+            -0.9563,
+            0.8375,
+            4.15
+          ],
+          [
+            -0.7438,
+            0.8375,
+            4.15
+          ],
+          [
+            -0.5312,
+            0.8375,
+            4.15
+          ],
+          [
+            -0.3188,
+            0.8375,
+            4.15
+          ],
+          [
+            -0.1063,
+            0.8375,
+            4.15
+          ],
+          [
+            0.1062,
+            0.8375,
+            4.15
+          ],
+          [
+            0.3187,
+            0.8375,
+            4.15
+          ],
+          [
+            0.5312,
+            0.8375,
+            4.15
+          ],
+          [
+            0.7437,
+            0.8375,
+            4.15
+          ],
+          [
+            0.9562,
+            0.8375,
+            4.15
+          ]
+        ],
+        "Directions": [
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel",
+          "Barrel"
+        ]
+      },
+      "RPM": 120
+    }
+  },
+  "Mass": 45,
+  "DamageModifiers": [
+    "All - 15",
+    "minecraft:lava + 15",
+    "minecraft:lava * 8.33",
+    "@minecraft:tnt * 5",
+    "@minecraft:tnt_minecart * 5",
+    "minecraft:arrow 0",
+    "minecraft:trident 0",
+    "minecraft:mob_attack 0",
+    "minecraft:mob_attack_no_aggro 0",
+    "minecraft:mob_projectile 0",
+    "minecraft:player_attack 0",
+    "@#superbwarfare:aerial_bomb * 12",
+    "#superbwarfare:projectile 0",
+    "All * 0.24",
+    "superbwarfare:vehicle_strike * 2.5",
+    "minecraft:explosion * 2.3",
+    "superbwarfare:custom_explosion * 0.72",
+    "superbwarfare:projectile_explosion * 0.72",
+    "superbwarfare:mine * 0.65",
+    "superbwarfare:lunge_mine * 0.75",
+    "superbwarfare:projectile_hit * 1.34",
+    "superbwarfare:grapeshot_hit * 0.12",
+    "#superbwarfare:projectile_absolute * 0.18",
+    "@#superbwarfare:aa_missile * 0.3",
+    "@superbwarfare:small_cannon_shell * 0.29",
+    "@superbwarfare:c4 * 6",
+    "@#superbwarfare:at_rocket * 1.4",
+    "@superbwarfare:gun_grenade * 1.45",
+    "@superbwarfare:mortar_shell * 1.45",
+    "@superbwarfare:tm_62 * 2.8",
+    "$entity.getSourceAngle(source, 0.3) * damage"
+  ],
+  "HUDColor": "0x00ff66",
+  "EngineType": "Track",
+  "EngineInfo": {
+    "Buoyancy": 0,
+    "EnergyCostRate": 128,
+    "WheelRotSpeed": 1.15,
+    "WheelDifferential": 0.55,
+    "TrackRotSpeed": 1.55,
+    "TrackDifferential": 0.6,
+    "MaxForwardSpeedRate": 0.95,
+    "MaxBackwardSpeedRate": 0.4,
+    "Increment": 0.012,
+    "Decrement": 0.007,
+    "SteeringSpeed": 0.07,
+    "EngineSoundVolume": 0.7
+  },
+  "EngineSound": "superbwarfare:truck_engine",
+  "ThirdPersonCameraPos": [
+    -0.8669625,
+    1.769,
+    6
+  ],
+  "VehicleIcon": "frontier_arcade_vehicles:textures/vehicle_icon/grad_icon.png",
+  "ContainerIcon": "superbwarfare:textures/gui/vehicle/type/land.png",
+  "VehicleContainerType": "Medium",
+  "Type": "Tank",
+  "CollisionLevel": {
+    "Level": 4,
+    "PowerLimits": [
+      [
+        0,
+        0,
+        true
+      ],
+      [
+        0,
+        0,
+        true
+      ],
+      [
+        0.1,
+        0.05,
+        false
+      ],
+      [
+        1,
+        0.3,
+        false
+      ]
+    ]
+  },
+  "DestroyInfo": {
+    "ExplosionDamage": 250,
+    "ExplosionRadius": 18,
+    "SympatheticDetonation": true,
+    "SympatheticDetonationForce": 1.3,
+    "SympatheticDetonationChance": 0.3
+  },
+  "HudType": "@Land",
+  "InertiaRotateRate": 0.8,
+  "HasDecoy": true,
+  "OBB": [
+    {
+      "Part": "Collision",
+      "Size": [
+        1.8469,
+        1.88985,
+        5.09375
+      ],
+      "Position": [
+        0.0906,
+        1.7898,
+        0.2812
+      ]
+    },
+    {
+      "Part": "WheelLeft",
+      "Size": [
+        0.3,
+        0.944925,
+        4.3296874999999995
+      ],
+      "Position": [
+        1.6375,
+        0.944925,
+        0.2812
+      ]
+    },
+    {
+      "Part": "WheelRight",
+      "Size": [
+        0.3,
+        0.944925,
+        4.3296874999999995
+      ],
+      "Position": [
+        -1.4563,
+        0.944925,
+        0.2812
+      ]
+    },
+    {
+      "Part": "MainEngine",
+      "Size": [
+        0.6,
+        0.4,
+        0.8
+      ],
+      "Position": [
+        0,
+        3.2797,
+        4.375
+      ]
+    },
+    {
+      "Part": "Turret",
+      "Size": [
+        3.14375,
+        1.18905,
+        2.1894
+      ],
+      "Position": [
+        0,
+        1.18905,
+        0
+      ],
+      "Transform": "Turret",
+      "Rotation": "Turret"
+    }
+  ],
+  "TerrainCompat": [
+    [
+      1.7375,
+      0,
+      -4.3125
+    ],
+    [
+      -1.7375,
+      0,
+      -4.3125
+    ],
+    [
+      1.7375,
+      0,
+      -2.475
+    ],
+    [
+      -1.7375,
+      0,
+      -2.475
+    ],
+    [
+      1.7375,
+      0,
+      -0.6375
+    ],
+    [
+      -1.7375,
+      0,
+      -0.6375
+    ],
+    [
+      1.7375,
+      0,
+      1.2
+    ],
+    [
+      -1.7375,
+      0,
+      1.2
+    ],
+    [
+      1.7375,
+      0,
+      3.0375
+    ],
+    [
+      -1.7375,
+      0,
+      3.0375
+    ],
+    [
+      1.7375,
+      0,
+      4.875
+    ],
+    [
+      -1.7375,
+      0,
+      4.875
+    ]
+  ]
+}

@@ -20,7 +20,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
 /**
- * Creative quick deploy: one item per SBW vehicle that puts the vehicle down where the player clicks, ready to
+ * Creative quick deploy: one item per SBW-based vehicle that puts the vehicle down where the player clicks, ready to
  * board, instead of a crate that needs a crowbar. The vehicle is a fresh native entity, exactly what an opened
  * crate would release; the stack carries only the vehicle ID, never entity data. Its icon is SBW's own crate
  * picture of that vehicle, added to the item atlas by assets/minecraft/atlases/blocks.json.
@@ -29,9 +29,11 @@ public final class VehicleDeploy {
     public static final String VEHICLE = "Vehicle";
     /** Vehicles with an icon, in the order the catalog lists them; the icon predicate is (index + 1) / 100. */
     public static final List<String> ORDER = List.of(
-        "t_90a", "m_1a_2", "ztz_99a", "yx_100", "prism_tank",
-        "bmp_2", "bradley", "lav_25", "plz_05", "tow",
-        "lav_ad", "hpj_11", "ah_6", "mi_28", "speedboat", "tiny_speedboat");
+        "superbwarfare:t_90a", "superbwarfare:m_1a_2", "superbwarfare:ztz_99a", "superbwarfare:yx_100",
+        "superbwarfare:prism_tank", "superbwarfare:bmp_2", "superbwarfare:bradley", "superbwarfare:lav_25",
+        "superbwarfare:plz_05", "frontier_arcade_vehicles:msta_s", "frontier_arcade_vehicles:bohdana",
+        "frontier_arcade_vehicles:grad", "superbwarfare:tow", "superbwarfare:lav_ad", "superbwarfare:hpj_11",
+        "superbwarfare:ah_6", "superbwarfare:mi_28", "superbwarfare:speedboat", "superbwarfare:tiny_speedboat");
     private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, ArcadeVehicles.ID);
     public static final RegistryObject<Item> ITEM = ITEMS.register("vehicle_deploy", DeployItem::new);
 
@@ -53,10 +55,10 @@ public final class VehicleDeploy {
         return ForgeRegistries.ENTITY_TYPES.getValue(id);
     }
 
-    /** SBW path of the stack's vehicle, or empty. */
+    /** The stack's vehicle ID as written in {@link #ORDER}, or empty. */
     static String path(ItemStack stack) {
         var id = stack.hasTag() ? ResourceLocation.tryParse(stack.getTag().getString(VEHICLE)) : null;
-        return id == null || !id.getNamespace().equals("superbwarfare") ? "" : id.getPath();
+        return id == null ? "" : id.toString();
     }
 
     private static final class DeployItem extends Item {

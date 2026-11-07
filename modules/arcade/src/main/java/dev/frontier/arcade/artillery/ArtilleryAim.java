@@ -1,6 +1,6 @@
 package dev.frontier.arcade.artillery;
 
-import com.atsuishio.superbwarfare.entity.projectile.CannonShellEntity;
+import com.atsuishio.superbwarfare.entity.projectile.FastThrowableProjectile;
 import com.atsuishio.superbwarfare.entity.vehicle.base.SpArtilleryEntity;
 import dev.frontier.arcade.ArcadeVehicles;
 import java.util.HashMap;
@@ -26,6 +26,8 @@ public final class ArtilleryAim {
     public static final double MIN_RANGE = 100;
     /** Largest elevation or bearing error a true-up takes away. */
     public static final double TRUE_UP_DEGREES = 1.0;
+    /** Rocket-to-rocket scatter of a launcher salvo (1 sigma): about 20 m either way at 4 km. */
+    private static final double SALVO_SPREAD_DEGREES = 0.3;
     private static final Map<UUID, Point> MISSIONS = new HashMap<>();
 
     private record Point(int x, int z) { }
@@ -47,7 +49,7 @@ public final class ArtilleryAim {
     }
 
     /** Called once for a shell that just left a gun's barrel. */
-    static void trueUp(ServerLevel level, SpArtilleryEntity gun, CannonShellEntity shell) {
+    static void trueUp(ServerLevel level, SpArtilleryEntity gun, FastThrowableProjectile shell) {
         var point = MISSIONS.get(gun.getUUID());
         if (point == null) return;
         Vec3 muzzle = shell.position(), velocity = shell.getDeltaMovement();
@@ -64,8 +66,15 @@ public final class ArtilleryAim {
         double elevation = elevation(speed, gravity, distance, rise, shotElevation);
         if (Double.isNaN(elevation) || Math.toDegrees(Math.abs(elevation - shotElevation)) > TRUE_UP_DEGREES
             || Math.toDegrees(bearingError) > TRUE_UP_DEGREES) return;
-        double across = speed * Math.cos(elevation) / distance;
-        shell.setDeltaMovement(dx * across, speed * Math.sin(elevation), dz * across);
+        double bearing = Math.atan2(dz, dx);
+        if (ArtilleryVehicles.isGrad(gun.getType())) {
+            // A salvo covers an area around the point instead of landing every rocket in one crater.
+            var random = level.getRandom();
+            elevation += Math.toRadians(random.nextGaussian() * SALVO_SPREAD_DEGREES);
+            bearing += Math.toRadians(random.nextGaussian() * SALVO_SPREAD_DEGREES);
+        }
+        double across = speed * Math.cos(elevation);
+        shell.setDeltaMovement(Math.cos(bearing) * across, speed * Math.sin(elevation), Math.sin(bearing) * across);
     }
 
     /**

@@ -38,6 +38,18 @@
     },
     {
       "type": "single",
+      "resource": "frontier_arcade_vehicles:vehicle_icon/container/msta_s"
+    },
+    {
+      "type": "single",
+      "resource": "frontier_arcade_vehicles:vehicle_icon/container/bohdana"
+    },
+    {
+      "type": "single",
+      "resource": "frontier_arcade_vehicles:vehicle_icon/container/grad"
+    },
+    {
+      "type": "single",
       "resource": "superbwarfare:vehicle_icon/container/tow"
     },
     {

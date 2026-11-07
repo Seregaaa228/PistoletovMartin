@@ -1,6 +1,8 @@
 package dev.frontier.arcade.artillery;
 
 import com.atsuishio.superbwarfare.entity.projectile.CannonShellEntity;
+import com.atsuishio.superbwarfare.entity.projectile.FastThrowableProjectile;
+import com.atsuishio.superbwarfare.entity.projectile.MediumRocketEntity;
 import com.atsuishio.superbwarfare.entity.vehicle.base.SpArtilleryEntity;
 import dev.frontier.arcade.ArcadeVehicles;
 import java.util.ArrayList;
@@ -12,6 +14,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
@@ -22,7 +25,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * Far flight for self-propelled-gun shells, DeepStrike style: no chunk is loaded along the path. While the shell
+ * Far flight for self-propelled-gun shells and launcher rockets, DeepStrike style: no chunk is loaded along the path. While the shell
  * flies over active terrain it is SBW's own entity; before it would leave entity-ticking chunks the server parks it
  * and steps the same motion itself (position, then gravity), reading terrain from loaded heightmaps or the world
  * generator. About {@link #ARRIVAL_TICKS} ticks before it lands a short-lived 3x3 ticket wakes the impact area and the
@@ -41,7 +44,7 @@ public final class ArtilleryShells {
     private static final TicketType<ChunkPos> IMPACT = TicketType.create(ArcadeVehicles.ID + ":artillery_impact",
         Comparator.comparingLong(ChunkPos::toLong), TICKET_LIFESPAN);
     private static final Map<ServerLevel, List<Flight>> FLIGHTS = new IdentityHashMap<>();
-    private static final Map<ServerLevel, List<CannonShellEntity>> LIVE = new IdentityHashMap<>();
+    private static final Map<ServerLevel, List<FastThrowableProjectile>> LIVE = new IdentityHashMap<>();
 
     private ArtilleryShells() { }
 
@@ -61,13 +64,19 @@ public final class ArtilleryShells {
         }
     }
 
-    public static boolean tagged(CannonShellEntity shell) {
+    /** The rounds a self-propelled gun or launcher fires: SBW cannon shells and medium rockets. */
+    public static boolean round(Entity entity) {
+        return entity instanceof CannonShellEntity || entity instanceof MediumRocketEntity;
+    }
+
+    public static boolean tagged(FastThrowableProjectile shell) {
         return shell.getPersistentData().getBoolean(TAG);
     }
 
     @SubscribeEvent
     public static void join(EntityJoinLevelEvent event) {
-        if (!(event.getLevel() instanceof ServerLevel level) || !(event.getEntity() instanceof CannonShellEntity shell)) return;
+        if (!(event.getLevel() instanceof ServerLevel level) || !round(event.getEntity())
+            || !(event.getEntity() instanceof FastThrowableProjectile shell)) return;
         if (!tagged(shell)) {
             SpArtilleryEntity gun = shell.getOwner() != null && shell.getOwner().getVehicle() instanceof SpArtilleryEntity seated ? seated
                 : level.getEntitiesOfClass(SpArtilleryEntity.class, shell.getBoundingBox().inflate(GUN_REACH)).stream().findFirst().orElse(null);
@@ -97,7 +106,7 @@ public final class ArtilleryShells {
      * Parks a live shell whose next steps leave entity-ticking terrain before it meets the ground; true when it was
      * taken over. A shell about to land inside active terrain stays SBW's.
      */
-    private static boolean park(ServerLevel level, CannonShellEntity shell) {
+    private static boolean park(ServerLevel level, FastThrowableProjectile shell) {
         Vec3 velocity = shell.getDeltaMovement();
         if (!leavesActiveTerrain(level, shell.position(), velocity, shell.getCustomGravity())) return false;
         var saved = new CompoundTag();
@@ -168,7 +177,7 @@ public final class ArtilleryShells {
             loaded.moveTo(flight.position.x, flight.position.y, flight.position.z, loaded.getYRot(), loaded.getXRot());
             return loaded;
         });
-        if (!(entity instanceof CannonShellEntity shell)) return true;
+        if (!(entity instanceof FastThrowableProjectile shell)) return true;
         shell.setDeltaMovement(flight.velocity);
         // SBW does not save gravity; the shell would otherwise return with its class default.
         shell.setCustomGravity(flight.gravity);
