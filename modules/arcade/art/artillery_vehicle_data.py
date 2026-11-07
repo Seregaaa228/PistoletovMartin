@@ -122,7 +122,7 @@ def build(vehicle, spec, plz):
         weapon.update({
             "Projectile": "superbwarfare:medium_rocket", "AmmoType": ["superbwarfare:medium_rocket_he"],
             "ShellType": "HE", "Damage": 200, "ExplosionDamage": 420, "ExplosionRadius": 16,
-            "Magazine": 40, "RPM": 120, "DefaultFireMode": "Auto", "AvailableFireModes": "Auto",
+            "Magazine": 40, "RPM": 600, "DefaultFireMode": "Auto", "AvailableFireModes": "Auto",
             "Icon": "superbwarfare:textures/overlay/vehicle/weapon/icons/he_shell.png",
             "Name": "item.superbwarfare.medium_rocket_he", "RecoilForce": 0.2, "ShootShake": [3, 4, 12],
             "SoundInfo": {"Fire1P": "superbwarfare:medium_rocket_fire", "Fire3P": "superbwarfare:medium_rocket_fire",

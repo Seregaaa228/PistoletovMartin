@@ -17,7 +17,7 @@ import net.minecraftforge.fml.common.Mod;
 
 /**
  * Flies parked rounds on the client so they stay visible: SBW's stepping (move, then gravity), one trail per round.
- * A rocket shows its motor flame and a long smoke trail; a shell only a faint streak, as a real shell shows. Trails
+ * A rocket shows a long smoke trail (its motor jet is drawn by RocketJets); a shell only a faint streak, as a real shell shows. Trails
  * are drawn only within sight of the camera and stop at the ground, on the server's word, or after a minute.
  */
 @Mod.EventBusSubscriber(modid = ArcadeVehicles.ID, value = Dist.CLIENT)
@@ -28,16 +28,21 @@ public final class ArtilleryTracersClient {
     /** SBW rockets in flight near this client: they get a motor flame at the tail (SBW draws only their smoke). */
     private static final List<MediumRocketEntity> ROCKETS = new ArrayList<>();
     private static final double FLAME_SIGHT_SQ = 256 * 256;
+    /** Rockets whose launch backblast was already drawn. */
+    private static final java.util.Set<MediumRocketEntity> LAUNCHED = java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>());
+    /** Distance from a rocket leaving the tube to the back of the Grad's pack, where the backblast comes out. */
+    private static final double PACK_LENGTH = 4.6;
 
     private static final class Tracer {
         final int id;
         final boolean rocket;
         final float gravity;
-        Vec3 position, velocity;
+        Vec3 previous, position, velocity;
         int age;
 
         Tracer(int id, Vec3 position, Vec3 velocity, float gravity, boolean rocket) {
-            this.id = id; this.position = position; this.velocity = velocity; this.gravity = gravity; this.rocket = rocket;
+            this.id = id; this.previous = position; this.position = position; this.velocity = velocity;
+            this.gravity = gravity; this.rocket = rocket;
         }
     }
 
@@ -57,20 +62,49 @@ public final class ArtilleryTracersClient {
             ROCKETS.add(rocket);
     }
 
-    /** Motor flame and fresh exhaust behind each live rocket, a little behind the body so it reads as a jet. */
+    /**
+     * Per live rocket: the launch backblast once (fire and smoke blown out of the back of the pack, as from a real
+     * Grad), then a smoke puff behind it each tick. The motor jet itself is drawn by {@link RocketJets}.
+     */
     private static void flames(net.minecraft.client.multiplayer.ClientLevel level, Vec3 camera) {
+        var random = level.getRandom();
         ROCKETS.removeIf(rocket -> {
             if (rocket.isRemoved() || rocket.level() != level) return true;
             Vec3 motion = rocket.getDeltaMovement();
             if (motion.lengthSqr() < 0.25 || rocket.position().distanceToSqr(camera) > FLAME_SIGHT_SQ) return false;
-            Vec3 tail = rocket.position().subtract(motion.normalize().scale(1.2));
-            Vec3 back = motion.normalize().scale(-0.15);
-            level.addParticle(ParticleTypes.FLAME, true, tail.x, tail.y, tail.z, back.x, back.y, back.z);
-            level.addParticle(ParticleTypes.SMALL_FLAME, true, tail.x, tail.y, tail.z, back.x * 2, back.y * 2, back.z * 2);
+            Vec3 ahead = motion.normalize();
+            if (rocket.tickCount < 6 && LAUNCHED.add(rocket)) {
+                Vec3 rear = rocket.position().subtract(ahead.scale(PACK_LENGTH + rocket.tickCount * motion.length()));
+                for (int i = 0; i < 14; i++) {
+                    Vec3 v = ahead.scale(-0.45 - random.nextDouble() * 0.5).add(random.nextGaussian() * 0.06, random.nextGaussian() * 0.06, random.nextGaussian() * 0.06);
+                    level.addParticle(i % 3 == 0 ? ParticleTypes.LAVA : ParticleTypes.FLAME, true, rear.x, rear.y, rear.z, v.x, v.y, v.z);
+                }
+                for (int i = 0; i < 8; i++) {
+                    Vec3 v = ahead.scale(-0.15 - random.nextDouble() * 0.2).add(random.nextGaussian() * 0.04, 0.03 + random.nextDouble() * 0.04, random.nextGaussian() * 0.04);
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, true, rear.x, rear.y, rear.z, v.x, v.y, v.z);
+                }
+            } else {
+                LAUNCHED.add(rocket);
+            }
+            Vec3 tail = rocket.position().subtract(ahead.scale(1.4));
             level.addParticle(ParticleTypes.SMOKE, true, tail.x, tail.y, tail.z, 0, 0.02, 0);
             return false;
         });
     }
+
+    /** Live rockets and parked rockets in flight, for {@link RocketJets}: position this frame and flight direction. */
+    static void forEachJet(float partial, JetSink sink) {
+        for (MediumRocketEntity rocket : ROCKETS) {
+            if (rocket.isRemoved()) continue;
+            Vec3 motion = rocket.getDeltaMovement();
+            if (motion.lengthSqr() < 0.25) continue;
+            sink.accept(rocket.getPosition(partial), motion.normalize(), rocket.getId());
+        }
+        for (Tracer tracer : TRACERS)
+            if (tracer.rocket) sink.accept(tracer.previous.lerp(tracer.position, partial), tracer.velocity.normalize(), tracer.id);
+    }
+
+    interface JetSink { void accept(Vec3 position, Vec3 direction, int seed); }
 
     @SubscribeEvent
     public static void tick(TickEvent.ClientTickEvent event) {
@@ -82,6 +116,7 @@ public final class ArtilleryTracersClient {
         flames(level, camera);
         TRACERS.removeIf(tracer -> {
             Vec3 from = tracer.position;
+            tracer.previous = from;
             tracer.position = from.add(tracer.velocity);
             tracer.velocity = tracer.velocity.add(0, -tracer.gravity, 0);
             if (++tracer.age > MAX_AGE || tracer.position.y < level.getMinBuildHeight()) return true;
@@ -96,8 +131,6 @@ public final class ArtilleryTracersClient {
                     Vec3 at = from.lerp(tracer.position, (double) i / puffs);
                     level.addParticle(ParticleTypes.LARGE_SMOKE, true, at.x, at.y, at.z, 0, 0.01, 0);
                 }
-                Vec3 tail = tracer.position.subtract(tracer.velocity.normalize().scale(1.2));
-                level.addParticle(ParticleTypes.FLAME, true, tail.x, tail.y, tail.z, 0, 0, 0);
             } else if (tracer.age % 2 == 0) {
                 level.addParticle(ParticleTypes.SMOKE, true, tracer.position.x, tracer.position.y, tracer.position.z, 0, 0, 0);
             }

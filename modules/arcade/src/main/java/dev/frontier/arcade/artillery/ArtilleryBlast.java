@@ -87,8 +87,8 @@ public final class ArtilleryBlast {
 
     /**
      * A round leaving a gun or launcher. A shell: muzzle fireball and a smoke cloud, dust kicked up around the
-     * vehicle. A rocket: motor flame at the tube, backblast smoke behind the pack, dust; and its roar reaching distant
-     * players at the speed of sound (SBW plays the gun's own near and far report).
+     * vehicle. A rocket: dust kicked up round the launcher (each client draws the backblast and the motor jet), and
+     * its roar reaching distant players at the speed of sound (SBW plays the gun's own near and far report).
      */
     public static void launch(ServerLevel level, Entity gun, Entity round, boolean rocket) {
         Vec3 muzzle = round.position();
@@ -100,9 +100,8 @@ public final class ArtilleryBlast {
             if (distance <= LAUNCH_SIGHT) {
                 float k = distance <= DETAIL_NEAR ? 1 : 0.5f;
                 if (rocket) {
-                    send(level, player, ParticleTypes.FLAME, muzzle, Math.round(6 * k), 0.3, 0.3, 0.3, 0.04);
-                    send(level, player, ParticleTypes.LARGE_SMOKE, muzzle.subtract(ahead.scale(4)), Math.round(10 * k), 1.2, 0.6, 1.2, 0.05);
-                    send(level, player, ParticleTypes.CLOUD, ground, Math.round(8 * k), 2.5, 0.3, 2.5, 0.06);
+                    // The backblast out of the back of the pack is drawn by each client (RocketJets); here only dust.
+                    send(level, player, ParticleTypes.CLOUD, ground, Math.round(6 * k), 2.5, 0.3, 2.5, 0.06);
                 } else {
                     send(level, player, ParticleTypes.EXPLOSION, muzzle.add(ahead), 1, 0, 0, 0, 0);
                     send(level, player, ParticleTypes.LARGE_SMOKE, muzzle.add(ahead.scale(1.5)), Math.round(18 * k), 1.2, 0.8, 1.2, 0.06);
