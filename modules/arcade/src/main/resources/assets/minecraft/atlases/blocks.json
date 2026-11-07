@@ -1,0 +1,68 @@
+{
+  "sources": [
+    {
+      "type": "single",
+      "resource": "superbwarfare:vehicle_icon/container/t_90a"
+    },
+    {
+      "type": "single",
+      "resource": "superbwarfare:vehicle_icon/container/m_1a_2"
+    },
+    {
+      "type": "single",
+      "resource": "superbwarfare:vehicle_icon/container/ztz_99a"
+    },
+    {
+      "type": "single",
+      "resource": "superbwarfare:vehicle_icon/container/yx_100"
+    },
+    {
+      "type": "single",
+      "resource": "superbwarfare:vehicle_icon/container/prism_tank"
+    },
+    {
+      "type": "single",
+      "resource": "superbwarfare:vehicle_icon/container/bmp_2"
+    },
+    {
+      "type": "single",
+      "resource": "superbwarfare:vehicle_icon/container/bradley"
+    },
+    {
+      "type": "single",
+      "resource": "superbwarfare:vehicle_icon/container/lav_25"
+    },
+    {
+      "type": "single",
+      "resource": "superbwarfare:vehicle_icon/container/plz_05"
+    },
+    {
+      "type": "single",
+      "resource": "superbwarfare:vehicle_icon/container/tow"
+    },
+    {
+      "type": "single",
+      "resource": "superbwarfare:vehicle_icon/container/lav_ad"
+    },
+    {
+      "type": "single",
+      "resource": "superbwarfare:vehicle_icon/container/hpj_11"
+    },
+    {
+      "type": "single",
+      "resource": "superbwarfare:vehicle_icon/container/ah_6"
+    },
+    {
+      "type": "single",
+      "resource": "superbwarfare:vehicle_icon/container/mi_28"
+    },
+    {
+      "type": "single",
+      "resource": "superbwarfare:vehicle_icon/container/speedboat"
+    },
+    {
+      "type": "single",
+      "resource": "superbwarfare:vehicle_icon/container/tiny_speedboat"
+    }
+  ]
+}

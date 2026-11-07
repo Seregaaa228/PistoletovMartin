@@ -23,7 +23,7 @@ import net.minecraftforge.registries.RegistryObject;
  * Creative quick deploy: one item per SBW vehicle that puts the vehicle down where the player clicks, ready to
  * board, instead of a crate that needs a crowbar. The vehicle is a fresh native entity, exactly what an opened
  * crate would release; the stack carries only the vehicle ID, never entity data. Its icon is SBW's own crate
- * picture of that vehicle.
+ * picture of that vehicle, added to the item atlas by assets/minecraft/atlases/blocks.json.
  */
 public final class VehicleDeploy {
     public static final String VEHICLE = "Vehicle";
