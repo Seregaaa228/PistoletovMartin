@@ -1,0 +1,104 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "minecraft:item/chest_minecart"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.01
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/t_90a"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.02
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/m_1a_2"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.03
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/ztz_99a"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.04
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/yx_100"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.05
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/prism_tank"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.06
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/bmp_2"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.07
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/bradley"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.08
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/lav_25"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.09
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/plz_05"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.1
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/tow"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.11
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/lav_ad"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.12
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/hpj_11"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.13
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/ah_6"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.14
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/mi_28"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.15
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/speedboat"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.16
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/tiny_speedboat"
+    }
+  ]
+}

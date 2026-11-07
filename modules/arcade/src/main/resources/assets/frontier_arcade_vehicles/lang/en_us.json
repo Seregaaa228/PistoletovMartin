@@ -50,5 +50,9 @@
   "gui.frontier_arcade_vehicles.artillery.traverse": "Traverse",
   "gui.frontier_arcade_vehicles.artillery.elevate": "Elevate",
   "gui.frontier_arcade_vehicles.artillery.too_close": "Under 100 m — no map fire",
-  "gui.frontier_arcade_vehicles.artillery.impact_in": "Impact in"
+  "gui.frontier_arcade_vehicles.artillery.impact_in": "Impact in",
+  "item.frontier_arcade_vehicles.vehicle_deploy": "Vehicle quick deploy",
+  "item.frontier_arcade_vehicles.vehicle_deploy.named": "%s",
+  "item.frontier_arcade_vehicles.vehicle_deploy.hint": "Right-click the ground: the vehicle appears ready, no crate or crowbar",
+  "message.frontier_arcade_vehicles.vehicle_deploy.no_room": "Not enough room: pick a flat spot"
 }

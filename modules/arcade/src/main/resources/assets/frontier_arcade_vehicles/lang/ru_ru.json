@@ -50,5 +50,9 @@
   "gui.frontier_arcade_vehicles.artillery.traverse": "Поворот",
   "gui.frontier_arcade_vehicles.artillery.elevate": "Угол",
   "gui.frontier_arcade_vehicles.artillery.too_close": "Ближе 100 м — по карте не стреляем",
-  "gui.frontier_arcade_vehicles.artillery.impact_in": "Разрыв через"
+  "gui.frontier_arcade_vehicles.artillery.impact_in": "Разрыв через",
+  "item.frontier_arcade_vehicles.vehicle_deploy": "Техника: быстрый спавн",
+  "item.frontier_arcade_vehicles.vehicle_deploy.named": "%s",
+  "item.frontier_arcade_vehicles.vehicle_deploy.hint": "ПКМ по земле — техника сразу на месте, без контейнера и лома",
+  "message.frontier_arcade_vehicles.vehicle_deploy.no_room": "Мало места: выбери ровную площадку"
 }
