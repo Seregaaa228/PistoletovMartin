@@ -23,12 +23,12 @@ SHELL_HE = {"Damage": 450, "ShellType": "HE", "Icon": "superbwarfare:textures/ov
 VEHICLES = {
     "msta_s": {
         "health": 520, "speed": 0.72, "velocity": 20, "gravity": 0.06, "reload": 140,
-        "he": (1000, 48), "ap": (1150, 460, 18), "wheeled": False, "visible_driver": True,
+        "he": (1000, 48), "ap": (1150, 460, 18), "wheeled": False,
         "driver": [0.75, 0.84, 3.31],
     },
     "bohdana": {
         "health": 380, "speed": 1.0, "velocity": 19, "gravity": 0.06, "reload": 110,
-        "he": (950, 44), "ap": (1100, 440, 17), "wheeled": True, "visible_driver": False,
+        "he": (950, 44), "ap": (1100, 440, 17), "wheeled": True,
         # Eye points in model units (bohdana_assets.py): driver and cab passenger; gunner camera barrel-local.
         "wheel_radius": 10.6,
         "driver_eye": (11.5, 46.5, -73), "crew_eye": (-11.5, 46.5, -73), "gunner_cam": (0, 10, -30),
@@ -37,7 +37,7 @@ VEHICLES = {
     },
     "grad": {
         "health": 300, "speed": 0.95, "velocity": 16, "gravity": 0.05, "reload": 600,
-        "rockets": True, "wheeled": True, "visible_driver": False,
+        "rockets": True, "wheeled": True,
         "wheel_radius": 12,
         "driver_eye": (10.2, 43, -35), "crew_eye": (-10.2, 43, -35), "gunner_cam": (0, 20, -5),
         "engine": {"MaxForwardSpeedRate": 1.15, "MaxBackwardSpeedRate": 0.7, "Increment": 0.02, "Decrement": 0.012,
@@ -197,7 +197,8 @@ def build(vehicle, spec, plz):
         # Truck crews sit in the cab, the driver at the wheel with a free look through the windscreen; the
         # second cab seat replaces PLZ-05's roof gunners. SBW data: +X left, +Z forward.
         driver, gunner = data["Seats"][0], data["Seats"][1]
-        driver.update({"IsEnclosed": True, "HidePassenger": True, "Transform": "Vehicle", "RotateWithVehicle": True,
+        # Seen from outside and in F5 at the wheel; only the gunner, inside the mount, stays hidden.
+        driver.update({"IsEnclosed": True, "HidePassenger": False, "Transform": "Vehicle", "RotateWithVehicle": True,
                        "Position": seat_from_eye(spec["driver_eye"]), "MinYaw": -100, "MaxYaw": 100,
                        "MinPitch": -45, "MaxPitch": 40})
         crew = copy.deepcopy(driver)
@@ -216,9 +217,10 @@ def build(vehicle, spec, plz):
 
 
 def seat_from_eye(eye):
-    """Seat position (blocks, SBW frame) that puts a seated player's eye at a model point."""
+    """Seat position (blocks, SBW frame) that puts a seated player's eye at a model point: SBW stands the rider's
+    feet at the seat position, so the eye is 1.62 above it and the hips 0.7."""
     x, y, z = eye
-    return [blocks(x), round(blocks(y) - 1.45, 4), blocks(-z)]
+    return [blocks(x), round(blocks(y) - 1.62, 4), blocks(-z)]
 
 
 def main():

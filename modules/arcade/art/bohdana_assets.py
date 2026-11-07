@@ -64,12 +64,12 @@ MOVABLE = {"turret", "barrelBase", "barrel", "tube"} | {
 STEER = {"wheelL0Turn", "wheelR0Turn"}         # new steering bones (SBW name rule)
 WHEEL_GEO_BONE = {f"wheel{s}{i}": f"wheel{s}{i}Turn" if i == "0" else f"wheel{s}{i}"
                   for s in "LR" for i in AXLES}
-SPADE_HINGE = [12, 14, 87]       # bh_spade_l pivot; bh_spade_r mirrors x
+SPADE_HINGE = [12, 14, 87]       # move_bh_spade_l pivot; move_bh_spade_r mirrors x
 WINDSCREEN_LOCAL = (2.5, 12.0)   # opening along the sloped frame, units above its hinge
 SIDE_WINDOW_LOCAL = (3.5, 10.5)
 DRIVER_EYE = [11.5, 46.5, -73]   # first-person eye: centre of the driver's windscreen pane
 GUNNER_CAM = [0, 10, -30]        # gunner camera over the tube, relative to GUN_PIVOT
-STEER_HUB = [11.5, 40.5, -76]    # steering-wheel hub (bh_steering_wheel pivot)
+STEER_HUB = [11.5, 40.5, -76]    # steering-wheel hub (move_bh_steering_wheel pivot)
 STEER_TILT = 35.0                # wheel plane above horizontal; column = local -Z
 STEER_BIND = [90 - STEER_TILT, 0, 0]   # bone rotation (file/Bedrock sign: +rx tips local -Z down)
 # Bone-name patterns SBW treats specially (wheel spin, tracks, flare, dog tag).
@@ -470,10 +470,10 @@ def build():
     mid = g.bone("bh_midbody", "body")
     deck = g.bone("bh_platform", "body")
     spades = g.bone("bh_spades", "body")
-    spade_l = g.bone("bh_spade_l", "body", SPADE_HINGE)
-    spade_r = g.bone("bh_spade_r", "body", [-SPADE_HINGE[0], SPADE_HINGE[1], SPADE_HINGE[2]])
-    fp_hide = g.bone("bh_fp_hide", "body")
-    steer = g.bone("bh_steering_wheel", "body", STEER_HUB)
+    spade_l = g.bone("move_bh_spade_l", "body", SPADE_HINGE)
+    spade_r = g.bone("move_bh_spade_r", "body", [-SPADE_HINGE[0], SPADE_HINGE[1], SPADE_HINGE[2]])
+    fp_hide = g.bone("move_bh_fp_hide", "body")
+    steer = g.bone("move_bh_steering_wheel", "body", STEER_HUB)
     g.by[steer]["rotation"] = list(STEER_BIND)
     rest = g.bone("bh_travel_rest", "body")
     mount = g.bone("bh_mount", "turret")
@@ -534,7 +534,7 @@ def build():
     g.sym(cab, [13, 24.05, -85.3], [1, 13.9, 0.9], "camo_dark")
     # Upper cab is a hollow armoured shell so the driver can look out: a sloped
     # windscreen frame with two openings, side plates with window openings, roof
-    # and rear wall. Glass and wipers live in bh_fp_hide (hidden in first person).
+    # and rear wall. Glass and wipers live in move_bh_fp_hide (hidden in first person).
     slope = math.degrees(math.atan2(6, 13))
     hinge, srot = [0, 40, -84], R("x", slope)
     plen = math.hypot(6, 13) + 0.3                 # local height of the sloped frame
@@ -1316,8 +1316,8 @@ def spade_deploy_angle(data):
     lo, hi = 90.0, 180.0
     for _ in range(60):
         mid = (lo + hi) / 2
-        q = posed.quads({"bh_spade_l": ("pitch", mid)})
-        q = [x for x, b in zip(q, _bones_of(posed)) if b == "bh_spade_l"]
+        q = posed.quads({"move_bh_spade_l": ("pitch", mid)})
+        q = [x for x, b in zip(q, _bones_of(posed)) if b == "move_bh_spade_l"]
         ymin = min(p[0][:, 1].min() for p in q)
         if ymin > -1:
             lo = mid
@@ -1340,7 +1340,7 @@ def _bones_of(posed):
     return out
 
 
-def eye_clearance(data, eye, hide=("bh_fp_hide",)):
+def eye_clearance(data, eye, hide=("move_bh_fp_hide",)):
     """Smallest distance from the eye to any visible cube (axis-aligned cubes
     exactly, rotated cubes through their face planes' bounding boxes)."""
     posed = Posed(data)
@@ -1414,7 +1414,7 @@ def previews(data, tex, out_dir, jar):
     # driving poses: steered front wheels, spades deployed
     phi = spade_deploy_angle(data)
     drive = {"wheelL0Turn": ("yaw", 25), "wheelR0Turn": ("yaw", 25)}
-    dig = {"bh_spade_l": ("pitch", phi), "bh_spade_r": ("pitch", phi)}
+    dig = {"move_bh_spade_l": ("pitch", phi), "move_bh_spade_r": ("pitch", phi)}
     poses = [("STEER 25 deg (wheel?0Turn yaw)", dict(yaw=30, elev=40, pose=drive)),
              (f"SPADES DEPLOYED (+{phi} deg about +X)", dict(yaw=215, elev=20, pose=dig)),
              ("SPADES DEPLOYED, SIDE", dict(yaw=-90, elev=0, pose=dig)),
@@ -1427,9 +1427,9 @@ def previews(data, tex, out_dir, jar):
         sheet.paste(im, (x, y + 20), im)
         d.text((x + 24, y + 4), label, font=font(20, True), fill=(40, 56, 44))
     sheet.save(out_dir / "bohdana-poses.png")
-    # first-person views (bh_fp_hide hidden) and the gunner camera
-    fp = ("bh_fp_hide",)
-    right90 = {"bh_steering_wheel": ("roll", -90)}     # right turn = negative rotateZ
+    # first-person views (move_bh_fp_hide hidden) and the gunner camera
+    fp = ("move_bh_fp_hide",)
+    right90 = {"move_bh_steering_wheel": ("roll", -90)}     # right turn = negative rotateZ
     views = [("driver-forward", DRIVER_EYE, 0, -8, fp, None, 0),
              ("driver-forward-wheel-right90", DRIVER_EYE, 0, -8, fp, right90, 0),
              ("driver-left60", DRIVER_EYE, -60, -8, fp, None, 0),
@@ -1514,7 +1514,7 @@ def validate(data, tex_size, jar=None):
         assert turn["pivot"] == by[f"wheel{side}0"]["pivot"]
         assert names.index(turn["name"]) < names.index(f"wheel{side}0")
         assert not by[f"wheel{side}0"].get("cubes"), "front wheel geometry belongs on Turn"
-    sw = by["bh_steering_wheel"]           # spins about local Z on top of its bind rotation
+    sw = by["move_bh_steering_wheel"]           # spins about local Z on top of its bind rotation
     assert sw["parent"] == "body" and sw["pivot"] == STEER_HUB and sw["rotation"] == STEER_BIND
     assert sw.get("cubes"), "steering wheel has no geometry"
     allowed_wheels = set(WHEEL_GEO_BONE.values())
@@ -1584,8 +1584,8 @@ def main():
                    + sorted(f"wheel{s}{i}" for s in "LR" for i in AXLES)},
         "muzzle": [0, GUN_PIVOT[1], MUZZLE_Z],
         "new_bones": {n: {k: geo.by[n][k] for k in ("parent", "pivot", "rotation") if k in geo.by[n]}
-                      for n in sorted(STEER | {"bh_spade_l", "bh_spade_r", "bh_fp_hide",
-                                               "bh_steering_wheel"})},
+                      for n in sorted(STEER | {"move_bh_spade_l", "move_bh_spade_r", "move_bh_fp_hide",
+                                               "move_bh_steering_wheel"})},
         "spade_deploy_deg_about_+X": spade_deploy_angle(data),
         "driver_eye": DRIVER_EYE,
         "driver_eye_clearance": round(eye_clearance(data, DRIVER_EYE), 2),

@@ -78,7 +78,7 @@ GUNNER_CAM = [0, 20, -5]                   # barrel-local, relative to PACK_PIVO
 # Steering wheel bone: pivot on the hub, bind rotation tilts local +Z (column axis, from
 # the column towards the driver) to (0, sin T, cos T); the rim lies in the local XY plane.
 STEER_HUB, STEER_TILT, STEER_R = [10.2, 37.0, -40.0], 55.0, 3.6
-# Rear jacks: fixed housing in `body`, telescopic leg + pad in grad_jack_l/r. The legs
+# Rear jacks: fixed housing in `body`, telescopic leg + pad in move_grad_jack_l/r. The legs
 # are modelled stowed; translating the bone down by JACK_TRAVEL puts the pads on y=0.
 JACK_X, JACK_Z, JACK_TOP, JACK_TRAVEL = 17.25, 65.5, 25.0, 8.0
 
@@ -87,12 +87,12 @@ JACK_X, JACK_Z, JACK_TOP, JACK_TRAVEL = 17.25, 65.5, 25.0, 8.0
 EXTRA_BONES = [
     ("wheelL0Turn", "WheelL", [WHEEL_X, WHEEL_R, AXLES[0]], "wheelL0"),
     ("wheelR0Turn", "WheelR", [-WHEEL_X, WHEEL_R, AXLES[0]], "wheelR0"),
-    ("grad_jack_l", "body", [JACK_X, JACK_TOP, JACK_Z], None),
-    ("grad_jack_r", "body", [-JACK_X, JACK_TOP, JACK_Z], None),
-    ("grad_fp_hide", "body", list(DRIVER_EYE), None),
-    ("grad_steering_wheel", "body", list(STEER_HUB), None),
+    ("move_grad_jack_l", "body", [JACK_X, JACK_TOP, JACK_Z], None),
+    ("move_grad_jack_r", "body", [-JACK_X, JACK_TOP, JACK_Z], None),
+    ("move_grad_fp_hide", "body", list(DRIVER_EYE), None),
+    ("move_grad_steering_wheel", "body", list(STEER_HUB), None),
 ]
-BIND_ROT = {"grad_steering_wheel": [STEER_TILT, 0, 0]}
+BIND_ROT = {"move_grad_steering_wheel": [STEER_TILT, 0, 0]}
 REPARENT = {"wheelL0": ("WheelL", "wheelL0Turn"), "wheelR0": ("WheelR", "wheelR0Turn")}
 
 # SBW's GeoVehicleRenderer steers (Y) and spins (X) every wheel?0Turn bone and spins every
@@ -102,8 +102,8 @@ def wheel_bone(side, i):
     return f"wheel{side}{i}Turn" if i == 0 else f"wheel{side}{i}"
 
 
-GEOMETRY_BONES = ({"body", "turret", "barrel", "grad_jack_l", "grad_jack_r", "grad_fp_hide",
-                   "grad_steering_wheel"}
+GEOMETRY_BONES = ({"body", "turret", "barrel", "move_grad_jack_l", "move_grad_jack_r", "move_grad_fp_hide",
+                   "move_grad_steering_wheel"}
                   | {wheel_bone(s, i) for s in "LR" for i in AXLES})
 
 # Frames mapping a part's local X axis onto a world axis (for round parts).
@@ -413,9 +413,9 @@ def cab_interior(t):
     hub = np.array(STEER_HUB, float)
     axis = np.array([0, math.sin(math.radians(STEER_TILT)), math.cos(math.radians(STEER_TILT))])
     t.bar(B, hub - axis * 7.0, hub - axis * 0.45, 1.0, 1.0, "black")
-    # Wheel in grad_steering_wheel, authored flat in the bone's local XY plane around the
+    # Wheel in move_grad_steering_wheel, authored flat in the bone's local XY plane around the
     # pivot; the bind rotation tilts it onto the column. Hub first (centred on the pivot).
-    W = "grad_steering_wheel"
+    W = "move_grad_steering_wheel"
     t.prism(W, hub, AXIS["z"], 0.9, 0.9, "black", n=4)
     t.ring(W, hub, AXIS["z"], STEER_R, 0.6, "black")
     for a in (0, 180, 270):          # three-spoke wheel, open at 12 o'clock
@@ -425,7 +425,7 @@ def cab_interior(t):
         t.box(B, s * 4, s * 17, 26, 29.5, -38, -28.5, "seat")
         t.ori(B, (s * 10.5, 35.2, -27.4), (13, 10.5, 2.2), axis_rot("x", 10), "seat")
         # Sun visors sit right above the eye: hidden in the driver's first person.
-        t.box("grad_fp_hide", s * 5, s * 16, 46.4, 46.8, -46.4, -43.4, "interior")
+        t.box("move_grad_fp_hide", s * 5, s * 16, 46.4, 46.8, -46.4, -43.4, "interior")
     t.bar(B, (2.0, 26, -40), (3.0, 33, -41.5), 0.6, 0.6, "black")
     t.bar(B, (-0.5, 26, -40), (0.2, 31.5, -40.8), 0.6, 0.6, "black")
     for x in (7.5, 10.5, 13.5):
@@ -495,7 +495,7 @@ def deck_and_rear(t):
     t.box(B, -5, 5, 19, 23, 72, 72.6, "plate")
     t.box(B, -1, 1, 23, 24, 72, 73, "metal")
     # Rear stabiliser jacks. Fixed in `body`: open-bottomed housing with a guide collar,
-    # crank and brace. Moving (grad_jack_l/r): telescopic inner leg, swivel, foot pad,
+    # crank and brace. Moving (move_grad_jack_l/r): telescopic inner leg, swivel, foot pad,
     # modelled stowed with the pad bottom at y = JACK_TRAVEL.
     x, z = JACK_X, JACK_Z
     t.sbox(B, x - 2.25, x + 2.25, 13, JACK_TOP, z - 2, z + 2, "olive_dark", skip={"down"})
@@ -508,7 +508,7 @@ def deck_and_rear(t):
     t.sbox(B, 21.3, 21.9, 22, 24.6, z - 0.3, z + 0.3, "black")
     t.sbar(B, (15.2, 23.5, z - 1.5), (9.7, 17, z), 0.8, 0.8, "dark")
     pad = JACK_TRAVEL
-    for s, bone in ((1, "grad_jack_l"), (-1, "grad_jack_r")):
+    for s, bone in ((1, "move_grad_jack_l"), (-1, "move_grad_jack_r")):
         cx = s * x
         t.box(bone, cx - 1.3, cx + 1.3, pad + 2.2, JACK_TOP - 0.4, z - 1.1, z + 1.1, "metal",
               tag="leg")
@@ -1022,7 +1022,7 @@ def previews(data, tex, folder):
     bg = (214, 218, 206, 255)
     fire = {"turret": axis_rot("y", 35), "barrel": axis_rot("x", 45)}
     steer = {"wheelL0Turn": axis_rot("y", 30), "wheelR0Turn": axis_rot("y", 30)}
-    deploy = {"grad_jack_l": (0, -JACK_TRAVEL, 0), "grad_jack_r": (0, -JACK_TRAVEL, 0)}
+    deploy = {"move_grad_jack_l": (0, -JACK_TRAVEL, 0), "move_grad_jack_r": (0, -JACK_TRAVEL, 0)}
     views = [("front34", None, None, 35, .55), ("side", None, None, 90, .05),
              ("rear34", None, None, 150, .55), ("fire_pose", fire, deploy, -60, .5),
              ("top", None, None, 10, 4.0), ("front", None, None, 0, .02),
@@ -1044,7 +1044,7 @@ def previews(data, tex, folder):
         canvas.alpha_composite(im)
         canvas.save(folder / f"grad-{name}.png")
     tex.resize((tex.width * 2, tex.height * 2), Image.Resampling.NEAREST).save(folder / "grad-atlas-x2.png")
-    # Driver first person (grad_fp_hide hidden, FOV 70) and the gunner's camera.
+    # Driver first person (move_grad_fp_hide hidden, FOV 70) and the gunner's camera.
     sky = (176, 196, 214, 255)
     shots = {"fp-forward": (DRIVER_EYE, 0, -8), "fp-left60": (DRIVER_EYE, 60, -8),
              "fp-right60": (DRIVER_EYE, -60, -8), "fp-level": (DRIVER_EYE, 0, 0),
@@ -1052,7 +1052,7 @@ def previews(data, tex, folder):
     strip = Image.new("RGB", (1600, 1350), sky[:3])
     for k, (name, (eye, yaw, pitch)) in enumerate(shots.items()):
         im = render_fp(data, tex, (800, 450), eye, yaw=yaw, pitch=pitch, fov=70,
-                       hide={"grad_fp_hide"} if name.startswith("fp") else ())
+                       hide={"move_grad_fp_hide"} if name.startswith("fp") else ())
         canvas = Image.new("RGBA", im.size, sky)
         horizon = 225 - 225 * math.tan(math.radians(-pitch)) / math.tan(math.radians(35))
         canvas.alpha_composite(Image.new("RGBA", (800, 450), (120, 116, 96, 255)), (0, int(horizon)))
@@ -1062,10 +1062,10 @@ def previews(data, tex, folder):
     strip.save(folder / "grad-views-fp.png")
     # Right turn: renderer rotateZ(-45 deg) on the wheel bone. SBW mirrors geo X, which flips
     # the sign of Z rotations, so in geo terms that is +45 deg about the bone's local Z.
-    bind = K.rot_matrix(BIND_ROT["grad_steering_wheel"])
-    spin = {"grad_steering_wheel": bind @ axis_rot("z", 45) @ bind.T}
+    bind = K.rot_matrix(BIND_ROT["move_grad_steering_wheel"])
+    spin = {"move_grad_steering_wheel": bind @ axis_rot("z", 45) @ bind.T}
     for name, pose in (("fp-wheel-straight", None), ("fp-wheel-right45", spin)):
-        im = render_fp(data, tex, (800, 450), DRIVER_EYE, 0, -25, 70, hide={"grad_fp_hide"}, poses=pose)
+        im = render_fp(data, tex, (800, 450), DRIVER_EYE, 0, -25, 70, hide={"move_grad_fp_hide"}, poses=pose)
         canvas = Image.new("RGBA", im.size, sky)
         canvas.alpha_composite(im)
         canvas.save(folder / f"grad-{name}.png")
@@ -1124,17 +1124,17 @@ def validate(data, skeleton, tex):
         assert by[name].get("rotation") == BIND_ROT.get(name)
     # Steering wheel: hub centred on the pivot; with the bind rotation local +Z points up
     # and back along the column towards the driver.
-    sw = by["grad_steering_wheel"]
+    sw = by["move_grad_steering_wheel"]
     hub0 = np.add(sw["cubes"][0]["origin"], np.array(sw["cubes"][0]["size"]) / 2)
     assert np.allclose(hub0, sw["pivot"], atol=0.05), hub0
-    assert sw["name"] not in subtree(bones, "grad_fp_hide")
+    assert sw["name"] not in subtree(bones, "move_grad_fp_hide")
     zax = K.rot_matrix(sw["rotation"]) @ [0, 0, 1]
     assert zax[1] > 0.5 and zax[2] > 0.3 and abs(zax[0]) < 1e-9, zax
     assert by["wheelL0Turn"]["pivot"] == by["wheelL0"]["pivot"]
     assert not by["wheelL0"].get("cubes") and not by["wheelR0"].get("cubes"), "front wheels spin twice"
     assert by["wheelR0Turn"]["pivot"] == by["wheelR0"]["pivot"]
     corners = np.array([[i, j, k] for i in (0, 1) for j in (0, 1) for k in (0, 1)], float)
-    for jack in ("grad_jack_l", "grad_jack_r"):   # stowed pad clear, travel lands it on y=0
+    for jack in ("move_grad_jack_l", "move_grad_jack_r"):   # stowed pad clear, travel lands it on y=0
         low = min(((corners * c["size"] + c["origin"] - c.get("pivot", 0))
                    @ K.rot_matrix(c.get("rotation")).T + c.get("pivot", 0))[:, 1].min()
                   for c in by[jack]["cubes"])

@@ -56517,7 +56517,7 @@
           ]
         },
         {
-          "name": "bh_spade_l",
+          "name": "move_bh_spade_l",
           "parent": "body",
           "pivot": [
             12,
@@ -57564,7 +57564,7 @@
           ]
         },
         {
-          "name": "bh_spade_r",
+          "name": "move_bh_spade_r",
           "parent": "body",
           "pivot": [
             -12,
@@ -58611,7 +58611,7 @@
           ]
         },
         {
-          "name": "bh_fp_hide",
+          "name": "move_bh_fp_hide",
           "parent": "body",
           "pivot": [
             0,
@@ -59126,7 +59126,7 @@
           ]
         },
         {
-          "name": "bh_steering_wheel",
+          "name": "move_bh_steering_wheel",
           "parent": "body",
           "pivot": [
             11.5,

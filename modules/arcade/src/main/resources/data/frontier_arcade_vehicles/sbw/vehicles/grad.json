@@ -26,7 +26,7 @@
       "Transform": "Vehicle",
       "Position": [
         0.6375,
-        1.2375,
+        1.0675,
         2.1875
       ],
       "RotateWithVehicle": true,
@@ -43,7 +43,7 @@
         ]
       },
       "IsEnclosed": true,
-      "HidePassenger": true
+      "HidePassenger": false
     },
     {
       "HidePassenger": true,
@@ -92,7 +92,7 @@
       "Transform": "Vehicle",
       "Position": [
         -0.6375,
-        1.2375,
+        1.0675,
         2.1875
       ],
       "RotateWithVehicle": true,
@@ -109,7 +109,7 @@
         ]
       },
       "IsEnclosed": true,
-      "HidePassenger": true
+      "HidePassenger": false
     }
   ],
   "Weapons": {

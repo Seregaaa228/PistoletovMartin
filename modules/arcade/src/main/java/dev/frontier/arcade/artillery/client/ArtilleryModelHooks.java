@@ -5,7 +5,6 @@ import com.atsuishio.superbwarfare.entity.vehicle.base.ArtilleryEntity;
 import com.github.mcmodderanchor.simplebedrockmodel.v2.common.model.runtime.BoneState;
 import dev.frontier.arcade.artillery.ArtilleryVehicles;
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.Mth;
 
 /**
  * Bones the PLZ-05 renderer does not know: the Grad's jacks slide down out of their housings, the Bohdana's spades
@@ -17,8 +16,11 @@ public final class ArtilleryModelHooks {
     private static final float GRAD_JACK_TRAVEL = 8;
     /** Degrees about X the Bohdana's spades swing to dig in (from bohdana_assets.py). */
     private static final float BOHDANA_SPADE_ANGLE = 119.46f;
-    /** Steering-wheel turns per front-wheel angle; the bone's local Z is the column axis, negative turns right. */
-    private static final float STEERING_RATIO = -6;
+    /**
+     * Steering-wheel turns per front-wheel angle, as SBW's own pickup: SBW's rudder is negative for a right turn, and
+     * a negative spin about the bone's local Z (the column) turns the wheel clockwise.
+     */
+    private static final float STEERING_RATIO = 8;
 
     private ArtilleryModelHooks() { }
 
@@ -26,16 +28,16 @@ public final class ArtilleryModelHooks {
         var type = entity.getType();
         if (type == ArtilleryVehicles.GRAD.get()) {
             float legs = ArtilleryLegsClient.progress(entity, partial);
-            slide(instance.getBone("grad_jack_l"), -GRAD_JACK_TRAVEL * legs);
-            slide(instance.getBone("grad_jack_r"), -GRAD_JACK_TRAVEL * legs);
-            hideFromDriver(entity, instance.getBone("grad_fp_hide"));
-            steer(entity, instance.getBone("grad_steering_wheel"), partial);
+            slide(instance.getBone("move_grad_jack_l"), -GRAD_JACK_TRAVEL * legs);
+            slide(instance.getBone("move_grad_jack_r"), -GRAD_JACK_TRAVEL * legs);
+            hideFromDriver(entity, instance.getBone("move_grad_fp_hide"));
+            steer(entity, instance.getBone("move_grad_steering_wheel"));
         } else if (type == ArtilleryVehicles.BOHDANA.get()) {
             float legs = ArtilleryLegsClient.progress(entity, partial);
-            swing(instance.getBone("bh_spade_l"), BOHDANA_SPADE_ANGLE * legs);
-            swing(instance.getBone("bh_spade_r"), BOHDANA_SPADE_ANGLE * legs);
-            hideFromDriver(entity, instance.getBone("bh_fp_hide"));
-            steer(entity, instance.getBone("bh_steering_wheel"), partial);
+            swing(instance.getBone("move_bh_spade_l"), BOHDANA_SPADE_ANGLE * legs);
+            swing(instance.getBone("move_bh_spade_r"), BOHDANA_SPADE_ANGLE * legs);
+            hideFromDriver(entity, instance.getBone("move_bh_fp_hide"));
+            steer(entity, instance.getBone("move_bh_steering_wheel"));
         }
     }
 
@@ -47,9 +49,12 @@ public final class ArtilleryModelHooks {
         if (bone != null) bone.rotation.rotateX((float) Math.toRadians(degrees));
     }
 
-    /** The cab steering wheel follows SBW's steering (rudder, radians, the angle of the front wheels). */
-    private static void steer(ArtilleryEntity entity, BoneState bone, float partial) {
-        if (bone != null) bone.rotation.rotateZ(Mth.lerp(partial, entity.getRudderRotO(), entity.getRudderRot()) * STEERING_RATIO);
+    /**
+     * The cab steering wheel follows SBW's steering (rudder, radians, the angle of the front wheels). SBW never updates
+     * the rudder's previous value, so interpolating would jitter; the current value is used as SBW's wheels see it.
+     */
+    private static void steer(ArtilleryEntity entity, BoneState bone) {
+        if (bone != null) bone.rotation.rotateZ(entity.getRudderRot() * STEERING_RATIO);
     }
 
     private static void hideFromDriver(ArtilleryEntity entity, BoneState bone) {
