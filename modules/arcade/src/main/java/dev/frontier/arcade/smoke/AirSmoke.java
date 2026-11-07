@@ -62,7 +62,7 @@ public final class AirSmoke {
         check("Trajan Tanks not loaded",!ModList.get().isLoaded("trajanstanks"));
         check("Trajan Core not loaded",!ModList.get().isLoaded("trajanscore"));
         check("SBW and existing FPV loaded",ModList.get().isLoaded("superbwarfare")&&ModList.get().isLoaded("uncomplicatedfpv"));
-        check("unknown shop ID fails closed",NativeAviationCatalog.createStack(level,"superbwarfare:t_90a").isEmpty());
+        check("unknown shop ID fails closed",NativeAviationCatalog.createStack(level,"superbwarfare:truck").isEmpty());
         for(var offer:NativeAviationCatalog.offers()) {
             ItemStack stack=NativeAviationCatalog.createStack(level,offer.id());
             check("usable shop offer "+offer.id(),!stack.isEmpty()&&offer.price()>0);

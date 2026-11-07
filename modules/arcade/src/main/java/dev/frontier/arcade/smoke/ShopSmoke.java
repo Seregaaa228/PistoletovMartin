@@ -18,7 +18,7 @@ final class ShopSmoke {
         AirSmoke.check("shop requires held real unified PDA",before.equals(inventory(p)));
         buy.invoke(null,p,"superbwarfare:a_10a");
         AirSmoke.check("shop insufficient funds is atomic",before.equals(inventory(p)));
-        buy.invoke(null,p,"superbwarfare:t_90a");
+        buy.invoke(null,p,"superbwarfare:truck");
         AirSmoke.check("shop cannot buy blocked or unknown vehicle",before.equals(inventory(p)));
         for(int i=0;i<p.getInventory().items.size();i++)p.getInventory().items.set(i,new ItemStack(Items.STONE,64));
         p.getInventory().items.set(0,new ItemStack(Items.EMERALD,64));before=inventory(p);

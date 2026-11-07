@@ -18,11 +18,13 @@
     "ItemStackMonitorCompatibility",
     "AddonControlAccess",
     "AddonControlLifecycle",
-    "NativeMonitorReconnect"
+    "NativeMonitorReconnect",
+    "ArtilleryShellChunks"
   ],
   "client": [
     "GeraniumInteriorSound",
-    "GeraniumRenderTint"
+    "GeraniumRenderTint",
+    "DeepStrikeArtilleryTablet"
   ],
   "injectors": {
     "defaultRequire": 1

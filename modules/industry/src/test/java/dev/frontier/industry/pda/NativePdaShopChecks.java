@@ -101,12 +101,12 @@ public final class NativePdaShopChecks {
             check(checks, "native copied aircraft inventories contain no hidden cargo", first instanceof Container a && a.isEmpty()
                 && second instanceof Container b && b.isEmpty() && data.getCompound("Inventory").getList("Items", Tag.TAG_COMPOUND).isEmpty());
             check(checks, "native builder rejects unknown and blocked vehicle IDs", ((ItemStack) create.invoke(null, player.serverLevel(), "frontier_acceptance:unknown")).isEmpty()
-                && ((ItemStack) create.invoke(null, player.serverLevel(), "superbwarfare:t_90a")).isEmpty());
+                && ((ItemStack) create.invoke(null, player.serverLevel(), "superbwarfare:truck")).isEmpty());
 
             supply(player, airPrice + 32, true);
             ListTag before = inventory(player);
             invoke(action, player, "shop", "frontier_acceptance:unknown", 1);
-            invoke(action, player, "shop", "superbwarfare:t_90a", 1);
+            invoke(action, player, "shop", "superbwarfare:truck", 1);
             check(checks, "public shop unknown or blocked offers preserve exact inventory NBT", before.equals(inventory(player)));
             supply(player, airPrice + 32, false); before = inventory(player);
             invoke(action, player, "shop", AIRCRAFT, 1);

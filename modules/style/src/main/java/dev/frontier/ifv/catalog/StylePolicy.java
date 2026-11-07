@@ -18,6 +18,7 @@ public final class StylePolicy {
     public static final Set<String> KEPT_ENTITY_PATHS = Set.of(
         "bmp_2", "bradley", "lav_25", "lav_ad", "hpj_11", "mortar", "tow",
         "speedboat", "tiny_speedboat", "drone", "ah_6", "mi_28",
+        "t_90a", "m_1a_2", "ztz_99a", "yx_100", "prism_tank", "plz_05",
         "vehicle_assembling_table"
     );
 

@@ -18,8 +18,7 @@ import java.util.Set;
 public final class VehicleAccessPolicy {
     /** Paths are kept public for audits and compatibility with the smoke harness. */
     public static final Set<String> BLOCKED_SBW_PATHS = Set.of(
-        "m_1a_2", "t_90a", "ztz_99a", "yx_100", "prism_tank",
-        "fh_77bw", "plz_05", "lav_150",
+        "fh_77bw", "lav_150",
         "sodayo_pick_up", "sodayo_pick_up_hmg", "sodayo_pick_up_tow",
         "sodayo_pick_up_rocket", "truck", "wheel_chair"
     );
