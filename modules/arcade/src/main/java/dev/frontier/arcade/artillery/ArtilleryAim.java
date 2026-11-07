@@ -26,8 +26,11 @@ public final class ArtilleryAim {
     public static final double MIN_RANGE = 100;
     /** Largest elevation or bearing error a true-up takes away. */
     public static final double TRUE_UP_DEGREES = 1.0;
-    /** Rocket-to-rocket scatter of a launcher salvo (1 sigma): about 13 m either way at 4 km. */
-    private static final double SALVO_SPREAD_DEGREES = 0.18;
+    /**
+     * Launcher salvo footprint: each rocket is aimed at its own random point in a disc round the mission point, of
+     * this radius plus this share of the range (about 25 m at 2 km, 35 m at 4 km).
+     */
+    private static final double SALVO_RADIUS = 15, SALVO_RADIUS_PER_BLOCK = 0.005;
     private static final Map<UUID, Point> MISSIONS = new HashMap<>();
 
     private record Point(int x, int z) { }
@@ -66,13 +69,20 @@ public final class ArtilleryAim {
         double elevation = elevation(speed, gravity, distance, rise, shotElevation);
         if (Double.isNaN(elevation) || Math.toDegrees(Math.abs(elevation - shotElevation)) > TRUE_UP_DEGREES
             || Math.toDegrees(bearingError) > TRUE_UP_DEGREES) return;
-        double bearing = Math.atan2(dz, dx);
         if (ArtilleryVehicles.isGrad(gun.getType())) {
-            // A salvo covers an area around the point instead of landing every rocket in one crater.
+            // A salvo covers an area round the point instead of landing every rocket in one crater: each rocket
+            // goes to its own point, uniform over a disc, solved exactly like the mission point itself.
             var random = level.getRandom();
-            elevation += Math.toRadians(random.nextGaussian() * SALVO_SPREAD_DEGREES);
-            bearing += Math.toRadians(random.nextGaussian() * SALVO_SPREAD_DEGREES);
+            double radius = (SALVO_RADIUS + SALVO_RADIUS_PER_BLOCK * distance) * Math.sqrt(random.nextDouble());
+            double angle = random.nextDouble() * Math.PI * 2;
+            int x = (int) Math.floor(point.x + 0.5 + Math.cos(angle) * radius), z = (int) Math.floor(point.z + 0.5 + Math.sin(angle) * radius);
+            double sx = x + 0.5 - muzzle.x, sz = z + 0.5 - muzzle.z, spot = Math.hypot(sx, sz);
+            double spotElevation = elevation(speed, gravity, spot, ArtilleryHeights.surface(level, x, z) + 1.0 - muzzle.y, elevation);
+            if (!Double.isNaN(spotElevation)) {
+                dx = sx; dz = sz; elevation = spotElevation;
+            }
         }
+        double bearing = Math.atan2(dz, dx);
         double across = speed * Math.cos(elevation);
         shell.setDeltaMovement(Math.cos(bearing) * across, speed * Math.sin(elevation), Math.sin(bearing) * across);
     }
