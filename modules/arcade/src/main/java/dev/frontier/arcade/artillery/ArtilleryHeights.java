@@ -29,7 +29,7 @@ public final class ArtilleryHeights {
     private static final double MAX_DISTANCE = 6000;
     private static final int COOLDOWN_TICKS = 10;
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-        new ResourceLocation(ArcadeVehicles.ID, "artillery"), () -> "1", "1"::equals, "1"::equals);
+        new ResourceLocation(ArcadeVehicles.ID, "artillery"), () -> "2", "2"::equals, "2"::equals);
     private static final Map<UUID, Long> LAST_QUERY = new WeakHashMap<>();
     private static boolean initialized;
 
@@ -40,10 +40,20 @@ public final class ArtilleryHeights {
         initialized = true;
         CHANNEL.registerMessage(0, Query.class, Query::encode, Query::decode, Query::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
         CHANNEL.registerMessage(1, Answer.class, Answer::encode, Answer::decode, Answer::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(2, Mission.class, Mission::encode, Mission::decode, Mission::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 
     public static void query(int x, int z) {
         CHANNEL.sendToServer(new Query(x, z));
+    }
+
+    /** Tells the server the crew's mission point, so a laid shot can be trued up onto it. */
+    public static void mission(int x, int z) {
+        CHANNEL.sendToServer(new Mission(x, z, true));
+    }
+
+    public static void clearMission() {
+        CHANNEL.sendToServer(new Mission(0, 0, false));
     }
 
     private static void answer(ServerPlayer player, Query query) {
@@ -75,6 +85,18 @@ public final class ArtilleryHeights {
         private static void handle(Query packet, Supplier<NetworkEvent.Context> contextSupplier) {
             var context = contextSupplier.get();
             context.enqueueWork(() -> answer(context.getSender(), packet));
+            context.setPacketHandled(true);
+        }
+    }
+
+    private record Mission(int x, int z, boolean active) {
+        private static void encode(Mission packet, FriendlyByteBuf buffer) {
+            buffer.writeInt(packet.x); buffer.writeInt(packet.z); buffer.writeBoolean(packet.active);
+        }
+        private static Mission decode(FriendlyByteBuf buffer) { return new Mission(buffer.readInt(), buffer.readInt(), buffer.readBoolean()); }
+        private static void handle(Mission packet, Supplier<NetworkEvent.Context> contextSupplier) {
+            var context = contextSupplier.get();
+            context.enqueueWork(() -> ArtilleryAim.mission(context.getSender(), packet.x, packet.z, packet.active, MAX_DISTANCE));
             context.setPacketHandled(true);
         }
     }

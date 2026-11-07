@@ -69,10 +69,11 @@ public final class ArtilleryShells {
     public static void join(EntityJoinLevelEvent event) {
         if (!(event.getLevel() instanceof ServerLevel level) || !(event.getEntity() instanceof CannonShellEntity shell)) return;
         if (!tagged(shell)) {
-            boolean fromGun = shell.getOwner() != null && shell.getOwner().getVehicle() instanceof SpArtilleryEntity
-                || !level.getEntitiesOfClass(SpArtilleryEntity.class, shell.getBoundingBox().inflate(GUN_REACH)).isEmpty();
-            if (!fromGun) return;
+            SpArtilleryEntity gun = shell.getOwner() != null && shell.getOwner().getVehicle() instanceof SpArtilleryEntity seated ? seated
+                : level.getEntitiesOfClass(SpArtilleryEntity.class, shell.getBoundingBox().inflate(GUN_REACH)).stream().findFirst().orElse(null);
+            if (gun == null) return;
             shell.getPersistentData().putBoolean(TAG, true);
+            ArtilleryAim.trueUp(level, gun, shell);
         }
         LIVE.computeIfAbsent(level, key -> new ArrayList<>()).add(shell);
     }

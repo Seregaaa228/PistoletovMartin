@@ -2,6 +2,7 @@ package dev.frontier.arcade.artillery.client;
 
 import com.atsuishio.superbwarfare.entity.vehicle.base.SpArtilleryEntity;
 import com.atsuishio.superbwarfare.tools.TrajectoryCalculator;
+import dev.frontier.arcade.artillery.ArtilleryAim;
 import dev.frontier.arcade.artillery.ArtilleryHeights;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -12,13 +13,13 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * The crew's own fire mission: a map point and an arc, kept on the client per gun. The server only reports the
- * surface height of a far column; the gunner lays the barrel by hand and fires with SBW's own trigger. The
- * solution is SBW's drag-free TrajectoryCalculator from the live muzzle, matching the native shell.
+ * surface height of a far column and keeps the mission point to true up a laid shot; the gunner lays the barrel by
+ * hand and fires with SBW's own trigger. The solution is SBW's drag-free TrajectoryCalculator from the live muzzle,
+ * matching the native shell.
  */
 public final class FireMission {
     static final String WEAPON = "Main";
-    /** Map fire is for indirect targets; anything closer is the tanks' and the gunner's own direct-fire job. */
-    static final double MIN_RANGE = 500;
+    static final double MIN_RANGE = ArtilleryAim.MIN_RANGE;
     private static int gunId = -1;
     private static BlockPos target;
     private static boolean heightKnown;
@@ -39,6 +40,7 @@ public final class FireMission {
         impactTick = 0;
         refreshHeight();
         if (!heightKnown) ArtilleryHeights.query(x, z);
+        ArtilleryHeights.mission(x, z);
     }
 
     /** Server answer for an unloaded column; ignored once the mission moved elsewhere. */
@@ -48,7 +50,10 @@ public final class FireMission {
         heightKnown = true;
     }
 
-    static void clear() { gunId = -1; target = null; impactTick = 0; }
+    static void clear() {
+        if (target != null) ArtilleryHeights.clearMission();
+        gunId = -1; target = null; impactTick = 0;
+    }
 
     static boolean tooClose(SpArtilleryEntity gun) {
         var point = target(gun);

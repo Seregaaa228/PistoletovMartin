@@ -49,6 +49,6 @@
   "gui.frontier_arcade_vehicles.artillery.laid": "LAID — FIRE",
   "gui.frontier_arcade_vehicles.artillery.traverse": "Traverse",
   "gui.frontier_arcade_vehicles.artillery.elevate": "Elevate",
-  "gui.frontier_arcade_vehicles.artillery.too_close": "Under 500 m — no map fire",
+  "gui.frontier_arcade_vehicles.artillery.too_close": "Under 100 m — no map fire",
   "gui.frontier_arcade_vehicles.artillery.impact_in": "Impact in"
 }

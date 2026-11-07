@@ -3,6 +3,7 @@ package dev.frontier.arcade.artillery.client;
 import com.atsuishio.superbwarfare.entity.vehicle.base.SpArtilleryEntity;
 import com.atsuishio.superbwarfare.tools.VectorToolKt;
 import dev.frontier.arcade.ArcadeVehicles;
+import dev.frontier.arcade.artillery.ArtilleryAim;
 import java.util.Locale;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -23,8 +24,8 @@ import org.joml.Vector4f;
  */
 @Mod.EventBusSubscriber(modid = ArcadeVehicles.ID, value = Dist.CLIENT)
 public final class ArtilleryClient {
-    /** Barrel within this of the solution counts as laid; at 2 km 0.1° is about 17 m of range. */
-    private static final double LAID_DEGREES = 0.1;
+    /** Barrel within this of the solution counts as laid; the server trues up a shot this close onto the mission. */
+    private static final double LAID_DEGREES = ArtilleryAim.TRUE_UP_DEGREES / 2;
     private static final int SOLUTION = 0xFFFFB000, BARREL = 0xFF34E07A, OFF = 0xFFFF4A3D;
     private static final Matrix4f VIEW = new Matrix4f(), PROJECTION = new Matrix4f();
     private static boolean matrices;

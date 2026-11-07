@@ -67,7 +67,8 @@
   ],
   "Weapons": {
     "Main": {
-      "Icon": "superbwarfare:textures/overlay/vehicle/weapon/icons/ap_shell.png",
+      "Icon": "superbwarfare:textures/overlay/vehicle/weapon/icons/he_shell.png",
+      "ShellType": "HE",
       "DefaultFireMode": "Semi",
       "AvailableFireModes": "Semi",
       "Projectile": "superbwarfare:cannon_shell",
@@ -77,18 +78,18 @@
       "Velocity": 18,
       "Gravity": 0.06,
       "ApDurability": 200,
-      "Damage": 1050,
-      "ExplosionDamage": 260,
-      "ExplosionRadius": 10,
+      "Damage": 450,
+      "ExplosionDamage": 900,
+      "ExplosionRadius": 42,
       "RecoilTime": 42,
       "RecoilForce": 1.1,
       "ShootShake": [12, 14, 80],
-      "Spread": 0.06,
+      "Spread": 0,
       "ProjectileLife": 800,
       "ShootAnimationTime": 30,
       "Crosshair": "@VehicleRuApc",
       "CrosshairColor": "0x00ff66",
-      "Name": "weapon.superbwarfare.cannon_ap",
+      "Name": "weapon.superbwarfare.cannon_he",
       "SoundInfo": {
         "Fire1P": "superbwarfare:plz_05_fire_1p",
         "Fire3P": "superbwarfare:plz_05_fire_3p",
@@ -101,16 +102,16 @@
       },
       "SoundRadius": 32,
       "AmmoType": [
-        "superbwarfare:large_shell_ap",
+        "superbwarfare:large_shell_he",
         {
-          "Ammo": "superbwarfare:large_shell_he",
+          "Ammo": "superbwarfare:large_shell_ap",
           "Override": {
-            "Icon": "superbwarfare:textures/overlay/vehicle/weapon/icons/he_shell.png",
-            "ShellType": "HE",
-            "Damage": 450,
-            "ExplosionDamage": 520,
-            "ExplosionRadius": 26,
-            "Name": "weapon.superbwarfare.cannon_he"
+            "Icon": "superbwarfare:textures/overlay/vehicle/weapon/icons/ap_shell.png",
+            "ShellType": "AP",
+            "Damage": 1050,
+            "ExplosionDamage": 420,
+            "ExplosionRadius": 16,
+            "Name": "weapon.superbwarfare.cannon_ap"
           }
         },
         {
