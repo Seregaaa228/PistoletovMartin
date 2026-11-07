@@ -64,14 +64,13 @@ MOVABLE = {"turret", "barrelBase", "barrel", "tube"} | {
 STEER = {"wheelL0Turn", "wheelR0Turn"}         # new steering bones (SBW name rule)
 WHEEL_GEO_BONE = {f"wheel{s}{i}": f"wheel{s}{i}Turn" if i == "0" else f"wheel{s}{i}"
                   for s in "LR" for i in AXLES}
-SPADE_HINGE = [12, 14, 87]       # move_bh_spade_l pivot; move_bh_spade_r mirrors x
+JACK_X, JACK_Z = 22.5, 88.25     # rear stabiliser jack axis (left; right mirrors x)
+JACK_TOP = 34.0                  # top of the static housing = move_bh_jack_l/_r pivot y
+JACK_PAD_Y = 9.0                 # stowed pad bottom; deployed = 0, so travel = -9 along Y
 WINDSCREEN_LOCAL = (2.5, 12.0)   # opening along the sloped frame, units above its hinge
 SIDE_WINDOW_LOCAL = (3.5, 10.5)
 DRIVER_EYE = [11.5, 46.5, -73]   # first-person eye: centre of the driver's windscreen pane
 GUNNER_CAM = [0, 10, -30]        # gunner camera over the tube, relative to GUN_PIVOT
-STEER_HUB = [11.5, 40.5, -76]    # steering-wheel hub (move_bh_steering_wheel pivot)
-STEER_TILT = 35.0                # wheel plane above horizontal; column = local -Z
-STEER_BIND = [90 - STEER_TILT, 0, 0]   # bone rotation (file/Bedrock sign: +rx tips local -Z down)
 # Bone-name patterns SBW treats specially (wheel spin, tracks, flare, dog tag).
 RESERVED_PREFIXES = ("wheel", "w_", "shell", "track", "flare", "laser")
 TEX_LIMIT = 512
@@ -469,12 +468,10 @@ def build():
     cab = g.bone("bh_cab", "body")
     mid = g.bone("bh_midbody", "body")
     deck = g.bone("bh_platform", "body")
-    spades = g.bone("bh_spades", "body")
-    spade_l = g.bone("move_bh_spade_l", "body", SPADE_HINGE)
-    spade_r = g.bone("move_bh_spade_r", "body", [-SPADE_HINGE[0], SPADE_HINGE[1], SPADE_HINGE[2]])
+    jacks = g.bone("bh_jack_housings", "body")
+    jack_l = g.bone("move_bh_jack_l", "body", [JACK_X, JACK_TOP, JACK_Z])
+    jack_r = g.bone("move_bh_jack_r", "body", [-JACK_X, JACK_TOP, JACK_Z])
     fp_hide = g.bone("move_bh_fp_hide", "body")
-    steer = g.bone("move_bh_steering_wheel", "body", STEER_HUB)
-    g.by[steer]["rotation"] = list(STEER_BIND)
     rest = g.bone("bh_travel_rest", "body")
     mount = g.bone("bh_mount", "turret")
     cradle = g.bone("bh_cradle", "barrel")
@@ -539,40 +536,31 @@ def build():
     hinge, srot = [0, 40, -84], R("x", slope)
     plen = math.hypot(6, 13) + 0.3                 # local height of the sloped frame
     w0, w1 = WINDSCREEN_LOCAL                      # opening, local y above the hinge
-    g.cube(cab, [-24, 40, -84], [48, w0, 2], "camo", rot=srot, pivot=hinge)          # sill
-    g.cube(cab, [-24, 40 + w1, -84], [48, plen - w1, 2], "camo", rot=srot, pivot=hinge)
-    g.sym(cab, [20, 40 + w0, -84], [4, w1 - w0, 2], "camo", rot=srot, pivot=hinge)  # posts
-    g.cube(cab, [-3, 40 + w0, -84], [6, w1 - w0, 2], "camo", rot=srot, pivot=hinge)
+    # Everything in front of the driver's eye (frame, pillars, glass, wipers,
+    # dashboard, roof front edge) is in move_bh_fp_hide: hidden only in the
+    # driver's own first person.
+    g.cube(fp_hide, [-24, 40, -84], [48, w0, 2], "camo", rot=srot, pivot=hinge)          # sill
+    g.cube(fp_hide, [-24, 40 + w1, -84], [48, plen - w1, 2], "camo", rot=srot, pivot=hinge)
+    g.sym(fp_hide, [20, 40 + w0, -84], [4, w1 - w0, 2], "camo", rot=srot, pivot=hinge)  # posts
+    g.cube(fp_hide, [-3, 40 + w0, -84], [6, w1 - w0, 2], "camo", rot=srot, pivot=hinge)
     g.sym(fp_hide, [3, 40 + w0, -83.4], [17, w1 - w0, 0.6], "glass", rot=srot, pivot=hinge)
     for o, s in (([3, 40 + w1, -84.6], [17, 0.6, 0.6]), ([3, 40 + w0 - 0.6, -84.6], [17, 0.6, 0.6]),
                  ([2.4, 40 + w0 - 0.6, -84.6], [0.6, w1 - w0 + 1.2, 0.6]),
                  ([20, 40 + w0 - 0.6, -84.6], [0.6, w1 - w0 + 1.2, 0.6])):
-        g.sym(cab, o, s, "camo_dark", rot=srot, pivot=hinge)            # window trims
+        g.sym(fp_hide, o, s, "camo_dark", rot=srot, pivot=hinge)        # window trims
     g.sym(fp_hide, [6, 40 + w0 + 0.3, -84.9], [7, 0.4, 0.4], "black", rot=srot, pivot=hinge)
-    g.cube(cab, [-22, 34, -82], [44, 7, 3], "camo_dark")                 # dashboard
+    g.cube(fp_hide, [-22, 34, -82], [44, 7, 3], "camo_dark")             # dashboard
     g.cube(cab, [-24, 40, -48], [48, 13, 2], "camo")                     # rear wall
     for x0 in (8, -16):                                                  # seats
         g.cube(cab, [x0, 34, -68], [8, 4, 7], "black")
         g.cube(cab, [x0, 38, -62], [8, 10, 1.5], "black")
-    # Steering wheel: modelled flat in the XY plane around its hub, column along
-    # -Z; the bone's bind rotation tips it to the column angle. SBW-side code
-    # spins it with rotateZ on top of the bind rotation.
-    hx, hy, hz = STEER_HUB
-    rr = 3.2
-    e = 2 * rr * math.tan(math.radians(22.5)) + 0.3
-    for k in range(8):
-        g.cube(steer, [hx - e / 2, hy + rr - 0.35, hz - 0.35], [e, 0.7, 0.7], "black",
-               rot=R("z", k * 45) if k else None, pivot=STEER_HUB)       # rim
-    for ang in (60, 180, 300):
-        g.cube(steer, [hx - 0.25, hy, hz - 0.2], [0.5, rr - 0.3, 0.4], "metal_dark",
-               rot=R("z", ang), pivot=STEER_HUB)                         # spokes
-    g.cube(steer, [hx - 0.8, hy - 0.8, hz - 0.5], [1.6, 1.6, 1.0], "metal_dark")   # hub
-    g.cube(steer, [hx - 0.4, hy - 0.4, hz - 4.5], [0.8, 0.8, 4.0], "black")       # column
     side_rot, side_piv = R("z", 8), [24, 40, -63]
     s0, s1 = SIDE_WINDOW_LOCAL
     for o, s in (([24, 40, -83], [1.6, s0, 36]), ([24, 40 + s1, -83], [1.6, 13.2 - s1, 36]),
-                 ([24, 40 + s0, -83], [1.6, s1 - s0, 7]), ([24, 40 + s0, -58], [1.6, s1 - s0, 11])):
+                 ([24, 40 + s0, -58], [1.6, s1 - s0, 11])):
         g.sym(cab, o, s, "camo", rot=side_rot, pivot=side_piv)          # side plates
+    g.sym(fp_hide, [24, 40 + s0, -83], [1.6, s1 - s0, 7], "camo", rot=side_rot,
+          pivot=side_piv)                                                # A-pillars
     g.sym(fp_hide, [24.5, 40 + s0, -76], [0.6, s1 - s0, 18], "glass", rot=side_rot, pivot=side_piv)
     for o, s in (([25.5, 40 + s1, -76.6], [0.7, 0.6, 19.2]), ([25.5, 40 + s0 - 0.6, -76.6], [0.7, 0.6, 19.2]),
                  ([25.5, 40 + s0 - 0.6, -76.6], [0.7, s1 - s0 + 1.2, 0.6]),
@@ -580,7 +568,8 @@ def build():
         g.sym(cab, o, s, "camo_dark", rot=side_rot, pivot=side_piv)
     g.cube(cab, [-22.5, 53, -77], [45, 1.5, 30], "camo")                 # roof + bevels
     g.sym(cab, [21.4, 51.9, -77], [2.2, 2.2, 30], "camo", rot=R("z", 45), pivot=[22.5, 53, -62])
-    g.cube(cab, [-22.5, 51.9, -78.1], [45, 2.2, 2.2], "camo", rot=R("x", 45), pivot=[0, 53, -77])
+    g.cube(fp_hide, [-22.5, 51.9, -78.1], [45, 2.2, 2.2], "camo", rot=R("x", 45),
+           pivot=[0, 53, -77])                                           # roof front edge
     g.ngon(cab, (-10, 55.3, -62), "y", 4.5, 1.6, "camo_flat")             # hatch
     g.cube(cab, [-14.8, 54.5, -64], [1.2, 1.2, 4], "metal")
     g.cube(cab, [-8, 56.0, -62.5], [4, 0.6, 1], "metal")
@@ -639,10 +628,10 @@ def build():
     g.sym(deck, [25.8, 22, 10], [0.6, 2, 2], "metal_dark")
     g.sym(deck, [13, 16, 66], [11, 10, 17.8], "camo_dark")
     g.cube(deck, [-20, 14, 82], [40, 5, 3], "camo_dark")                 # rear bumper
-    g.sym(deck, [18.5, 21.5, 84], [5, 4, 1], "metal_dark")               # tail lights
-    g.sym(deck, [19, 22, 84.6], [2, 3, 0.6], "tail")
-    g.sym(deck, [21.3, 22, 84.6], [1.8, 3, 0.6], "lamp")
-    g.sym(deck, [18.5, 25.6, 84], [5, 0.5, 2], "metal_dark")
+    g.sym(deck, [12.5, 21.5, 83.8], [5, 4, 1], "metal_dark")             # tail lights
+    g.sym(deck, [13, 22, 84.4], [2, 3, 0.6], "tail")
+    g.sym(deck, [15.3, 22, 84.4], [1.8, 3, 0.6], "lamp")
+    g.sym(deck, [12.5, 25.6, 83.8], [5, 0.5, 1.8], "metal_dark")
     g.sym(deck, [25.5, 28, -5], [1, 3, 17], "camo")                      # side boards
     g.sym(deck, [25.5, 28, 66], [1, 3, 14], "camo")
     for z in (-5.4, 11.4, 65.6, 79.4):
@@ -660,27 +649,25 @@ def build():
     for k in range(3):
         g.cube(deck, [-2.6, 10 + k * 5, 84.6], [5.2, 0.6, 0.6], "metal")
 
-    # --- rear spades (stowed up) with hydraulic rams ----------------------------------------
-    # Static hinge brackets on the rear bumper; each spade (arms, blade, teeth,
-    # ribs and its ram) folds about its own hinge bone. Modelled stowed (up).
-    hx, hy, hz = SPADE_HINGE
-    for x0 in (hx - 7, hx + 5.5):
-        g.sym(spades, [x0, hy - 3, hz - 3], [1.5, 6, 5.5], "metal_dark")
-    g.sym(spades, [hx - 7.5, hy - 3.5, hz - 3], [15, 1.5, 2.5], "camo_dark")  # bracket base
-    pair = dict(bone2=spade_r)
-    g.sym(spade_l, [hx - 5.5, hy - 1, hz - 1], [11, 2, 2], "metal", **pair)    # hinge tube
-    for x0 in (hx - 5.4, hx + 4):
-        g.sym(spade_l, [x0, hy, hz - 0.8], [1.4, 21, 1.6], "camo_dark", **pair)  # arms
-    g.sym(spade_l, [hx - 5.4, hy + 10, hz - 0.6], [10.8, 1.4, 1.2], "camo_dark", **pair)
-    g.sym(spade_l, [hx - 7, hy + 19, hz - 1.8], [14, 9, 2.2], "camo_dark", **pair)  # blade
-    for k in range(4):
-        g.sym(spade_l, [hx - 6.5 + k * 3.5, hy + 28, hz - 1.4], [2.4, 2.5, 1.4], "metal_dark",
-              **pair)                                                    # teeth
-    for x0 in (hx - 3.5, hx + 2.3):
-        g.sym(spade_l, [x0, hy + 19.5, hz + 0.4], [1.2, 8, 1], "camo_dark", **pair)  # ribs
-    g.sym(spade_l, [hx - 0.8, hy + 1.5, hz + 1.2], [1.6, 11, 1.6], "metal_dark", **pair)  # ram
-    g.sym(spade_l, [hx - 0.4, hy + 12.5, hz + 1.6], [0.8, 7, 0.8], "metal", **pair)
-    g.sym(spade_l, [hx - 1, hy + 19.5, hz + 0.4], [2, 2, 1.6], "metal_dark", **pair)
+    # --- rear stabiliser jacks --------------------------------------------------------
+    # Static square housings at the rear corners (bh_jack_housings); the inner leg
+    # and broad foot pad slide straight down in move_bh_jack_l/_r. Axis-aligned
+    # cubes only, no rotation anywhere, exact left/right mirrors. Modelled stowed;
+    # deploy = translate the bones by (0, -JACK_PAD_Y, 0) so the pad meets y = 0.
+    jx, jz, jt, pad = JACK_X, JACK_Z, JACK_TOP, JACK_PAD_Y
+    g.sym(jacks, [jx - 2.75, 14.2, jz - 2.75], [5.5, jt - 14.2, 5.5], "camo_dark")   # housing
+    g.sym(jacks, [jx - 3.25, jt, jz - 3.25], [6.5, 1, 6.5], "metal_dark")            # top cap
+    g.sym(jacks, [jx - 1.25, jt + 1, jz - 1.25], [2.5, 2, 2.5], "metal")             # ram head
+    g.sym(jacks, [jx - 3.25, 14, jz - 3.25], [6.5, 1.2, 6.5], "metal_dark")          # collar
+    g.sym(jacks, [jx - 3.1, 24, jz - 3.1], [6.2, 1, 6.2], "camo")                    # band
+    g.sym(jacks, [jx - 2.75, 20, 83.8], [5.5, 8, jz - 2.75 - 83.8], "camo_dark")     # bracket
+    pair = dict(bone2=jack_r)
+    g.sym(jack_l, [jx - 1.75, pad + 1.5, jz - 1.75], [3.5, jt - 1 - pad - 1.5, 3.5], "metal",
+          **pair)                                                        # inner leg
+    g.sym(jack_l, [jx - 2.25, pad + 1.5, jz - 2.25], [4.5, 1.2, 4.5], "metal_dark", **pair)
+    g.sym(jack_l, [jx - 4.5, pad, jz - 4.5], [9, 1.5, 9], "metal_dark", **pair)       # foot pad
+    g.sym(jack_l, [jx - 4, pad + 1.5, jz - 0.5], [8, 0.8, 1], "metal_dark", **pair)   # pad ribs
+    g.sym(jack_l, [jx - 0.5, pad + 1.5, jz - 4], [1, 0.8, 8], "metal_dark", **pair)
 
     # --- gun mount (yaws with turret) --------------------------------------------------
     tx, ty, tz = TURRET_PIVOT
@@ -1309,35 +1296,10 @@ def render_eye(data, tex, eye, yaw=0.0, pitch=0.0, fov=70.0, size=(960, 600), po
     return img
 
 
-def spade_deploy_angle(data):
-    """Right-handed angle about +X (deg) that puts the lowest point of the left
-    spade at y = -1 (model units), swinging the blade rearward (+Z)."""
-    posed = Posed(data)
-    lo, hi = 90.0, 180.0
-    for _ in range(60):
-        mid = (lo + hi) / 2
-        q = posed.quads({"move_bh_spade_l": ("pitch", mid)})
-        q = [x for x, b in zip(q, _bones_of(posed)) if b == "move_bh_spade_l"]
-        ymin = min(p[0][:, 1].min() for p in q)
-        if ymin > -1:
-            lo = mid
-        else:
-            hi = mid
-    return round((lo + hi) / 2, 2)
-
-
-def _bones_of(posed):
-    """Bone name for each quad, in Posed.quads() order (no pose, no hide)."""
-    out = []
-    for b in posed.bones:
-        for c in b.get("cubes", []):
-            if sum(v > 0 for v in c["size"]) < 2:
-                continue
-            for f in FACES:
-                uvi = c.get("uv", {}).get(f)
-                if uvi and uvi["uv_size"][0] and uvi["uv_size"][1]:
-                    out.append(b["name"])
-    return out
+def jack_pad_bottom(data, travel):
+    """Lowest y of the left jack's moving cubes after sliding down by `travel`."""
+    b = Posed(data).by["move_bh_jack_l"]
+    return min(c["origin"][1] for c in b["cubes"]) - travel
 
 
 def eye_clearance(data, eye, hide=("move_bh_fp_hide",)):
@@ -1411,14 +1373,14 @@ def previews(data, tex, out_dir, jar):
         sheet.paste(im, (x, y + 20), im)
         d.text((x + 24, y + 4), label, font=font(20, True), fill=(40, 56, 44))
     sheet.save(out_dir / "bohdana-preview.png")
-    # driving poses: steered front wheels, spades deployed
-    phi = spade_deploy_angle(data)
+    # driving poses: steered front wheels; rear jacks stowed and deployed
     drive = {"wheelL0Turn": ("yaw", 25), "wheelR0Turn": ("yaw", 25)}
-    dig = {"move_bh_spade_l": ("pitch", phi), "move_bh_spade_r": ("pitch", phi)}
+    down = {"move_bh_jack_l": ("move", [0, -JACK_PAD_Y, 0]),
+            "move_bh_jack_r": ("move", [0, -JACK_PAD_Y, 0])}
     poses = [("STEER 25 deg (wheel?0Turn yaw)", dict(yaw=30, elev=40, pose=drive)),
-             (f"SPADES DEPLOYED (+{phi} deg about +X)", dict(yaw=215, elev=20, pose=dig)),
-             ("SPADES DEPLOYED, SIDE", dict(yaw=-90, elev=0, pose=dig)),
-             ("SPADES STOWED, SIDE", dict(yaw=-90, elev=0))]
+             (f"JACKS DEPLOYED (-{JACK_PAD_Y} along Y)", dict(yaw=215, elev=20, pose=down)),
+             ("JACKS STOWED, REAR", dict(yaw=180, elev=8)),
+             ("JACKS DEPLOYED, REAR", dict(yaw=180, elev=8, pose=down))]
     sheet = Image.new("RGB", (2000, 1360), (226, 229, 217))
     d = ImageDraw.Draw(sheet)
     for i, (label, kw) in enumerate(poses):
@@ -1429,9 +1391,8 @@ def previews(data, tex, out_dir, jar):
     sheet.save(out_dir / "bohdana-poses.png")
     # first-person views (move_bh_fp_hide hidden) and the gunner camera
     fp = ("move_bh_fp_hide",)
-    right90 = {"move_bh_steering_wheel": ("roll", -90)}     # right turn = negative rotateZ
     views = [("driver-forward", DRIVER_EYE, 0, -8, fp, None, 0),
-             ("driver-forward-wheel-right90", DRIVER_EYE, 0, -8, fp, right90, 0),
+             ("driver-forward-level", DRIVER_EYE, 0, 0, fp, None, 0),
              ("driver-left60", DRIVER_EYE, -60, -8, fp, None, 0),
              ("driver-right60", DRIVER_EYE, 60, -8, fp, None, 0),
              ("gunner-elev-3", None, 0, 0, (), None, -3),
@@ -1514,9 +1475,20 @@ def validate(data, tex_size, jar=None):
         assert turn["pivot"] == by[f"wheel{side}0"]["pivot"]
         assert names.index(turn["name"]) < names.index(f"wheel{side}0")
         assert not by[f"wheel{side}0"].get("cubes"), "front wheel geometry belongs on Turn"
-    sw = by["move_bh_steering_wheel"]           # spins about local Z on top of its bind rotation
-    assert sw["parent"] == "body" and sw["pivot"] == STEER_HUB and sw["rotation"] == STEER_BIND
-    assert sw.get("cubes"), "steering wheel has no geometry"
+    for side, sign in (("l", 1), ("r", -1)):    # translating jacks: no rotation at all
+        jb = by[f"move_bh_jack_{side}"]
+        assert jb["parent"] == "body" and "rotation" not in jb
+        assert jb["pivot"] == [sign * JACK_X, JACK_TOP, JACK_Z]
+        assert jb.get("cubes") and all("rotation" not in c for c in jb["cubes"])
+    for side in "lr":
+        assert by.get(f"move_bh_spade_{side}") is None
+    assert by.get("move_bh_steering_wheel") is None
+    L = sorted((c["origin"], c["size"]) for c in by["move_bh_jack_l"]["cubes"])
+    Rm = sorted(([-(o[0] + s[0]), o[1], o[2]], s) for o, s in
+                ((c["origin"], c["size"]) for c in by["move_bh_jack_r"]["cubes"]))
+    assert np.allclose(np.array([a + b for a, b in L]), np.array([a + b for a, b in Rm])), \
+        "jacks are not exact mirrors"
+    assert all("rotation" not in c for c in by["bh_jack_housings"]["cubes"])
     allowed_wheels = set(WHEEL_GEO_BONE.values())
     for b in bones:          # only the six used wheels carry cubes; tracks/locks stay empty
         n = b["name"]
@@ -1584,14 +1556,15 @@ def main():
                    + sorted(f"wheel{s}{i}" for s in "LR" for i in AXLES)},
         "muzzle": [0, GUN_PIVOT[1], MUZZLE_Z],
         "new_bones": {n: {k: geo.by[n][k] for k in ("parent", "pivot", "rotation") if k in geo.by[n]}
-                      for n in sorted(STEER | {"move_bh_spade_l", "move_bh_spade_r", "move_bh_fp_hide",
-                                               "move_bh_steering_wheel"})},
-        "spade_deploy_deg_about_+X": spade_deploy_angle(data),
+                      for n in sorted(STEER | {"move_bh_jack_l", "move_bh_jack_r", "move_bh_fp_hide"})},
+        "jack_travel_y": -JACK_PAD_Y,
+        "jack_pad_bottom_deployed": jack_pad_bottom(data, JACK_PAD_Y),
         "driver_eye": DRIVER_EYE,
         "driver_eye_clearance": round(eye_clearance(data, DRIVER_EYE), 2),
         "gunner_cam_barrel_local": GUNNER_CAM,
     })
     assert report["driver_eye_clearance"] > 2.0, "driver eye too close to visible geometry"
+    assert abs(report["jack_pad_bottom_deployed"]) < 1e-6, "deployed jack pad must meet y = 0"
     if args.preview:
         previews(data, tex, args.preview, args.jar)
     print(json.dumps(report))

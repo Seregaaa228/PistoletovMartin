@@ -1,5 +1,5 @@
 {
-  "Animation": "superbwarfare:animations/bedrock/vehicle/plz_05.animation.json",
+  "Animation": "frontier_arcade_vehicles:animations/bedrock/vehicle/bohdana.animation.json",
   "Models": [
     {
       "Model": "frontier_arcade_vehicles:models/bedrock/vehicle/bohdana.geo.json",

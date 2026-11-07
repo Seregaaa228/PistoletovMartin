@@ -1,0 +1,47 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.main.idle": {
+      "loop": true
+    },
+    "animation.main.fire": {
+      "loop": "hold_on_last_frame",
+      "animation_length": 1,
+      "bones": {
+        "barrelBase": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "0.05": [
+              -1.0,
+              0,
+              0
+            ],
+            "0.3": [
+              -0.8,
+              0,
+              0
+            ],
+            "0.5": [
+              0.3,
+              0,
+              0
+            ],
+            "0.8": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "animation.plz_05.lock_turret": {
+      "loop": true,
+      "bones": {}
+    }
+  }
+}

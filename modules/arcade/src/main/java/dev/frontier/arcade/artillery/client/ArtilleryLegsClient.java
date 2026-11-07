@@ -37,7 +37,7 @@ public final class ArtilleryLegsClient {
         LEGS.put(vehicle, new Leg(down, instant ? now - ArtilleryLegs.DEPLOY_TICKS : now));
     }
 
-    /** Above the hotbar while in a braced-capable vehicle: what the legs are doing and what X does next. */
+    /** Top of the screen, clear of SBW's own prompts, in a braced-capable vehicle: the legs' state and what X does. */
     @SubscribeEvent
     public static void hud(RenderGuiEvent.Post event) {
         var mc = Minecraft.getInstance();
@@ -46,7 +46,7 @@ public final class ArtilleryLegsClient {
         var g = event.getGuiGraphics();
         boolean down = down(gun);
         g.drawCenteredString(mc.font, Component.translatable(down ? "hud.frontier_arcade_vehicles.legs.down" : "hud.frontier_arcade_vehicles.legs.up"),
-            g.guiWidth() / 2, g.guiHeight() - 72, down ? 0xFF34E07A : 0xFFFFB000);
+            g.guiWidth() / 2, 6, down ? 0xFF34E07A : 0xFFFFB000);
     }
 
     public static boolean down(Entity vehicle) {
@@ -56,6 +56,7 @@ public final class ArtilleryLegsClient {
 
     /** 0 stowed .. 1 fully down, eased. */
     public static float progress(Entity vehicle, float partialTick) {
+        if (ArtilleryShotDebug.POSE) return 1;
         var leg = LEGS.get(vehicle.getId());
         if (leg == null) return 0;
         float t = Math.min(1, Math.max(0, (vehicle.level().getGameTime() - leg.since + partialTick) / ArtilleryLegs.DEPLOY_TICKS));

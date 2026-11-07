@@ -426,12 +426,11 @@ class Model:
 P_LOCK = (20.87326, -85.1823)          # paojia pivot (y, z)
 GLACIS_NOSE = (-90.0, 21.0)            # (z, y)
 GLACIS_TOP = (-62.0, 31.2)
-DECK_Y = 31.2
-ENGINE_DECK_Y = 28.6
+DECK_Y = 31.2                          # one flat roof under the whole turret sweep
 HULL_REAR = 57.0
 TURRET_FRONT, TURRET_REAR = -34.0, 62.0
 TURRET_X = 30.5
-TURRET_Y0, TURRET_Y1 = 32.0, 59.5
+TURRET_Y0, TURRET_Y1 = 31.35, 59.5     # turret bottom sits 0.15 above the deck
 ROAD_Z = [-54.288, -34.632, -17.784, -0.936, 14.976, 36.504]
 ROAD_Y = 7.3008
 ROAD_A = 5.8          # road wheel apothem
@@ -456,14 +455,13 @@ def build_hull(m: Model):
     # Bolted appliqué strips on the glacis (a few raised bevelled plates).
     for x0, x1 in ((-21, -8.5), (8.5, 21)):
         m.plate(B, x0, x1, (-88.5, 21.9), (-66.0, 30.1), 0.6, (-1, 1), "camo_light")
-    # Sponsons over the tracks: high front deck, low engine deck at the rear.
+    # Sponsons over the tracks and the hull roof: one flat deck from the
+    # glacis to the rear plate, so the overhanging turret always sits on it.
     m.mbox(B, 22.5, 21.5, -62, 34.5, DECK_Y, 24, "camo")
     m.box(B, -22.5, 21.5, -62, 22.5, DECK_Y, 24, "camo")
-    m.box(B, -34.5, 21.5, 24, 34.5, ENGINE_DECK_Y, HULL_REAR, "camo")
-    # Step between the decks is bevelled.
-    m.plate(B, -34.5, 34.5, (24.0, DECK_Y), (27.0, ENGINE_DECK_Y), 1.0, (1, -1), "camo_dark")
+    m.box(B, -34.5, 21.5, 24, 34.5, DECK_Y, HULL_REAR, "camo")
     # Bevel along the deck side edges.
-    m.mplate(B, 34.5, 35.4, (-62.0, 30.0), (24.0, 30.0), 1.2, (0, -1), "camo_dark")
+    m.mplate(B, 34.5, 35.4, (-62.0, 30.0), (HULL_REAR, 30.0), 1.2, (0, -1), "camo_dark")
     # Front fenders over the track run-in and the hull side lip.
     m.mbox(B, 22.5, 21.5, -92.5, 35.6, 22.7, -62, "camo", {"down": "under"})
     m.mbox(B, 34.5, 21.5, -62, 35.6, 22.7, HULL_REAR + 1.5, "camo_dark", {"down": "under"})
@@ -476,7 +474,7 @@ def build_hull(m: Model):
         m.mbox(B, 35.0, 20.6, z + 0.6, 36.4, 21.4, z + L - 1.1, "metal_dark")
         z += L
     # Hull rear plate (slight slope) with lights and a stowage box.
-    m.plate(B, -34.0, 34.0, (HULL_REAR, ENGINE_DECK_Y), (HULL_REAR + 1.8, 9.0), 2.0, (-1, 0), "camo")
+    m.plate(B, -34.0, 34.0, (HULL_REAR, DECK_Y), (HULL_REAR + 1.8, 9.0), 2.0, (-1, 0), "camo")
     m.box(B, -22.4, 6, HULL_REAR - 1, 22.4, 9.5, HULL_REAR + 2.2, "camo_dark")
     for sx in (1, -1):
         m.box(D, sx * 27.5, 23.4, HULL_REAR + 1.0, sx * 31.0, 25.9, HULL_REAR + 2.1, "metal_dark")
@@ -512,17 +510,17 @@ def build_hull(m: Model):
     for px in (hx - 3.0, hx + 3.0):
         m.box(D, px - 1.3, DECK_Y, hz - 8.6, px + 1.3, DECK_Y + 1.9, hz - 6.2, "camo_dark",
               {"north": "glass"})
-    # Engine deck grilles and access panels.
+    # Engine air grilles on the deck strips beside the turret (kept below
+    # the turret bottom so it can swing over them).
     for sx in (1, -1):
-        m.box(D, sx * 8.0, ENGINE_DECK_Y, 30.0, sx * 30.0, ENGINE_DECK_Y + 0.4, 52.0, "grille")
-        m.box(D, sx * 8.0, ENGINE_DECK_Y, 26.0, sx * 30.0, ENGINE_DECK_Y + 0.3, 29.4, "camo_dark")
-    m.box(D, -6.5, ENGINE_DECK_Y, 28.0, 6.5, ENGINE_DECK_Y + 0.5, 54.0, "camo_light")
+        m.box(D, sx * 31.0, DECK_Y, 26.0, sx * 34.2, DECK_Y + 0.12, 54.0, "grille")
     # Exhaust grille on the left sponson (T-72 heritage).
     m.box(D, 35.4, 23.0, 30.0, 36.3, 27.6, 40.0, "exhaust")
     m.box(D, 35.4, 22.4, 29.4, 36.6, 23.0, 40.6, "metal_dark")
     m.box(D, 35.4, 27.6, 29.4, 36.6, 28.2, 40.6, "metal_dark")
     # Fender stowage boxes with lids and latches.
-    for sx, z0, z1 in ((1, -46.0, -30.0), (-1, -58.0, -40.0), (-1, -36.0, -22.0)):
+    # Kept outside the turret's swept radius (~57 units about z=14.04).
+    for sx, z0, z1 in ((1, -60.0, -40.0), (-1, -60.0, -40.0)):
         m.box(D, sx * 26.0, DECK_Y, z0, sx * 34.4, DECK_Y + 3.8, z1, "box", ctx={"latch": 2})
         m.box(D, sx * 25.8, DECK_Y + 3.8, z0 - 0.2, sx * 34.6, DECK_Y + 4.4, z1 + 0.2, "camo_dark")
     # Spare track links on the glacis.
@@ -1415,7 +1413,70 @@ def validate(geo, plz_geo=None):
             for _, world, _ in cube_world_corners(c, mats[b["name"]]).values():
                 lo = np.minimum(lo, world.min(0))
                 hi = np.maximum(hi, world.max(0))
+    check_seating(bones, mats)
     return count, lo, hi
+
+
+# SBW 0.8.9.1 bakes only these bones as separate parts; every other bone is
+# folded into its nearest kept ancestor (+ bones named by the animation file).
+KEPT_PATTERNS = [r"^root$", r"^base$", r"^turret$", r"^barrel$", r"^move_.*", r"^wheel[LR].*",
+                 r"^track.*", r"^w_.*", r"^flare.*", r"^laser.*", r"^shell.*",
+                 r"^.*_dogTag_\d+x\d+$", r"^dummy_.*"]
+ANIMATED = {"tube", "barrelBase", "paojia", "zhuzi", "paojia2", "shensuo"}
+
+
+def kept_part(by, name):
+    while name:
+        if name in ANIMATED or any(re.match(p, name) for p in KEPT_PATTERNS):
+            return name
+        name = by[name].get("parent")
+    return None
+
+
+def check_seating(bones, mats):
+    """The turret must rest on the hull roof and sweep over it freely.
+
+    * Every new msta_* bone is unrotated (the baker folds them into kept
+      parts, so a bind rotation would silently move geometry).
+    * The lowest turret shell face is at most 0.3 above the flat deck, with
+      deck geometry directly below it along the whole turret length.
+    * No hull part rises above the turret bottom inside the swept circle.
+    """
+    by = {b["name"]: b for b in bones}
+    for b in bones:
+        if b["name"].startswith("msta_"):
+            assert "rotation" not in b, b["name"]
+    piv = np.array(by["turret"]["pivot"], float)
+    turret_pts, hull_boxes = [], []
+    for b in bones:
+        part = kept_part(by, b["name"])
+        for c in b.get("cubes", []):
+            pts = np.concatenate([w for _, w, _ in cube_world_corners(c, mats[b["name"]]).values()])
+            if part == "turret":
+                turret_pts.append(pts)
+            elif part == "base":
+                hull_boxes.append(pts)
+    tp = np.concatenate(turret_pts)
+    shell = tp[tp[:, 1] < TURRET_Y0 + 6]
+    radius = np.hypot(shell[:, 0] - piv[0], shell[:, 2] - piv[2]).max()
+    bottom = tp[np.abs(tp[:, 0]) > 24][:, 1].min()          # outside the ring
+    assert DECK_Y <= bottom <= DECK_Y + 0.3, ("turret bottom", bottom, DECK_Y)
+    for pts in hull_boxes:
+        if pts[:, 1].max() <= TURRET_Y0 + 1e-6:
+            continue
+        xs, zs = pts[:, 0], pts[:, 2]
+        nx = np.clip(piv[0], xs.min(), xs.max())
+        nz = np.clip(piv[2], zs.min(), zs.max())
+        assert math.hypot(nx - piv[0], nz - piv[2]) > radius, \
+            ("hull part inside turret sweep", pts.min(0), pts.max(0), radius)
+    # Deck under the turret footprint: the roof top must be at DECK_Y from the
+    # turret front to the hull rear across the turret width.
+    roof = [(p[:, 0].min(), p[:, 0].max(), p[:, 2].min(), p[:, 2].max()) for p in hull_boxes
+            if abs(p[:, 1].max() - DECK_Y) < 1e-6]
+    for x in np.linspace(-TURRET_X + 0.5, TURRET_X - 0.5, 13):
+        for z in np.linspace(TURRET_FRONT + 0.5, HULL_REAR - 0.5, 40):
+            assert any(x0 <= x <= x1 and z0 <= z <= z1 for x0, x1, z0, z1 in roof), \
+                ("deck gap under turret", x, z)
 
 
 # ---------------------------------------------------------------------------

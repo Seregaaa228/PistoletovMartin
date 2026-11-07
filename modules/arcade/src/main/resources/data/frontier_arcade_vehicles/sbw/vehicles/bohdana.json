@@ -43,7 +43,16 @@
         ]
       },
       "IsEnclosed": true,
-      "HidePassenger": false
+      "HidePassenger": false,
+      "CameraPos": {
+        "Transform": "Vehicle",
+        "UseFixedCameraPos": true,
+        "Position": [
+          0.7188,
+          2.9062,
+          4.5625
+        ]
+      }
     },
     {
       "HidePassenger": true,
@@ -109,7 +118,16 @@
         ]
       },
       "IsEnclosed": true,
-      "HidePassenger": false
+      "HidePassenger": false,
+      "CameraPos": {
+        "Transform": "Vehicle",
+        "UseFixedCameraPos": true,
+        "Position": [
+          -0.7188,
+          2.9062,
+          4.5625
+        ]
+      }
     }
   ],
   "Weapons": {
@@ -306,12 +324,12 @@
       "Size": [
         1.6875,
         1.8594,
-        5.7125
+        5.8047
       ],
       "Position": [
         0.0,
         1.8594,
-        0.1
+        0.0078
       ]
     },
     {

@@ -39,7 +39,7 @@ VEHICLES = {
         "health": 300, "speed": 0.95, "velocity": 16, "gravity": 0.05, "reload": 600,
         "rockets": True, "wheeled": True,
         "wheel_radius": 12,
-        "driver_eye": (10.2, 43, -35), "crew_eye": (-10.2, 43, -35), "gunner_cam": (0, 20, -5),
+        "driver_eye": (10.2, 43, -37), "crew_eye": (-10.2, 43, -37), "gunner_cam": (0, 20, -5),
         "engine": {"MaxForwardSpeedRate": 1.15, "MaxBackwardSpeedRate": 0.7, "Increment": 0.02, "Decrement": 0.012,
                    "SteeringSpeed": 0.065, "WheelRotSpeed": 1.25},
         # First tube centre x, y; tube pitch; muzzle-face z (model units).
@@ -201,8 +201,12 @@ def build(vehicle, spec, plz):
         driver.update({"IsEnclosed": True, "HidePassenger": False, "Transform": "Vehicle", "RotateWithVehicle": True,
                        "Position": seat_from_eye(spec["driver_eye"]), "MinYaw": -100, "MaxYaw": 100,
                        "MinPitch": -45, "MaxPitch": 40})
+        # The first-person camera is pinned at the eye point the model was made for, whatever the rider's height
+        # and SBW's seat placement: SBW honours a fixed camera position for any seat.
+        driver["CameraPos"] = camera_at(spec["driver_eye"])
         crew = copy.deepcopy(driver)
         crew["Position"] = seat_from_eye(spec["crew_eye"])
+        crew["CameraPos"] = camera_at(spec["crew_eye"])
         crew["DismountInfo"] = {"Transform": "Vehicle", "Position": [-2.2, 0.375, crew["Position"][2]]}
         driver["DismountInfo"] = {"Transform": "Vehicle", "Position": [2.2, 0.375, driver["Position"][2]]}
         if spec.get("gunner_cam"):
@@ -214,6 +218,33 @@ def build(vehicle, spec, plz):
     else:
         data["Seats"][0]["Position"] = spec["driver"]
     return data
+
+
+def animations(vehicle, spec):
+    """
+    The vehicle's own animations, under the names Plz05Entity plays. Each model needs its own file: SBW pairs an
+    animation with a model by file name and binds it to that model's bones, and PLZ-05's file, bound to PLZ-05's bone
+    order, swung whatever of ours sat at those indices (a truck jack turned 67 degrees).
+    """
+    kick = 1.0 if spec.get("rockets") else 3.0
+    fire = {"loop": "hold_on_last_frame", "animation_length": 1, "bones": {
+        "barrelBase": {"rotation": {"0.0": [0, 0, 0], "0.05": [-kick, 0, 0], "0.3": [-kick * 0.8, 0, 0],
+                                    "0.5": [kick * 0.3, 0, 0], "0.8": [0, 0, 0]}}}}
+    if not spec.get("rockets"):
+        # The barrel slides back in its cradle and runs out again.
+        fire["bones"]["tube"] = {"position": {"0.0": [0, 0, 0], "0.0167": [0, 0, 11], "0.3": [0, 0, 0]}}
+    lock = {"loop": True, "bones": {}}
+    if vehicle == "msta_s":
+        # The travel lock on the glacis stands up to hold the barrel while driving.
+        lock["bones"]["paojia"] = {"rotation": [67.5, 0, 0]}
+    return {"format_version": "1.8.0", "animations": {
+        "animation.main.idle": {"loop": True}, "animation.main.fire": fire, "animation.plz_05.lock_turret": lock}}
+
+
+def camera_at(eye):
+    """SBW seat camera fixed at a model point (vehicle frame, blocks)."""
+    x, y, z = eye
+    return {"Transform": "Vehicle", "UseFixedCameraPos": True, "Position": [blocks(x), blocks(y), blocks(-z)]}
 
 
 def seat_from_eye(eye):
@@ -230,7 +261,10 @@ def main():
         out = RES / f"data/{NS}/sbw/vehicles/{vehicle}.json"
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(data, indent=2) + "\n")
-        client = {"Animation": "superbwarfare:animations/bedrock/vehicle/plz_05.animation.json",
+        animation = RES / f"assets/{NS}/animations/bedrock/vehicle/{vehicle}.animation.json"
+        animation.parent.mkdir(parents=True, exist_ok=True)
+        animation.write_text(json.dumps(animations(vehicle, spec), indent=2) + "\n")
+        client = {"Animation": f"{NS}:animations/bedrock/vehicle/{vehicle}.animation.json",
                   "Models": [{"Model": f"{NS}:models/bedrock/vehicle/{vehicle}.geo.json",
                               "Texture": f"{NS}:textures/bedrock/vehicle/{vehicle}.png"}]}
         out = RES / f"assets/{NS}/sbw/vehicles/{vehicle}.json"

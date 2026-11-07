@@ -27,7 +27,7 @@
       "Position": [
         0.6375,
         1.0675,
-        2.1875
+        2.3125
       ],
       "RotateWithVehicle": true,
       "MinPitch": -45,
@@ -39,11 +39,20 @@
         "Position": [
           2.2,
           0.375,
-          2.1875
+          2.3125
         ]
       },
       "IsEnclosed": true,
-      "HidePassenger": false
+      "HidePassenger": false,
+      "CameraPos": {
+        "Transform": "Vehicle",
+        "UseFixedCameraPos": true,
+        "Position": [
+          0.6375,
+          2.6875,
+          2.3125
+        ]
+      }
     },
     {
       "HidePassenger": true,
@@ -93,7 +102,7 @@
       "Position": [
         -0.6375,
         1.0675,
-        2.1875
+        2.3125
       ],
       "RotateWithVehicle": true,
       "MinPitch": -45,
@@ -105,11 +114,20 @@
         "Position": [
           -2.2,
           0.375,
-          2.1875
+          2.3125
         ]
       },
       "IsEnclosed": true,
-      "HidePassenger": false
+      "HidePassenger": false,
+      "CameraPos": {
+        "Transform": "Vehicle",
+        "UseFixedCameraPos": true,
+        "Position": [
+          -0.6375,
+          2.6875,
+          2.3125
+        ]
+      }
     }
   ],
   "Weapons": {

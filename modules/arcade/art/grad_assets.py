@@ -73,26 +73,28 @@ for _i, _z in AXLES.items():
     MOVED[f"wheelR{_i}"] = [-WHEEL_X, WHEEL_R, _z]
 DRIVER_SEAT = [10.5, 29.5, -33]            # top of the left (driver) cushion
 CREW_SEAT = [-10.5, 29.5, -33]
-DRIVER_EYE = [10.2, 43, -35]               # first-person eye: middle of the driver's pane, looking -Z
+# Driver camera (fixed by the renderer): middle of the driver's windscreen pane, mid-height
+# of the opening (y 38..46), looking -Z over the bonnet. FP_HIDE holds everything in front
+# of it (frame, seals, wipers, shields, dash, visors, roof front edge).
+DRIVER_EYE = [10.2, 43, -37]
+FP_HIDE = "move_grad_fp_hide"
 GUNNER_CAM = [0, 20, -5]                   # barrel-local, relative to PACK_PIVOT
-# Steering wheel bone: pivot on the hub, bind rotation tilts local +Z (column axis, from
-# the column towards the driver) to (0, sin T, cos T); the rim lies in the local XY plane.
-STEER_HUB, STEER_TILT, STEER_R = [10.2, 37.0, -40.0], 55.0, 3.6
-# Rear jacks: fixed housing in `body`, telescopic leg + pad in move_grad_jack_l/r. The legs
+# Rear jacks: fixed housing in `body`, square inner leg + square pad in move_grad_jack_l/r,
+# all axis-aligned (SBW's baker negates X/Y rotations of cubes in moving bones). The legs
 # are modelled stowed; translating the bone down by JACK_TRAVEL puts the pads on y=0.
 JACK_X, JACK_Z, JACK_TOP, JACK_TRAVEL = 17.25, 65.5, 25.0, 8.0
+JACK_BONES = ("move_grad_jack_l", "move_grad_jack_r")
 
 # Bones added to the PLZ-05 skeleton (name, parent, pivot, insert before) and the one
 # allowed change of parent: SBW's wheeled engine steers wheelL0Turn / wheelR0Turn.
 EXTRA_BONES = [
     ("wheelL0Turn", "WheelL", [WHEEL_X, WHEEL_R, AXLES[0]], "wheelL0"),
     ("wheelR0Turn", "WheelR", [-WHEEL_X, WHEEL_R, AXLES[0]], "wheelR0"),
-    ("move_grad_jack_l", "body", [JACK_X, JACK_TOP, JACK_Z], None),
-    ("move_grad_jack_r", "body", [-JACK_X, JACK_TOP, JACK_Z], None),
-    ("move_grad_fp_hide", "body", list(DRIVER_EYE), None),
-    ("move_grad_steering_wheel", "body", list(STEER_HUB), None),
+    (JACK_BONES[0], "body", [JACK_X, JACK_TOP, JACK_Z], None),
+    (JACK_BONES[1], "body", [-JACK_X, JACK_TOP, JACK_Z], None),
+    (FP_HIDE, "body", list(DRIVER_EYE), None),
 ]
-BIND_ROT = {"move_grad_steering_wheel": [STEER_TILT, 0, 0]}
+BIND_ROT = {}                              # bind rotations of added bones (none at present)
 REPARENT = {"wheelL0": ("WheelL", "wheelL0Turn"), "wheelR0": ("WheelR", "wheelR0Turn")}
 
 # SBW's GeoVehicleRenderer steers (Y) and spins (X) every wheel?0Turn bone and spins every
@@ -102,8 +104,7 @@ def wheel_bone(side, i):
     return f"wheel{side}{i}Turn" if i == 0 else f"wheel{side}{i}"
 
 
-GEOMETRY_BONES = ({"body", "turret", "barrel", "move_grad_jack_l", "move_grad_jack_r", "move_grad_fp_hide",
-                   "move_grad_steering_wheel"}
+GEOMETRY_BONES = ({"body", "turret", "barrel", FP_HIDE, *JACK_BONES}
                   | {wheel_bone(s, i) for s in "LR" for i in AXLES})
 
 # Frames mapping a part's local X axis onto a world axis (for round parts).
@@ -126,7 +127,7 @@ def native_skeleton():
     bones = json.loads(OUT["geo"].read_text())["minecraft:geometry"][0]["bones"]
     out = []
     for b in bones:
-        if b["name"] in extra:
+        if b["name"] in extra or b["name"].startswith("move_grad_"):   # also retired ones
             continue
         b = {k: b[k] for k in ("name", "parent", "pivot", "rotation") if k in b}
         if b["name"] in REPARENT:
@@ -345,16 +346,19 @@ def cab(t):
     floor = t.box(B, -22, 22, 24, 26, -48, -24.5, "dark")
     inward(floor, (0, 1, 0), "floor")
     inward(t.box(B, -22, 22, 26, 38, -48, -46.5, "olive"), (0, 0, 1), "interior")
-    inward(t.box(B, -22, 22, 46, 48, -48, -46.5, "olive"), (0, 0, 1), "interior")
-    for c in t.sbox(B, 19.5, 22, 38, 46, -48, -46.5, "olive"):
+    # Windscreen frame, seals and wipers: hidden in the driver's own first person (F).
+    # Moving bones get their X/Y rotations negated by SBW's baker, so F keeps to
+    # axis-aligned cubes (the 45-degree corner posts look the same either way).
+    F = FP_HIDE
+    inward(t.box(F, -22, 22, 46, 48, -48, -46.5, "olive"), (0, 0, 1), "interior")
+    for c in t.sbox(F, 19.5, 22, 38, 46, -48, -46.5, "olive"):
         inward(c, (0, 0, 1), "interior")
-    inward(t.box(B, -0.9, 0.9, 38, 46, -48, -46.5, "olive"), (0, 0, 1), "interior")
-    t.sori(B, (21.7, 37, -47.7), (2.2, 22, 2.2), axis_rot("y", 45), "olive")   # rounded corners
+    inward(t.box(F, -0.9, 0.9, 38, 46, -48, -46.5, "olive"), (0, 0, 1), "interior")
+    t.sori(F, (21.7, 37, -47.7), (2.2, 22, 2.2), axis_rot("y", 45), "olive")   # rounded corners
     for x0, x1 in ((0.9, 19.5), (-19.5, -0.9)):                                # screen seals
-        t.box(B, x0, x1, 45.5, 46, -47.8, -47.1, "rubber")
-        t.box(B, x0, x1, 38, 38.5, -47.8, -47.1, "rubber")
-    # Parked wipers lie level along the screen base (a slanted bar read as a crooked view).
-    t.sbar(B, (3.5, 38.75, -48.3), (11.5, 38.75, -48.3), 0.45, 0.45, "black")
+        t.box(F, x0, x1, 45.5, 46, -47.8, -47.1, "rubber")
+        t.box(F, x0, x1, 38, 38.5, -47.8, -47.1, "rubber")
+    t.sbox(F, 3.5, 11.5, 38.5, 39.0, -48.55, -48.05, "black")                  # parked wipers
     t.sbox(B, 19.2, 22.2, 30, 35, -48.4, -47.8, "olive_dark")                  # cowl vents
     # Doors (lower), window frames, canvas quarters, handles, hinges.
     for s in (1, -1):
@@ -378,7 +382,7 @@ def cab(t):
     inward(t.box(B, -14, 14, 48, 50.4, -48.6, -24.1, "canvas"), (0, -1, 0), "interior")
     for c in t.sori(B, (18.1, 48.9, -36.35), (8.7, 2.0, 24.5), axis_rot("z", -14), "canvas"):
         inward(c, (0, -1, 0), "interior")
-    t.box(B, -22.3, 22.3, 47.3, 48.3, -48.9, -48.1, "canvas")
+    t.box(F, -22.3, 22.3, 47.3, 48.3, -48.9, -48.1, "canvas")                  # roof front edge
     for z in (-44.5, -38.5, -32.5, -27.5):
         t.box(B, -14.2, 14.2, 50.2, 50.9, z - 0.5, z + 0.5, "canvas", tag="bow")
         t.sori(B, (18.1, 49.65, z), (8.9, 0.9, 1.0), axis_rot("z", -14), "canvas", tag="bow")
@@ -387,10 +391,10 @@ def cab(t):
         t.sbox(B, 22.0, 22.4, 45.6, 48.5, z - 0.2, z + 0.2, "rope", share="tie")
     for x in (-18, -10, 10, 18):
         t.box(B, x - 0.2, x + 0.2, 45.6, 48.5, -24.5, -24.1, "rope", share="tie_r")
-    # Raised blast shields over the windscreen on hinged arms.
-    t.sori(B, (10.2, 49.6, -50.1), (17.4, 0.8, 5.6), axis_rot("x", 20), "olive", tag="shield")
+    # Raised blast shields over the windscreen (flat, axis-aligned) on short arms.
+    t.sbox(F, 1.5, 18.9, 49.0, 49.8, -53.4, -48.0, "olive", tag="shield")
     for x in (3, 17.2):
-        t.sbar(B, (x, 47.4, -48.2), (x, 49.1, -51.6), 0.6, 0.6, "metal")
+        t.sbox(F, x - 0.3, x + 0.3, 47.6, 49.0, -49.4, -48.8, "metal", share="shield_arm")
     # Mirrors with arms, steps, grab handle, antenna.
     t.sbar(B, (22, 44.6, -47), (26.6, 44.6, -48.6), 0.5, 0.5, "metal")
     t.sbar(B, (22, 40.2, -47), (26.6, 40.2, -48.6), 0.5, 0.5, "metal")
@@ -407,25 +411,14 @@ def cab(t):
 
 def cab_interior(t):
     B = "body"
-    t.box(B, -20.5, 20.5, 33, 38, -46.5, -43, "dash")
-    t.box(B, 3.5, 17.5, 37.9, 38.6, -46.5, -44.5, "dark")                  # instrument hood
-    # Steering column (fixed) along the wheel axis, from under the dash to the hub.
-    hub = np.array(STEER_HUB, float)
-    axis = np.array([0, math.sin(math.radians(STEER_TILT)), math.cos(math.radians(STEER_TILT))])
-    t.bar(B, hub - axis * 7.0, hub - axis * 0.45, 1.0, 1.0, "black")
-    # Wheel in move_grad_steering_wheel, authored flat in the bone's local XY plane around the
-    # pivot; the bind rotation tilts it onto the column. Hub first (centred on the pivot).
-    W = "move_grad_steering_wheel"
-    t.prism(W, hub, AXIS["z"], 0.9, 0.9, "black", n=4)
-    t.ring(W, hub, AXIS["z"], STEER_R, 0.6, "black")
-    for a in (0, 180, 270):          # three-spoke wheel, open at 12 o'clock
-        d = np.array([math.cos(math.radians(a)), math.sin(math.radians(a)), 0.0])
-        t.bar(W, hub + d * 0.8, hub + d * (STEER_R - 0.2), 0.5, 0.35, "black", up=(0, 0, 1))
+    # Dashboard, instrument hood and sun visors: hidden in the driver's first person. The
+    # steering wheel was dropped (it could not be animated reliably); no column either.
+    t.box(FP_HIDE, -20.5, 20.5, 33, 38, -46.5, -43, "dash")
+    t.box(FP_HIDE, 3.5, 17.5, 37.9, 38.6, -46.5, -44.5, "dark")             # instrument hood
     for s in (1, -1):
         t.box(B, s * 4, s * 17, 26, 29.5, -38, -28.5, "seat")
         t.ori(B, (s * 10.5, 35.2, -27.4), (13, 10.5, 2.2), axis_rot("x", 10), "seat")
-        # Sun visors sit right above the eye: hidden in the driver's first person.
-        t.box("move_grad_fp_hide", s * 5, s * 16, 46.4, 46.8, -46.4, -43.4, "interior")
+        t.box(FP_HIDE, s * 5, s * 16, 46.4, 46.8, -46.4, -43.4, "interior")   # sun visors
     t.bar(B, (2.0, 26, -40), (3.0, 33, -41.5), 0.6, 0.6, "black")
     t.bar(B, (-0.5, 26, -40), (0.2, 31.5, -40.8), 0.6, 0.6, "black")
     for x in (7.5, 10.5, 13.5):
@@ -494,26 +487,25 @@ def deck_and_rear(t):
         t.box(B, s * 15.6, s * 21.4, 24.2, 24.6, 73.4, 73.8, "metal")
     t.box(B, -5, 5, 19, 23, 72, 72.6, "plate")
     t.box(B, -1, 1, 23, 24, 72, 73, "metal")
-    # Rear stabiliser jacks. Fixed in `body`: open-bottomed housing with a guide collar,
-    # crank and brace. Moving (move_grad_jack_l/r): telescopic inner leg, swivel, foot pad,
-    # modelled stowed with the pad bottom at y = JACK_TRAVEL.
-    x, z = JACK_X, JACK_Z
-    t.sbox(B, x - 2.25, x + 2.25, 13, JACK_TOP, z - 2, z + 2, "olive_dark", skip={"down"})
-    t.sbox(B, x - 2.25, x + 2.25, 12.4, 13.4, z - 2, z - 1.3, "dark")
-    t.sbox(B, x - 2.25, x + 2.25, 12.4, 13.4, z + 1.3, z + 2, "dark")
-    t.sbox(B, x - 2.25, x - 1.45, 12.4, 13.4, z - 1.3, z + 1.3, "dark")
-    t.sbox(B, x + 1.45, x + 2.25, 12.4, 13.4, z - 1.3, z + 1.3, "dark")
-    t.sbox(B, x - 2.6, x + 2.6, 23.4, 24.4, z - 2.35, z + 2.35, "dark")         # top flange
-    t.sbar(B, (19.5, 22, z), (21.6, 22, z), 0.5, 0.5, "metal")
-    t.sbox(B, 21.3, 21.9, 22, 24.6, z - 0.3, z + 0.3, "black")
-    t.sbar(B, (15.2, 23.5, z - 1.5), (9.7, 17, z), 0.8, 0.8, "dark")
+    # Rear stabiliser jacks, all axis-aligned and exact mirrors. Fixed in `body`: square
+    # open-bottomed housing, guide collar round the leg, top flange, crank. Moving
+    # (move_grad_jack_l/r): square inner leg and square foot pad, modelled stowed with the
+    # pad bottom at y = JACK_TRAVEL; the bone translates straight down by JACK_TRAVEL.
+    x, z, h, g = JACK_X, JACK_Z, 2.25, 1.3          # housing and leg-hole half widths
+    t.sbox(B, x - h, x + h, 13, JACK_TOP, z - h, z + h, "olive_dark", skip={"down"})
+    t.sbox(B, x - h, x + h, 12.4, 13.4, z - h, z - g, "dark")
+    t.sbox(B, x - h, x + h, 12.4, 13.4, z + g, z + h, "dark")
+    t.sbox(B, x - h, x - g, 12.4, 13.4, z - g, z + g, "dark")
+    t.sbox(B, x + g, x + h, 12.4, 13.4, z - g, z + g, "dark")
+    t.sbox(B, x - h - 0.35, x + h + 0.35, 23.4, 24.4, z - h - 0.35, z + h + 0.35, "dark")
+    t.sbox(B, x + h, x + h + 2.1, 21.75, 22.25, z - 0.25, z + 0.25, "metal")   # crank
+    t.sbox(B, x + h + 1.8, x + h + 2.4, 22.0, 24.6, z - 0.3, z + 0.3, "black")
     pad = JACK_TRAVEL
-    for s, bone in ((1, "move_grad_jack_l"), (-1, "move_grad_jack_r")):
+    for s, bone in ((1, JACK_BONES[0]), (-1, JACK_BONES[1])):
         cx = s * x
-        t.box(bone, cx - 1.3, cx + 1.3, pad + 2.2, JACK_TOP - 0.4, z - 1.1, z + 1.1, "metal",
+        t.box(bone, cx - 1.2, cx + 1.2, pad + 1.4, JACK_TOP - 0.4, z - 1.2, z + 1.2, "metal",
               tag="leg")
-        t.box(bone, cx - 1.0, cx + 1.0, pad + 1.4, pad + 2.2, z - 1.0, z + 1.0, "dark")
-        t.prism(bone, (cx, pad + 0.7, z), AXIS["y"], 3.2, 1.4, "dark", n=4)
+        t.box(bone, cx - 3.0, cx + 3.0, pad, pad + 1.4, z - 3.0, z + 3.0, "dark")
 
 
 def turret(t):
@@ -1022,7 +1014,7 @@ def previews(data, tex, folder):
     bg = (214, 218, 206, 255)
     fire = {"turret": axis_rot("y", 35), "barrel": axis_rot("x", 45)}
     steer = {"wheelL0Turn": axis_rot("y", 30), "wheelR0Turn": axis_rot("y", 30)}
-    deploy = {"move_grad_jack_l": (0, -JACK_TRAVEL, 0), "move_grad_jack_r": (0, -JACK_TRAVEL, 0)}
+    deploy = {bone: (0, -JACK_TRAVEL, 0) for bone in JACK_BONES}
     views = [("front34", None, None, 35, .55), ("side", None, None, 90, .05),
              ("rear34", None, None, 150, .55), ("fire_pose", fire, deploy, -60, .5),
              ("top", None, None, 10, 4.0), ("front", None, None, 0, .02),
@@ -1052,7 +1044,7 @@ def previews(data, tex, folder):
     strip = Image.new("RGB", (1600, 1350), sky[:3])
     for k, (name, (eye, yaw, pitch)) in enumerate(shots.items()):
         im = render_fp(data, tex, (800, 450), eye, yaw=yaw, pitch=pitch, fov=70,
-                       hide={"move_grad_fp_hide"} if name.startswith("fp") else ())
+                       hide={FP_HIDE} if name.startswith("fp") else ())
         canvas = Image.new("RGBA", im.size, sky)
         horizon = 225 - 225 * math.tan(math.radians(-pitch)) / math.tan(math.radians(35))
         canvas.alpha_composite(Image.new("RGBA", (800, 450), (120, 116, 96, 255)), (0, int(horizon)))
@@ -1060,15 +1052,11 @@ def previews(data, tex, folder):
         canvas.save(folder / f"grad-{name}.png")
         strip.paste(canvas.convert("RGB"), (k % 2 * 800, k // 2 * 450))
     strip.save(folder / "grad-views-fp.png")
-    # Right turn: renderer rotateZ(-45 deg) on the wheel bone. SBW mirrors geo X, which flips
-    # the sign of Z rotations, so in geo terms that is +45 deg about the bone's local Z.
-    bind = K.rot_matrix(BIND_ROT["move_grad_steering_wheel"])
-    spin = {"move_grad_steering_wheel": bind @ axis_rot("z", 45) @ bind.T}
-    for name, pose in (("fp-wheel-straight", None), ("fp-wheel-right45", spin)):
-        im = render_fp(data, tex, (800, 450), DRIVER_EYE, 0, -25, 70, hide={"move_grad_fp_hide"}, poses=pose)
-        canvas = Image.new("RGBA", im.size, sky)
-        canvas.alpha_composite(im)
-        canvas.save(folder / f"grad-{name}.png")
+    # The same eye with nothing hidden (what a passenger sees), for comparison.
+    im = render_fp(data, tex, (800, 450), DRIVER_EYE, 0, -8, 70)
+    canvas = Image.new("RGBA", im.size, sky)
+    canvas.alpha_composite(im)
+    canvas.save(folder / "grad-fp-forward-unhidden.png")
     jar = native_jar()
     if not jar:
         return
@@ -1122,19 +1110,36 @@ def validate(data, skeleton, tex):
     for name, parent, pivot, _ in EXTRA_BONES:
         assert by[name].get("parent") == parent and by[name]["pivot"] == list(pivot)
         assert by[name].get("rotation") == BIND_ROT.get(name)
-    # Steering wheel: hub centred on the pivot; with the bind rotation local +Z points up
-    # and back along the column towards the driver.
-    sw = by["move_grad_steering_wheel"]
-    hub0 = np.add(sw["cubes"][0]["origin"], np.array(sw["cubes"][0]["size"]) / 2)
-    assert np.allclose(hub0, sw["pivot"], atol=0.05), hub0
-    assert sw["name"] not in subtree(bones, "move_grad_fp_hide")
-    zax = K.rot_matrix(sw["rotation"]) @ [0, 0, 1]
-    assert zax[1] > 0.5 and zax[2] > 0.3 and abs(zax[0]) < 1e-9, zax
+    corners = np.array([[i, j, k] for i in (0, 1) for j in (0, 1) for k in (0, 1)], float)
+
+    def cube_corners(c, rot):
+        p = np.array(c.get("pivot", [0, 0, 0]), float)
+        return np.round((corners * c["size"] + c["origin"] - p) @ K.rot_matrix(rot).T + p, 3)
+
+    # SBW's baker negates X/Y rotations of cubes in moving (move_*) bones: every such cube
+    # must come out the same either way. The jacks use no rotation at all.
+    for b in bones:
+        if not b["name"].startswith("move_"):
+            continue
+        assert "rotation" not in b, b["name"]
+        for c in b.get("cubes", []):
+            r = c.get("rotation")
+            if r:
+                a = sorted(map(tuple, cube_corners(c, r)))
+                m = sorted(map(tuple, cube_corners(c, [-r[0], -r[1], r[2]])))
+                assert np.allclose(a, m, atol=1e-3), (b["name"], r)
+    for jack in JACK_BONES:
+        assert all("rotation" not in c for c in by[jack]["cubes"]), jack
+    left = sorted(tuple(np.round([-(c["origin"][0] + c["size"][0]), *c["origin"][1:], *c["size"]], 2))
+                  for c in by[JACK_BONES[0]]["cubes"])
+    right = sorted(tuple(np.round([*c["origin"], *c["size"]], 2)) for c in by[JACK_BONES[1]]["cubes"])
+    assert np.allclose(left, right, atol=0.07), "jacks are not exact mirrors"
+    assert by[JACK_BONES[1]]["pivot"] == [-v if i == 0 else v for i, v in enumerate(by[JACK_BONES[0]]["pivot"])]
+    assert "move_grad_steering_wheel" not in by
     assert by["wheelL0Turn"]["pivot"] == by["wheelL0"]["pivot"]
     assert not by["wheelL0"].get("cubes") and not by["wheelR0"].get("cubes"), "front wheels spin twice"
     assert by["wheelR0Turn"]["pivot"] == by["wheelR0"]["pivot"]
-    corners = np.array([[i, j, k] for i in (0, 1) for j in (0, 1) for k in (0, 1)], float)
-    for jack in ("move_grad_jack_l", "move_grad_jack_r"):   # stowed pad clear, travel lands it on y=0
+    for jack in JACK_BONES:   # stowed pad clear, travel lands it on y=0
         low = min(((corners * c["size"] + c["origin"] - c.get("pivot", 0))
                    @ K.rot_matrix(c.get("rotation")).T + c.get("pivot", 0))[:, 1].min()
                   for c in by[jack]["cubes"])
