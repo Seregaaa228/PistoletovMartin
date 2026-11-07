@@ -61,6 +61,14 @@ TYRE_R, TYRE_X, TYRE_W = 9.9, 22.5, 8.0
 AXLES = {"0": -62.0, "3": 30.0, "6": 53.0}   # wheel bone index -> hub z
 MOVABLE = {"turret", "barrelBase", "barrel", "tube"} | {
     f"wheel{s}{i}" for s in "LR" for i in AXLES}
+STEER = {"wheelL0Turn", "wheelR0Turn"}         # new steering bones (SBW name rule)
+WHEEL_GEO_BONE = {f"wheel{s}{i}": f"wheel{s}{i}Turn" if i == "0" else f"wheel{s}{i}"
+                  for s in "LR" for i in AXLES}
+SPADE_HINGE = [12, 14, 87]       # bh_spade_l pivot; bh_spade_r mirrors x
+WINDSCREEN_LOCAL = (2.5, 12.0)   # opening along the sloped frame, units above its hinge
+SIDE_WINDOW_LOCAL = (3.5, 10.5)
+DRIVER_EYE = [12, 46, -73]       # recommended first-person eye (model coordinates)
+GUNNER_CAM = [7, 7, -30]         # recommended gunner camera, relative to GUN_PIVOT
 # Bone-name patterns SBW treats specially (wheel spin, tracks, flare, dog tag).
 RESERVED_PREFIXES = ("wheel", "w_", "shell", "track", "flare", "laser")
 TEX_LIMIT = 512
@@ -317,10 +325,22 @@ class Geo:
         for side, sign in (("L", 1), ("R", -1)):
             for idx, z in AXLES.items():
                 self.by[f"wheel{side}{idx}"]["pivot"] = [sign * TYRE_X, HUB_Y, z]
+        # Steering: SBW yaws (rudder) and spins bones named wheel?0Turn. The front
+        # wheel geometry sits on them; wheel?0 becomes an empty child (it would
+        # spin a second time), keeping its pivot. Inserted before wheel?0 so that
+        # parents precede children in the bone list.
+        for side in "LR":
+            child = self.by[f"wheel{side}0"]
+            turn = {"name": f"wheel{side}0Turn", "parent": f"Wheel{side}",
+                    "pivot": list(child["pivot"])}
+            self.bones.insert(self.bones.index(child), turn)
+            self.by[turn["name"]] = turn
+            child["parent"] = turn["name"]
 
-    def bone(self, name, parent):
+    def bone(self, name, parent, pivot=None):
         assert name not in self.by and not name.startswith(RESERVED_PREFIXES), name
-        bone = {"name": name, "parent": parent, "pivot": list(self.by[parent]["pivot"])}
+        bone = {"name": name, "parent": parent,
+                "pivot": list(pivot if pivot is not None else self.by[parent]["pivot"])}
         self.bones.append(bone)
         self.by[name] = bone
         return name
@@ -348,13 +368,14 @@ class Geo:
             mr, mp = [rot[0], -rot[1], -rot[2]], [-pivot[0], pivot[1], pivot[2]]
         return mo, mf, mr, mp
 
-    def sym(self, bone, origin, size, mat="camo", faces=None, rot=None, pivot=None):
-        """Cube on the +X side and its mirror; both share one texture region."""
+    def sym(self, bone, origin, size, mat="camo", faces=None, rot=None, pivot=None, bone2=None):
+        """Cube on the +X side and its mirror (optionally on another bone);
+        both share one texture region."""
         self.groups += 1
         key = ("sym", self.groups)
         self.cube(bone, origin, size, mat, faces, rot, pivot, key)
         mo, mf, mr, mp = self.mirrored(origin, size, faces, rot, pivot)
-        self.cube(bone, mo, size, mat, mf, mr, mp, key, mirror=True)
+        self.cube(bone2 or bone, mo, size, mat, mf, mr, mp, key, mirror=True)
 
     def ngon(self, bone, center, axis, radius, length, mat, n=8, ends=None, sym=False):
         """Regular n-gon prism (n = 8 or 12) from n/2 overlapping bands.
@@ -446,6 +467,9 @@ def build():
     mid = g.bone("bh_midbody", "body")
     deck = g.bone("bh_platform", "body")
     spades = g.bone("bh_spades", "body")
+    spade_l = g.bone("bh_spade_l", "body", SPADE_HINGE)
+    spade_r = g.bone("bh_spade_r", "body", [-SPADE_HINGE[0], SPADE_HINGE[1], SPADE_HINGE[2]])
+    fp_hide = g.bone("bh_fp_hide", "body")
     rest = g.bone("bh_travel_rest", "body")
     mount = g.bone("bh_mount", "turret")
     cradle = g.bone("bh_cradle", "barrel")
@@ -455,7 +479,7 @@ def build():
     # --- wheels ------------------------------------------------------------------
     for side, sign in (("L", 1), ("R", -1)):
         for idx, z in AXLES.items():
-            wheel(g, f"wheel{side}{idx}", sign, z)
+            wheel(g, WHEEL_GEO_BONE[f"wheel{side}{idx}"], sign, z)
 
     # --- chassis, axles, bumper, lights --------------------------------------------
     g.sym(chassis, [6, 12, -86], [5, 8, 170], "camo_dark")
@@ -501,23 +525,37 @@ def build():
     for y in (24, 37):
         g.cube(cab, [-13.5, y, -85.4], [27, 1, 1], "camo_dark")
     g.sym(cab, [13, 24.05, -85.3], [1, 13.9, 0.9], "camo_dark")
-    g.cube(cab, [-24, 40, -82], [48, 4, 36], "camo")
-    g.cube(cab, [-24, 44, -80.2], [48, 4, 34.2], "camo")
-    g.cube(cab, [-24, 48, -78], [48, 5, 32], "camo")
+    # Upper cab is a hollow armoured shell so the driver can look out: a sloped
+    # windscreen frame with two openings, side plates with window openings, roof
+    # and rear wall. Glass and wipers live in bh_fp_hide (hidden in first person).
     slope = math.degrees(math.atan2(6, 13))
     hinge, srot = [0, 40, -84], R("x", slope)
-    g.cube(cab, [-24, 40, -84], [48, math.hypot(6, 13) + 0.3, 2], "camo", rot=srot, pivot=hinge)
-    g.sym(cab, [3, 44.5, -84.5], [17, 6, 0.6], "glass", rot=srot, pivot=hinge)
-    for o, s in (([3, 50.5, -85], [17, 0.8, 0.8]), ([3, 44.0, -85], [17, 0.8, 0.8]),
-                 ([19.6, 44.0, -85], [0.8, 7.3, 0.8]), ([3, 44.0, -85], [0.8, 7.3, 0.8])):
-        g.sym(cab, o, s, "camo_dark", rot=srot, pivot=hinge)            # window frames
-    g.cube(cab, [-1.5, 44, -84.9], [3, 7.5, 0.9], "camo", rot=srot, pivot=hinge)
-    g.sym(cab, [6, 44.8, -85.3], [7, 0.4, 0.4], "black", rot=srot, pivot=hinge)  # wipers
+    plen = math.hypot(6, 13) + 0.3                 # local height of the sloped frame
+    w0, w1 = WINDSCREEN_LOCAL                      # opening, local y above the hinge
+    g.cube(cab, [-24, 40, -84], [48, w0, 2], "camo", rot=srot, pivot=hinge)          # sill
+    g.cube(cab, [-24, 40 + w1, -84], [48, plen - w1, 2], "camo", rot=srot, pivot=hinge)
+    g.sym(cab, [20, 40 + w0, -84], [4, w1 - w0, 2], "camo", rot=srot, pivot=hinge)  # posts
+    g.cube(cab, [-3, 40 + w0, -84], [6, w1 - w0, 2], "camo", rot=srot, pivot=hinge)
+    g.sym(fp_hide, [3, 40 + w0, -83.4], [17, w1 - w0, 0.6], "glass", rot=srot, pivot=hinge)
+    for o, s in (([3, 40 + w1, -84.6], [17, 0.6, 0.6]), ([3, 40 + w0 - 0.6, -84.6], [17, 0.6, 0.6]),
+                 ([2.4, 40 + w0 - 0.6, -84.6], [0.6, w1 - w0 + 1.2, 0.6]),
+                 ([20, 40 + w0 - 0.6, -84.6], [0.6, w1 - w0 + 1.2, 0.6])):
+        g.sym(cab, o, s, "camo_dark", rot=srot, pivot=hinge)            # window trims
+    g.sym(fp_hide, [6, 40 + w0 + 0.3, -84.9], [7, 0.4, 0.4], "black", rot=srot, pivot=hinge)
+    g.cube(cab, [-22, 40, -82], [44, 2, 5], "camo_dark")                 # dashboard
+    g.cube(cab, [-24, 40, -48], [48, 13, 2], "camo")                     # rear wall
+    for x0 in (8, -16):                                                  # seats
+        g.cube(cab, [x0, 40, -66], [8, 2, 7], "black")
+        g.cube(cab, [x0, 42, -60], [8, 9, 1.5], "black")
     side_rot, side_piv = R("z", 8), [24, 40, -63]
-    g.sym(cab, [24, 40, -80], [1.6, 13.2, 33], "camo", rot=side_rot, pivot=side_piv)
-    g.sym(cab, [25.3, 44, -72], [0.5, 6, 12], "glass", rot=side_rot, pivot=side_piv)
-    for o, s in (([25.2, 43.4, -72.6], [0.7, 0.7, 13.2]), ([25.2, 50, -72.6], [0.7, 0.7, 13.2]),
-                 ([25.2, 43.4, -72.6], [0.7, 7.3, 0.7]), ([25.2, 43.4, -60.1], [0.7, 7.3, 0.7])):
+    s0, s1 = SIDE_WINDOW_LOCAL
+    for o, s in (([24, 40, -83], [1.6, s0, 36]), ([24, 40 + s1, -83], [1.6, 13.2 - s1, 36]),
+                 ([24, 40 + s0, -83], [1.6, s1 - s0, 7]), ([24, 40 + s0, -58], [1.6, s1 - s0, 11])):
+        g.sym(cab, o, s, "camo", rot=side_rot, pivot=side_piv)          # side plates
+    g.sym(fp_hide, [24.5, 40 + s0, -76], [0.6, s1 - s0, 18], "glass", rot=side_rot, pivot=side_piv)
+    for o, s in (([25.5, 40 + s1, -76.6], [0.7, 0.6, 19.2]), ([25.5, 40 + s0 - 0.6, -76.6], [0.7, 0.6, 19.2]),
+                 ([25.5, 40 + s0 - 0.6, -76.6], [0.7, s1 - s0 + 1.2, 0.6]),
+                 ([25.5, 40 + s0 - 0.6, -58], [0.7, s1 - s0 + 1.2, 0.6])):
         g.sym(cab, o, s, "camo_dark", rot=side_rot, pivot=side_piv)
     g.cube(cab, [-22.5, 53, -77], [45, 1.5, 30], "camo")                 # roof + bevels
     g.sym(cab, [21.4, 51.9, -77], [2.2, 2.2, 30], "camo", rot=R("z", 45), pivot=[22.5, 53, -62])
@@ -602,18 +640,26 @@ def build():
         g.cube(deck, [-2.6, 10 + k * 5, 84.6], [5.2, 0.6, 0.6], "metal")
 
     # --- rear spades (stowed up) with hydraulic rams ----------------------------------------
-    for x0 in (7, 17):
-        g.sym(spades, [x0, 14, 82], [2, 6, 6], "metal_dark")
-    g.sym(spades, [6.5, 16, 85], [14, 1.6, 1.6], "metal")
-    g.sym(spades, [6, 10, 88], [14, 20, 2], "camo_dark")
+    # Static hinge brackets on the rear bumper; each spade (arms, blade, teeth,
+    # ribs and its ram) folds about its own hinge bone. Modelled stowed (up).
+    hx, hy, hz = SPADE_HINGE
+    for x0 in (hx - 7, hx + 5.5):
+        g.sym(spades, [x0, hy - 3, hz - 3], [1.5, 6, 5.5], "metal_dark")
+    g.sym(spades, [hx - 7.5, hy - 3.5, hz - 3], [15, 1.5, 2.5], "camo_dark")  # bracket base
+    pair = dict(bone2=spade_r)
+    g.sym(spade_l, [hx - 5.5, hy - 1, hz - 1], [11, 2, 2], "metal", **pair)    # hinge tube
+    for x0 in (hx - 5.4, hx + 4):
+        g.sym(spade_l, [x0, hy, hz - 0.8], [1.4, 21, 1.6], "camo_dark", **pair)  # arms
+    g.sym(spade_l, [hx - 5.4, hy + 10, hz - 0.6], [10.8, 1.4, 1.2], "camo_dark", **pair)
+    g.sym(spade_l, [hx - 7, hy + 19, hz - 1.8], [14, 9, 2.2], "camo_dark", **pair)  # blade
     for k in range(4):
-        g.sym(spades, [6.5 + k * 3.5, 6.5, 88.3], [2.6, 3.5, 1.4], "metal_dark")
-    for x0 in (9, 15.5):
-        g.sym(spades, [x0, 12, 90], [1.5, 17, 1.2], "camo_dark")
-    g.sym(spades, [5.8, 29, 87.5], [14.4, 2, 3], "camo_dark")
-    g.sym(spades, [12.2, 28.7, 73], [1.6, 1.6, 8], "metal_dark")
-    g.sym(spades, [12.6, 29.1, 81], [0.8, 0.8, 6.5], "metal")
-    g.sym(spades, [12, 28.5, 86.5], [2, 2, 1.5], "metal_dark")
+        g.sym(spade_l, [hx - 6.5 + k * 3.5, hy + 28, hz - 1.4], [2.4, 2.5, 1.4], "metal_dark",
+              **pair)                                                    # teeth
+    for x0 in (hx - 3.5, hx + 2.3):
+        g.sym(spade_l, [x0, hy + 19.5, hz + 0.4], [1.2, 8, 1], "camo_dark", **pair)  # ribs
+    g.sym(spade_l, [hx - 0.8, hy + 1.5, hz + 1.2], [1.6, 11, 1.6], "metal_dark", **pair)  # ram
+    g.sym(spade_l, [hx - 0.4, hy + 12.5, hz + 1.6], [0.8, 7, 0.8], "metal", **pair)
+    g.sym(spade_l, [hx - 1, hy + 19.5, hz + 0.4], [2, 2, 1.6], "metal_dark", **pair)
 
     # --- gun mount (yaws with turret) --------------------------------------------------
     tx, ty, tz = TURRET_PIVOT
@@ -1020,11 +1066,21 @@ class Posed:
             b = self.by.get(b.get("parent"))
         return pts
 
-    def quads(self, pose=None):
+    def hidden(self, name, hide):
+        b = self.by[name]
+        while b is not None:
+            if b["name"] in hide:
+                return True
+            b = self.by.get(b.get("parent"))
+        return False
+
+    def quads(self, pose=None, hide=()):
         pose = pose or {}
         mirror = np.array([-1, 1, 1])
         out = []
         for b in self.bones:
+            if hide and self.hidden(b["name"], hide):
+                continue
             for c in b.get("cubes", []):
                 if sum(v > 0 for v in c["size"]) < 2:
                     continue
@@ -1124,6 +1180,159 @@ def render(data, tex, size=(1000, 700), yaw=45, elev=25, pose=None, margin=40,
     return Image.fromarray(pix, "RGBA")
 
 
+def render_eye(data, tex, eye, yaw=0.0, pitch=0.0, fov=70.0, size=(960, 600), pose=None,
+               hide=(), near=0.3):
+    """Perspective view from a model-space eye (file coordinates).
+
+    yaw 0 looks along -Z; negative yaw turns to the driver's left (file +X, which
+    Java shows as -X). `fov` is vertical, as in Minecraft. Near-plane clipped,
+    perspective-correct texturing, flat ground (y = 0) and sky behind."""
+    w, h = size
+    tw, th = tex.size
+    texp = np.asarray(tex.convert("RGBA"))
+    e = np.array(eye, float) * np.array([-1, 1, 1])
+    yw, pt = math.radians(yaw), math.radians(pitch)
+    f = np.array([math.sin(yw) * math.cos(pt), math.sin(pt), -math.cos(yw) * math.cos(pt)])
+    r = np.cross(f, [0, 1, 0]); r /= np.linalg.norm(r)
+    u = np.cross(r, f)
+    F = (h / 2) / math.tan(math.radians(fov) / 2)
+    inv = np.zeros((h, w))                      # 1/depth buffer, 0 = empty
+    pix = np.zeros((h, w, 3), np.uint8)
+    light_dir = np.array([0.35, 1.0, -0.55]); light_dir /= np.linalg.norm(light_dir)
+    for pts, uvi, centre in Posed(data).quads(pose, hide):
+        normal = np.cross(pts[1] - pts[0], pts[3] - pts[0])
+        n = np.linalg.norm(normal)
+        if n < 1e-9:
+            continue
+        normal /= n
+        if centre is not None and (pts.mean(0) - centre) @ normal < 0:
+            normal = -normal
+        if centre is not None and (pts[0] - e) @ normal >= 0:
+            continue                             # back face
+        if centre is None and (pts[0] - e) @ normal > 0:
+            normal = -normal
+        uv0, (su, sv) = uvi["uv"], uvi["uv_size"]
+        eu, ev = (0.01 if su > 0 else -0.01), (0.01 if sv > 0 else -0.01)
+        uvq = np.array([[uv0[0], uv0[1] + sv - ev], [uv0[0] + su - eu, uv0[1] + sv - ev],
+                        [uv0[0] + su - eu, uv0[1]], [uv0[0], uv0[1]]], float)
+        rel = pts - e
+        cam = np.stack((rel @ r, rel @ u, rel @ f), axis=1)
+        poly = []                                # clip against depth >= near
+        for i in range(4):
+            a, b = i, (i + 1) % 4
+            pa, pb = cam[a], cam[b]
+            if pa[2] >= near:
+                poly.append((pa, uvq[a]))
+            if (pa[2] >= near) != (pb[2] >= near):
+                t = (near - pa[2]) / (pb[2] - pa[2])
+                poly.append((pa + t * (pb - pa), uvq[a] + t * (uvq[b] - uvq[a])))
+        if len(poly) < 3:
+            continue
+        light = 0.62 + 0.38 * max(0.0, normal @ light_dir)
+        P = np.array([p for p, _ in poly]); T = np.array([t for _, t in poly])
+        sx = w / 2 + P[:, 0] / P[:, 2] * F
+        sy = h / 2 - P[:, 1] / P[:, 2] * F
+        iz = 1 / P[:, 2]
+        for k in range(1, len(poly) - 1):
+            ids = [0, k, k + 1]
+            xs, ys = sx[ids], sy[ids]
+            x0 = max(0, int(xs.min())); x1 = min(w - 1, math.ceil(xs.max()))
+            y0 = max(0, int(ys.min())); y1 = min(h - 1, math.ceil(ys.max()))
+            if x1 < x0 or y1 < y0:
+                continue
+            xx, yy = np.meshgrid(np.arange(x0, x1 + 1) + .5, np.arange(y0, y1 + 1) + .5)
+            (ax, bx, cx), (ay, by, cy) = xs, ys
+            den = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy)
+            if abs(den) < 1e-9:
+                continue
+            l1 = ((by - cy) * (xx - cx) + (cx - bx) * (yy - cy)) / den
+            l2 = ((cy - ay) * (xx - cx) + (ax - cx) * (yy - cy)) / den
+            l3 = 1 - l1 - l2
+            zi = l1 * iz[ids[0]] + l2 * iz[ids[1]] + l3 * iz[ids[2]]
+            old = inv[y0:y1 + 1, x0:x1 + 1]
+            m = (l1 >= -1e-6) & (l2 >= -1e-6) & (l3 >= -1e-6) & (zi > old)
+            if not m.any():
+                continue
+            tu = (l1 * T[ids[0], 0] * iz[ids[0]] + l2 * T[ids[1], 0] * iz[ids[1]]
+                  + l3 * T[ids[2], 0] * iz[ids[2]]) / zi
+            tv = (l1 * T[ids[0], 1] * iz[ids[0]] + l2 * T[ids[1], 1] * iz[ids[1]]
+                  + l3 * T[ids[2], 1] * iz[ids[2]]) / zi
+            col = texp[np.clip(np.floor(tv).astype(int), 0, th - 1),
+                       np.clip(np.floor(tu).astype(int), 0, tw - 1)]
+            m &= col[..., 3] > 0
+            region = pix[y0:y1 + 1, x0:x1 + 1]
+            region[m] = np.clip(col[..., :3] * light, 0, 255).astype(np.uint8)[m]
+            old[m] = zi[m]
+    # background: sky, and ground with a one-block grid
+    xx, yy = np.meshgrid(np.arange(w) + .5, np.arange(h) + .5)
+    d = (f[None, None] + ((xx - w / 2) / F)[..., None] * r[None, None]
+         - ((yy - h / 2) / F)[..., None] * u[None, None])
+    sky = np.zeros((h, w, 3)); sky[...] = (178, 196, 214)
+    down = d[..., 1] < -1e-6
+    t = np.where(down, -e[1] / np.where(down, d[..., 1], -1), 0)
+    gx, gz = e[0] + t * d[..., 0], e[2] + t * d[..., 2]
+    grid = (np.abs(gx / 16 - np.round(gx / 16)) < 0.03) | (np.abs(gz / 16 - np.round(gz / 16)) < 0.03)
+    ground = np.zeros((h, w, 3)); ground[...] = (116, 128, 84); ground[grid] = (98, 108, 72)
+    bg = np.where(down[..., None], ground, sky)
+    empty = inv == 0
+    out = np.where(empty[..., None], bg, pix).astype(np.uint8)
+    img = Image.fromarray(out, "RGB")
+    dr = ImageDraw.Draw(img)                     # view centre marker
+    dr.line((w / 2 - 8, h / 2, w / 2 + 8, h / 2), fill=(255, 60, 40))
+    dr.line((w / 2, h / 2 - 8, w / 2, h / 2 + 8), fill=(255, 60, 40))
+    return img
+
+
+def spade_deploy_angle(data):
+    """Right-handed angle about +X (deg) that puts the lowest point of the left
+    spade at y = -1 (model units), swinging the blade rearward (+Z)."""
+    posed = Posed(data)
+    lo, hi = 90.0, 180.0
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        q = posed.quads({"bh_spade_l": ("pitch", mid)})
+        q = [x for x, b in zip(q, _bones_of(posed)) if b == "bh_spade_l"]
+        ymin = min(p[0][:, 1].min() for p in q)
+        if ymin > -1:
+            lo = mid
+        else:
+            hi = mid
+    return round((lo + hi) / 2, 2)
+
+
+def _bones_of(posed):
+    """Bone name for each quad, in Posed.quads() order (no pose, no hide)."""
+    out = []
+    for b in posed.bones:
+        for c in b.get("cubes", []):
+            if sum(v > 0 for v in c["size"]) < 2:
+                continue
+            for f in FACES:
+                uvi = c.get("uv", {}).get(f)
+                if uvi and uvi["uv_size"][0] and uvi["uv_size"][1]:
+                    out.append(b["name"])
+    return out
+
+
+def eye_clearance(data, eye, hide=("bh_fp_hide",)):
+    """Smallest distance from the eye to any visible cube (axis-aligned cubes
+    exactly, rotated cubes through their face planes' bounding boxes)."""
+    posed = Posed(data)
+    e = np.array(eye, float)
+    best = 1e9
+    for b in posed.bones:
+        if posed.hidden(b["name"], hide):
+            continue
+        for c in b.get("cubes", []):
+            if min(c["size"]) <= 0:
+                continue
+            pts = np.concatenate([face_frame(c, f) for f in FACES])
+            lo, hi = pts.min(0), pts.max(0)
+            dist = np.linalg.norm(np.maximum(0, np.maximum(lo - e, e - hi)))
+            best = min(best, dist)
+    return best
+
+
 def downsample(img, size):
     return img.convert("RGBa").resize(size, Image.Resampling.LANCZOS).convert("RGBA")
 
@@ -1176,6 +1385,47 @@ def previews(data, tex, out_dir, jar):
         sheet.paste(im, (x, y + 20), im)
         d.text((x + 24, y + 4), label, font=font(20, True), fill=(40, 56, 44))
     sheet.save(out_dir / "bohdana-preview.png")
+    # driving poses: steered front wheels, spades deployed
+    phi = spade_deploy_angle(data)
+    drive = {"wheelL0Turn": ("yaw", 25), "wheelR0Turn": ("yaw", 25)}
+    dig = {"bh_spade_l": ("pitch", phi), "bh_spade_r": ("pitch", phi)}
+    poses = [("STEER 25 deg (wheel?0Turn yaw)", dict(yaw=30, elev=40, pose=drive)),
+             (f"SPADES DEPLOYED (+{phi} deg about +X)", dict(yaw=215, elev=20, pose=dig)),
+             ("SPADES DEPLOYED, SIDE", dict(yaw=-90, elev=0, pose=dig)),
+             ("SPADES STOWED, SIDE", dict(yaw=-90, elev=0))]
+    sheet = Image.new("RGB", (2000, 1360), (226, 229, 217))
+    d = ImageDraw.Draw(sheet)
+    for i, (label, kw) in enumerate(poses):
+        im = render(data, tex, (1000, 660), **kw)
+        x, y = (i % 2) * 1000, (i // 2) * 680
+        sheet.paste(im, (x, y + 20), im)
+        d.text((x + 24, y + 4), label, font=font(20, True), fill=(40, 56, 44))
+    sheet.save(out_dir / "bohdana-poses.png")
+    # first-person views (bh_fp_hide hidden) and the gunner camera
+    gun_eye = [a + b for a, b in zip(GUN_PIVOT, GUNNER_CAM)]
+    views = [("driver-forward", DRIVER_EYE, 0, -8, ("bh_fp_hide",)),
+             ("driver-left60", DRIVER_EYE, -60, -8, ("bh_fp_hide",)),
+             ("driver-right60", DRIVER_EYE, 60, -8, ("bh_fp_hide",)),
+             ("driver-forward-at-12-46-68", [12, 46, -68], 0, -8, ("bh_fp_hide",)),
+             ("gunner", gun_eye, 0, -3, ()),
+             ("gunner-elev30", None, 0, 27, ())]
+    sheet = Image.new("RGB", (1940, 1890), (226, 229, 217))
+    d = ImageDraw.Draw(sheet)
+    for i, (name, eye, yaw, pitch, hide) in enumerate(views):
+        pose = None
+        if eye is None:                         # gunner camera rides the barrel
+            a = math.radians(30)
+            pose = {"barrel": ("pitch", 30)}
+            dy, dz = GUNNER_CAM[1], GUNNER_CAM[2]
+            eye = [GUN_PIVOT[0] + GUNNER_CAM[0], GUN_PIVOT[1] + dy * math.cos(a) - dz * math.sin(a),
+                   GUN_PIVOT[2] + dy * math.sin(a) + dz * math.cos(a)]
+        im = render_eye(data, tex, eye, yaw, pitch, 70, (960, 600), pose, hide)
+        im.save(out_dir / f"fp-{name}.png")
+        x, y = (i % 2) * 980, (i // 2) * 630
+        sheet.paste(im, (x, y + 26))
+        d.text((x + 8, y + 4), f"{name}  eye {[round(v, 1) for v in eye]}  yaw {yaw}  pitch {pitch}",
+               font=font(18, True), fill=(40, 56, 44))
+    sheet.save(out_dir / "bohdana-first-person.png")
     tex.resize((tex.width * 2, tex.height * 2), Image.Resampling.NEAREST).save(out_dir / "atlas-x2.png")
     for p, scale in ((ICON_CONTAINER, 4), (ICON_SIDE, 3)):
         icon = Image.open(p)
@@ -1223,14 +1473,21 @@ def validate(data, tex_size, jar=None):
         name, parent, pivot = row[0], row[1], row[2]
         b = by.get(name)
         assert b is not None, f"missing PLZ bone {name}"
-        assert b.get("parent") == parent, f"parent changed: {name}"
+        want = f"{name}Turn" if name in ("wheelL0", "wheelR0") else parent   # steering
+        assert b.get("parent") == want, f"parent changed: {name}"
         assert b.get("rotation") == (list(row[3]) if len(row) > 3 else None), f"rotation changed: {name}"
         if name not in MOVABLE:
             assert b["pivot"] == list(pivot), f"pivot changed: {name}"
     ref_names = {r[0] for r in reference}
-    for name in set(names) - ref_names:
+    for name in set(names) - ref_names - STEER:
         assert not name.startswith(RESERVED_PREFIXES) and "_dogTag_" not in name, name
-    allowed_wheels = {f"wheel{s}{i}" for s in "LR" for i in AXLES}
+    for side in "LR":        # steering bones: under Wheel?, pivot on the front hub
+        turn = by[f"wheel{side}0Turn"]
+        assert turn["parent"] == f"Wheel{side}" and "rotation" not in turn
+        assert turn["pivot"] == by[f"wheel{side}0"]["pivot"]
+        assert names.index(turn["name"]) < names.index(f"wheel{side}0")
+        assert not by[f"wheel{side}0"].get("cubes"), "front wheel geometry belongs on Turn"
+    allowed_wheels = set(WHEEL_GEO_BONE.values())
     for b in bones:          # only the six used wheels carry cubes; tracks/locks stay empty
         n = b["name"]
         if b.get("cubes") and (n.startswith(("wheel", "track", "Track", "smallwhl")) or n in {
@@ -1296,7 +1553,14 @@ def main():
         "pivots": {n: geo.by[n]["pivot"] for n in ["turret", "barrelBase", "barrel", "tube"]
                    + sorted(f"wheel{s}{i}" for s in "LR" for i in AXLES)},
         "muzzle": [0, GUN_PIVOT[1], MUZZLE_Z],
+        "new_bones": {n: {"parent": geo.by[n]["parent"], "pivot": geo.by[n]["pivot"]}
+                      for n in sorted(STEER | {"bh_spade_l", "bh_spade_r", "bh_fp_hide"})},
+        "spade_deploy_deg_about_+X": spade_deploy_angle(data),
+        "driver_eye": DRIVER_EYE,
+        "driver_eye_clearance": round(eye_clearance(data, DRIVER_EYE), 2),
+        "gunner_cam_barrel_local": GUNNER_CAM,
     })
+    assert report["driver_eye_clearance"] > 2.0, "driver eye too close to visible geometry"
     if args.preview:
         previews(data, tex, args.preview, args.jar)
     print(json.dumps(report))

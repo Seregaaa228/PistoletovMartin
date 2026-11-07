@@ -25,23 +25,24 @@
     {
       "Transform": "Vehicle",
       "Position": [
-        0.656,
-        1.19,
-        2.19
+        0.6562,
+        1.2375,
+        2.1875
       ],
       "RotateWithVehicle": true,
-      "MinPitch": -60,
-      "MaxPitch": 60,
-      "MinYaw": -95,
-      "MaxYaw": 95,
+      "MinPitch": -45,
+      "MaxPitch": 40,
+      "MinYaw": -100,
+      "MaxYaw": 100,
       "DismountInfo": {
         "Transform": "Vehicle",
         "Position": [
-          2.5,
+          2.2,
           0.375,
-          2.656
+          2.1875
         ]
       },
+      "IsEnclosed": true,
       "HidePassenger": true
     },
     {
@@ -54,10 +55,16 @@
       ],
       "CameraPos": {
         "Transform": "Barrel",
+        "UseFixedCameraPos": true,
+        "Position": [
+          0.0,
+          1.25,
+          0.3125
+        ],
         "ZoomPosition": [
-          0,
-          0.626,
-          1.526
+          0.0,
+          1.25,
+          0.3125
         ],
         "Direction": "Barrel"
       },
@@ -82,45 +89,26 @@
       "HasThermalImaging": true
     },
     {
-      "Transform": "Turret",
+      "Transform": "Vehicle",
       "Position": [
-        1.1525,
-        0.75,
-        -0.51145
+        -0.6562,
+        1.2375,
+        2.1875
       ],
-      "CanRotateBody": true,
       "RotateWithVehicle": true,
-      "MinPitch": -50,
-      "MaxPitch": 90,
+      "MinPitch": -45,
+      "MaxPitch": 40,
+      "MinYaw": -100,
+      "MaxYaw": 100,
       "DismountInfo": {
         "Transform": "Vehicle",
         "Position": [
-          0,
+          -2.2,
           0.375,
-          -5
+          2.1875
         ]
       },
-      "HidePassenger": true
-    },
-    {
-      "Transform": "Turret",
-      "Position": [
-        -1.1525,
-        0.75,
-        -0.51145
-      ],
-      "CanRotateBody": true,
-      "RotateWithVehicle": true,
-      "MinPitch": -50,
-      "MaxPitch": 90,
-      "DismountInfo": {
-        "Transform": "Vehicle",
-        "Position": [
-          0,
-          0.375,
-          -5
-        ]
-      },
+      "IsEnclosed": true,
       "HidePassenger": true
     }
   ],
@@ -156,8 +144,8 @@
       "SoundInfo": {
         "Fire1P": "superbwarfare:medium_rocket_fire",
         "Fire3P": "superbwarfare:medium_rocket_fire",
-        "Fire3PFar": "superbwarfare:plz_05_far",
-        "Fire3PVeryFar": "superbwarfare:plz_05_veryfar"
+        "Fire3PFar": "superbwarfare:medium_rocket_fire",
+        "Fire3PVeryFar": "superbwarfare:medium_rocket_fire"
       },
       "SoundRadius": 32,
       "AmmoType": [
@@ -448,20 +436,18 @@
     "$entity.getSourceAngle(source, 0.3) * damage"
   ],
   "HUDColor": "0x00ff66",
-  "EngineType": "Track",
+  "EngineType": "Wheel",
   "EngineInfo": {
     "Buoyancy": 0,
-    "EnergyCostRate": 128,
-    "WheelRotSpeed": 1.15,
-    "WheelDifferential": 0.55,
-    "TrackRotSpeed": 1.55,
-    "TrackDifferential": 0.6,
-    "MaxForwardSpeedRate": 0.95,
-    "MaxBackwardSpeedRate": 0.4,
-    "Increment": 0.012,
-    "Decrement": 0.007,
-    "SteeringSpeed": 0.07,
-    "EngineSoundVolume": 0.7
+    "EnergyCostRate": 48,
+    "WheelDifferential": 0.45,
+    "EngineSoundVolume": 0.7,
+    "MaxForwardSpeedRate": 1.15,
+    "MaxBackwardSpeedRate": 0.7,
+    "Increment": 0.02,
+    "Decrement": 0.012,
+    "SteeringSpeed": 0.065,
+    "WheelRotSpeed": 1.25
   },
   "EngineSound": "superbwarfare:truck_engine",
   "ThirdPersonCameraPos": [
@@ -472,7 +458,7 @@
   "VehicleIcon": "frontier_arcade_vehicles:textures/vehicle_icon/grad_icon.png",
   "ContainerIcon": "superbwarfare:textures/gui/vehicle/type/land.png",
   "VehicleContainerType": "Medium",
-  "Type": "Tank",
+  "Type": "APC",
   "CollisionLevel": {
     "Level": 4,
     "PowerLimits": [
@@ -513,12 +499,12 @@
       "Part": "Collision",
       "Size": [
         1.8469,
-        1.88985,
+        1.83985,
         5.09375
       ],
       "Position": [
         0.0906,
-        1.7898,
+        1.8398,
         0.2812
       ]
     },
@@ -526,12 +512,12 @@
       "Part": "WheelLeft",
       "Size": [
         0.3,
-        0.944925,
+        0.919925,
         4.3296874999999995
       ],
       "Position": [
         1.6375,
-        0.944925,
+        0.919925,
         0.2812
       ]
     },
@@ -539,12 +525,12 @@
       "Part": "WheelRight",
       "Size": [
         0.3,
-        0.944925,
+        0.919925,
         4.3296874999999995
       ],
       "Position": [
         -1.4563,
-        0.944925,
+        0.919925,
         0.2812
       ]
     },

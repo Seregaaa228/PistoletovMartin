@@ -26,22 +26,23 @@
       "Transform": "Vehicle",
       "Position": [
         0.75,
-        1.375,
-        4.25
+        1.425,
+        4.5625
       ],
       "RotateWithVehicle": true,
-      "MinPitch": -60,
-      "MaxPitch": 60,
-      "MinYaw": -95,
-      "MaxYaw": 95,
+      "MinPitch": -45,
+      "MaxPitch": 40,
+      "MinYaw": -100,
+      "MaxYaw": 100,
       "DismountInfo": {
         "Transform": "Vehicle",
         "Position": [
-          2.5,
+          2.2,
           0.375,
-          2.656
+          4.5625
         ]
       },
+      "IsEnclosed": true,
       "HidePassenger": true
     },
     {
@@ -54,10 +55,16 @@
       ],
       "CameraPos": {
         "Transform": "Barrel",
+        "UseFixedCameraPos": true,
+        "Position": [
+          0.4375,
+          0.4375,
+          1.875
+        ],
         "ZoomPosition": [
-          0,
-          0.626,
-          1.526
+          0.4375,
+          0.4375,
+          1.875
         ],
         "Direction": "Barrel"
       },
@@ -82,45 +89,26 @@
       "HasThermalImaging": true
     },
     {
-      "Transform": "Turret",
+      "Transform": "Vehicle",
       "Position": [
-        1.1525,
-        0.75,
-        -0.51145
+        -0.75,
+        1.425,
+        4.5625
       ],
-      "CanRotateBody": true,
       "RotateWithVehicle": true,
-      "MinPitch": -50,
-      "MaxPitch": 90,
+      "MinPitch": -45,
+      "MaxPitch": 40,
+      "MinYaw": -100,
+      "MaxYaw": 100,
       "DismountInfo": {
         "Transform": "Vehicle",
         "Position": [
-          0,
+          -2.2,
           0.375,
-          -5
+          4.5625
         ]
       },
-      "HidePassenger": true
-    },
-    {
-      "Transform": "Turret",
-      "Position": [
-        -1.1525,
-        0.75,
-        -0.51145
-      ],
-      "CanRotateBody": true,
-      "RotateWithVehicle": true,
-      "MinPitch": -50,
-      "MaxPitch": 90,
-      "DismountInfo": {
-        "Transform": "Vehicle",
-        "Position": [
-          0,
-          0.375,
-          -5
-        ]
-      },
+      "IsEnclosed": true,
       "HidePassenger": true
     }
   ],
@@ -254,20 +242,18 @@
     "$entity.getSourceAngle(source, 0.3) * damage"
   ],
   "HUDColor": "0x00ff66",
-  "EngineType": "Track",
+  "EngineType": "Wheel",
   "EngineInfo": {
     "Buoyancy": 0,
-    "EnergyCostRate": 128,
-    "WheelRotSpeed": 1.15,
-    "WheelDifferential": 0.55,
-    "TrackRotSpeed": 1.55,
-    "TrackDifferential": 0.6,
-    "MaxForwardSpeedRate": 1.0,
-    "MaxBackwardSpeedRate": 0.4,
-    "Increment": 0.012,
-    "Decrement": 0.007,
-    "SteeringSpeed": 0.07,
-    "EngineSoundVolume": 0.7
+    "EnergyCostRate": 48,
+    "WheelDifferential": 0.45,
+    "EngineSoundVolume": 0.7,
+    "MaxForwardSpeedRate": 1.25,
+    "MaxBackwardSpeedRate": 0.7,
+    "Increment": 0.02,
+    "Decrement": 0.012,
+    "SteeringSpeed": 0.06,
+    "WheelRotSpeed": 1.3
   },
   "EngineSound": "superbwarfare:truck_engine",
   "ThirdPersonCameraPos": [
@@ -278,7 +264,7 @@
   "VehicleIcon": "frontier_arcade_vehicles:textures/vehicle_icon/bohdana_icon.png",
   "ContainerIcon": "superbwarfare:textures/gui/vehicle/type/land.png",
   "VehicleContainerType": "Medium",
-  "Type": "Tank",
+  "Type": "APC",
   "CollisionLevel": {
     "Level": 4,
     "PowerLimits": [
@@ -320,12 +306,12 @@
       "Size": [
         1.7875,
         2.2176,
-        5.7875
+        5.74375
       ],
       "Position": [
         0.0,
         2.2824,
-        0.0875
+        0.1313
       ]
     },
     {
@@ -333,12 +319,12 @@
       "Size": [
         0.3,
         1.1088,
-        4.919375
+        4.882187500000001
       ],
       "Position": [
         1.4875,
         1.1088,
-        0.0875
+        0.1313
       ]
     },
     {
@@ -346,12 +332,12 @@
       "Size": [
         0.3,
         1.1088,
-        4.919375
+        4.882187500000001
       ],
       "Position": [
         -1.4875,
         1.1088,
-        0.0875
+        0.1313
       ]
     },
     {
@@ -387,52 +373,52 @@
     [
       1.5875000000000001,
       0,
-      -5.2
+      -5.1125
     ],
     [
       -1.5875000000000001,
       0,
-      -5.2
+      -5.1125
     ],
     [
       1.5875000000000001,
       0,
-      -3.085
+      -3.015
     ],
     [
       -1.5875000000000001,
       0,
-      -3.085
+      -3.015
     ],
     [
       1.5875000000000001,
       0,
-      -0.97
+      -0.9175
     ],
     [
       -1.5875000000000001,
       0,
-      -0.97
+      -0.9175
     ],
     [
       1.5875000000000001,
       0,
-      1.145
+      1.18
     ],
     [
       -1.5875000000000001,
       0,
-      1.145
+      1.18
     ],
     [
       1.5875000000000001,
       0,
-      3.26
+      3.2775
     ],
     [
       -1.5875000000000001,
       0,
-      3.26
+      3.2775
     ],
     [
       1.5875000000000001,

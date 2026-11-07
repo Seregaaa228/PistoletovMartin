@@ -28,8 +28,9 @@ public final class ArtilleryHeights {
     /** A little beyond the PLZ-05's 5.4 km level-ground reach. */
     private static final double MAX_DISTANCE = 6000;
     private static final int COOLDOWN_TICKS = 10;
-    private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-        new ResourceLocation(ArcadeVehicles.ID, "artillery"), () -> "2", "2"::equals, "2"::equals);
+    /** The artillery channel; ArtilleryLegs and ArtilleryTracers register their messages on it too. */
+    static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
+        new ResourceLocation(ArcadeVehicles.ID, "artillery"), () -> "3", "3"::equals, "3"::equals);
     private static final Map<UUID, Long> LAST_QUERY = new WeakHashMap<>();
     private static boolean initialized;
 
@@ -41,6 +42,8 @@ public final class ArtilleryHeights {
         CHANNEL.registerMessage(0, Query.class, Query::encode, Query::decode, Query::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
         CHANNEL.registerMessage(1, Answer.class, Answer::encode, Answer::decode, Answer::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(2, Mission.class, Mission::encode, Mission::decode, Mission::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        ArtilleryLegs.register(CHANNEL, 3);
+        ArtilleryTracers.register(CHANNEL, 5);
     }
 
     public static void query(int x, int z) {

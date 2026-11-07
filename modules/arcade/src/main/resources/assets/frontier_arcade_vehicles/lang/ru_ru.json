@@ -57,5 +57,7 @@
   "message.frontier_arcade_vehicles.vehicle_deploy.no_room": "Мало места: выбери ровную площадку",
   "entity.frontier_arcade_vehicles.msta_s": "2С19 «Мста-С»",
   "entity.frontier_arcade_vehicles.bohdana": "2С22 «Богдана»",
-  "entity.frontier_arcade_vehicles.grad": "БМ-21 «Град»"
+  "entity.frontier_arcade_vehicles.grad": "БМ-21 «Град»",
+  "message.frontier_arcade_vehicles.legs.lowering": "Опоры опускаются… X ещё раз — карта огня",
+  "message.frontier_arcade_vehicles.legs.raising": "Опоры поднимаются"
 }

@@ -73,7 +73,32 @@ for _i, _z in AXLES.items():
     MOVED[f"wheelR{_i}"] = [-WHEEL_X, WHEEL_R, _z]
 DRIVER_SEAT = [10.5, 29.5, -33]            # top of the left (driver) cushion
 CREW_SEAT = [-10.5, 29.5, -33]
-GEOMETRY_BONES = {"body", "turret", "barrel"} | {f"wheel{s}{i}" for s in "LR" for i in AXLES}
+DRIVER_EYE = [10.5, 43, -35]               # first-person eye, looking -Z
+GUNNER_CAM = [0, 20, -5]                   # barrel-local, relative to PACK_PIVOT
+# Rear jacks: fixed housing in `body`, telescopic leg + pad in grad_jack_l/r. The legs
+# are modelled stowed; translating the bone down by JACK_TRAVEL puts the pads on y=0.
+JACK_X, JACK_Z, JACK_TOP, JACK_TRAVEL = 17.25, 65.5, 25.0, 8.0
+
+# Bones added to the PLZ-05 skeleton (name, parent, pivot, insert before) and the one
+# allowed change of parent: SBW's wheeled engine steers wheelL0Turn / wheelR0Turn.
+EXTRA_BONES = [
+    ("wheelL0Turn", "WheelL", [WHEEL_X, WHEEL_R, AXLES[0]], "wheelL0"),
+    ("wheelR0Turn", "WheelR", [-WHEEL_X, WHEEL_R, AXLES[0]], "wheelR0"),
+    ("grad_jack_l", "body", [JACK_X, JACK_TOP, JACK_Z], None),
+    ("grad_jack_r", "body", [-JACK_X, JACK_TOP, JACK_Z], None),
+    ("grad_fp_hide", "body", list(DRIVER_EYE), None),
+]
+REPARENT = {"wheelL0": ("WheelL", "wheelL0Turn"), "wheelR0": ("WheelR", "wheelR0Turn")}
+
+# SBW's GeoVehicleRenderer steers (Y) and spins (X) every wheel?0Turn bone and spins every
+# wheel[LR]* bone, so the front wheel cubes live on the Turn bones (as on sodayo/bohdana)
+# and wheelL0/wheelR0 stay empty; otherwise the front wheels would spin twice.
+def wheel_bone(side, i):
+    return f"wheel{side}{i}Turn" if i == 0 else f"wheel{side}{i}"
+
+
+GEOMETRY_BONES = ({"body", "turret", "barrel", "grad_jack_l", "grad_jack_r", "grad_fp_hide"}
+                  | {wheel_bone(s, i) for s in "LR" for i in AXLES})
 
 # Frames mapping a part's local X axis onto a world axis (for round parts).
 AXIS = {"x": np.eye(3), "y": axis_rot("z", 90), "z": axis_rot("y", -90)}
@@ -89,10 +114,19 @@ def native_skeleton():
                 bones = json.loads(z.read(NATIVE))["minecraft:geometry"][0]["bones"]
             return [{k: b[k] for k in ("name", "parent", "pivot", "rotation") if k in b}
                     for b in bones], str(jar.relative_to(ROOT))
-    # Moved pivots are re-applied by Model and checked against MOVED anyway.
+    # Moved pivots are re-applied by geo() and checked against MOVED anyway; added
+    # bones and the steering re-parenting are undone to recover the native list.
+    extra = {e[0] for e in EXTRA_BONES}
     bones = json.loads(OUT["geo"].read_text())["minecraft:geometry"][0]["bones"]
-    return [{k: b[k] for k in ("name", "parent", "pivot", "rotation") if k in b}
-            for b in bones], "previous grad.geo.json (native jar not found)"
+    out = []
+    for b in bones:
+        if b["name"] in extra:
+            continue
+        b = {k: b[k] for k in ("name", "parent", "pivot", "rotation") if k in b}
+        if b["name"] in REPARENT:
+            b["parent"] = REPARENT[b["name"]][0]
+        out.append(b)
+    return out, "previous grad.geo.json (native jar not found)"
 
 
 def native_jar():
@@ -114,11 +148,12 @@ class Truck:
         self.cubes.append(c)
         return c
 
-    def box(self, bone, x0, x1, y0, y1, z0, z1, mat, **kw):
+    def box(self, bone, x0, x1, y0, y1, z0, z1, mat, skip=(), **kw):
         xa, xb = sorted((x0, x1))
         ya, yb = sorted((y0, y1))
         za, zb = sorted((z0, z1))
-        return self._add(K.Cube(bone, (xa, ya, za), (xb - xa, yb - ya, zb - za), mat), **kw)
+        return self._add(K.Cube(bone, (xa, ya, za), (xb - xa, yb - ya, zb - za), mat,
+                                skip=skip), **kw)
 
     def sbox(self, bone, x0, x1, *rest, **kw):
         """Box on the +X (left) side and its mirror on the -X side."""
@@ -219,26 +254,28 @@ def wheel(t, bone, center, frame, out_sign, spare=False):
 def wheels(t):
     for side, s in (("L", 1), ("R", -1)):
         for i, z in AXLES.items():
-            wheel(t, f"wheel{side}{i}", (s * WHEEL_X, WHEEL_R, z), AXIS["x"], s)
+            wheel(t, wheel_bone(side, i), (s * WHEEL_X, WHEEL_R, z), AXIS["x"], s)
 
 
 def frame_and_axles(t):
     B = "body"
-    t.sbox(B, 8, 12, 14, 20, -79, 70, "dark")
+    # Narrow ladder frame and inboard springs leave room for the steered front tyres.
+    t.sbox(B, 6, 9.5, 14, 20, -79, 70, "dark")
     for z in (-77, -45, -20, 31, 66):
-        t.box(B, -8, 8, 15, 19, z, z + 3, "dark")
+        t.box(B, -6, 6, 15, 19, z, z + 3, "dark")
     for z in AXLES.values():
-        t.box(B, -15, 15, 10.5, 13.5, z - 1.5, z + 1.5, "dark")
+        reach = 12 if z == AXLES[0] else 15          # front axle stops short of the steered hubs
+        t.box(B, -reach, reach, 10.5, 13.5, z - 1.5, z + 1.5, "dark")
         t.prism(B, (0, 11.5, z), AXIS["z"], 3.4, 7, "dark", n=4)
-    t.sbox(B, 10, 13, 12.5, 14.5, -68, -44, "metal")             # front leaf springs
-    t.sbox(B, 10, 13, 13, 15, 6, 58, "metal")                    # rear bogie springs
+    t.sbox(B, 6.5, 9.5, 12.5, 14, -68, -44, "metal")             # front leaf springs
+    t.sbox(B, 6.5, 9.5, 12.5, 14, 6, 58, "metal")                # rear bogie springs
     for x in (11.5, -11.5):
         t.prism(B, (x, 15.5, 32), AXIS["x"], 2.4, 5, "dark", n=4)
-    t.sbar(B, (13.6, 13.5, -61), (13.6, 23, -52), 1.2, 1.2, "metal")   # shock absorbers
+    t.sbar(B, (10.6, 13.5, -61), (10.6, 23, -52), 1.2, 1.2, "metal")   # shock absorbers
     t.bar(B, (-7, 12.5, -63), (7, 12.5, -63), 1.0, 1.0, "metal")       # track rod
-    t.box(B, 12.2, 12.9, 20, 20.7, -40, 28, "cable")                    # launcher cable run
+    t.box(B, 9.6, 10.3, 19.2, 19.9, -40, 28, "cable")                   # launcher cable run
     for z in (-30, -10, 10):
-        t.box(B, 12, 13.2, 19.8, 20.9, z, z + 1, "metal")
+        t.box(B, 9.5, 10.6, 19, 20.1, z, z + 1, "metal")
 
 
 def bonnet_and_wings(t):
@@ -252,7 +289,8 @@ def bonnet_and_wings(t):
     t.box(B, -5, 5, 13.7, 16.8, -83.3, -83, "plate")
     t.prism(B, (0, 12.4, -80.5), AXIS["x"], 2.1, 15, "dark", n=4)       # winch drum
     # Long bonnet: crowned top, bevelled front edge, louvres, latches.
-    t.box(B, -11, 11, 19, 35, -78, -48.5, "olive")
+    t.box(B, -11, 11, 21, 35, -78, -48.5, "olive")
+    t.box(B, -7, 7, 16, 21, -76, -50, "dark")                    # engine sump, inside the lock
     t.box(B, -7.5, 7.5, 35, 37, -77, -48.5, "olive")
     t.sori(B, (9.15, 35.55, -62.75), (4.4, 1.8, 28.5), axis_rot("z", -28), "olive")
     t.ori(B, (0, 36.1, -77.6), (15, 1.8, 1.8), axis_rot("x", 45), "olive")
@@ -265,14 +303,15 @@ def bonnet_and_wings(t):
         t.sbox(B, 11, 11.7, 33, 34.6, zc, zc + 1.6, "metal")
     # Radiator grille: frame ring, dark core, vertical bars.
     t.box(B, -10.5, 10.5, 33, 34.6, -79.2, -78, "olive")
-    t.box(B, -10.5, 10.5, 19.6, 21.2, -79.2, -78, "olive")
-    t.sbox(B, 8.6, 10.5, 21.2, 33, -79.2, -78, "olive")
-    t.box(B, -8.6, 8.6, 21.2, 33, -78.6, -78, "grille")
+    t.box(B, -10.5, 10.5, 21, 22.6, -79.2, -78, "olive")
+    t.sbox(B, 8.6, 10.5, 22.6, 33, -79.2, -78, "olive")
+    t.box(B, -8.6, 8.6, 22.6, 33, -78.6, -78, "grille")
     for i in range(8):
         x = -7.35 + i * 2.1
-        t.box(B, x - 0.4, x + 0.4, 21.2, 33, -79.0, -78.6, "olive_dark", share="grille_bar")
-    # Front wings: flat top, curved front from three slabs, rolled edge, inner apron.
-    t.sbox(B, 12, 24, 25.5, 27, -66.2, -44.8, "olive")
+        t.box(B, x - 0.4, x + 0.4, 22.6, 33, -79.0, -78.6, "olive_dark", share="grille_bar")
+    # Front wings: flat top up to the bonnet, curved front from three slabs, rolled edge.
+    # The wheel well stays open underneath so the steered tyre can swing (~30 deg lock).
+    t.sbox(B, 11, 24, 25.5, 27, -66.2, -44.8, "olive")
     prof = [(-66.0, 26.25), (-71.2, 25.4), (-75.0, 23.0), (-76.8, 19.4)]
     for (za, ya), (zb, yb) in zip(prof, prof[1:]):
         d = np.array([0, yb - ya, zb - za])
@@ -280,7 +319,6 @@ def bonnet_and_wings(t):
         t.sbar(B, (18, ya - e[1], za - e[2]), (18, yb + e[1], zb + e[2]), 12, 1.5, "olive")
     t.sbar(B, (18, 26.4, -45.0), (18, 18.6, -42.6), 12, 1.5, "olive")
     t.sbox(B, 23.4, 24.2, 24.9, 27.2, -66, -45, "olive_dark")
-    t.sbox(B, 12, 12.8, 15, 25.5, -70, -45, "dark")
     # Headlights with brackets, lenses and wire guards; side and blackout lamps.
     for s in (1, -1):
         x = s * 16.6
@@ -309,7 +347,7 @@ def cab(t):
     for x0, x1 in ((0.9, 19.5), (-19.5, -0.9)):                                # screen seals
         t.box(B, x0, x1, 45.5, 46, -47.8, -47.1, "rubber")
         t.box(B, x0, x1, 38, 38.5, -47.8, -47.1, "rubber")
-    t.sbar(B, (4, 46.4, -48.3), (11.5, 45.2, -48.3), 0.45, 0.45, "black")      # wipers
+    t.sbar(B, (3.5, 38.8, -48.3), (11.5, 39.3, -48.3), 0.45, 0.45, "black")    # parked wipers
     t.sbox(B, 19.2, 22.2, 30, 35, -48.4, -47.8, "olive_dark")                  # cowl vents
     # Doors (lower), window frames, canvas quarters, handles, hinges.
     for s in (1, -1):
@@ -351,9 +389,9 @@ def cab(t):
     t.sbar(B, (22, 40.2, -47), (26.6, 40.2, -48.6), 0.5, 0.5, "metal")
     t.sbox(B, 26.3, 26.9, 39.8, 45.2, -48.9, -48.3, "metal")
     t.sori(B, (26.7, 42.6, -49.5), (2.8, 4.4, 0.6), axis_rot("y", -18), "black")
-    t.sbox(B, 20.5, 24.5, 18, 18.8, -46, -35, "metal", tag="tread")
+    t.sbox(B, 20.5, 24.5, 18, 18.8, -43.5, -35, "metal", tag="tread")
     t.sbox(B, 21.5, 24.2, 22, 22.8, -45.5, -36, "metal", tag="tread")
-    t.sbox(B, 23.6, 24.2, 17, 23, -46, -45.4, "dark")
+    t.sbox(B, 23.6, 24.2, 17, 23, -43.5, -42.9, "dark")
     t.sbox(B, 23.6, 24.2, 17, 23, -35.6, -35, "dark")
     t.sbox(B, 22.1, 22.6, 29, 40, -27.4, -26.9, "metal")
     t.box(B, -21.6, -19.4, 50, 51.4, -27.1, -24.9, "metal")
@@ -366,12 +404,14 @@ def cab_interior(t):
     t.box(B, 3.5, 17.5, 37.9, 38.6, -46.5, -44.5, "dark")                  # instrument hood
     t.bar(B, (10.5, 33, -43.2), (10.5, 38.0, -39.6), 1.0, 1.0, "black")
     tilt = axis_rot("x", -40) @ AXIS["z"]                                   # wheel faces driver
-    t.ring(B, (10.5, 38.5, -39.2), tilt, 3.6, 0.6, "black")
-    t.bar(B, (6.9, 38.5, -39.2), (14.1, 38.5, -39.2), 0.5, 0.4, "black")
+    # The wheel rim fills the lower middle of the driver's view: hidden in first person.
+    t.ring("grad_fp_hide", (10.5, 38.5, -39.2), tilt, 3.6, 0.6, "black")
+    t.bar("grad_fp_hide", (6.9, 38.5, -39.2), (14.1, 38.5, -39.2), 0.5, 0.4, "black")
     for s in (1, -1):
         t.box(B, s * 4, s * 17, 26, 29.5, -38, -28.5, "seat")
         t.ori(B, (s * 10.5, 35.2, -27.4), (13, 10.5, 2.2), axis_rot("x", 10), "seat")
-        t.box(B, s * 5, s * 16, 46.4, 46.8, -46.4, -43.4, "interior")       # sun visors
+        # Sun visors sit right above the eye: hidden in the driver's first person.
+        t.box("grad_fp_hide", s * 5, s * 16, 46.4, 46.8, -46.4, -43.4, "interior")
     t.bar(B, (2.0, 26, -40), (3.0, 33, -41.5), 0.6, 0.6, "black")
     t.bar(B, (-0.5, 26, -40), (0.2, 31.5, -40.8), 0.6, 0.6, "black")
     for x in (7.5, 10.5, 13.5):
@@ -391,8 +431,10 @@ def spare_and_chassis(t):
     for z in (-23, -5):
         t.prism(B, (18, 16.5, z), AXIS["z"], 4.45, 0.8, "dark", n=4)
     t.prism(B, (18, 21.0, -21), AXIS["y"], 1.0, 1.0, "metal", n=4)
-    t.box(B, 12, 14.5, 15, 18, -22, -20, "dark")
-    t.box(B, 12, 14.5, 15, 18, -7, -5, "dark")
+    for z in (-22, -7):          # tank, box and air-tank brackets to the frame rails
+        t.box(B, 9.5, 14.5, 15, 18, z, z + 2, "dark")
+        t.box(B, -14, -9.5, 15, 18, z, z + 2, "dark")
+    t.box(B, -14.5, -9.5, 15, 17.5, 1, 3, "dark")
     t.box(B, -22, -14, 13, 21, -30, -19, "olive")
     t.box(B, -22.3, -13.7, 21, 21.8, -30.3, -18.7, "olive_dark")
     t.box(B, -22, -14, 13, 21, -18, -8, "olive")
@@ -400,9 +442,11 @@ def spare_and_chassis(t):
     for z in (-27, -22, -15, -11):
         t.box(B, -22.6, -22.0, 18.5, 20.5, z - 0.6, z + 0.6, "metal", share="latch")
     t.prism(B, (-17.5, 16.0, 0), AXIS["z"], 3.0, 9, "olive_dark", n=4)
-    t.prism(B, (-16.5, 13.4, -38.5), AXIS["z"], 2.3, 12, "exhaust", n=4)
-    t.bar(B, (-10, 16.5, -50), (-16.5, 13.4, -44.4), 1.0, 1.0, "exhaust")
-    t.bar(B, (-16.5, 13.4, -32.6), (-22.6, 12.4, -28.5), 1.0, 1.0, "exhaust")
+    # Exhaust: pipe along the right rail behind the steered wheel, muffler, side tailpipe.
+    t.prism(B, (-16.5, 13.4, -36), AXIS["z"], 2.3, 9, "exhaust", n=4)
+    t.bar(B, (-7.5, 15.5, -50), (-10.4, 14.2, -40.6), 1.0, 1.0, "exhaust")
+    t.bar(B, (-10.4, 14.2, -40.8), (-16.5, 13.4, -40.3), 1.0, 1.0, "exhaust")
+    t.bar(B, (-18.6, 13.2, -34), (-23.2, 12.4, -34.6), 1.0, 1.0, "exhaust")
 
 
 def deck_and_rear(t):
@@ -416,7 +460,7 @@ def deck_and_rear(t):
     t.sbar(B, (19.25, 24.6, 3.0), (19.25, 16.8, 5.4), 8.6, 0.8, "olive")
     t.sbar(B, (19.25, 24.6, 60.8), (19.25, 15.8, 58.7), 8.6, 0.8, "olive")
     t.sbox(B, 15, 23.5, 4.6, 16.2, 59.2, 59.8, "rubber")
-    t.sbox(B, 13, 24, 7.5, 18.6, -42.4, -41.8, "rubber")
+    t.sbox(B, 13, 20.4, 7.5, 17.9, -42.4, -41.8, "rubber")
     # Equipment boxes with lids and latches forward of the turntable.
     t.sbox(B, 17, 22.5, 28, 32, 0, 13.5, "olive")
     t.sbox(B, 16.7, 22.8, 32, 32.6, -0.3, 13.8, "olive_dark")
@@ -436,15 +480,26 @@ def deck_and_rear(t):
         t.box(B, s * 15.6, s * 21.4, 24.2, 24.6, 73.4, 73.8, "metal")
     t.box(B, -5, 5, 19, 23, 72, 72.6, "plate")
     t.box(B, -1, 1, 23, 24, 72, 73, "metal")
-    # Rear stabiliser jacks, lowered (static: the native 'paojia' travel-lock bones
-    # pivot at the front bumper, so geometry under them would swing wildly).
-    t.sbox(B, 15, 19.5, 13, 25, 63.5, 67.5, "olive_dark")
-    for s in (1, -1):
-        t.prism(B, (s * 17.25, 8, 65.5), AXIS["y"], 1.1, 10, "metal", n=4)
-        t.prism(B, (s * 17.25, 1.6, 65.5), AXIS["y"], 3.2, 1.6, "dark", n=4)
-    t.sbar(B, (19.5, 22, 65.5), (21.6, 22, 65.5), 0.5, 0.5, "metal")
-    t.sbox(B, 21.3, 21.9, 22, 24.6, 65.2, 65.8, "black")
-    t.sbar(B, (15.2, 23.5, 64), (12.2, 17, 65.5), 0.8, 0.8, "dark")
+    # Rear stabiliser jacks. Fixed in `body`: open-bottomed housing with a guide collar,
+    # crank and brace. Moving (grad_jack_l/r): telescopic inner leg, swivel, foot pad,
+    # modelled stowed with the pad bottom at y = JACK_TRAVEL.
+    x, z = JACK_X, JACK_Z
+    t.sbox(B, x - 2.25, x + 2.25, 13, JACK_TOP, z - 2, z + 2, "olive_dark", skip={"down"})
+    t.sbox(B, x - 2.25, x + 2.25, 12.4, 13.4, z - 2, z - 1.3, "dark")
+    t.sbox(B, x - 2.25, x + 2.25, 12.4, 13.4, z + 1.3, z + 2, "dark")
+    t.sbox(B, x - 2.25, x - 1.45, 12.4, 13.4, z - 1.3, z + 1.3, "dark")
+    t.sbox(B, x + 1.45, x + 2.25, 12.4, 13.4, z - 1.3, z + 1.3, "dark")
+    t.sbox(B, x - 2.6, x + 2.6, 23.4, 24.4, z - 2.35, z + 2.35, "dark")         # top flange
+    t.sbar(B, (19.5, 22, z), (21.6, 22, z), 0.5, 0.5, "metal")
+    t.sbox(B, 21.3, 21.9, 22, 24.6, z - 0.3, z + 0.3, "black")
+    t.sbar(B, (15.2, 23.5, z - 1.5), (9.7, 17, z), 0.8, 0.8, "dark")
+    pad = JACK_TRAVEL
+    for s, bone in ((1, "grad_jack_l"), (-1, "grad_jack_r")):
+        cx = s * x
+        t.box(bone, cx - 1.3, cx + 1.3, pad + 2.2, JACK_TOP - 0.4, z - 1.1, z + 1.1, "metal",
+              tag="leg")
+        t.box(bone, cx - 1.0, cx + 1.0, pad + 1.4, pad + 2.2, z - 1.0, z + 1.0, "dark")
+        t.prism(bone, (cx, pad + 0.7, z), AXIS["y"], 3.2, 1.4, "dark", n=4)
 
 
 def turret(t):
@@ -639,7 +694,7 @@ def paint(p, n, c, face, s, tt, wh):
         rgb[digit] = np.array([40, 40, 38.0])
     elif mat == "dash" and n[2] > 0.9:
         for x in (6.5, 9.5, 12.5, 15.0):
-            rgb[np.hypot(p[:, 0] - x, p[:, 1] - 35.7) < 1.0] = np.array([170, 168, 150.0])
+            rgb[np.hypot(p[:, 0] - x, p[:, 1] - 35.7) < 1.0] = np.array([128, 126, 112.0])
     elif mat == "metal":
         if c.tag == "tread":
             rgb[(np.mod(p[:, 0] + p[:, 2], 2.0) < 1)] *= 1.15
@@ -714,12 +769,27 @@ def atlas(cubes):
 
 
 # ---------------------------------------------------------------- export ---
-def geo(skeleton, cubes, size):
-    bones = []
+def skeleton_with_extras(skeleton):
+    """Native bones (moved pivots applied) plus the added bones and the steering parent."""
+    before = {e[3]: e for e in EXTRA_BONES if e[3]}
+    out = []
     for nb in skeleton:
+        if nb["name"] in before:
+            name, parent, pivot, _ = before[nb["name"]]
+            out.append({"name": name, "parent": parent, "pivot": list(pivot)})
         b = json.loads(json.dumps(nb))
         if b["name"] in MOVED:
             b["pivot"] = list(MOVED[b["name"]])
+        if b["name"] in REPARENT:
+            b["parent"] = REPARENT[b["name"]][1]
+        out.append(b)
+    out += [{"name": n, "parent": p, "pivot": list(v)} for n, p, v, at in EXTRA_BONES if not at]
+    return out
+
+
+def geo(skeleton, cubes, size):
+    bones = []
+    for b in skeleton_with_extras(skeleton):
         out = []
         for c in cubes:
             if c.bone != b["name"]:
@@ -745,9 +815,11 @@ def geo(skeleton, cubes, size):
 
 
 # ------------------------------------------------------------ rendering ---
-def geo_quads(data, poses=None):
-    """World quads (4 points), texel quads and normals of a Bedrock geo, per-face UV."""
-    poses = poses or {}
+def geo_quads(data, poses=None, moves=None, hide=()):
+    """World quads (4 points) and texel quads of a Bedrock geo with per-face UV.
+    poses: bone -> extra rotation matrix; moves: bone -> translation; hide: bones
+    (with their children) left out, as a renderer hiding a bone would."""
+    poses, moves = poses or {}, moves or {}
     bones = {b["name"]: b for b in data["minecraft:geometry"][0]["bones"]}
 
     def to_world(name, pts):
@@ -756,10 +828,19 @@ def geo_quads(data, poses=None):
         if name in poses:
             r = poses[name] @ r
         pv = np.array(b.get("pivot", [0, 0, 0]), float)
-        pts = (pts - pv) @ r.T + pv
+        pts = (pts - pv) @ r.T + pv + np.asarray(moves.get(name, (0, 0, 0)), float)
         return to_world(b["parent"], pts) if "parent" in b else pts
 
+    def hidden(name):
+        while name:
+            if name in hide:
+                return True
+            name = bones[name].get("parent")
+        return False
+
     for b in bones.values():
+        if hidden(b["name"]):
+            continue
         for c in b.get("cubes", []):
             if not isinstance(c.get("uv"), dict):
                 continue
@@ -778,18 +859,107 @@ def geo_quads(data, poses=None):
 
 
 def view_basis(yaw, elevation):
+    """Camera towards `cam`. Screen right follows the in-game handedness: SBW draws geo X
+    mirrored, so +X (the L side) is the vehicle's left when it faces -Z."""
     cam = np.array([math.sin(math.radians(yaw)), elevation, -math.cos(math.radians(yaw))])
     cam /= np.linalg.norm(cam)
-    right = np.cross([0, 1, 0], cam)
+    right = np.cross(cam, [0, 1, 0])
     right /= np.linalg.norm(right)
-    return cam, right, np.cross(cam, right)
+    return cam, right, np.cross(right, cam)
 
 
-def render(data, tex, size, yaw=35, elevation=.62, poses=None, scale=None, centre=None, margin=.06):
+LIGHT = np.array([-.35, 1, -.6]) / np.linalg.norm([-.35, 1, -.6])
+
+
+def raster(pix, zbuf, texp, scr, key, wq, uv, shade):
+    """One triangle: screen xy, depth key (larger = nearer), perspective weight wq
+    (1 for orthographic, 1/depth for perspective) and texel coordinates per vertex."""
+    h, w = zbuf.shape
+    th, tw = texp.shape[:2]
+    a, b, c = scr
+    x0, x1 = max(0, int(min(a[0], b[0], c[0]))), min(w - 1, math.ceil(max(a[0], b[0], c[0])))
+    y0, y1 = max(0, int(min(a[1], b[1], c[1]))), min(h - 1, math.ceil(max(a[1], b[1], c[1])))
+    if x1 < x0 or y1 < y0:
+        return
+    den = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1])
+    if abs(den) < 1e-9:
+        return
+    xx, yy = np.meshgrid(np.arange(x0, x1 + 1) + .5, np.arange(y0, y1 + 1) + .5)
+    l1 = ((b[1] - c[1]) * (xx - c[0]) + (c[0] - b[0]) * (yy - c[1])) / den
+    l2 = ((c[1] - a[1]) * (xx - c[0]) + (a[0] - c[0]) * (yy - c[1])) / den
+    l3 = 1 - l1 - l2
+    z = l1 * key[0] + l2 * key[1] + l3 * key[2]
+    q = l1 * wq[0] + l2 * wq[1] + l3 * wq[2]
+    q = np.where(np.abs(q) < 1e-12, 1e-12, q)
+    tu = (l1 * wq[0] * uv[0, 0] + l2 * wq[1] * uv[1, 0] + l3 * wq[2] * uv[2, 0]) / q
+    tv = (l1 * wq[0] * uv[0, 1] + l2 * wq[1] * uv[1, 1] + l3 * wq[2] * uv[2, 1]) / q
+    col = texp[np.clip(np.floor(tv), 0, th - 1).astype(int), np.clip(np.floor(tu), 0, tw - 1).astype(int)]
+    old = zbuf[y0:y1 + 1, x0:x1 + 1]
+    m = (l1 >= -1e-6) & (l2 >= -1e-6) & (l3 >= -1e-6) & (z > old) & (col[..., 3] > 8)
+    if not m.any():
+        return
+    out = col.astype(float)
+    out[..., :3] *= shade
+    pix[y0:y1 + 1, x0:x1 + 1][m] = out[m].astype(np.uint8)
+    old[m] = z[m]
+
+
+def face_shade(q, toward):
+    n = np.cross(q[1] - q[0], q[3] - q[0])
+    if np.linalg.norm(n) < 1e-9:
+        return None
+    n /= np.linalg.norm(n)
+    if n @ toward < 0:
+        n = -n
+    return 0.62 + 0.38 * max(0.0, float(n @ LIGHT))
+
+
+def render_fp(data, tex, size, eye, yaw=0.0, pitch=-8.0, fov=70.0, hide=(), near=0.4):
+    """Perspective view from `eye` (model units): yaw 0 looks -Z, positive yaw turns to
+    the vehicle's left (+X); fov is vertical, as Minecraft's. Polygons are clipped at
+    the near plane, texturing is perspective-correct."""
+    w, h = size
+    yr, pr = math.radians(yaw), math.radians(pitch)
+    f = np.array([math.sin(yr) * math.cos(pr), math.sin(pr), -math.cos(yr) * math.cos(pr)])
+    right = np.cross([0, 1, 0], f)
+    right /= np.linalg.norm(right)
+    up = np.cross(f, right)
+    focal = (h / 2) / math.tan(math.radians(fov) / 2)
+    e = np.asarray(eye, float)
+    texp = np.asarray(tex.convert("RGBA"))
+    zbuf = np.full((h, w), -1e30)
+    pix = np.zeros((h, w, 4), np.uint8)
+    for q, uvq in geo_quads(data, hide=hide):
+        shade = face_shade(q, e - q.mean(0))
+        if shade is None:
+            continue
+        cam = np.stack(((q - e) @ right, (q - e) @ up, (q - e) @ f), 1)
+        poly = list(zip(cam, uvq))
+        clipped = []
+        for (pa, ua), (pb, ub) in zip(poly, poly[1:] + poly[:1]):
+            if pa[2] >= near:
+                clipped.append((pa, ua))
+            if (pa[2] >= near) != (pb[2] >= near):
+                t = (near - pa[2]) / (pb[2] - pa[2])
+                clipped.append((pa + t * (pb - pa), ua + t * (ub - ua)))
+        if len(clipped) < 3:
+            continue
+        P = np.array([p for p, _ in clipped])
+        U = np.array([u for _, u in clipped])
+        scr = np.stack((w / 2 + P[:, 0] / P[:, 2] * focal, h / 2 - P[:, 1] / P[:, 2] * focal), 1)
+        inv = 1 / P[:, 2]
+        for k in range(1, len(P) - 1):
+            ids = [0, k, k + 1]
+            raster(pix, zbuf, texp, scr[ids], inv[ids], inv[ids], U[ids], shade)
+    return Image.fromarray(pix, "RGBA")
+
+
+def render(data, tex, size, yaw=35, elevation=.62, poses=None, scale=None, centre=None, margin=.06,
+           moves=None):
     """Orthographic textured render; returns (RGBA image, scale, centre) for reuse."""
     w, h = size
     cam, right, up = view_basis(yaw, elevation)
-    quads = list(geo_quads(data, poses))
+    quads = list(geo_quads(data, poses, moves))
     pts = np.concatenate([q for q, _ in quads])
     proj = np.stack((pts @ right, pts @ up), 1)
     lo, hi = proj.min(0), proj.max(0)
@@ -797,54 +967,23 @@ def render(data, tex, size, yaw=35, elevation=.62, poses=None, scale=None, centr
         scale = min(w * (1 - 2 * margin) / (hi[0] - lo[0]), h * (1 - 2 * margin) / (hi[1] - lo[1]))
         centre = (lo + hi) / 2
     texp = np.asarray(tex.convert("RGBA"))
-    th, tw = texp.shape[:2]
     zbuf = np.full((h, w), -1e30)
     pix = np.zeros((h, w, 4), np.uint8)
-    light = np.array([-.35, 1, -.6])
-    light /= np.linalg.norm(light)
+    ones = np.ones(3)
     for q, uvq in quads:
-        n = np.cross(q[1] - q[0], q[3] - q[0])
-        if np.linalg.norm(n) < 1e-9:
+        shade = face_shade(q, cam)
+        if shade is None:
             continue
-        n /= np.linalg.norm(n)
-        if n @ cam < 0:
-            n = -n
-        shade = 0.62 + 0.38 * max(0.0, float(n @ light))
         scr = np.stack(((q @ right - centre[0]) * scale + w / 2, h / 2 - (q @ up - centre[1]) * scale), 1)
         depth = q @ cam
-        for ids in ((0, 1, 2), (0, 2, 3)):
-            a, b, c = scr[list(ids)]
-            x0, x1 = max(0, int(min(a[0], b[0], c[0]))), min(w - 1, math.ceil(max(a[0], b[0], c[0])))
-            y0, y1 = max(0, int(min(a[1], b[1], c[1]))), min(h - 1, math.ceil(max(a[1], b[1], c[1])))
-            if x1 < x0 or y1 < y0:
-                continue
-            den = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1])
-            if abs(den) < 1e-9:
-                continue
-            xx, yy = np.meshgrid(np.arange(x0, x1 + 1) + .5, np.arange(y0, y1 + 1) + .5)
-            l1 = ((b[1] - c[1]) * (xx - c[0]) + (c[0] - b[0]) * (yy - c[1])) / den
-            l2 = ((c[1] - a[1]) * (xx - c[0]) + (a[0] - c[0]) * (yy - c[1])) / den
-            l3 = 1 - l1 - l2
-            uv = uvq[list(ids)]
-            dd = depth[list(ids)]
-            z = l1 * dd[0] + l2 * dd[1] + l3 * dd[2]
-            tx = np.clip(np.floor(l1 * uv[0, 0] + l2 * uv[1, 0] + l3 * uv[2, 0]), 0, tw - 1).astype(int)
-            ty = np.clip(np.floor(l1 * uv[0, 1] + l2 * uv[1, 1] + l3 * uv[2, 1]), 0, th - 1).astype(int)
-            col = texp[ty, tx]
-            old = zbuf[y0:y1 + 1, x0:x1 + 1]
-            m = (l1 >= -1e-6) & (l2 >= -1e-6) & (l3 >= -1e-6) & (z > old) & (col[..., 3] > 8)
-            if not m.any():
-                continue
-            out = col.astype(float)
-            out[..., :3] *= shade
-            pix[y0:y1 + 1, x0:x1 + 1][m] = out[m].astype(np.uint8)
-            old[m] = z[m]
+        for ids in ([0, 1, 2], [0, 2, 3]):
+            raster(pix, zbuf, texp, scr[ids], depth[ids], ones, uvq[ids], shade)
     return Image.fromarray(pix, "RGBA"), scale, centre
 
 
 # ----------------------------------------------------------------- icons ---
 def side_icon(data, tex):
-    im, _, _ = render(data, tex, (768, 192), yaw=-84, elevation=.1, margin=.02)
+    im, _, _ = render(data, tex, (768, 192), yaw=84, elevation=.1, margin=.02)   # front left
     im = im.resize((256, 64), Image.Resampling.LANCZOS)
     a = np.asarray(im).astype(float)
     lum = (a[..., :3] @ [.299, .587, .114]) / 255
@@ -856,7 +995,8 @@ def side_icon(data, tex):
 
 
 def container_icon(data, tex):
-    im, _, _ = render(data, tex, (384, 384), yaw=35, elevation=.62, margin=.02)
+    # Front towards the lower right, as SBW's own container icons.
+    im, _, _ = render(data, tex, (384, 384), yaw=-35, elevation=.62, margin=.02)
     return im.resize((128, 128), Image.Resampling.LANCZOS)
 
 
@@ -864,11 +1004,17 @@ def previews(data, tex, folder):
     folder.mkdir(parents=True, exist_ok=True)
     bg = (214, 218, 206, 255)
     fire = {"turret": axis_rot("y", 35), "barrel": axis_rot("x", 45)}
-    views = [("front34", None, 35, .55), ("side", None, -90, .05), ("rear34", None, 150, .55),
-             ("fire_pose", fire, 60, .5), ("top", None, 10, 4.0), ("front", None, 0, .02)]
+    steer = {"wheelL0Turn": axis_rot("y", 30), "wheelR0Turn": axis_rot("y", 30)}
+    deploy = {"grad_jack_l": (0, -JACK_TRAVEL, 0), "grad_jack_r": (0, -JACK_TRAVEL, 0)}
+    views = [("front34", None, None, 35, .55), ("side", None, None, 90, .05),
+             ("rear34", None, None, 150, .55), ("fire_pose", fire, deploy, -60, .5),
+             ("top", None, None, 10, 4.0), ("front", None, None, 0, .02),
+             ("steer30_top", steer, None, 90, 40.0), ("steer30_front", steer, None, -25, .8),
+             ("jacks_stowed", None, None, 205, .12),
+             ("jacks_deployed", None, deploy, 205, .12)]
     sheet = Image.new("RGB", (1800, 1200), bg[:3])
-    for k, (name, pose, yaw, el) in enumerate(views):
-        im, _, _ = render(data, tex, (900, 600), yaw=yaw, elevation=el, poses=pose)
+    for k, (name, pose, move, yaw, el) in enumerate(views):
+        im, _, _ = render(data, tex, (900, 600), yaw=yaw, elevation=el, poses=pose, moves=move)
         canvas = Image.new("RGBA", im.size, bg)
         canvas.alpha_composite(im)
         canvas.save(folder / f"grad-{name}.png")
@@ -881,6 +1027,22 @@ def previews(data, tex, folder):
         canvas.alpha_composite(im)
         canvas.save(folder / f"grad-{name}.png")
     tex.resize((tex.width * 2, tex.height * 2), Image.Resampling.NEAREST).save(folder / "grad-atlas-x2.png")
+    # Driver first person (grad_fp_hide hidden, FOV 70) and the gunner's camera.
+    sky = (176, 196, 214, 255)
+    shots = {"fp-forward": (DRIVER_EYE, 0, -8), "fp-left60": (DRIVER_EYE, 60, -8),
+             "fp-right60": (DRIVER_EYE, -60, -8),
+             "gunner": (list(np.add(PACK_PIVOT, GUNNER_CAM)), 0, -6)}
+    strip = Image.new("RGB", (1600, 900), sky[:3])
+    for k, (name, (eye, yaw, pitch)) in enumerate(shots.items()):
+        im = render_fp(data, tex, (800, 450), eye, yaw=yaw, pitch=pitch, fov=70,
+                       hide={"grad_fp_hide"} if name.startswith("fp") else ())
+        canvas = Image.new("RGBA", im.size, sky)
+        horizon = 225 - 225 * math.tan(math.radians(-pitch)) / math.tan(math.radians(35))
+        canvas.alpha_composite(Image.new("RGBA", (800, 450), (120, 116, 96, 255)), (0, int(horizon)))
+        canvas.alpha_composite(im)
+        canvas.save(folder / f"grad-{name}.png")
+        strip.paste(canvas.convert("RGB"), (k % 2 * 800, k // 2 * 450))
+    strip.save(folder / "grad-views-fp.png")
     jar = native_jar()
     if not jar:
         return
@@ -892,7 +1054,7 @@ def previews(data, tex, folder):
             models.append((json.loads(z.read(f"assets/superbwarfare/models/bedrock/vehicle/{n}.geo.json")),
                            Image.open(io.BytesIO(z.read(f"assets/superbwarfare/textures/bedrock/vehicle/{n}.png")))))
     models.append((data, tex))
-    for name, (yaw, el) in {"compare-34": (35, .55), "compare-side": (-90, .05)}.items():
+    for name, (yaw, el) in {"compare-34": (-35, .55), "compare-side": (90, .05)}.items():
         _, right, up = view_basis(yaw, el)
         proj = [np.stack((p @ right, p @ up), 1) for p in
                 (np.concatenate([q for q, _ in geo_quads(d)]) for d, _ in models)]
@@ -922,13 +1084,27 @@ def validate(data, skeleton, tex):
     by = {b["name"]: b for b in bones}
     names = [b["name"] for b in bones]
     assert len(names) == len(set(names)), "duplicate bone names"
-    assert names == [b["name"] for b in skeleton], "native bone order and set"
+    assert names == [b["name"] for b in skeleton_with_extras(skeleton)], "bone order and set"
     for nb in skeleton:
         b = by[nb["name"]]
-        assert b.get("parent") == nb.get("parent"), ("parent", nb["name"])
+        parent = REPARENT[nb["name"]][1] if nb["name"] in REPARENT else nb.get("parent")
+        assert nb.get("parent") == REPARENT.get(nb["name"], (nb.get("parent"),))[0]
+        assert b.get("parent") == parent, ("parent", nb["name"])
         assert b.get("rotation") == nb.get("rotation"), ("rotation", nb["name"])
         expect = MOVED.get(nb["name"], nb["pivot"])
         assert b["pivot"] == list(expect), ("pivot", nb["name"])
+    for name, parent, pivot, _ in EXTRA_BONES:
+        assert by[name].get("parent") == parent and by[name]["pivot"] == list(pivot)
+        assert "rotation" not in by[name]
+    assert by["wheelL0Turn"]["pivot"] == by["wheelL0"]["pivot"]
+    assert not by["wheelL0"].get("cubes") and not by["wheelR0"].get("cubes"), "front wheels spin twice"
+    assert by["wheelR0Turn"]["pivot"] == by["wheelR0"]["pivot"]
+    corners = np.array([[i, j, k] for i in (0, 1) for j in (0, 1) for k in (0, 1)], float)
+    for jack in ("grad_jack_l", "grad_jack_r"):   # stowed pad clear, travel lands it on y=0
+        low = min(((corners * c["size"] + c["origin"] - c.get("pivot", 0))
+                   @ K.rot_matrix(c.get("rotation")).T + c.get("pivot", 0))[:, 1].min()
+                  for c in by[jack]["cubes"])
+        assert abs(low - JACK_TRAVEL) < 0.07 and JACK_TRAVEL > 4, (jack, low)
     for b in bones:
         if b.get("cubes"):
             assert b["name"] in GEOMETRY_BONES, ("geometry on unexpected bone", b["name"])
@@ -947,7 +1123,7 @@ def validate(data, skeleton, tex):
     # Wheels turn about their bone pivots: the tyre (first cube) is centred on the hub.
     for side in "LR":
         for i in AXLES:
-            b = by[f"wheel{side}{i}"]
+            b = by[wheel_bone(side, i)]
             first = b["cubes"][0]
             centre = np.add(first["origin"], np.array(first["size"]) / 2)
             assert np.allclose(centre, b["pivot"], atol=0.05), (b["name"], centre)
@@ -959,9 +1135,46 @@ def validate(data, skeleton, tex):
             "bounds_blocks": ((hi - lo) / 16).round(3).tolist()}
 
 
+def steering_clearance(t, limit=45):
+    """Largest front-wheel lock (degrees, each way) before a steered front tyre or its
+    hub parts first enter a fixed body cube."""
+    body = [c for c in t.cubes if c.bone == "body" and min(c.size) > 0.05 and any(True for _ in c.faces())]
+    out = {}
+    for side, s in (("L", 1), ("R", -1)):
+        pts = []
+        for c in t.cubes:
+            if c.bone != wheel_bone(side, 0):
+                continue
+            for face, corner, sv, tv, n in c.faces():
+                g = np.linspace(0.02, 0.98, 6)
+                ss, tt = np.meshgrid(g, g)
+                pts.append(c.world(corner + ss.reshape(-1, 1) * sv + tt.reshape(-1, 1) * tv))
+        pts = np.concatenate(pts)
+        hub = np.array([s * WHEEL_X, WHEEL_R, AXLES[0]])
+        for sign in (1, -1):
+            clear = 0
+            for deg in range(1, limit + 1):
+                p = (pts - hub) @ axis_rot("y", sign * deg).T + hub
+                lo, hi = p.min(0), p.max(0)
+                hit = False
+                for c in body:
+                    a, b = cull._aabb(c)
+                    if np.any(a > hi) or np.any(b < lo):
+                        continue
+                    if cull._inside(c, p, tol=0.05).any():
+                        hit = True
+                        break
+                if hit:
+                    break
+                clear = deg
+            out[f"{side}{'+' if sign > 0 else '-'}"] = clear
+    return out
+
+
 def main():
     skeleton, source = native_skeleton()
     t, hidden, zleft = build()
+    steer = steering_clearance(t)
     tex = atlas([c for c in t.cubes if any(True for _ in c.faces())])
     data = geo(skeleton, t.cubes, tex.width)
     metrics = validate(data, skeleton, tex)
@@ -977,7 +1190,11 @@ def main():
                    coplanar_pairs_left=zleft, moved_pivots=MOVED,
                    muzzle_face_centre=[0, TUBE_Y0 + 2 * TUBE_PITCH, PACK_Z[0]],
                    tube_field_wh=[10 * TUBE_PITCH, 4 * TUBE_PITCH],
-                   driver_seat=DRIVER_SEAT, crew_seat=CREW_SEAT)
+                   driver_seat=DRIVER_SEAT, crew_seat=CREW_SEAT, driver_eye=DRIVER_EYE,
+                   gunner_cam_barrel_local=GUNNER_CAM,
+                   gunner_cam_model=list(np.add(PACK_PIVOT, GUNNER_CAM).tolist()),
+                   jack_travel_down=JACK_TRAVEL, steering_clear_deg=steer,
+                   extra_bones=[{"name": n, "parent": p, "pivot": v} for n, p, v, _ in EXTRA_BONES])
     print(json.dumps(metrics, indent=1))
 
 

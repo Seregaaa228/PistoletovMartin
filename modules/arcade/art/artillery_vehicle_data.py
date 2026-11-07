@@ -29,14 +29,19 @@ VEHICLES = {
     "bohdana": {
         "health": 380, "speed": 1.0, "velocity": 19, "gravity": 0.06, "reload": 110,
         "he": (950, 44), "ap": (1100, 440, 17), "wheeled": True, "visible_driver": False,
-        "driver": [0.75, 1.375, 4.25],
+        # Eye points in model units (bohdana_assets.py): driver and cab passenger; gunner camera barrel-local.
+        "driver_eye": (12, 46, -73), "crew_eye": (-12, 46, -73), "gunner_cam": (7, 7, -30),
+        "engine": {"MaxForwardSpeedRate": 1.25, "MaxBackwardSpeedRate": 0.7, "Increment": 0.02, "Decrement": 0.012,
+                   "SteeringSpeed": 0.06, "WheelRotSpeed": 1.3},
     },
     "grad": {
         "health": 300, "speed": 0.95, "velocity": 16, "gravity": 0.05, "reload": 600,
         "rockets": True, "wheeled": True, "visible_driver": False,
+        "driver_eye": (10.5, 43, -35), "crew_eye": (-10.5, 43, -35), "gunner_cam": (0, 20, -5),
+        "engine": {"MaxForwardSpeedRate": 1.15, "MaxBackwardSpeedRate": 0.7, "Increment": 0.02, "Decrement": 0.012,
+                   "SteeringSpeed": 0.065, "WheelRotSpeed": 1.25},
         # First tube centre x, y; tube pitch; muzzle-face z (model units).
         "tubes": (-15.3, 38.2, 3.4, -21),
-        "driver": [0.656, 1.19, 2.19],
     },
 }
 
@@ -84,7 +89,12 @@ def build(vehicle, spec, plz):
     data["EngineInfo"]["MaxForwardSpeedRate"] = spec["speed"]
     data["VehicleIcon"] = f"{NS}:textures/vehicle_icon/{vehicle}_icon.png"
     if spec.get("wheeled"):
+        # Drives like a truck: SBW's wheeled engine steers the front wheels (wheelL0Turn / wheelR0Turn).
         data["EngineSound"] = "superbwarfare:truck_engine"
+        data["EngineType"] = "Wheel"
+        data["Type"] = "APC"
+        data["EngineInfo"] = {"Buoyancy": 0, "EnergyCostRate": 48, "WheelDifferential": 0.45, "EngineSoundVolume": 0.7,
+                              **spec["engine"]}
 
     weapon = data["Weapons"]["Main"]
     gun_lo, gun_hi = extent(subtree(b, "barrel"))
@@ -102,7 +112,7 @@ def build(vehicle, spec, plz):
             "Icon": "superbwarfare:textures/overlay/vehicle/weapon/icons/he_shell.png",
             "Name": "item.superbwarfare.medium_rocket_he", "RecoilForce": 0.2, "ShootShake": [3, 4, 12],
             "SoundInfo": {"Fire1P": "superbwarfare:medium_rocket_fire", "Fire3P": "superbwarfare:medium_rocket_fire",
-                          "Fire3PFar": "superbwarfare:plz_05_far", "Fire3PVeryFar": "superbwarfare:plz_05_veryfar"},
+                          "Fire3PFar": "superbwarfare:medium_rocket_fire", "Fire3PVeryFar": "superbwarfare:medium_rocket_fire"},
         })
         # Four rows of ten tube mouths on the pack's front face (from grad_assets.py), fired in turn.
         x0, y0, pitch, mouth = spec["tubes"]
@@ -147,12 +157,32 @@ def build(vehicle, spec, plz):
         probes += [[half_x, 0, z], [-half_x, 0, z]]
     data["TerrainCompat"] = probes
     data["ThirdPersonCameraPos"] = [-0.8669625, round(blocks(top_hi[1]) - 1.5, 3), 6]
-    # Driver from the model's hatch or cab seat (SBW data: +X left, +Z forward). Truck crews ride inside.
-    data["Seats"][0]["Position"] = spec["driver"]
-    if not spec["visible_driver"]:
-        for seat in data["Seats"]:
-            seat["HidePassenger"] = True
+    if spec.get("wheeled"):
+        # Truck crews sit in the cab, the driver at the wheel with a free look through the windscreen; the
+        # second cab seat replaces PLZ-05's roof gunners. SBW data: +X left, +Z forward.
+        driver, gunner = data["Seats"][0], data["Seats"][1]
+        driver.update({"IsEnclosed": True, "HidePassenger": True, "Transform": "Vehicle", "RotateWithVehicle": True,
+                       "Position": seat_from_eye(spec["driver_eye"]), "MinYaw": -100, "MaxYaw": 100,
+                       "MinPitch": -45, "MaxPitch": 40})
+        crew = copy.deepcopy(driver)
+        crew["Position"] = seat_from_eye(spec["crew_eye"])
+        crew["DismountInfo"] = {"Transform": "Vehicle", "Position": [-2.2, 0.375, crew["Position"][2]]}
+        driver["DismountInfo"] = {"Transform": "Vehicle", "Position": [2.2, 0.375, driver["Position"][2]]}
+        if spec.get("gunner_cam"):
+            cam = spec["gunner_cam"]
+            gunner["CameraPos"] = {"Transform": "Barrel", "UseFixedCameraPos": True,
+                                   "Position": [blocks(cam[0]), blocks(cam[1]), blocks(-cam[2])],
+                                   "ZoomPosition": [blocks(cam[0]), blocks(cam[1]), blocks(-cam[2])], "Direction": "Barrel"}
+        data["Seats"] = [driver, gunner, crew]
+    else:
+        data["Seats"][0]["Position"] = spec["driver"]
     return data
+
+
+def seat_from_eye(eye):
+    """Seat position (blocks, SBW frame) that puts a seated player's eye at a model point."""
+    x, y, z = eye
+    return [blocks(x), round(blocks(y) - 1.45, 4), blocks(-z)]
 
 
 def main():

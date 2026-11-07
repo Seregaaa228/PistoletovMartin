@@ -26,8 +26,8 @@ public final class ArtilleryAim {
     public static final double MIN_RANGE = 100;
     /** Largest elevation or bearing error a true-up takes away. */
     public static final double TRUE_UP_DEGREES = 1.0;
-    /** Rocket-to-rocket scatter of a launcher salvo (1 sigma): about 20 m either way at 4 km. */
-    private static final double SALVO_SPREAD_DEGREES = 0.3;
+    /** Rocket-to-rocket scatter of a launcher salvo (1 sigma): about 13 m either way at 4 km. */
+    private static final double SALVO_SPREAD_DEGREES = 0.18;
     private static final Map<UUID, Point> MISSIONS = new HashMap<>();
 
     private record Point(int x, int z) { }

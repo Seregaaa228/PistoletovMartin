@@ -57,6 +57,8 @@ public final class ArtilleryShells {
         int age;
         /** Chunk whose 3x3 area was last woken for this shell, or null. */
         ChunkPos woken;
+        /** Id of the trail nearby clients fly for it meanwhile. */
+        int tracer;
 
         Flight(CompoundTag shell, float gravity, int life, int age, Vec3 position, Vec3 velocity) {
             this.shell = shell; this.gravity = gravity; this.life = life; this.age = age;
@@ -83,6 +85,7 @@ public final class ArtilleryShells {
             if (gun == null) return;
             shell.getPersistentData().putBoolean(TAG, true);
             ArtilleryAim.trueUp(level, gun, shell);
+            ArtilleryBlast.launch(level, gun, shell, shell instanceof MediumRocketEntity);
         }
         LIVE.computeIfAbsent(level, key -> new ArrayList<>()).add(shell);
     }
@@ -93,7 +96,11 @@ public final class ArtilleryShells {
         var live = LIVE.get(level);
         if (live != null) live.removeIf(shell -> !shell.isAlive() || park(level, shell));
         var flights = FLIGHTS.get(level);
-        if (flights != null) flights.removeIf(flight -> step(level, flight));
+        if (flights != null) flights.removeIf(flight -> {
+            if (!step(level, flight)) return false;
+            ArtilleryTracers.end(level, flight.tracer, flight.position);
+            return true;
+        });
     }
 
     @SubscribeEvent
@@ -114,6 +121,7 @@ public final class ArtilleryShells {
         saved.remove("UUID");
         var flight = new Flight(saved, shell.getCustomGravity(), shell.getLife(), shell.tickCount, shell.position(), velocity);
         shell.discard();
+        flight.tracer = ArtilleryTracers.start(level, flight.position, velocity, flight.gravity, shell instanceof MediumRocketEntity);
         FLIGHTS.computeIfAbsent(level, key -> new ArrayList<>()).add(flight);
         return true;
     }

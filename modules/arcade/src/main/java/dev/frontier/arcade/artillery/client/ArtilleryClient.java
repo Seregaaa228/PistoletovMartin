@@ -33,13 +33,16 @@ public final class ArtilleryClient {
 
     private ArtilleryClient() { }
 
-    /** Called from DeepStrike's console-key tick: in a self-propelled gun X opens the fire-mission tablet. */
+    /**
+     * Called from DeepStrike's console-key tick: in a self-propelled gun X opens the fire-mission tablet; in a
+     * braced vehicle with its legs up, X lowers them first.
+     */
     public static void consoleKey(KeyMapping key) {
         var mc = Minecraft.getInstance();
         if (mc.screen != null || mc.player == null || !(mc.player.getVehicle() instanceof SpArtilleryEntity gun) || gun.isWreck()) return;
         boolean open = false;
         while (key.consumeClick()) open = true;
-        if (open) ArtilleryTabletScreen.open(gun);
+        if (open && !ArtilleryLegsClient.consoleKey(gun)) ArtilleryTabletScreen.open(gun);
     }
 
     private static SpArtilleryEntity seatedGun() {

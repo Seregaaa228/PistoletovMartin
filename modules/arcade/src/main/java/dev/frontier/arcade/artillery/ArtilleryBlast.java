@@ -15,7 +15,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
@@ -39,15 +42,23 @@ public final class ArtilleryBlast {
     private static final double NEAR = 48;
     /** 343 m/s in blocks per tick. */
     private static final double SOUND_PER_TICK = 343.0 / 20.0;
-    private static final int MAX_ECHOES = 256;
+    /** Beyond these, a player gets 60% / 35% of the particles: far bursts are small on screen anyway. */
+    private static final double DETAIL_NEAR = 128, DETAIL_FAR = 256;
+    /** Launch smoke is seen this far; farther away only the sound of the launch arrives. */
+    private static final double LAUNCH_SIGHT = 384;
+    private static final int MAX_ECHOES = 1024;
+    private static final ResourceLocation ROCKET_FIRE = new ResourceLocation("superbwarfare", "medium_rocket_fire");
     private static final List<Echo> ECHOES = new ArrayList<>();
 
-    private record Echo(ServerLevel level, UUID player, long due, Vec3 blast, double distance) { }
+    /** A sound on its way to one listener: a burst's boom, or a rocket launch's roar. */
+    private record Echo(ServerLevel level, UUID player, long due, Vec3 blast, double distance, boolean launch) { }
 
     private ArtilleryBlast() { }
 
     public static void burst(ServerLevel level, Vec3 at, float radius) {
         float r = Math.max(radius, 4);
+        // A launcher salvo is forty small bursts: each gets fewer particles than one heavy shell.
+        float weight = radius >= 30 ? 1 : 0.6f;
         var below = level.getBlockState(BlockPos.containing(at).below());
         var ground = below.isAir() ? Blocks.DIRT.defaultBlockState() : below;
         var debris = new BlockParticleOption(ParticleTypes.BLOCK, ground);
@@ -55,22 +66,52 @@ public final class ArtilleryBlast {
         for (ServerPlayer player : level.players()) {
             double distance = player.position().distanceTo(at);
             if (distance <= SIGHT) {
+                float k = weight * (distance <= DETAIL_NEAR ? 1 : distance <= DETAIL_FAR ? 0.6f : 0.35f);
                 send(level, player, ParticleTypes.FLASH, at, 2, 0, 0, 0, 0);
-                send(level, player, ParticleTypes.EXPLOSION_EMITTER, at, Math.max(3, Math.round(r / 6)), r * 0.15, r * 0.08, r * 0.15, 0);
-                send(level, player, ParticleTypes.EXPLOSION, at, Math.round(r * 2), r * 0.3, r * 0.15, r * 0.3, 0);
-                send(level, player, ParticleTypes.FLAME, at, Math.round(r * 3), r * 0.2, r * 0.1, r * 0.2, 0.35);
-                send(level, player, ParticleTypes.LAVA, at, Math.round(r), r * 0.2, r * 0.1, r * 0.2, 0);
-                send(level, player, debris, at.add(0, 1, 0), Math.round(r * 6), r * 0.3, r * 0.15, r * 0.3, 0.6);
-                send(level, player, ParticleTypes.LARGE_SMOKE, at.add(0, r * 0.15, 0), Math.round(r * 4), r * 0.35, r * 0.25, r * 0.35, 0.08);
-                send(level, player, ParticleTypes.CLOUD, at, Math.round(r * 3), r * 0.5, 0.3, r * 0.5, 0.25);
-                send(level, player, ParticleTypes.CAMPFIRE_SIGNAL_SMOKE, at, Math.round(r), r * 0.15, 1, r * 0.15, 0.02);
+                send(level, player, ParticleTypes.EXPLOSION_EMITTER, at, Math.max(2, Math.round(r / 6 * k)), r * 0.15, r * 0.08, r * 0.15, 0);
+                send(level, player, ParticleTypes.EXPLOSION, at, Math.round(r * 2 * k), r * 0.3, r * 0.15, r * 0.3, 0);
+                send(level, player, ParticleTypes.FLAME, at, Math.round(r * 3 * k), r * 0.2, r * 0.1, r * 0.2, 0.35);
+                send(level, player, ParticleTypes.LAVA, at, Math.round(r * k), r * 0.2, r * 0.1, r * 0.2, 0);
+                send(level, player, debris, at.add(0, 1, 0), Math.round(r * 6 * k), r * 0.3, r * 0.15, r * 0.3, 0.6);
+                send(level, player, ParticleTypes.LARGE_SMOKE, at.add(0, r * 0.15, 0), Math.round(r * 4 * k), r * 0.35, r * 0.25, r * 0.35, 0.08);
+                send(level, player, ParticleTypes.CLOUD, at, Math.round(r * 3 * k), r * 0.5, 0.3, r * 0.5, 0.25);
+                send(level, player, ParticleTypes.CAMPFIRE_SIGNAL_SMOKE, at, Math.round(r * k), r * 0.15, 1, r * 0.15, 0.02);
             }
             if (distance > NEAR && distance <= HEARING && ECHOES.size() < MAX_ECHOES)
-                ECHOES.add(new Echo(level, player.getUUID(), now + Math.round(distance / SOUND_PER_TICK), at, distance));
+                ECHOES.add(new Echo(level, player.getUUID(), now + Math.round(distance / SOUND_PER_TICK), at, distance, false));
         }
         // Up close: a sharp crack over SBW's own blast, carried as a world sound to everyone within ~130 blocks.
         level.playSound(null, at.x, at.y, at.z, SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS, 8, 0.55f);
         level.playSound(null, at.x, at.y, at.z, SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.BLOCKS, 6, 0.6f);
+    }
+
+    /**
+     * A round leaving a gun or launcher. A shell: muzzle fireball and a smoke cloud, dust kicked up around the
+     * vehicle. A rocket: motor flame at the tube, backblast smoke behind the pack, dust; and its roar reaching distant
+     * players at the speed of sound (SBW plays the gun's own near and far report).
+     */
+    public static void launch(ServerLevel level, Entity gun, Entity round, boolean rocket) {
+        Vec3 muzzle = round.position();
+        Vec3 ahead = round.getDeltaMovement().lengthSqr() < 1.0E-6 ? Vec3.ZERO : round.getDeltaMovement().normalize();
+        Vec3 ground = gun.position().add(0, 0.3, 0);
+        long now = level.getGameTime();
+        for (ServerPlayer player : level.players()) {
+            double distance = player.position().distanceTo(muzzle);
+            if (distance <= LAUNCH_SIGHT) {
+                float k = distance <= DETAIL_NEAR ? 1 : 0.5f;
+                if (rocket) {
+                    send(level, player, ParticleTypes.FLAME, muzzle, Math.round(6 * k), 0.3, 0.3, 0.3, 0.04);
+                    send(level, player, ParticleTypes.LARGE_SMOKE, muzzle.subtract(ahead.scale(4)), Math.round(10 * k), 1.2, 0.6, 1.2, 0.05);
+                    send(level, player, ParticleTypes.CLOUD, ground, Math.round(8 * k), 2.5, 0.3, 2.5, 0.06);
+                } else {
+                    send(level, player, ParticleTypes.EXPLOSION, muzzle.add(ahead), 1, 0, 0, 0, 0);
+                    send(level, player, ParticleTypes.LARGE_SMOKE, muzzle.add(ahead.scale(1.5)), Math.round(18 * k), 1.2, 0.8, 1.2, 0.06);
+                    send(level, player, ParticleTypes.CLOUD, ground, Math.round(24 * k), 4, 0.2, 4, 0.12);
+                }
+            }
+            if (rocket && distance > NEAR && distance <= HEARING && ECHOES.size() < MAX_ECHOES)
+                ECHOES.add(new Echo(level, player.getUUID(), now + Math.round(distance / SOUND_PER_TICK), muzzle, distance, true));
+        }
     }
 
     private static void send(ServerLevel level, ServerPlayer player, ParticleOptions type, Vec3 at, int count,
@@ -83,7 +124,9 @@ public final class ArtilleryBlast {
         if (event.phase != TickEvent.Phase.END || ECHOES.isEmpty()) return;
         ECHOES.removeIf(echo -> {
             if (echo.level.getGameTime() < echo.due) return false;
-            if (echo.level.getPlayerByUUID(echo.player) instanceof ServerPlayer player) boom(player, echo);
+            if (echo.level.getPlayerByUUID(echo.player) instanceof ServerPlayer player) {
+                if (echo.launch) roar(player, echo); else boom(player, echo);
+            }
             return true;
         });
     }
@@ -101,6 +144,17 @@ public final class ArtilleryBlast {
         long seed = player.getRandom().nextLong();
         play(player, SoundEvents.GENERIC_EXPLODE, source, volume, 0.4f + 0.2f * near, seed);
         play(player, SoundEvents.LIGHTNING_BOLT_THUNDER, source, volume * 0.7f, 0.65f + 0.2f * near, seed);
+    }
+
+    /** A distant rocket launch: SBW's own rocket report, lower and quieter with distance, from its direction. */
+    private static void roar(ServerPlayer player, Echo echo) {
+        Vec3 ear = player.getEyePosition();
+        Vec3 toward = echo.blast.subtract(ear);
+        Vec3 source = toward.lengthSqr() < 1.0E-6 ? ear : ear.add(toward.normalize().scale(2));
+        float near = (float) (1 - echo.distance / HEARING);
+        SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(ROCKET_FIRE);
+        play(player, sound != null ? sound : SoundEvents.FIREWORK_ROCKET_LAUNCH, source, 0.25f + 0.5f * near, 0.6f + 0.25f * near,
+            player.getRandom().nextLong());
     }
 
     private static void play(ServerPlayer player, SoundEvent sound, Vec3 at, float volume, float pitch, long seed) {

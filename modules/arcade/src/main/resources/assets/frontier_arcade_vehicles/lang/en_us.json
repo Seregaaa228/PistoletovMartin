@@ -57,5 +57,7 @@
   "message.frontier_arcade_vehicles.vehicle_deploy.no_room": "Not enough room: pick a flat spot",
   "entity.frontier_arcade_vehicles.msta_s": "2S19 Msta-S",
   "entity.frontier_arcade_vehicles.bohdana": "2S22 Bohdana",
-  "entity.frontier_arcade_vehicles.grad": "BM-21 Grad"
+  "entity.frontier_arcade_vehicles.grad": "BM-21 Grad",
+  "message.frontier_arcade_vehicles.legs.lowering": "Lowering stabilisers… X again for the fire map",
+  "message.frontier_arcade_vehicles.legs.raising": "Raising stabilisers"
 }

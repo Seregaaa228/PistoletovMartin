@@ -26,7 +26,8 @@
   "client": [
     "GeraniumInteriorSound",
     "GeraniumRenderTint",
-    "DeepStrikeArtilleryTablet"
+    "DeepStrikeArtilleryTablet",
+    "ArtilleryModelParts"
   ],
   "injectors": {
     "defaultRequire": 1
