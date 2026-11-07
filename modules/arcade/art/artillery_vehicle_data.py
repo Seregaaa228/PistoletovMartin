@@ -30,14 +30,16 @@ VEHICLES = {
         "health": 380, "speed": 1.0, "velocity": 19, "gravity": 0.06, "reload": 110,
         "he": (950, 44), "ap": (1100, 440, 17), "wheeled": True, "visible_driver": False,
         # Eye points in model units (bohdana_assets.py): driver and cab passenger; gunner camera barrel-local.
-        "driver_eye": (12, 46, -73), "crew_eye": (-12, 46, -73), "gunner_cam": (7, 7, -30),
+        "wheel_radius": 10.6,
+        "driver_eye": (11.5, 46.5, -73), "crew_eye": (-11.5, 46.5, -73), "gunner_cam": (0, 10, -30),
         "engine": {"MaxForwardSpeedRate": 1.25, "MaxBackwardSpeedRate": 0.7, "Increment": 0.02, "Decrement": 0.012,
                    "SteeringSpeed": 0.06, "WheelRotSpeed": 1.3},
     },
     "grad": {
         "health": 300, "speed": 0.95, "velocity": 16, "gravity": 0.05, "reload": 600,
         "rockets": True, "wheeled": True, "visible_driver": False,
-        "driver_eye": (10.5, 43, -35), "crew_eye": (-10.5, 43, -35), "gunner_cam": (0, 20, -5),
+        "wheel_radius": 12,
+        "driver_eye": (10.2, 43, -35), "crew_eye": (-10.2, 43, -35), "gunner_cam": (0, 20, -5),
         "engine": {"MaxForwardSpeedRate": 1.15, "MaxBackwardSpeedRate": 0.7, "Increment": 0.02, "Decrement": 0.012,
                    "SteeringSpeed": 0.065, "WheelRotSpeed": 1.25},
         # First tube centre x, y; tube pitch; muzzle-face z (model units).
@@ -156,6 +158,23 @@ def build(vehicle, spec, plz):
         z = round(z0 + (z1 - z0) * i / 5, 4)
         probes += [[half_x, 0, z], [-half_x, 0, z]]
     data["TerrainCompat"] = probes
+    if spec.get("wheeled"):
+        # A truck rides on its tyres: probe exactly under each wheel and give each wheel its own hit box, as SBW's
+        # pickup does; probes at the bumpers and a tank's 2.1-block step made it hop and lean on level road.
+        hubs = [b[name]["pivot"] for name in ("wheelL0Turn", "wheelL3", "wheelL6", "wheelR0Turn", "wheelR3", "wheelR6")]
+        radius = spec["wheel_radius"]
+        data["TerrainCompat"] = [[blocks(x), 0, blocks(-z)] for x, _, z in hubs]
+        half = round(blocks(radius) * 0.75, 4)
+        wheels = [{"Part": "WheelLeft" if x > 0 else "WheelRight", "Size": [0.3, half, half],
+                   "Position": [blocks(x), half, blocks(-z)]} for x, _, z in hubs]
+        # The body box sits above the axles and centred: ground clearance, no drag on the road, no lean.
+        hull_box = data["OBB"][0]
+        bottom, top = blocks(radius) * 1.2, hull_box["Position"][1] + hull_box["Size"][1]
+        hull_box["Size"][1] = round((top - bottom) / 2, 4)
+        hull_box["Position"] = [0, round((top + bottom) / 2, 4), hull_box["Position"][2]]
+        data["OBB"] = [box for box in data["OBB"] if box.get("Part") not in ("WheelLeft", "WheelRight")] + wheels
+        data["UpStep"] = 1.1
+        data["Mass"] = 14
     data["ThirdPersonCameraPos"] = [-0.8669625, round(blocks(top_hi[1]) - 1.5, 3), 6]
     if spec.get("wheeled"):
         # Truck crews sit in the cab, the driver at the wheel with a free look through the windscreen; the

@@ -73,8 +73,11 @@ for _i, _z in AXLES.items():
     MOVED[f"wheelR{_i}"] = [-WHEEL_X, WHEEL_R, _z]
 DRIVER_SEAT = [10.5, 29.5, -33]            # top of the left (driver) cushion
 CREW_SEAT = [-10.5, 29.5, -33]
-DRIVER_EYE = [10.5, 43, -35]               # first-person eye, looking -Z
+DRIVER_EYE = [10.2, 43, -35]               # first-person eye: middle of the driver's pane, looking -Z
 GUNNER_CAM = [0, 20, -5]                   # barrel-local, relative to PACK_PIVOT
+# Steering wheel bone: pivot on the hub, bind rotation tilts local +Z (column axis, from
+# the column towards the driver) to (0, sin T, cos T); the rim lies in the local XY plane.
+STEER_HUB, STEER_TILT, STEER_R = [10.2, 37.0, -40.0], 55.0, 3.6
 # Rear jacks: fixed housing in `body`, telescopic leg + pad in grad_jack_l/r. The legs
 # are modelled stowed; translating the bone down by JACK_TRAVEL puts the pads on y=0.
 JACK_X, JACK_Z, JACK_TOP, JACK_TRAVEL = 17.25, 65.5, 25.0, 8.0
@@ -87,7 +90,9 @@ EXTRA_BONES = [
     ("grad_jack_l", "body", [JACK_X, JACK_TOP, JACK_Z], None),
     ("grad_jack_r", "body", [-JACK_X, JACK_TOP, JACK_Z], None),
     ("grad_fp_hide", "body", list(DRIVER_EYE), None),
+    ("grad_steering_wheel", "body", list(STEER_HUB), None),
 ]
+BIND_ROT = {"grad_steering_wheel": [STEER_TILT, 0, 0]}
 REPARENT = {"wheelL0": ("WheelL", "wheelL0Turn"), "wheelR0": ("WheelR", "wheelR0Turn")}
 
 # SBW's GeoVehicleRenderer steers (Y) and spins (X) every wheel?0Turn bone and spins every
@@ -97,7 +102,8 @@ def wheel_bone(side, i):
     return f"wheel{side}{i}Turn" if i == 0 else f"wheel{side}{i}"
 
 
-GEOMETRY_BONES = ({"body", "turret", "barrel", "grad_jack_l", "grad_jack_r", "grad_fp_hide"}
+GEOMETRY_BONES = ({"body", "turret", "barrel", "grad_jack_l", "grad_jack_r", "grad_fp_hide",
+                   "grad_steering_wheel"}
                   | {wheel_bone(s, i) for s in "LR" for i in AXLES})
 
 # Frames mapping a part's local X axis onto a world axis (for round parts).
@@ -347,7 +353,8 @@ def cab(t):
     for x0, x1 in ((0.9, 19.5), (-19.5, -0.9)):                                # screen seals
         t.box(B, x0, x1, 45.5, 46, -47.8, -47.1, "rubber")
         t.box(B, x0, x1, 38, 38.5, -47.8, -47.1, "rubber")
-    t.sbar(B, (3.5, 38.8, -48.3), (11.5, 39.3, -48.3), 0.45, 0.45, "black")    # parked wipers
+    # Parked wipers lie level along the screen base (a slanted bar read as a crooked view).
+    t.sbar(B, (3.5, 38.75, -48.3), (11.5, 38.75, -48.3), 0.45, 0.45, "black")
     t.sbox(B, 19.2, 22.2, 30, 35, -48.4, -47.8, "olive_dark")                  # cowl vents
     # Doors (lower), window frames, canvas quarters, handles, hinges.
     for s in (1, -1):
@@ -402,11 +409,18 @@ def cab_interior(t):
     B = "body"
     t.box(B, -20.5, 20.5, 33, 38, -46.5, -43, "dash")
     t.box(B, 3.5, 17.5, 37.9, 38.6, -46.5, -44.5, "dark")                  # instrument hood
-    t.bar(B, (10.5, 33, -43.2), (10.5, 38.0, -39.6), 1.0, 1.0, "black")
-    tilt = axis_rot("x", -40) @ AXIS["z"]                                   # wheel faces driver
-    # The wheel rim fills the lower middle of the driver's view: hidden in first person.
-    t.ring("grad_fp_hide", (10.5, 38.5, -39.2), tilt, 3.6, 0.6, "black")
-    t.bar("grad_fp_hide", (6.9, 38.5, -39.2), (14.1, 38.5, -39.2), 0.5, 0.4, "black")
+    # Steering column (fixed) along the wheel axis, from under the dash to the hub.
+    hub = np.array(STEER_HUB, float)
+    axis = np.array([0, math.sin(math.radians(STEER_TILT)), math.cos(math.radians(STEER_TILT))])
+    t.bar(B, hub - axis * 7.0, hub - axis * 0.45, 1.0, 1.0, "black")
+    # Wheel in grad_steering_wheel, authored flat in the bone's local XY plane around the
+    # pivot; the bind rotation tilts it onto the column. Hub first (centred on the pivot).
+    W = "grad_steering_wheel"
+    t.prism(W, hub, AXIS["z"], 0.9, 0.9, "black", n=4)
+    t.ring(W, hub, AXIS["z"], STEER_R, 0.6, "black")
+    for a in (0, 180, 270):          # three-spoke wheel, open at 12 o'clock
+        d = np.array([math.cos(math.radians(a)), math.sin(math.radians(a)), 0.0])
+        t.bar(W, hub + d * 0.8, hub + d * (STEER_R - 0.2), 0.5, 0.35, "black", up=(0, 0, 1))
     for s in (1, -1):
         t.box(B, s * 4, s * 17, 26, 29.5, -38, -28.5, "seat")
         t.ori(B, (s * 10.5, 35.2, -27.4), (13, 10.5, 2.2), axis_rot("x", 10), "seat")
@@ -784,6 +798,9 @@ def skeleton_with_extras(skeleton):
             b["parent"] = REPARENT[b["name"]][1]
         out.append(b)
     out += [{"name": n, "parent": p, "pivot": list(v)} for n, p, v, at in EXTRA_BONES if not at]
+    for b in out:
+        if b["name"] in BIND_ROT:
+            b["rotation"] = list(BIND_ROT[b["name"]])
     return out
 
 
@@ -914,7 +931,7 @@ def face_shade(q, toward):
     return 0.62 + 0.38 * max(0.0, float(n @ LIGHT))
 
 
-def render_fp(data, tex, size, eye, yaw=0.0, pitch=-8.0, fov=70.0, hide=(), near=0.4):
+def render_fp(data, tex, size, eye, yaw=0.0, pitch=-8.0, fov=70.0, hide=(), near=0.4, poses=None):
     """Perspective view from `eye` (model units): yaw 0 looks -Z, positive yaw turns to
     the vehicle's left (+X); fov is vertical, as Minecraft's. Polygons are clipped at
     the near plane, texturing is perspective-correct."""
@@ -929,7 +946,7 @@ def render_fp(data, tex, size, eye, yaw=0.0, pitch=-8.0, fov=70.0, hide=(), near
     texp = np.asarray(tex.convert("RGBA"))
     zbuf = np.full((h, w), -1e30)
     pix = np.zeros((h, w, 4), np.uint8)
-    for q, uvq in geo_quads(data, hide=hide):
+    for q, uvq in geo_quads(data, poses, hide=hide):
         shade = face_shade(q, e - q.mean(0))
         if shade is None:
             continue
@@ -1030,9 +1047,9 @@ def previews(data, tex, folder):
     # Driver first person (grad_fp_hide hidden, FOV 70) and the gunner's camera.
     sky = (176, 196, 214, 255)
     shots = {"fp-forward": (DRIVER_EYE, 0, -8), "fp-left60": (DRIVER_EYE, 60, -8),
-             "fp-right60": (DRIVER_EYE, -60, -8),
+             "fp-right60": (DRIVER_EYE, -60, -8), "fp-level": (DRIVER_EYE, 0, 0),
              "gunner": (list(np.add(PACK_PIVOT, GUNNER_CAM)), 0, -6)}
-    strip = Image.new("RGB", (1600, 900), sky[:3])
+    strip = Image.new("RGB", (1600, 1350), sky[:3])
     for k, (name, (eye, yaw, pitch)) in enumerate(shots.items()):
         im = render_fp(data, tex, (800, 450), eye, yaw=yaw, pitch=pitch, fov=70,
                        hide={"grad_fp_hide"} if name.startswith("fp") else ())
@@ -1043,6 +1060,15 @@ def previews(data, tex, folder):
         canvas.save(folder / f"grad-{name}.png")
         strip.paste(canvas.convert("RGB"), (k % 2 * 800, k // 2 * 450))
     strip.save(folder / "grad-views-fp.png")
+    # Right turn: renderer rotateZ(-45 deg) on the wheel bone. SBW mirrors geo X, which flips
+    # the sign of Z rotations, so in geo terms that is +45 deg about the bone's local Z.
+    bind = K.rot_matrix(BIND_ROT["grad_steering_wheel"])
+    spin = {"grad_steering_wheel": bind @ axis_rot("z", 45) @ bind.T}
+    for name, pose in (("fp-wheel-straight", None), ("fp-wheel-right45", spin)):
+        im = render_fp(data, tex, (800, 450), DRIVER_EYE, 0, -25, 70, hide={"grad_fp_hide"}, poses=pose)
+        canvas = Image.new("RGBA", im.size, sky)
+        canvas.alpha_composite(im)
+        canvas.save(folder / f"grad-{name}.png")
     jar = native_jar()
     if not jar:
         return
@@ -1095,7 +1121,15 @@ def validate(data, skeleton, tex):
         assert b["pivot"] == list(expect), ("pivot", nb["name"])
     for name, parent, pivot, _ in EXTRA_BONES:
         assert by[name].get("parent") == parent and by[name]["pivot"] == list(pivot)
-        assert "rotation" not in by[name]
+        assert by[name].get("rotation") == BIND_ROT.get(name)
+    # Steering wheel: hub centred on the pivot; with the bind rotation local +Z points up
+    # and back along the column towards the driver.
+    sw = by["grad_steering_wheel"]
+    hub0 = np.add(sw["cubes"][0]["origin"], np.array(sw["cubes"][0]["size"]) / 2)
+    assert np.allclose(hub0, sw["pivot"], atol=0.05), hub0
+    assert sw["name"] not in subtree(bones, "grad_fp_hide")
+    zax = K.rot_matrix(sw["rotation"]) @ [0, 0, 1]
+    assert zax[1] > 0.5 and zax[2] > 0.3 and abs(zax[0]) < 1e-9, zax
     assert by["wheelL0Turn"]["pivot"] == by["wheelL0"]["pivot"]
     assert not by["wheelL0"].get("cubes") and not by["wheelR0"].get("cubes"), "front wheels spin twice"
     assert by["wheelR0Turn"]["pivot"] == by["wheelR0"]["pivot"]
@@ -1194,7 +1228,9 @@ def main():
                    gunner_cam_barrel_local=GUNNER_CAM,
                    gunner_cam_model=list(np.add(PACK_PIVOT, GUNNER_CAM).tolist()),
                    jack_travel_down=JACK_TRAVEL, steering_clear_deg=steer,
-                   extra_bones=[{"name": n, "parent": p, "pivot": v} for n, p, v, _ in EXTRA_BONES])
+                   extra_bones=[dict({"name": n, "parent": p, "pivot": v},
+                                     **({"rotation": BIND_ROT[n]} if n in BIND_ROT else {}))
+                                for n, p, v, _ in EXTRA_BONES])
     print(json.dumps(metrics, indent=1))
 
 

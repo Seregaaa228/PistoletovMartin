@@ -59,5 +59,7 @@
   "entity.frontier_arcade_vehicles.bohdana": "2С22 «Богдана»",
   "entity.frontier_arcade_vehicles.grad": "БМ-21 «Град»",
   "message.frontier_arcade_vehicles.legs.lowering": "Опоры опускаются… X ещё раз — карта огня",
-  "message.frontier_arcade_vehicles.legs.raising": "Опоры поднимаются"
+  "message.frontier_arcade_vehicles.legs.raising": "Опоры поднимаются",
+  "hud.frontier_arcade_vehicles.legs.up": "Опоры подняты · X — опустить",
+  "hud.frontier_arcade_vehicles.legs.down": "Опоры опущены · X — карта огня · W — поднять и ехать"
 }

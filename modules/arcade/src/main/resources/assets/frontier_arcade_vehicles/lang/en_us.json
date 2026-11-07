@@ -59,5 +59,7 @@
   "entity.frontier_arcade_vehicles.bohdana": "2S22 Bohdana",
   "entity.frontier_arcade_vehicles.grad": "BM-21 Grad",
   "message.frontier_arcade_vehicles.legs.lowering": "Lowering stabilisers… X again for the fire map",
-  "message.frontier_arcade_vehicles.legs.raising": "Raising stabilisers"
+  "message.frontier_arcade_vehicles.legs.raising": "Raising stabilisers",
+  "hud.frontier_arcade_vehicles.legs.up": "Stabilisers up · X to lower",
+  "hud.frontier_arcade_vehicles.legs.down": "Stabilisers down · X fire map · W raise and drive"
 }

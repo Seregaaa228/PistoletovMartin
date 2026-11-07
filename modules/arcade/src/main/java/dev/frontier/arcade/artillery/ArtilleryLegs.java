@@ -10,6 +10,8 @@ import java.util.function.Supplier;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraftforge.api.distmarker.Dist;
@@ -35,6 +37,7 @@ public final class ArtilleryLegs {
     public static final int DEPLOY_TICKS = 30;
     private static final String TAG = "frontier_legs_down";
     private static final Set<Entity> DOWN = Collections.newSetFromMap(new WeakHashMap<>());
+    private static final org.slf4j.Logger LOGGER = com.mojang.logging.LogUtils.getLogger();
     private static SimpleChannel channel;
 
     private ArtilleryLegs() { }
@@ -58,11 +61,21 @@ public final class ArtilleryLegs {
         return vehicle.getPersistentData().getBoolean(TAG);
     }
 
-    private static void set(SpArtilleryEntity gun, boolean down) {
-        if (down(gun) == down) return;
+    private static void set(ServerPlayer player, SpArtilleryEntity gun, boolean down) {
+        if (down(gun) == down) {
+            // Already so: still confirm to the asker, whose client showed it at once.
+            channel.send(PacketDistributor.PLAYER.with(() -> player), new State(gun.getId(), down, true));
+            return;
+        }
         gun.getPersistentData().putBoolean(TAG, down);
         if (down) DOWN.add(gun); else DOWN.remove(gun);
-        channel.send(PacketDistributor.TRACKING_ENTITY.with(() -> gun), new State(gun.getId(), down, false));
+        var state = new State(gun.getId(), down, false);
+        channel.send(PacketDistributor.TRACKING_ENTITY.with(() -> gun), state);
+        channel.send(PacketDistributor.PLAYER.with(() -> player), state);
+        // Hydraulics: a heavy hiss and thunk as the legs travel.
+        gun.level().playSound(null, gun.getX(), gun.getY(), gun.getZ(),
+            down ? SoundEvents.PISTON_EXTEND : SoundEvents.PISTON_CONTRACT, SoundSource.NEUTRAL, 1.5f, 0.55f);
+        LOGGER.debug("{} stabilisers of {} at {}", down ? "Lowered" : "Raised", gun.getType(), gun.blockPosition());
     }
 
     @SubscribeEvent
@@ -96,7 +109,7 @@ public final class ArtilleryLegs {
             context.enqueueWork(() -> {
                 var player = context.getSender();
                 if (player != null && player.isAlive() && player.getVehicle() instanceof SpArtilleryEntity gun
-                    && !gun.isWreck() && stabilised(gun.getType())) set(gun, packet.down);
+                    && !gun.isWreck() && stabilised(gun.getType())) set(player, gun, packet.down);
             });
             context.setPacketHandled(true);
         }

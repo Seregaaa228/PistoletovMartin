@@ -11,6 +11,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
+import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -30,7 +31,22 @@ public final class ArtilleryLegsClient {
     public static void state(int vehicle, boolean down, boolean instant) {
         var level = Minecraft.getInstance().level;
         long now = level == null ? 0 : level.getGameTime();
+        var known = LEGS.get(vehicle);
+        // A confirmation of what this client already shows keeps its animation running.
+        if (known != null && known.down == down && instant) return;
         LEGS.put(vehicle, new Leg(down, instant ? now - ArtilleryLegs.DEPLOY_TICKS : now));
+    }
+
+    /** Above the hotbar while in a braced-capable vehicle: what the legs are doing and what X does next. */
+    @SubscribeEvent
+    public static void hud(RenderGuiEvent.Post event) {
+        var mc = Minecraft.getInstance();
+        if (mc.options.hideGui || mc.screen != null || mc.player == null
+            || !(mc.player.getVehicle() instanceof SpArtilleryEntity gun) || !ArtilleryLegs.stabilised(gun.getType())) return;
+        var g = event.getGuiGraphics();
+        boolean down = down(gun);
+        g.drawCenteredString(mc.font, Component.translatable(down ? "hud.frontier_arcade_vehicles.legs.down" : "hud.frontier_arcade_vehicles.legs.up"),
+            g.guiWidth() / 2, g.guiHeight() - 72, down ? 0xFF34E07A : 0xFFFFB000);
     }
 
     public static boolean down(Entity vehicle) {
@@ -50,6 +66,8 @@ public final class ArtilleryLegsClient {
     /** X in a braced-capable vehicle: lower the legs first; once they are down, X opens the fire map. */
     static boolean consoleKey(SpArtilleryEntity gun) {
         if (!ArtilleryLegs.stabilised(gun.getType()) || down(gun)) return false;
+        // Shown at once; the server confirms (or corrects) it.
+        state(gun.getId(), true, false);
         ArtilleryLegs.request(true);
         var player = Minecraft.getInstance().player;
         if (player != null) player.displayClientMessage(Component.translatable("message.frontier_arcade_vehicles.legs.lowering"), true);
@@ -66,6 +84,7 @@ public final class ArtilleryLegsClient {
         long now = mc.level.getGameTime();
         if (now - lastRaise < 10) return;
         lastRaise = now;
+        state(gun.getId(), false, false);
         ArtilleryLegs.request(false);
         mc.player.displayClientMessage(Component.translatable("message.frontier_arcade_vehicles.legs.raising"), true);
     }

@@ -67,8 +67,11 @@ WHEEL_GEO_BONE = {f"wheel{s}{i}": f"wheel{s}{i}Turn" if i == "0" else f"wheel{s}
 SPADE_HINGE = [12, 14, 87]       # bh_spade_l pivot; bh_spade_r mirrors x
 WINDSCREEN_LOCAL = (2.5, 12.0)   # opening along the sloped frame, units above its hinge
 SIDE_WINDOW_LOCAL = (3.5, 10.5)
-DRIVER_EYE = [12, 46, -73]       # recommended first-person eye (model coordinates)
-GUNNER_CAM = [7, 7, -30]         # recommended gunner camera, relative to GUN_PIVOT
+DRIVER_EYE = [11.5, 46.5, -73]   # first-person eye: centre of the driver's windscreen pane
+GUNNER_CAM = [0, 10, -30]        # gunner camera over the tube, relative to GUN_PIVOT
+STEER_HUB = [11.5, 40.5, -76]    # steering-wheel hub (bh_steering_wheel pivot)
+STEER_TILT = 35.0                # wheel plane above horizontal; column = local -Z
+STEER_BIND = [90 - STEER_TILT, 0, 0]   # bone rotation (file/Bedrock sign: +rx tips local -Z down)
 # Bone-name patterns SBW treats specially (wheel spin, tracks, flare, dog tag).
 RESERVED_PREFIXES = ("wheel", "w_", "shell", "track", "flare", "laser")
 TEX_LIMIT = 512
@@ -470,6 +473,8 @@ def build():
     spade_l = g.bone("bh_spade_l", "body", SPADE_HINGE)
     spade_r = g.bone("bh_spade_r", "body", [-SPADE_HINGE[0], SPADE_HINGE[1], SPADE_HINGE[2]])
     fp_hide = g.bone("bh_fp_hide", "body")
+    steer = g.bone("bh_steering_wheel", "body", STEER_HUB)
+    g.by[steer]["rotation"] = list(STEER_BIND)
     rest = g.bone("bh_travel_rest", "body")
     mount = g.bone("bh_mount", "turret")
     cradle = g.bone("bh_cradle", "barrel")
@@ -514,7 +519,9 @@ def build():
     g.ngon(chassis, (-17, 17, -52), "z", 3, 9, "metal_dark_flat")        # muffler
 
     # --- armoured cab -------------------------------------------------------------------
-    g.cube(cab, [-26, 22, -82], [52, 18, 36], "camo")
+    g.cube(cab, [-26, 22, -82], [52, 12, 36], "camo")                  # floor at y 34 inside
+    g.sym(cab, [24.5, 34, -82], [1.5, 6, 36], "camo")                    # lower side walls
+    g.cube(cab, [-24, 34, -48], [48, 6, 2], "camo")
     g.cube(cab, [-24, 22, -84], [48, 18, 2], "camo")
     s2 = 2 * math.sqrt(2)
     g.sym(cab, [24 - s2 / 2, 22.05, -82 - s2 / 2], [s2, 17.9, s2], "camo", rot=R("y", 45),
@@ -542,11 +549,25 @@ def build():
                  ([20, 40 + w0 - 0.6, -84.6], [0.6, w1 - w0 + 1.2, 0.6])):
         g.sym(cab, o, s, "camo_dark", rot=srot, pivot=hinge)            # window trims
     g.sym(fp_hide, [6, 40 + w0 + 0.3, -84.9], [7, 0.4, 0.4], "black", rot=srot, pivot=hinge)
-    g.cube(cab, [-22, 40, -82], [44, 2, 5], "camo_dark")                 # dashboard
+    g.cube(cab, [-22, 34, -82], [44, 7, 3], "camo_dark")                 # dashboard
     g.cube(cab, [-24, 40, -48], [48, 13, 2], "camo")                     # rear wall
     for x0 in (8, -16):                                                  # seats
-        g.cube(cab, [x0, 40, -66], [8, 2, 7], "black")
-        g.cube(cab, [x0, 42, -60], [8, 9, 1.5], "black")
+        g.cube(cab, [x0, 34, -68], [8, 4, 7], "black")
+        g.cube(cab, [x0, 38, -62], [8, 10, 1.5], "black")
+    # Steering wheel: modelled flat in the XY plane around its hub, column along
+    # -Z; the bone's bind rotation tips it to the column angle. SBW-side code
+    # spins it with rotateZ on top of the bind rotation.
+    hx, hy, hz = STEER_HUB
+    rr = 3.2
+    e = 2 * rr * math.tan(math.radians(22.5)) + 0.3
+    for k in range(8):
+        g.cube(steer, [hx - e / 2, hy + rr - 0.35, hz - 0.35], [e, 0.7, 0.7], "black",
+               rot=R("z", k * 45) if k else None, pivot=STEER_HUB)       # rim
+    for ang in (60, 180, 300):
+        g.cube(steer, [hx - 0.25, hy, hz - 0.2], [0.5, rr - 0.3, 0.4], "metal_dark",
+               rot=R("z", ang), pivot=STEER_HUB)                         # spokes
+    g.cube(steer, [hx - 0.8, hy - 0.8, hz - 0.5], [1.6, 1.6, 1.0], "metal_dark")   # hub
+    g.cube(steer, [hx - 0.4, hy - 0.4, hz - 4.5], [0.8, 0.8, 4.0], "black")       # column
     side_rot, side_piv = R("z", 8), [24, 40, -63]
     s0, s1 = SIDE_WINDOW_LOCAL
     for o, s in (([24, 40, -83], [1.6, s0, 36]), ([24, 40 + s1, -83], [1.6, 13.2 - s1, 36]),
@@ -1048,8 +1069,6 @@ class Posed:
         b = self.by[bone]
         while b is not None:
             pv = np.array(b["pivot"], float)
-            if "rotation" in b:
-                pts = (pts - pv) @ rot_matrix(b["rotation"]).T + pv
             if b["name"] in pose:
                 kind, val = pose[b["name"]]
                 if kind == "move":
@@ -1059,10 +1078,15 @@ class Posed:
                     if kind == "yaw":
                         M = np.array([[math.cos(a), 0, math.sin(a)], [0, 1, 0],
                                       [-math.sin(a), 0, math.cos(a)]])
+                    elif kind == "roll":      # Java rotateZ(+a) == file Rz(-a) (X mirror)
+                        M = np.array([[math.cos(-a), -math.sin(-a), 0],
+                                      [math.sin(-a), math.cos(-a), 0], [0, 0, 1]])
                     else:   # pitch/spin about X; positive raises the -Z end
                         M = np.array([[1, 0, 0], [0, math.cos(a), -math.sin(a)],
                                       [0, math.sin(a), math.cos(a)]])
                     pts = (pts - pv) @ M.T + pv
+            if "rotation" in b:                 # bind rotation applies after the local pose
+                pts = (pts - pv) @ rot_matrix(b["rotation"]).T + pv
             b = self.by.get(b.get("parent"))
         return pts
 
@@ -1253,10 +1277,12 @@ def render_eye(data, tex, eye, yaw=0.0, pitch=0.0, fov=70.0, size=(960, 600), po
             m = (l1 >= -1e-6) & (l2 >= -1e-6) & (l3 >= -1e-6) & (zi > old)
             if not m.any():
                 continue
+            zs = np.where(m, zi, 1.0)            # only covered pixels are sampled
             tu = (l1 * T[ids[0], 0] * iz[ids[0]] + l2 * T[ids[1], 0] * iz[ids[1]]
-                  + l3 * T[ids[2], 0] * iz[ids[2]]) / zi
+                  + l3 * T[ids[2], 0] * iz[ids[2]]) / zs
             tv = (l1 * T[ids[0], 1] * iz[ids[0]] + l2 * T[ids[1], 1] * iz[ids[1]]
-                  + l3 * T[ids[2], 1] * iz[ids[2]]) / zi
+                  + l3 * T[ids[2], 1] * iz[ids[2]]) / zs
+            tu, tv = np.where(m, tu, 0), np.where(m, tv, 0)
             col = texp[np.clip(np.floor(tv).astype(int), 0, th - 1),
                        np.clip(np.floor(tu).astype(int), 0, tw - 1)]
             m &= col[..., 3] > 0
@@ -1326,7 +1352,7 @@ def eye_clearance(data, eye, hide=("bh_fp_hide",)):
         for c in b.get("cubes", []):
             if min(c["size"]) <= 0:
                 continue
-            pts = np.concatenate([face_frame(c, f) for f in FACES])
+            pts = np.concatenate([posed.chain(b["name"], face_frame(c, f), {}) for f in FACES])
             lo, hi = pts.min(0), pts.max(0)
             dist = np.linalg.norm(np.maximum(0, np.maximum(lo - e, e - hi)))
             best = min(best, dist)
@@ -1402,23 +1428,24 @@ def previews(data, tex, out_dir, jar):
         d.text((x + 24, y + 4), label, font=font(20, True), fill=(40, 56, 44))
     sheet.save(out_dir / "bohdana-poses.png")
     # first-person views (bh_fp_hide hidden) and the gunner camera
-    gun_eye = [a + b for a, b in zip(GUN_PIVOT, GUNNER_CAM)]
-    views = [("driver-forward", DRIVER_EYE, 0, -8, ("bh_fp_hide",)),
-             ("driver-left60", DRIVER_EYE, -60, -8, ("bh_fp_hide",)),
-             ("driver-right60", DRIVER_EYE, 60, -8, ("bh_fp_hide",)),
-             ("driver-forward-at-12-46-68", [12, 46, -68], 0, -8, ("bh_fp_hide",)),
-             ("gunner", gun_eye, 0, -3, ()),
-             ("gunner-elev30", None, 0, 27, ())]
+    fp = ("bh_fp_hide",)
+    right90 = {"bh_steering_wheel": ("roll", -90)}     # right turn = negative rotateZ
+    views = [("driver-forward", DRIVER_EYE, 0, -8, fp, None, 0),
+             ("driver-forward-wheel-right90", DRIVER_EYE, 0, -8, fp, right90, 0),
+             ("driver-left60", DRIVER_EYE, -60, -8, fp, None, 0),
+             ("driver-right60", DRIVER_EYE, 60, -8, fp, None, 0),
+             ("gunner-elev-3", None, 0, 0, (), None, -3),
+             ("gunner-elev45", None, 0, 0, (), None, 45)]
     sheet = Image.new("RGB", (1940, 1890), (226, 229, 217))
     d = ImageDraw.Draw(sheet)
-    for i, (name, eye, yaw, pitch, hide) in enumerate(views):
-        pose = None
+    for i, (name, eye, yaw, pitch, hide, pose, elev) in enumerate(views):
         if eye is None:                         # gunner camera rides the barrel
-            a = math.radians(30)
-            pose = {"barrel": ("pitch", 30)}
+            a = math.radians(elev)
+            pose = {"barrel": ("pitch", elev)}
             dy, dz = GUNNER_CAM[1], GUNNER_CAM[2]
             eye = [GUN_PIVOT[0] + GUNNER_CAM[0], GUN_PIVOT[1] + dy * math.cos(a) - dz * math.sin(a),
                    GUN_PIVOT[2] + dy * math.sin(a) + dz * math.cos(a)]
+            pitch = elev
         im = render_eye(data, tex, eye, yaw, pitch, 70, (960, 600), pose, hide)
         im.save(out_dir / f"fp-{name}.png")
         x, y = (i % 2) * 980, (i // 2) * 630
@@ -1487,6 +1514,9 @@ def validate(data, tex_size, jar=None):
         assert turn["pivot"] == by[f"wheel{side}0"]["pivot"]
         assert names.index(turn["name"]) < names.index(f"wheel{side}0")
         assert not by[f"wheel{side}0"].get("cubes"), "front wheel geometry belongs on Turn"
+    sw = by["bh_steering_wheel"]           # spins about local Z on top of its bind rotation
+    assert sw["parent"] == "body" and sw["pivot"] == STEER_HUB and sw["rotation"] == STEER_BIND
+    assert sw.get("cubes"), "steering wheel has no geometry"
     allowed_wheels = set(WHEEL_GEO_BONE.values())
     for b in bones:          # only the six used wheels carry cubes; tracks/locks stay empty
         n = b["name"]
@@ -1553,8 +1583,9 @@ def main():
         "pivots": {n: geo.by[n]["pivot"] for n in ["turret", "barrelBase", "barrel", "tube"]
                    + sorted(f"wheel{s}{i}" for s in "LR" for i in AXLES)},
         "muzzle": [0, GUN_PIVOT[1], MUZZLE_Z],
-        "new_bones": {n: {"parent": geo.by[n]["parent"], "pivot": geo.by[n]["pivot"]}
-                      for n in sorted(STEER | {"bh_spade_l", "bh_spade_r", "bh_fp_hide"})},
+        "new_bones": {n: {k: geo.by[n][k] for k in ("parent", "pivot", "rotation") if k in geo.by[n]}
+                      for n in sorted(STEER | {"bh_spade_l", "bh_spade_r", "bh_fp_hide",
+                                               "bh_steering_wheel"})},
         "spade_deploy_deg_about_+X": spade_deploy_angle(data),
         "driver_eye": DRIVER_EYE,
         "driver_eye_clearance": round(eye_clearance(data, DRIVER_EYE), 2),

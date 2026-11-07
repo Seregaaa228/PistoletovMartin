@@ -10,6 +10,8 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import com.atsuishio.superbwarfare.entity.projectile.MediumRocketEntity;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -23,6 +25,9 @@ public final class ArtilleryTracersClient {
     private static final double SIGHT_SQ = 512 * 512;
     private static final int MAX_AGE = 1200, MAX_TRACERS = 256;
     private static final List<Tracer> TRACERS = new ArrayList<>();
+    /** SBW rockets in flight near this client: they get a motor flame at the tail (SBW draws only their smoke). */
+    private static final List<MediumRocketEntity> ROCKETS = new ArrayList<>();
+    private static final double FLAME_SIGHT_SQ = 256 * 256;
 
     private static final class Tracer {
         final int id;
@@ -47,12 +52,34 @@ public final class ArtilleryTracersClient {
     }
 
     @SubscribeEvent
+    public static void join(EntityJoinLevelEvent event) {
+        if (event.getLevel().isClientSide() && event.getEntity() instanceof MediumRocketEntity rocket && ROCKETS.size() < MAX_TRACERS)
+            ROCKETS.add(rocket);
+    }
+
+    /** Motor flame and fresh exhaust behind each live rocket, a little behind the body so it reads as a jet. */
+    private static void flames(net.minecraft.client.multiplayer.ClientLevel level, Vec3 camera) {
+        ROCKETS.removeIf(rocket -> {
+            if (rocket.isRemoved() || rocket.level() != level) return true;
+            Vec3 motion = rocket.getDeltaMovement();
+            if (motion.lengthSqr() < 0.25 || rocket.position().distanceToSqr(camera) > FLAME_SIGHT_SQ) return false;
+            Vec3 tail = rocket.position().subtract(motion.normalize().scale(1.2));
+            Vec3 back = motion.normalize().scale(-0.15);
+            level.addParticle(ParticleTypes.FLAME, true, tail.x, tail.y, tail.z, back.x, back.y, back.z);
+            level.addParticle(ParticleTypes.SMALL_FLAME, true, tail.x, tail.y, tail.z, back.x * 2, back.y * 2, back.z * 2);
+            level.addParticle(ParticleTypes.SMOKE, true, tail.x, tail.y, tail.z, 0, 0.02, 0);
+            return false;
+        });
+    }
+
+    @SubscribeEvent
     public static void tick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || TRACERS.isEmpty()) return;
+        if (event.phase != TickEvent.Phase.END || TRACERS.isEmpty() && ROCKETS.isEmpty()) return;
         var mc = Minecraft.getInstance();
         var level = mc.level;
         if (level == null || mc.isPaused()) return;
         Vec3 camera = mc.gameRenderer.getMainCamera().getPosition();
+        flames(level, camera);
         TRACERS.removeIf(tracer -> {
             Vec3 from = tracer.position;
             tracer.position = from.add(tracer.velocity);
@@ -69,7 +96,8 @@ public final class ArtilleryTracersClient {
                     Vec3 at = from.lerp(tracer.position, (double) i / puffs);
                     level.addParticle(ParticleTypes.LARGE_SMOKE, true, at.x, at.y, at.z, 0, 0.01, 0);
                 }
-                level.addParticle(ParticleTypes.FLAME, true, tracer.position.x, tracer.position.y, tracer.position.z, 0, 0, 0);
+                Vec3 tail = tracer.position.subtract(tracer.velocity.normalize().scale(1.2));
+                level.addParticle(ParticleTypes.FLAME, true, tail.x, tail.y, tail.z, 0, 0, 0);
             } else if (tracer.age % 2 == 0) {
                 level.addParticle(ParticleTypes.SMOKE, true, tracer.position.x, tracer.position.y, tracer.position.z, 0, 0, 0);
             }
@@ -80,5 +108,6 @@ public final class ArtilleryTracersClient {
     @SubscribeEvent
     public static void loggedOut(ClientPlayerNetworkEvent.LoggingOut event) {
         TRACERS.clear();
+        ROCKETS.clear();
     }
 }
