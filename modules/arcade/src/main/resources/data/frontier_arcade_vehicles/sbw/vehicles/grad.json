@@ -452,7 +452,7 @@
   "EngineSound": "superbwarfare:truck_engine",
   "ThirdPersonCameraPos": [
     -0.8669625,
-    1.769,
+    1.094,
     6
   ],
   "VehicleIcon": "frontier_arcade_vehicles:textures/vehicle_icon/grad_icon.png",
@@ -498,15 +498,44 @@
     {
       "Part": "Collision",
       "Size": [
-        1.8469,
-        1.3898,
-        5.09375
+        1.5312,
+        1.575,
+        4.9688
       ],
       "Position": [
-        0,
-        2.2898,
-        0.2812
+        0.0,
+        1.575,
+        0.4062
       ]
+    },
+    {
+      "Part": "Turret",
+      "Size": [
+        1.5,
+        0.3438,
+        0.9062
+      ],
+      "Position": [
+        0.0625,
+        0.5,
+        -0.4062
+      ],
+      "Transform": "Turret",
+      "Rotation": "Turret"
+    },
+    {
+      "Size": [
+        1.25,
+        0.5656,
+        2.1094
+      ],
+      "Position": [
+        0.0,
+        0.4719,
+        2.0156
+      ],
+      "Transform": "Barrel",
+      "Rotation": "Barrel"
     },
     {
       "Part": "MainEngine",
@@ -517,100 +546,85 @@
       ],
       "Position": [
         0,
-        3.2797,
+        1.89,
         4.375
       ]
     },
     {
-      "Part": "Turret",
-      "Size": [
-        3.14375,
-        1.18905,
-        2.1894
-      ],
-      "Position": [
-        0,
-        1.18905,
-        0
-      ],
-      "Transform": "Turret",
-      "Rotation": "Turret"
-    },
-    {
       "Part": "WheelLeft",
       "Size": [
-        0.3,
-        0.5625,
-        0.5625
+        0.28,
+        0.75,
+        0.75
       ],
       "Position": [
         1.1875,
-        0.5625,
+        0.75,
         3.5
       ]
     },
     {
       "Part": "WheelLeft",
       "Size": [
-        0.3,
-        0.5625,
-        0.5625
+        0.28,
+        0.75,
+        0.75
       ],
       "Position": [
         1.1875,
-        0.5625,
+        0.75,
         -1.125
       ]
     },
     {
       "Part": "WheelLeft",
       "Size": [
-        0.3,
-        0.5625,
-        0.5625
+        0.28,
+        0.75,
+        0.75
       ],
       "Position": [
         1.1875,
-        0.5625,
+        0.75,
         -2.875
       ]
     },
     {
       "Part": "WheelRight",
       "Size": [
-        0.3,
-        0.5625,
-        0.5625
+        0.28,
+        0.75,
+        0.75
       ],
       "Position": [
         -1.1875,
-        0.5625,
+        0.75,
         3.5
       ]
     },
     {
       "Part": "WheelRight",
       "Size": [
-        0.3,
-        0.5625,
-        0.5625
+        0.28,
+        0.75,
+        0.75
       ],
       "Position": [
         -1.1875,
-        0.5625,
+        0.75,
         -1.125
       ]
     },
     {
       "Part": "WheelRight",
       "Size": [
-        0.3,
-        0.5625,
-        0.5625
+        0.28,
+        0.75,
+        0.75
       ],
       "Position": [
         -1.1875,
-        0.5625,
+        0.75,
         -2.875
       ]
     }

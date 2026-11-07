@@ -258,7 +258,7 @@
   "EngineSound": "superbwarfare:truck_engine",
   "ThirdPersonCameraPos": [
     -0.8669625,
-    2.931,
+    2.688,
     6
   ],
   "VehicleIcon": "frontier_arcade_vehicles:textures/vehicle_icon/bohdana_icon.png",
@@ -304,15 +304,44 @@
     {
       "Part": "Collision",
       "Size": [
-        1.7875,
-        1.8525,
-        5.74375
+        1.6875,
+        1.8594,
+        5.7125
       ],
       "Position": [
-        0,
-        2.6475,
-        0.1313
+        0.0,
+        1.8594,
+        0.1
       ]
+    },
+    {
+      "Part": "Turret",
+      "Size": [
+        0.95,
+        1.2188,
+        1.375
+      ],
+      "Position": [
+        0.1125,
+        1.2188,
+        -0.3125
+      ],
+      "Transform": "Turret",
+      "Rotation": "Turret"
+    },
+    {
+      "Size": [
+        0.375,
+        0.4614,
+        5.3719
+      ],
+      "Position": [
+        0.0,
+        0.0073,
+        4.1219
+      ],
+      "Transform": "Barrel",
+      "Rotation": "Barrel"
     },
     {
       "Part": "MainEngine",
@@ -323,100 +352,85 @@
       ],
       "Position": [
         0,
-        4.1,
-        4.875
+        2.2313,
+        4.8125
       ]
-    },
-    {
-      "Part": "Turret",
-      "Size": [
-        2.26165,
-        1.3406,
-        5.6875
-      ],
-      "Position": [
-        0,
-        1.3406,
-        0
-      ],
-      "Transform": "Turret",
-      "Rotation": "Turret"
     },
     {
       "Part": "WheelLeft",
       "Size": [
-        0.3,
-        0.4969,
-        0.4969
+        0.28,
+        0.6625,
+        0.6625
       ],
       "Position": [
         1.4062,
-        0.4969,
+        0.6625,
         3.875
       ]
     },
     {
       "Part": "WheelLeft",
       "Size": [
-        0.3,
-        0.4969,
-        0.4969
+        0.28,
+        0.6625,
+        0.6625
       ],
       "Position": [
         1.4062,
-        0.4969,
+        0.6625,
         -1.875
       ]
     },
     {
       "Part": "WheelLeft",
       "Size": [
-        0.3,
-        0.4969,
-        0.4969
+        0.28,
+        0.6625,
+        0.6625
       ],
       "Position": [
         1.4062,
-        0.4969,
+        0.6625,
         -3.3125
       ]
     },
     {
       "Part": "WheelRight",
       "Size": [
-        0.3,
-        0.4969,
-        0.4969
+        0.28,
+        0.6625,
+        0.6625
       ],
       "Position": [
         -1.4062,
-        0.4969,
+        0.6625,
         3.875
       ]
     },
     {
       "Part": "WheelRight",
       "Size": [
-        0.3,
-        0.4969,
-        0.4969
+        0.28,
+        0.6625,
+        0.6625
       ],
       "Position": [
         -1.4062,
-        0.4969,
+        0.6625,
         -1.875
       ]
     },
     {
       "Part": "WheelRight",
       "Size": [
-        0.3,
-        0.4969,
-        0.4969
+        0.28,
+        0.6625,
+        0.6625
       ],
       "Position": [
         -1.4062,
-        0.4969,
+        0.6625,
         -3.3125
       ]
     }

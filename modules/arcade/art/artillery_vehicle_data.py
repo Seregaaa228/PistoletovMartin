@@ -76,6 +76,18 @@ def extent(bone_list):
     return lo, hi
 
 
+def solid(bone_list):
+    """The bones' cubes that are real bulk: not slivers (antennas, mirrors, lamps), and not rotated."""
+    out = []
+    for bone in bone_list:
+        # Rotated cubes (bevels, tilted plates) are left out: their origin/size box is not where they sit.
+        cubes = [c for c in bone.get("cubes", []) if min(c["size"]) >= 1.5 and c["size"][0] * c["size"][1] * c["size"][2] >= 12
+                 and not any(c.get("rotation", [0, 0, 0]))]
+        if cubes:
+            out.append({"cubes": cubes})
+    return out
+
+
 def blocks(v):
     return round(v / 16, 4)
 
@@ -134,47 +146,52 @@ def build(vehicle, spec, plz):
                 ammo["Override"].update({"Damage": ap_damage, "ExplosionDamage": ap_blast, "ExplosionRadius": ap_radius})
         weapon["ShootPos"] = {"Transform": "Barrel", "Positions": [[0, 0, reach]], "Directions": ["Barrel"]}
 
-    # Collision: hull below the turret ring, the turret above it; wheels/tracks as the side parts.
-    body_lo, body_hi = extent([x for n, x in b.items() if n not in {y["name"] for y in subtree(b, "turret")}])
-    top_lo, top_hi = extent(subtree(b, "turret"))
-    size = lambda lo, hi: [blocks(hi[0] - lo[0]) / 2, blocks(hi[1] - lo[1]) / 2, blocks(hi[2] - lo[2]) / 2]
-    centre = lambda lo, hi: [blocks((hi[0] + lo[0]) / 2), blocks((hi[1] + lo[1]) / 2), blocks(-(hi[2] + lo[2]) / 2)]
-    hull = size(body_lo, body_hi)
-    data["OBB"] = [
-        {"Part": "Collision", "Size": hull, "Position": centre(body_lo, body_hi)},
-        {"Part": "WheelLeft", "Size": [0.3, hull[1] * 0.5, hull[2] * 0.85],
-         "Position": [blocks(body_hi[0]) - 0.3, hull[1] * 0.5, centre(body_lo, body_hi)[2]]},
-        {"Part": "WheelRight", "Size": [0.3, hull[1] * 0.5, hull[2] * 0.85],
-         "Position": [blocks(body_lo[0]) + 0.3, hull[1] * 0.5, centre(body_lo, body_hi)[2]]},
-        {"Part": "MainEngine", "Size": [0.6, 0.4, 0.8],
-         "Position": [0, blocks(body_hi[1]) - 0.4, blocks(-body_lo[2]) - 1.0 if spec.get("wheeled") else blocks(-body_hi[2]) + 1.2]},
-        {"Part": "Turret", "Size": size(top_lo, top_hi), "Position": [0, blocks(top_hi[1] - top_lo[1]) / 2, 0],
+    # Collision, from the model's solid parts (thin antennas, mirrors and lamps do not count). SBW stands the vehicle
+    # on these boxes and hits, boards and collides with them, so each follows what it covers:
+    #   hull: ground to deck, bumper to bumper, one box (no gaps, no step to snag);
+    #   turret / launcher: its own box turning with the turret; the gun or rocket pack: one that elevates with it;
+    #   wheels or tracks: the running gear as the parts SBW damages separately.
+    turret_names = {x["name"] for x in subtree(b, "turret")}
+    barrel_names = {x["name"] for x in subtree(b, "barrel")}
+    hull_lo, hull_hi = extent(solid([x for n, x in b.items() if n not in turret_names]))
+    top_lo, top_hi = extent(solid([x for n, x in b.items() if n in turret_names and n not in barrel_names]))
+    gun_lo, gun_hi = extent(solid([b[n] for n in barrel_names]))
+    half = lambda lo, hi: [round(blocks(hi[i] - lo[i]) / 2, 4) for i in range(3)]
+    # Model to data frame (x stays, z flips), relative to a pivot.
+    at = lambda lo, hi, pivot: [round(blocks((lo[0] + hi[0]) / 2 - pivot[0]), 4), round(blocks((lo[1] + hi[1]) / 2 - pivot[1]), 4),
+                                round(blocks(-((lo[2] + hi[2]) / 2 - pivot[2])), 4)]
+    hull_lo[1] = 0  # the hull box stands on the ground
+    width = max(abs(hull_lo[0]), abs(hull_hi[0]))
+    hull_lo[0], hull_hi[0] = -width, width
+    boxes = [
+        {"Part": "Collision", "Size": half(hull_lo, hull_hi), "Position": at(hull_lo, hull_hi, [0, 0, 0])},
+        {"Part": "Turret", "Size": half(top_lo, top_hi), "Position": at(top_lo, top_hi, turret),
          "Transform": "Turret", "Rotation": "Turret"},
+        {"Size": half(gun_lo, gun_hi), "Position": at(gun_lo, gun_hi, barrel), "Transform": "Barrel", "Rotation": "Barrel"},
     ]
-    # Terrain probes along both sides, front to back.
-    half_x, z0, z1 = max(abs(blocks(body_lo[0])), abs(blocks(body_hi[0]))) - 0.2, blocks(-body_hi[2]) + 0.5, blocks(-body_lo[2]) - 0.5
-    probes = []
-    for i in range(6):
-        z = round(z0 + (z1 - z0) * i / 5, 4)
-        probes += [[half_x, 0, z], [-half_x, 0, z]]
-    data["TerrainCompat"] = probes
+    engine_z = blocks(-hull_lo[2]) - 1.0 if spec.get("wheeled") else blocks(-hull_hi[2]) + 1.2
+    boxes.append({"Part": "MainEngine", "Size": [0.6, 0.4, 0.8], "Position": [0, round(blocks(hull_hi[1]) * 0.6, 4), round(engine_z, 4)]})
     if spec.get("wheeled"):
-        # A truck rides on its tyres: probe exactly under each wheel and give each wheel its own hit box, as SBW's
-        # pickup does; probes at the bumpers and a tank's 2.1-block step made it hop and lean on level road.
+        # A truck rides on its tyres: probe exactly under each wheel and give each wheel its own box, as SBW's pickup
+        # does. Probes at the bumpers and a tank's 2.1-block step made it hop and lean on level road.
         hubs = [b[name]["pivot"] for name in ("wheelL0Turn", "wheelL3", "wheelL6", "wheelR0Turn", "wheelR3", "wheelR6")]
-        radius = spec["wheel_radius"]
+        r = round(blocks(spec["wheel_radius"]), 4)
         data["TerrainCompat"] = [[blocks(x), 0, blocks(-z)] for x, _, z in hubs]
-        half = round(blocks(radius) * 0.75, 4)
-        wheels = [{"Part": "WheelLeft" if x > 0 else "WheelRight", "Size": [0.3, half, half],
-                   "Position": [blocks(x), half, blocks(-z)]} for x, _, z in hubs]
-        # The body box sits above the axles and centred: ground clearance, no drag on the road, no lean.
-        hull_box = data["OBB"][0]
-        bottom, top = blocks(radius) * 1.2, hull_box["Position"][1] + hull_box["Size"][1]
-        hull_box["Size"][1] = round((top - bottom) / 2, 4)
-        hull_box["Position"] = [0, round((top + bottom) / 2, 4), hull_box["Position"][2]]
-        data["OBB"] = [box for box in data["OBB"] if box.get("Part") not in ("WheelLeft", "WheelRight")] + wheels
+        boxes += [{"Part": "WheelLeft" if x > 0 else "WheelRight", "Size": [0.28, r, r], "Position": [blocks(x), r, blocks(-z)]}
+                  for x, _, z in hubs]
         data["UpStep"] = 1.1
         data["Mass"] = 14
+    else:
+        side = [round(blocks(width) - 0.35, 4), 0.6, round(blocks(hull_hi[2] - hull_lo[2]) / 2 * 0.85, 4)]
+        mid = round(blocks(-(hull_lo[2] + hull_hi[2]) / 2), 4)
+        boxes += [{"Part": "WheelLeft", "Size": [0.35, 0.6, side[2]], "Position": [side[0], 0.6, mid]},
+                  {"Part": "WheelRight", "Size": [0.35, 0.6, side[2]], "Position": [-side[0], 0.6, mid]}]
+        probes = []
+        for i in range(6):
+            z = round(blocks(-hull_hi[2]) + 0.6 + (blocks(hull_hi[2] - hull_lo[2]) - 1.2) * i / 5, 4)
+            probes += [[side[0], 0, z], [-side[0], 0, z]]
+        data["TerrainCompat"] = probes
+    data["OBB"] = boxes
     data["ThirdPersonCameraPos"] = [-0.8669625, round(blocks(top_hi[1]) - 1.5, 3), 6]
     if spec.get("wheeled"):
         # Truck crews sit in the cab, the driver at the wheel with a free look through the windscreen; the
