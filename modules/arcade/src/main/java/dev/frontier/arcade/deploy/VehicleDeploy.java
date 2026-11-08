@@ -33,7 +33,9 @@ public final class VehicleDeploy {
         "superbwarfare:prism_tank", "superbwarfare:bmp_2", "superbwarfare:bradley", "superbwarfare:lav_25",
         "superbwarfare:plz_05", "frontier_arcade_vehicles:msta_s", "frontier_arcade_vehicles:bohdana",
         "frontier_arcade_vehicles:grad", "superbwarfare:tow", "superbwarfare:lav_ad", "superbwarfare:hpj_11",
-        "superbwarfare:ah_6", "superbwarfare:mi_28", "superbwarfare:speedboat", "superbwarfare:tiny_speedboat");
+        "superbwarfare:ah_6", "superbwarfare:mi_28", "superbwarfare:speedboat", "superbwarfare:tiny_speedboat",
+        "frontier_arcade_vehicles:s125_pechora", "frontier_arcade_vehicles:s300ps", "frontier_arcade_vehicles:s400_triumf",
+        "frontier_arcade_vehicles:pantsir_s1");
     private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, ArcadeVehicles.ID);
     public static final RegistryObject<Item> ITEM = ITEMS.register("vehicle_deploy", DeployItem::new);
 
@@ -89,6 +91,8 @@ public final class VehicleDeploy {
                 player.displayClientMessage(Component.translatable("message.frontier_arcade_vehicles.vehicle_deploy.no_room"), true);
                 return InteractionResult.FAIL;
             }
+            // An air-defence site fights for whoever set it up: its owner decides friend or foe.
+            if (entity instanceof dev.frontier.arcade.airdefense.SamSiteEntity site) site.setOwner(player.getUUID());
             if (!level.addFreshEntity(entity)) return InteractionResult.FAIL;
             level.gameEvent(player, GameEvent.ENTITY_PLACE, at);
             if (!player.getAbilities().instabuild) context.getItemInHand().shrink(1);

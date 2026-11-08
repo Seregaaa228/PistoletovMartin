@@ -1,0 +1,8 @@
+{
+  "Models": [
+    {
+      "Model": "frontier_arcade_vehicles:models/bedrock/vehicle/pantsir_s1.geo.json",
+      "Texture": "frontier_arcade_vehicles:textures/bedrock/vehicle/pantsir_s1.png"
+    }
+  ]
+}

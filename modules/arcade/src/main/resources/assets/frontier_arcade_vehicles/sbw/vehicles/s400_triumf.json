@@ -1,0 +1,8 @@
+{
+  "Models": [
+    {
+      "Model": "frontier_arcade_vehicles:models/bedrock/vehicle/s400_triumf.geo.json",
+      "Texture": "frontier_arcade_vehicles:textures/bedrock/vehicle/s400_triumf.png"
+    }
+  ]
+}

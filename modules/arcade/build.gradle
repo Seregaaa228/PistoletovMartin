@@ -33,3 +33,10 @@ tasks.register('geraniumFlightModelTest', JavaExec) {
     mainClass = 'dev.frontier.arcade.geranium.GeraniumFlightModelTest'
 }
 tasks.named('check').configure { dependsOn 'geraniumFlightModelTest' }
+
+tasks.register('samFlightTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.frontier.arcade.airdefense.SamFlightTest'
+}
+tasks.named('check').configure { dependsOn 'samFlightTest' }

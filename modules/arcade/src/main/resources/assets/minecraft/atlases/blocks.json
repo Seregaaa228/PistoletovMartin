@@ -75,6 +75,22 @@
     {
       "type": "single",
       "resource": "superbwarfare:vehicle_icon/container/tiny_speedboat"
+    },
+    {
+      "type": "single",
+      "resource": "frontier_arcade_vehicles:vehicle_icon/container/s125_pechora"
+    },
+    {
+      "type": "single",
+      "resource": "frontier_arcade_vehicles:vehicle_icon/container/s300ps"
+    },
+    {
+      "type": "single",
+      "resource": "frontier_arcade_vehicles:vehicle_icon/container/s400_triumf"
+    },
+    {
+      "type": "single",
+      "resource": "frontier_arcade_vehicles:vehicle_icon/container/pantsir_s1"
     }
   ]
 }

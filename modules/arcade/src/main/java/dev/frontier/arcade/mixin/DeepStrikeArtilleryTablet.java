@@ -13,7 +13,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * DeepStrike's console key (X, rebindable) opens its tablet in its own vehicles; in a self-propelled gun the same
- * key opens the fire-mission tablet. Clicks are consumed only there, so DeepStrike's vehicles are unaffected.
+ * key opens the fire-mission tablet, and in a SAM site it switches AUTO/MANUAL. Clicks are consumed only there,
+ * so DeepStrike's vehicles are unaffected.
  */
 @Pseudo
 @Mixin(targets = "dev.sbw.deepstrike.client.PatriotDefenseScreen", remap = false)
@@ -22,6 +23,8 @@ public abstract class DeepStrikeArtilleryTablet {
 
     @Inject(method = "clientTick", at = @At("HEAD"), remap = false)
     private static void frontier$artilleryTablet(TickEvent.ClientTickEvent event, CallbackInfo ci) {
-        if (event.phase == TickEvent.Phase.END) ArtilleryClient.consoleKey(OPEN);
+        if (event.phase != TickEvent.Phase.END) return;
+        ArtilleryClient.consoleKey(OPEN);
+        dev.frontier.arcade.airdefense.client.SamHud.consoleKey(OPEN);
     }
 }

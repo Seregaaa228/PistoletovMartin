@@ -35,10 +35,16 @@ public final class FrontierCreativeTabs {
             "superbwarfare:prism_tank", "superbwarfare:bmp_2", "superbwarfare:bradley", "superbwarfare:lav_25",
             "superbwarfare:plz_05", "frontier_arcade_vehicles:msta_s", "frontier_arcade_vehicles:bohdana",
             "frontier_arcade_vehicles:grad", "superbwarfare:tow", "superbwarfare:lav_ad", "superbwarfare:hpj_11",
-            "superbwarfare:ah_6", "superbwarfare:mi_28", "superbwarfare:speedboat", "superbwarfare:tiny_speedboat");
+            "superbwarfare:ah_6", "superbwarfare:mi_28", "superbwarfare:speedboat", "superbwarfare:tiny_speedboat",
+            "frontier_arcade_vehicles:s125_pechora", "frontier_arcade_vehicles:s300ps", "frontier_arcade_vehicles:s400_triumf",
+            "frontier_arcade_vehicles:pantsir_s1");
     /** Our own vehicles: no SBW crate to replace, so the catalog adds their quick-deploy items itself. */
     private static final List<String> OWN_VEHICLES = List.of(
             "frontier_arcade_vehicles:msta_s", "frontier_arcade_vehicles:bohdana", "frontier_arcade_vehicles:grad");
+    /** Our own air-defence complexes, listed under air defence. */
+    private static final List<String> OWN_AIR_DEFENSE = List.of(
+            "frontier_arcade_vehicles:s125_pechora", "frontier_arcade_vehicles:s300ps", "frontier_arcade_vehicles:s400_triumf",
+            "frontier_arcade_vehicles:pantsir_s1");
     private static CreativeModeTab.ItemDisplayParameters cachedParameters;
     private static Map<Group, Set<ItemStack>> cached;
 
@@ -103,6 +109,10 @@ public final class FrontierCreativeTabs {
         for (String vehicle : OWN_VEHICLES) {
             ItemStack deploy = deployStack(vehicle);
             if (!deploy.isEmpty()) groups.get(Group.VEHICLES).add(deploy);
+        }
+        for (String site : OWN_AIR_DEFENSE) {
+            ItemStack deploy = deployStack(site);
+            if (!deploy.isEmpty()) groups.get(Group.AIR_DEFENSE).add(deploy);
         }
         for (Group group : Group.values()) groups.put(group, deployFirst(groups.get(group)));
         cachedParameters = parameters;
@@ -180,7 +190,7 @@ public final class FrontierCreativeTabs {
         if (CatalogRules.isFactory(id.getNamespace(), path)) return Group.FACTORIES;
         if (CatalogRules.isArmor(id.getNamespace(), path, className, stack.getItem() instanceof ArmorItem)) return Group.ARMOR;
         if (has(text, "controller", "remote", "monitor", "tablet", "radio", "laptop", "terminal", "ground_station", "pda")) return Group.CONTROLS;
-        if (has(text, "patriot", "iron_dome", "s300", "s400", "s_300", "s_400", "air_defense", "radar", "an_mpq", "lav_ad", "avenger", "hpj_11")) return Group.AIR_DEFENSE;
+        if (has(text, "patriot", "iron_dome", "s125", "s300", "s400", "s_300", "s_400", "pantsir", "air_defense", "radar", "an_mpq", "lav_ad", "avenger", "hpj_11")) return Group.AIR_DEFENSE;
         if (has(text, "drone", "mavic", "fpv", "uav", "shahed", "geranium", "reb", "relay_plane")) return Group.DRONES;
         if (has(text, "missile", "rocket", "warhead", "bomb", "storm_shadow", "peacekeeper", "jagm", "pac_2", "pac_3", "tamir")) return Group.MISSILES;
         if (has(text, "speedboat", "boat", "ship", "gunboat", "vessel")) return Group.SHIPS;

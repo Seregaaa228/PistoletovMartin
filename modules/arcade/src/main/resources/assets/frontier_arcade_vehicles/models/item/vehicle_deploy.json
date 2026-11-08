@@ -117,6 +117,30 @@
         "frontier_arcade_vehicles:vehicle": 0.19
       },
       "model": "frontier_arcade_vehicles:item/vehicle_deploy/tiny_speedboat"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.2
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/s125_pechora"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.21
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/s300ps"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.22
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/s400_triumf"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.23
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/pantsir_s1"
     }
   ]
 }

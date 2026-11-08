@@ -22,6 +22,7 @@ public final class ArcadeVehicles {
         dev.frontier.arcade.geranium.GeraniumContent.initialize(net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext.get().getModEventBus());
         dev.frontier.arcade.uav.NativeUavCamera.initialize(net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext.get().getModEventBus());
         dev.frontier.arcade.artillery.ArtilleryVehicles.initialize(net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext.get().getModEventBus());
+        dev.frontier.arcade.airdefense.AirDefense.initialize(net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext.get().getModEventBus());
         dev.frontier.arcade.deploy.VehicleDeploy.initialize(net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext.get().getModEventBus());
         dev.frontier.arcade.artillery.ArtilleryHeights.initialize();
     }
