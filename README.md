@@ -8,7 +8,7 @@ Minecraft Java **1.20.1**, **Forge 47.4.0**, **JDK 17**.
 
 ## Начало работы
 
-1. Скачайте [полный комплект проекта из Releases](https://github.com/Seregaaa228/PistoletovMartin/releases/tag/frontier-team-0.4.0)
+1. Скачайте [полный комплект проекта из Releases](https://github.com/Seregaaa228/PistoletovMartin/releases/tag/frontier-team-0.5.0)
    и распакуйте его, включая `instance/mods`. Для работы через Git клонируйте
    репозиторий и перенесите в него исключённые папки из полного комплекта.
 2. Установите JDK 17. Настройте `JAVA_HOME`, если установлено несколько JDK.
@@ -163,7 +163,7 @@ KubeJS, Patchouli, Jade и Forge Energy. Дополнительные библи
 В Git хранятся исходники, общие настройки и lock-файлы. Большие сторонние JAR,
 стандартные ресурсы TaCZ, установщик Forge и старые ZIP исключены через
 `.gitignore`; они присутствуют в полном комплекте проекта. Для нового клона
-перенесите также эти папки из [полного комплекта](https://github.com/Seregaaa228/PistoletovMartin/releases/tag/frontier-team-0.4.0).
+перенесите также эти папки из [полного комплекта](https://github.com/Seregaaa228/PistoletovMartin/releases/tag/frontier-team-0.5.0).
 
 Репозиторий команды: [Seregaaa228/PistoletovMartin](https://github.com/Seregaaa228/PistoletovMartin).
 Архив в Releases — исходный снимок передачи; актуальные изменения команды
