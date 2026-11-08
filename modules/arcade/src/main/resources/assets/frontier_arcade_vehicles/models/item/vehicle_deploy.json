@@ -141,6 +141,12 @@
         "frontier_arcade_vehicles:vehicle": 0.23
       },
       "model": "frontier_arcade_vehicles:item/vehicle_deploy/pantsir_s1"
+    },
+    {
+      "predicate": {
+        "frontier_arcade_vehicles:vehicle": 0.24
+      },
+      "model": "frontier_arcade_vehicles:item/vehicle_deploy/patriot_m901"
     }
   ]
 }

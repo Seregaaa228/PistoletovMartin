@@ -84,5 +84,8 @@
   "hud.frontier_arcade_vehicles.sam.missile.v601": "5В27",
   "hud.frontier_arcade_vehicles.sam.missile.m48n6": "48Н6",
   "hud.frontier_arcade_vehicles.sam.missile.m9m96": "9М96",
-  "hud.frontier_arcade_vehicles.sam.missile.m57e6": "57Э6"
+  "hud.frontier_arcade_vehicles.sam.missile.m57e6": "57Э6",
+  "entity.frontier_arcade_vehicles.patriot_m901": "MIM-104 «Пэтриот»",
+  "hud.frontier_arcade_vehicles.sam.missile.pac2": "PAC-2",
+  "hud.frontier_arcade_vehicles.sam.missile.pac3": "PAC-3"
 }

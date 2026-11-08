@@ -35,7 +35,7 @@ public final class VehicleDeploy {
         "frontier_arcade_vehicles:grad", "superbwarfare:tow", "superbwarfare:lav_ad", "superbwarfare:hpj_11",
         "superbwarfare:ah_6", "superbwarfare:mi_28", "superbwarfare:speedboat", "superbwarfare:tiny_speedboat",
         "frontier_arcade_vehicles:s125_pechora", "frontier_arcade_vehicles:s300ps", "frontier_arcade_vehicles:s400_triumf",
-        "frontier_arcade_vehicles:pantsir_s1");
+        "frontier_arcade_vehicles:pantsir_s1", "frontier_arcade_vehicles:patriot_m901");
     private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, ArcadeVehicles.ID);
     public static final RegistryObject<Item> ITEM = ITEMS.register("vehicle_deploy", DeployItem::new);
 

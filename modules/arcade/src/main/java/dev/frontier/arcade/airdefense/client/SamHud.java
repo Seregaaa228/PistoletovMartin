@@ -40,6 +40,7 @@ public final class SamHud {
     private static final Matrix4f VIEW = new Matrix4f(), PROJECTION = new Matrix4f();
     private static boolean matrices;
     private static int hovered = -1;
+    private static long lastSweep;
 
     private SamHud() { }
 
@@ -55,7 +56,11 @@ public final class SamHud {
         if (mc.screen != null || site == null) return;
         boolean toggle = false;
         while (key.consumeClick()) toggle = true;
-        if (toggle) SamNetwork.command(site.getId(), SamNetwork.Command.TOGGLE_MODE, 0);
+        if (toggle) {
+            SamNetwork.command(site.getId(), SamNetwork.Command.TOGGLE_MODE, 0);
+            // Switching to AUTO starts the search; to MANUAL, ends it.
+            SamSounds.ui(SamSounds.id("superbwarfare", site.mode() == SamSiteEntity.AUTO ? "radar_search_end" : "radar_search_start"), 0.6f, 1.0f);
+        }
     }
 
     /** SBW's fire button: engage the contact under the sight. Cancelled so the crew does not swing at the hull. */
@@ -66,7 +71,10 @@ public final class SamHud {
         if (site == null || mc.screen != null || event.getAction() != GLFW.GLFW_PRESS
                 || !ModKeyMappings.FIRE.matchesMouse(event.getButton())) return;
         event.setCanceled(true);
-        if (hovered >= 0) SamNetwork.command(site.getId(), SamNetwork.Command.DESIGNATE, hovered);
+        if (hovered >= 0) {
+            SamNetwork.command(site.getId(), SamNetwork.Command.DESIGNATE, hovered);
+            SamSounds.ui(SamSounds.id("superbwarfare", "missile_locked"), 0.7f, 1.0f);
+        }
     }
 
     @SubscribeEvent
@@ -85,7 +93,8 @@ public final class SamHud {
         if (site == null || mc.options.hideGui || mc.screen != null || mc.level == null) { hovered = -1; return; }
         GuiGraphics g = event.getGuiGraphics();
         float partial = event.getPartialTick();
-        boolean fresh = picture != null && picture.site() == site.getId() && mc.level.getGameTime() - SamClientSide.pictureTick < 40;
+        long pictureAge = mc.level.getGameTime() - SamClientSide.pictureTick;
+        boolean fresh = picture != null && picture.site() == site.getId() && pictureAge >= 0 && pictureAge < 40;
         status(g, site, fresh ? picture : null);
         if (!fresh) { hovered = -1; return; }
         Vec3 camera = mc.gameRenderer.getMainCamera().getPosition();
@@ -99,7 +108,18 @@ public final class SamHud {
             double angle = Math.acos(Math.max(-1, Math.min(1, toward.normalize().dot(look))));
             if (angle < best) { best = angle; pick = contact.entityId(); }
         }
+        if (pick != hovered && pick >= 0) {
+            // A new contact under the sight: a short lock tone, higher when it can be engaged.
+            int next = pick;
+            boolean inZone = picture.contacts().stream().anyMatch(c -> c.entityId() == next && c.inEnvelope());
+            SamSounds.ui(SamSounds.id("superbwarfare", "missile_locking"), 0.45f, inZone ? 1.2f : 0.9f);
+        }
         hovered = pick;
+        long now = mc.level.getGameTime();
+        if (site.mode() == SamSiteEntity.AUTO && now % 80 == 0 && now != lastSweep) {
+            lastSweep = now;
+            SamSounds.ui(SamSounds.id("superbwarfare", "radar_search_idle"), 0.25f, 1.0f);
+        }
         for (var contact : picture.contacts()) bracket(g, contact, position(contact, origin, partial).subtract(camera), picture);
         scope(g, site, picture, mc.gameRenderer.getMainCamera().getYRot());
         hint(g, picture);
@@ -214,7 +234,9 @@ public final class SamHud {
         var warning = SamClientSide.warning;
         if (warning == null || mc.level == null) return;
         long age = mc.level.getGameTime() - SamClientSide.warningTick;
-        if (age > 100 || (age / 5) % 2 == 1) return;
+        // A warning from another world (game time went backwards) is gone.
+        if (age < 0) { SamClientSide.warning = null; return; }
+        if ((age > 100 && !SamSounds.anyInbound()) || (age / 5) % 2 == 1) return;
         float relative = net.minecraft.util.Mth.wrapDegrees(warning.bearing() - mc.player.getYRot());
         String clock = String.format(Locale.ROOT, "%s · %+.0f° · %d м",
             Component.translatable("hud.frontier_arcade_vehicles.sam.launch_warning").getString(), relative, warning.distance());

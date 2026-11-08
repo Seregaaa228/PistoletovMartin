@@ -84,5 +84,8 @@
   "hud.frontier_arcade_vehicles.sam.missile.v601": "V-601",
   "hud.frontier_arcade_vehicles.sam.missile.m48n6": "48N6",
   "hud.frontier_arcade_vehicles.sam.missile.m9m96": "9M96",
-  "hud.frontier_arcade_vehicles.sam.missile.m57e6": "57E6"
+  "hud.frontier_arcade_vehicles.sam.missile.m57e6": "57E6",
+  "entity.frontier_arcade_vehicles.patriot_m901": "MIM-104 Patriot",
+  "hud.frontier_arcade_vehicles.sam.missile.pac2": "PAC-2",
+  "hud.frontier_arcade_vehicles.sam.missile.pac3": "PAC-3"
 }

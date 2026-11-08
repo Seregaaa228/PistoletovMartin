@@ -37,14 +37,14 @@ public final class FrontierCreativeTabs {
             "frontier_arcade_vehicles:grad", "superbwarfare:tow", "superbwarfare:lav_ad", "superbwarfare:hpj_11",
             "superbwarfare:ah_6", "superbwarfare:mi_28", "superbwarfare:speedboat", "superbwarfare:tiny_speedboat",
             "frontier_arcade_vehicles:s125_pechora", "frontier_arcade_vehicles:s300ps", "frontier_arcade_vehicles:s400_triumf",
-            "frontier_arcade_vehicles:pantsir_s1");
+            "frontier_arcade_vehicles:pantsir_s1", "frontier_arcade_vehicles:patriot_m901");
     /** Our own vehicles: no SBW crate to replace, so the catalog adds their quick-deploy items itself. */
     private static final List<String> OWN_VEHICLES = List.of(
             "frontier_arcade_vehicles:msta_s", "frontier_arcade_vehicles:bohdana", "frontier_arcade_vehicles:grad");
     /** Our own air-defence complexes, listed under air defence. */
     private static final List<String> OWN_AIR_DEFENSE = List.of(
             "frontier_arcade_vehicles:s125_pechora", "frontier_arcade_vehicles:s300ps", "frontier_arcade_vehicles:s400_triumf",
-            "frontier_arcade_vehicles:pantsir_s1");
+            "frontier_arcade_vehicles:pantsir_s1", "frontier_arcade_vehicles:patriot_m901");
     private static CreativeModeTab.ItemDisplayParameters cachedParameters;
     private static Map<Group, Set<ItemStack>> cached;
 

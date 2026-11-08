@@ -13,10 +13,8 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.TicketType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -31,14 +29,12 @@ import net.minecraftforge.registries.ForgeRegistries;
  * the same {@link SamFlight} model toward the same target between sparse position updates, so
  * only the spawn, a few corrections and one burst message cross the network.
  *
- * <p>It never loads chunks: ahead of it, only already loaded chunks get a short ticket so it keeps
- * ticking between a site and an aircraft that are far apart; in unloaded terrain it self-destructs.
- * Missiles are not saved: a missile in a chunk that unloads is simply gone.</p>
+ * <p>It never loads chunks: in unloaded terrain it is gone; through loaded terrain that is not
+ * ticking (between a site and an aircraft far apart) its launching site steps it. Missiles are not
+ * saved: a missile in a chunk that unloads is simply gone.</p>
  */
 public final class SamMissileEntity extends Entity implements IEntityAdditionalSpawnData {
     private static final EntityDataAccessor<Integer> TARGET = SynchedEntityData.defineId(SamMissileEntity.class, EntityDataSerializers.INT);
-    /** Keeps the chunk under and just ahead of a missile ticking; expires on its own. */
-    private static final TicketType<Integer> TICKET = TicketType.create("frontier_sam_missile", Integer::compareTo, 40);
     private static final ResourceLocation FLARE = new ResourceLocation("superbwarfare", "flare_decoy");
 
     private SamMissile type = SamMissile.V601;
@@ -50,7 +46,8 @@ public final class SamMissileEntity extends Entity implements IEntityAdditionalS
     private Vec3 targetPos, targetVel = Vec3.ZERO, endGameOffset;
     private double targetAccel, lastDistance = Double.MAX_VALUE;
     private int lostTicks;
-    private long lastTicketChunk = Long.MIN_VALUE;
+    /** Game tick of the last server step: the launching site may also step a missile it sees frozen. */
+    private long lastStep = Long.MIN_VALUE;
     private final Set<Integer> seenDecoys = new HashSet<>();
     // Client: last server position, blended into the local flight.
     private Vec3 correction;
@@ -96,6 +93,11 @@ public final class SamMissileEntity extends Entity implements IEntityAdditionalS
     @Override
     public void tick() {
         if (state == null) { discard(); return; }
+        if (!level().isClientSide) {
+            long now = level().getGameTime();
+            if (now == lastStep) return;
+            lastStep = now;
+        }
         xo = getX(); yo = getY(); zo = getZ();
         if (level().isClientSide) { clientTick(); return; }
         ServerLevel level = (ServerLevel) level();
@@ -143,19 +145,20 @@ public final class SamMissileEntity extends Entity implements IEntityAdditionalS
             burst(level, state.pos, null, 0);
             return;
         }
-        if (!keepTicking(level)) { discard(); return; }
+        if (!inLoadedTerrain(level)) { discard(); return; }
         setPos(state.pos);
         setDeltaMovement(state.velocity());
         orient();
     }
 
+    /** Any removal, chunk unload included, frees the target in the shared engagement table. */
     @Override
-    public void remove(RemovalReason reason) {
+    public void onRemovedFromWorld() {
         if (!level().isClientSide && engagedId != null) {
             SamSiteEntity.released(engagedId);
             engagedId = null;
         }
-        super.remove(reason);
+        super.onRemovedFromWorld();
     }
 
     private Entity resolveTarget(ServerLevel level) {
@@ -172,7 +175,12 @@ public final class SamMissileEntity extends Entity implements IEntityAdditionalS
                 target = decoy;
                 targetId = decoy.getUUID();
                 entityData.set(TARGET, decoy.getId());
+                // The aircraft's track says nothing about the flare's: start the flare's afresh.
                 endGameOffset = null;
+                targetPos = null;
+                targetVel = Vec3.ZERO;
+                targetAccel = 0;
+                lastDistance = Double.MAX_VALUE;
                 return;
             }
         }
@@ -187,18 +195,14 @@ public final class SamMissileEntity extends Entity implements IEntityAdditionalS
         return level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this)).getType() == HitResult.Type.MISS;
     }
 
-    /** Short tickets on loaded chunks under and ahead of the missile; false when it would enter unloaded terrain. */
-    private boolean keepTicking(ServerLevel level) {
-        Vec3 ahead = state.pos.add(state.dir.scale(state.speed * 3));
-        BlockPos here = BlockPos.containing(state.pos), next = BlockPos.containing(ahead);
-        if (!level.hasChunkAt(here)) return false;
-        long key = ChunkPos.asLong(next.getX() >> 4, next.getZ() >> 4);
-        if (key != lastTicketChunk) {
-            lastTicketChunk = key;
-            if (level.hasChunkAt(next)) level.getChunkSource().addRegionTicket(TICKET, new ChunkPos(next), 2, getId());
-            level.getChunkSource().addRegionTicket(TICKET, new ChunkPos(here), 2, getId());
-        }
-        return true;
+    /**
+     * A missile flies only through loaded terrain and never asks for chunks: entering an unloaded
+     * chunk ends it. Where the terrain is loaded but not ticking (between a site and an aircraft far
+     * apart), the launching site steps it ({@link SamSiteEntity}).
+     */
+    private boolean inLoadedTerrain(ServerLevel level) {
+        Vec3 ahead = state.pos.add(state.dir.scale(state.speed));
+        return level.hasChunkAt(BlockPos.containing(state.pos)) && level.hasChunkAt(BlockPos.containing(ahead));
     }
 
     private void burst(ServerLevel level, Vec3 at, Entity victim, double miss) {
@@ -208,7 +212,7 @@ public final class SamMissileEntity extends Entity implements IEntityAdditionalS
             SamDamage.apply(victim, SamFlight.damageFraction(type, miss), source);
             // Fragments reach other air contacts close by (a drone swarm, a wingman).
             for (Entity near : AirPicture.contacts(level)) {
-                if (near == victim) continue;
+                if (near == victim || SamIff.friendly(level, ownerId, near)) continue;
                 double d = near.getBoundingBox().getCenter().distanceTo(at);
                 if (d <= type.fuseRadius * 2) SamDamage.apply(near, SamFlight.damageFraction(type, type.fuseRadius * 0.5 + d * 0.5) * 0.5, source);
             }
@@ -262,6 +266,8 @@ public final class SamMissileEntity extends Entity implements IEntityAdditionalS
 
     @Override
     public void writeSpawnData(FriendlyByteBuf buffer) {
+        // A summoned missile has no flight until launched: send a harmless one (it discards itself).
+        if (state == null) state = new SamFlight.State(position(), new Vec3(0, 1, 0), 0);
         buffer.writeByte(type.ordinal());
         buffer.writeDouble(state.pos.x); buffer.writeDouble(state.pos.y); buffer.writeDouble(state.pos.z);
         buffer.writeFloat((float) state.dir.x); buffer.writeFloat((float) state.dir.y); buffer.writeFloat((float) state.dir.z);

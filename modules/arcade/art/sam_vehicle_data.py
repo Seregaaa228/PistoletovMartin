@@ -37,6 +37,9 @@ VEHICLES = {
     "pantsir_s1": {"health": 340, "type": "Car", "box": (20.5, 72, -89, 82), "wheel_x": 16.5, "axles": (-64, -36, 16, 38),
                    "driver": (9.5, 42.5, -71), "driver_camera": (9.5, 63, -74), "crew": (-9.5, 42.5, -71),
                    "camera": (0, 108, 30)},
+    "patriot_m901": {"health": 380, "type": "Car", "box": (19.6, 68, -104, 100), "wheel_x": 15.6,
+                     "axles": (-80, -30, -10, 60, 80), "driver": (9.5, 38.5, -86), "driver_camera": (9.5, 54, -86),
+                     "crew": (-9.5, 38.5, -86), "camera": (0, 88, 40)},
 }
 
 

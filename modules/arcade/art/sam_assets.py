@@ -43,7 +43,7 @@ import zfight  # noqa: E402
 import grad_assets as G  # noqa: E402  (orthographic renderer and icon styles)
 
 ASSETS = HERE.parent / "src/main/resources/assets/frontier_arcade_vehicles"
-MODULES = ("sam.s125", "sam.maz", "sam.pantsir")
+MODULES = ("sam.s125", "sam.maz", "sam.pantsir", "sam.patriot")
 ATLAS = 1024
 
 

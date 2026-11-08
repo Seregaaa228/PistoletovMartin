@@ -19,13 +19,13 @@ public final class SamFlightTest {
             var s = new SamFlight.State(Vec3.ZERO, new Vec3(0, 0, 1), 0.5);
             double flown = 0;
             while (!SamFlight.spent(rack.missile(), s)) { Vec3 p = s.pos; SamFlight.step(s, rack.missile(), null, null); flown += s.pos.distanceTo(p); }
-            double needed = rack.missile() == SamMissile.M9M96 ? 160 : system.maxRange;
+            double needed = rack.missile().shortReach() > 0 ? rack.missile().shortReach() : system.maxRange;
             require(flown > needed * 1.15, system + " " + rack.missile() + " reaches " + needed + " (flew " + (int) flown + ")");
         }
 
         // Without terminal error the guidance itself reaches every kind of target.
         for (SamMissile missile : SamMissile.values()) {
-            double range = missile == SamMissile.V601 ? 150 : missile == SamMissile.M57E6 || missile == SamMissile.M9M96 ? 120 : 220;
+            double range = range(missile);
             double miss = engage(missile, range, 60, 4.7, 0, 0, null);
             require(miss <= missile.fuseRadius * .5, missile + " guides onto a straight jet, miss " + miss);
             require(engage(missile, range, 60, 4.7, Math.toRadians(8), 0, null) <= missile.fuseRadius, missile + " follows a break");
@@ -34,13 +34,13 @@ public final class SamFlightTest {
         require(engage(SamMissile.M9M96, 140, 30, 3.3, 0, 0, null) <= SamMissile.M9M96.fuseRadius, "9M96 vs jet Geranium");
 
         // Kill chance with the terminal error, seeded: nominal against a straight jet, lower against a hard break.
-        double[][] straight = {{.55, .85}, {.75, .95}, {.80, .97}, {.65, .92}};
+        double[][] straight = {{.55, .85}, {.75, .95}, {.80, .97}, {.65, .92}, {.75, .95}, {.85, .99}};
         double s125Break = pk(SamMissile.V601, Math.toRadians(8)), s300Break = pk(SamMissile.M48N6, Math.toRadians(8));
         for (SamMissile missile : SamMissile.values()) {
             double p = pk(missile, 0);
             double[] band = straight[missile.ordinal()];
             System.out.printf("  %s Pk straight %.2f, 8 deg/tick break %.2f%n", missile, p, pk(missile, Math.toRadians(8)));
-            if (!(p >= band[0] && p <= band[1])) System.out.println("  OUT OF BAND " + missile);
+            require(p >= band[0] && p <= band[1], missile + " nominal kill chance " + p);
         }
         require(s125Break < .5, "a hard break beats the S-125 more often than not (" + s125Break + ")");
         require(s300Break > s125Break + .15, "the 48N6 holds on better (" + s300Break + ")");
@@ -65,14 +65,24 @@ public final class SamFlightTest {
         require(SamEnvelope.visible(SamSystem.PANTSIR, SamEnvelope.Kind.DRONE, 200, 10), "Pantsir sees drones");
         require(!SamEnvelope.visible(SamSystem.S125, SamEnvelope.Kind.JET, 100, 1), "nap-of-earth hides");
         require(SamEnvelope.threat(SamEnvelope.Kind.JET, 100, 4) > SamEnvelope.threat(SamEnvelope.Kind.JET, 200, 4), "nearer first");
+        int[] patriot = {2, 8};
+        require(SamEnvelope.choose(SamSystem.PATRIOT, patriot, SamEnvelope.Kind.MISSILE, 250, 120) == SamMissile.PAC2, "PAC-2 beyond PAC-3 reach");
+        require(SamEnvelope.choose(SamSystem.PATRIOT, patriot, SamEnvelope.Kind.MISSILE, 150, 120) == SamMissile.PAC3, "PAC-3 against missiles");
+        require(SamEnvelope.choose(SamSystem.PATRIOT, patriot, SamEnvelope.Kind.JET, 280, 80) == SamMissile.PAC2, "PAC-2 for far jets");
+        require(SamEnvelope.choose(SamSystem.S125, new int[]{4}, SamEnvelope.Kind.MISSILE, 120, 60) == null, "S-125 does not engage missiles");
+        require(SamEnvelope.choose(SamSystem.S300, new int[]{4}, SamEnvelope.Kind.MISSILE, 120, 60) == SamMissile.M48N6, "S-300 engages missiles");
         System.out.println("SamFlightTest: " + checks + " checks passed");
+    }
+
+    private static double range(SamMissile missile) {
+        return switch (missile) { case V601 -> 150; case M57E6, M9M96, PAC3 -> 120; default -> 220; };
     }
 
     private static double pk(SamMissile missile, double turnRate) {
         var random = new java.util.Random(1234 + missile.ordinal());
         int hits = 0, trials = 300;
         for (int i = 0; i < trials; i++) {
-            double range = missile == SamMissile.V601 ? 150 : missile == SamMissile.M57E6 || missile == SamMissile.M9M96 ? 120 : 220;
+            double range = range(missile);
             double error = SamFlight.terminalError(missile, random.nextGaussian(), turnRate * 4.7);
             double angle = random.nextDouble() * Math.PI * 2;
             if (engage(missile, range, 60, 4.7, turnRate, error, angle) <= missile.fuseRadius) hits++;

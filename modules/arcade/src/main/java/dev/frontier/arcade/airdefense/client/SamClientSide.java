@@ -5,15 +5,11 @@ import dev.frontier.arcade.airdefense.SamMissile;
 import dev.frontier.arcade.airdefense.SamMissileEntity;
 import dev.frontier.arcade.airdefense.SamNetwork;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.registries.ForgeRegistries;
 
 /**
  * Air-defence effects, all on the client and only near the viewer: the launch blast and smoke,
@@ -46,7 +42,7 @@ final class SamClientSide implements AirDefense.Client {
         if (mc.level == null) return;
         SamClientSide.warning = warning;
         warningTick = mc.level.getGameTime();
-        play(new ResourceLocation("superbwarfare", "missile_warning"), 1.0f, 1.0f, null);
+        SamSounds.inbound(warning.missileId());
     }
 
     @Override
@@ -56,9 +52,11 @@ final class SamClientSide implements AirDefense.Client {
         Vec3 camera = mc.gameRenderer.getMainCamera().getPosition();
         Vec3 at = missile.position(), dir = missile.direction();
         double distance = at.distanceTo(camera);
-        // Launch sound by distance, delayed by nothing: the sound engine's own attenuation does the rest.
+        // Launch roar by distance, arriving late with the speed of sound; then the motor's loop.
         String sound = distance < 48 ? "entity.interceptor.launch_close" : distance < 160 ? "entity.interceptor.launch_mid" : "entity.interceptor.launch_far";
-        play(new ResourceLocation("deepstrike", sound), distance < 48 ? 1.6f : 4f, 0.95f + RANDOM.nextFloat() * 0.1f, at);
+        SamSounds.delayed(new ResourceLocation("deepstrike", sound), at, distance < 48 ? 1.6f : 4f, 0.95f + RANDOM.nextFloat() * 0.1f);
+        SamSounds.launched(missile);
+        SamTrails.flash(at, 2.2f, true);
         if (distance > LAUNCH_SIGHT) return;
         float detail = distance < 64 ? 1f : distance < 128 ? 0.6f : 0.3f;
         boolean vertical = missile.missileType().verticalTicks > 0;
@@ -85,12 +83,15 @@ final class SamClientSide implements AirDefense.Client {
         Vec3 camera = mc.gameRenderer.getMainCamera().getPosition();
         Vec3 at = missile.position(), dir = missile.direction();
         double distance = at.distanceTo(camera);
-        if (distance > TRAIL_SIGHT) return;
+        SamSounds.flyby(missile, distance);
         boolean burning = missile.burning();
         Vec3 nozzle = at.subtract(dir.scale(0.9));
+        // The continuous trail is drawn geometry (SamTrails); particles only add texture up close.
+        SamTrails.record(missile, nozzle);
+        if (distance > TRAIL_SIGHT) return;
         Vec3 step = dir.scale(Math.max(0.5, missile.getDeltaMovement().length()));
         // Fill the gap the missile flew this tick so the trail reads as one line, not beads.
-        int puffs = burning ? (distance < 64 ? 4 : distance < 128 ? 2 : 1) : (distance < 96 ? 1 : 0);
+        int puffs = burning ? (distance < 48 ? 3 : distance < 96 ? 1 : 0) : 0;
         for (int i = 0; i < puffs; i++) {
             Vec3 p = nozzle.subtract(step.scale(i / (double) Math.max(1, puffs)));
             add(burning ? ParticleTypes.CAMPFIRE_COSY_SMOKE : ParticleTypes.CLOUD, p.add(jitter(0.12)), new Vec3(0, 0.012, 0));
@@ -106,10 +107,11 @@ final class SamClientSide implements AirDefense.Client {
         Vec3 camera = mc.gameRenderer.getMainCamera().getPosition();
         double distance = at.distanceTo(camera);
         SamMissile type = SamMissile.of(burst.missile());
-        String sound = distance < 64 ? "entity.interceptor.pac2_burst" : null;
-        if (sound != null) play(new ResourceLocation("deepstrike", sound), 4f, 0.9f + RANDOM.nextFloat() * 0.2f, at);
-        else play(new ResourceLocation("superbwarfare", distance < 192 ? "explosion_far" : "explosion_very_far"), 8f, 1f, at);
+        // Near: the sharp burst; farther: SBW's distant explosion; both late by the speed of sound.
+        if (distance < 64) SamSounds.delayed(new ResourceLocation("deepstrike", "entity.interceptor.pac2_burst"), at, 4f, 0.9f + RANDOM.nextFloat() * 0.2f);
+        else SamSounds.delayed(new ResourceLocation("superbwarfare", distance < 192 ? "explosion_far" : "explosion_very_far"), at, 8f, 1f);
         float size = type.plume;
+        SamTrails.flash(at, 4.5f * size, true);
         float detail = distance < 96 ? 1f : distance < 192 ? 0.5f : 0.25f;
         add(ParticleTypes.FLASH, at, Vec3.ZERO);
         add(ParticleTypes.EXPLOSION, at, Vec3.ZERO);
@@ -133,13 +135,5 @@ final class SamClientSide implements AirDefense.Client {
         if (now != budgetTick) { budgetTick = now; spent = 0; }
         if (++spent > BUDGET) return;
         mc.level.addAlwaysVisibleParticle(type, true, at.x, at.y, at.z, velocity.x, velocity.y, velocity.z);
-    }
-
-    private static void play(ResourceLocation id, float volume, float pitch, Vec3 at) {
-        SoundEvent event = ForgeRegistries.SOUND_EVENTS.getValue(id);
-        if (event == null) return;
-        var mc = Minecraft.getInstance();
-        if (at == null) mc.getSoundManager().play(SimpleSoundInstance.forUI(event, pitch, volume));
-        else mc.level.playLocalSound(at.x, at.y, at.z, event, SoundSource.HOSTILE, volume, pitch, false);
     }
 }

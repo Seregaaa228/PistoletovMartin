@@ -30,7 +30,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  */
 public final class SamNetwork {
     static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-        new ResourceLocation(ArcadeVehicles.ID, "air_defense"), () -> "1", "1"::equals, "1"::equals);
+        new ResourceLocation(ArcadeVehicles.ID, "air_defense"), () -> "2", "2"::equals, "2"::equals);
     /** Contacts sent per picture: the nearest ones; a scope cannot show more legibly anyway. */
     public static final int MAX_CONTACTS = 24;
     /** Bursts are heard and seen this far. */
@@ -175,10 +175,10 @@ public final class SamNetwork {
     // ------------------------------------------------------------------ launch warning
 
     /** Sent to the crew of the aircraft a missile was launched at: bearing to the site and the missile. */
-    public record Warning(float bearing, short distance, byte missile) {
-        void encode(FriendlyByteBuf out) { out.writeFloat(bearing); out.writeShort(distance); out.writeByte(missile); }
+    public record Warning(float bearing, short distance, byte missile, int missileId) {
+        void encode(FriendlyByteBuf out) { out.writeFloat(bearing); out.writeShort(distance); out.writeByte(missile); out.writeVarInt(missileId); }
 
-        static Warning decode(FriendlyByteBuf in) { return new Warning(in.readFloat(), in.readShort(), in.readByte()); }
+        static Warning decode(FriendlyByteBuf in) { return new Warning(in.readFloat(), in.readShort(), in.readByte(), in.readVarInt()); }
 
         void handle(Supplier<NetworkEvent.Context> context) {
             context.get().enqueueWork(() -> AirDefense.client().warning(this));
@@ -186,10 +186,10 @@ public final class SamNetwork {
         }
     }
 
-    static void warn(Entity target, SamSiteEntity site, SamMissile missile) {
+    static void warn(Entity target, SamSiteEntity site, SamMissileEntity missile) {
         Vec3 d = site.position().subtract(target.position());
         float bearing = (float) Math.toDegrees(Math.atan2(-d.x, d.z));
-        var warning = new Warning(bearing, (short) Math.min(Short.MAX_VALUE, d.length()), (byte) missile.ordinal());
+        var warning = new Warning(bearing, (short) Math.min(Short.MAX_VALUE, d.length()), (byte) missile.missileType().ordinal(), missile.getId());
         for (Entity rider : target.getRootVehicle().getIndirectPassengers())
             if (rider instanceof ServerPlayer player) CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), warning);
         if (target instanceof ServerPlayer player) CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), warning);

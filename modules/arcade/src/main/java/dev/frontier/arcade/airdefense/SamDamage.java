@@ -13,6 +13,7 @@ import net.minecraft.world.entity.LivingEntity;
  */
 public final class SamDamage {
     private static final String GUIDED_MISSILE = "dev.sbw.deepstrike.game.GuidedMissileEntity";
+    private static final String BALLISTIC_MISSILE = "dev.frontier.industry.combat.BallisticMissileEntity";
 
     private SamDamage() { }
 
@@ -23,9 +24,18 @@ public final class SamDamage {
             float before = vehicle.getHealth();
             // The native path keeps kill credit, hit sounds and wreck handling.
             target.invulnerableTime = 0;
-            vehicle.hurt(source, wanted);
-            if (vehicle.isAlive() && !vehicle.isWreck() && before - vehicle.getHealth() < wanted * 0.95f)
+            // Top up modifier-reduced damage only; a refusal (team friendly fire, immunity) stands.
+            if (vehicle.hurt(source, wanted) && vehicle.isAlive() && !vehicle.isWreck() && before - vehicle.getHealth() < wanted * 0.95f)
                 vehicle.setHealth(Math.max(0, before - wanted));
+            return;
+        }
+        if (target.getClass().getName().equals(BALLISTIC_MISSILE)) {
+            // Industry's own interception: the warhead falls harmlessly.
+            try {
+                target.getClass().getMethod("intercepted").invoke(target);
+            } catch (ReflectiveOperationException | RuntimeException unavailable) {
+                target.discard();
+            }
             return;
         }
         if (target.getClass().getName().equals(GUIDED_MISSILE)) {

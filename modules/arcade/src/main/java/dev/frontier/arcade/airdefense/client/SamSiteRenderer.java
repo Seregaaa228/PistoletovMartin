@@ -45,6 +45,7 @@ public final class SamSiteRenderer extends BasicVehicleRenderer {
             rotate(instance.getBone("move_antenna"), (float) Math.toRadians(sweep == 0 ? 0 : 6 * Math.sin(sweep * 2.3)), 0);
         }
         else if (system == SamSystem.PANTSIR) pantsir(instance, site, pitch);
+        else if (system == SamSystem.PATRIOT) patriot(instance, site, pitch);
         else pack(instance, site);
     }
 
@@ -84,6 +85,24 @@ public final class SamSiteRenderer extends BasicVehicleRenderer {
         rotate(instance.getBone("move_antenna"), (float) Math.toRadians(-90 * jacks), 0);
         for (int tube = 0; tube < 4; tube++)
             rotate(instance.getBone("move_cover_" + tube), (float) Math.toRadians(spent(site, tube) ? 100 : 0), 0);
+    }
+
+    /** Patriot: jacks down first, the launcher rises on its two rams, covers open once it is up. */
+    private static void patriot(VehicleModelInstance instance, SamSiteEntity site, float pitch) {
+        float deploy = site.deployPercent() / 100f, jacks = Mth.clamp(deploy / JACKS, 0, 1);
+        for (int i = 0; i < 4; i++) slide(instance.getBone("move_jack_" + i), 0, -3.6f * jacks, 0);
+        // Rams: barrel pinned at (y 27.8, z 40) on the turntable, rod eye at (27.8, 74) on the launcher (hinge 30, 95).
+        double f = Math.toRadians(pitch), dy = 27.8 - 30, dz = 74 - 95;
+        double by = 30 + dy * Math.cos(f) - dz * Math.sin(f), bz = 95 + dy * Math.sin(f) + dz * Math.cos(f);
+        double vy = by - 27.8, vz = bz - 40;
+        float alpha = (float) -Math.atan2(vy, vz), stroke = (float) (Math.hypot(vy, vz) - 34);
+        for (int k = 0; k < 2; k++) {
+            rotate(instance.getBone("move_ram_" + k), alpha, 0);
+            slide(instance.getBone("move_ram_" + k + "_s1"), 0, 0, stroke);
+        }
+        float covers = (float) Math.toRadians(deploy >= 0.95f ? 100 : 0);
+        for (int i = 0; i < 4; i++) rotate(instance.getBone("move_cover_" + i), covers, 0);
+        rotate(instance.getBone("move_antenna"), (float) Math.toRadians(-90 * jacks), 0);
     }
 
     /** Whether a canister has launched its round (S-400 inner canisters: any of their four). */

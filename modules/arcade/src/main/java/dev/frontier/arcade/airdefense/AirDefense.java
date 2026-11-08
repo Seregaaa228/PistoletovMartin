@@ -17,7 +17,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
 /**
- * Air defence: the S-125, S-300, S-400 and Pantsir complexes and their missile. Sites are SBW
+ * Air defence: the S-125, S-300, S-400, Pantsir and Patriot complexes and their missile. Sites are SBW
  * vehicles with their own data (sbw/vehicles/&lt;id&gt;.json) and models; registered like SBW's own
  * vehicles. The missile is tracked like SBW projectiles but updated only every third tick.
  */
@@ -28,7 +28,8 @@ public final class AirDefense {
     public static final RegistryObject<EntityType<SamSiteEntity>> S300 = site(SamSystem.S300, 3.4f, 3.6f);
     public static final RegistryObject<EntityType<SamSiteEntity>> S400 = site(SamSystem.S400, 3.4f, 3.6f);
     public static final RegistryObject<EntityType<SamSiteEntity>> PANTSIR = site(SamSystem.PANTSIR, 3.2f, 3.6f);
-    public static final List<RegistryObject<EntityType<SamSiteEntity>>> SITES = List.of(S125, S300, S400, PANTSIR);
+    public static final RegistryObject<EntityType<SamSiteEntity>> PATRIOT = site(SamSystem.PATRIOT, 3.4f, 3.6f);
+    public static final List<RegistryObject<EntityType<SamSiteEntity>>> SITES = List.of(S125, S300, S400, PANTSIR, PATRIOT);
     public static final RegistryObject<EntityType<SamMissileEntity>> MISSILE = ENTITIES.register("sam_missile", () -> EntityType.Builder
         .<SamMissileEntity>of(SamMissileEntity::new, MobCategory.MISC).sized(0.5f, 0.5f)
         .setTrackingRange(32).setUpdateInterval(3).setShouldReceiveVelocityUpdates(false).fireImmune().noSave()
@@ -54,6 +55,8 @@ public final class AirDefense {
         MinecraftForge.EVENT_BUS.addListener((EntityLeaveLevelEvent event) -> AirPicture.leave(event));
         MinecraftForge.EVENT_BUS.addListener((LevelEvent.Unload event) -> AirPicture.unload(event));
         MinecraftForge.EVENT_BUS.addListener((ServerStoppingEvent event) -> SamSiteEntity.clearEngagements());
+        MinecraftForge.EVENT_BUS.addListener((EntityJoinLevelEvent event) -> LegacyLaunchers.join(event));
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.TickEvent.ServerTickEvent event) -> LegacyLaunchers.tick(event));
     }
 
     public static SamSystem system(EntityType<?> type) {

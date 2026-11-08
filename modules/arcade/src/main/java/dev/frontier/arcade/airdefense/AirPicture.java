@@ -28,6 +28,8 @@ public final class AirPicture {
     private static final TagKey<EntityType<?>> AIR_TARGETS = TagKey.create(Registries.ENTITY_TYPE,
         new ResourceLocation("frontier_industry", "combat_air_targets"));
     private static final String GUIDED_MISSILE = "dev.sbw.deepstrike.game.GuidedMissileEntity";
+    /** Industry's ballistic missile: engaged by every complex but the S-125. */
+    private static final String BALLISTIC_MISSILE = "dev.frontier.industry.combat.BallisticMissileEntity";
     /** Per level: entity to its kind, or {@link #UNKNOWN} until an SBW vehicle has bound its data. */
     private static final Map<Level, Map<Entity, Object>> LEVELS = Collections.synchronizedMap(new java.util.WeakHashMap<>());
     private static final Object UNKNOWN = new Object();
@@ -46,7 +48,8 @@ public final class AirPicture {
                 default -> null;
             };
         }
-        if (entity.getClass().getName().equals(GUIDED_MISSILE)) return SamEnvelope.Kind.MISSILE;
+        String name = entity.getClass().getName();
+        if (name.equals(GUIDED_MISSILE) || name.equals(BALLISTIC_MISSILE)) return SamEnvelope.Kind.MISSILE;
         if (entity.getType().is(AIR_TARGETS)) return SamEnvelope.Kind.DRONE;
         return null;
     }
@@ -55,7 +58,8 @@ public final class AirPicture {
         if (!(event.getLevel() instanceof ServerLevel level) || event.getEntity() instanceof SamMissileEntity) return;
         Entity entity = event.getEntity();
         // SBW vehicles read their type from data that is only bound once added; test the class first.
-        if (entity instanceof VehicleEntity || entity.getClass().getName().equals(GUIDED_MISSILE) || entity.getType().is(AIR_TARGETS))
+        String name = entity.getClass().getName();
+        if (entity instanceof VehicleEntity || name.equals(GUIDED_MISSILE) || name.equals(BALLISTIC_MISSILE) || entity.getType().is(AIR_TARGETS))
             LEVELS.computeIfAbsent(level, key -> new IdentityHashMap<>()).put(entity, UNKNOWN);
     }
 

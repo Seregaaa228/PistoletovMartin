@@ -19,22 +19,24 @@ public final class SamEnvelope {
 
     /** Inside the zone of fire for this missile. */
     public static boolean engageable(SamSystem system, SamMissile missile, double range, double altitude) {
-        double max = missile == SamMissile.M9M96 ? Math.min(system.maxRange, 160) : system.maxRange;
+        double max = missile.shortReach() > 0 ? Math.min(system.maxRange, missile.shortReach()) : system.maxRange;
         return range >= system.minRange && range <= max && altitude >= system.minAltitude && altitude <= system.maxAltitude;
     }
 
     /**
-     * Missile to use on a contact, or null if no loaded rack fits. The S-400 keeps its two
-     * 48N6 for far, fast targets and spends 9M96 on drones, helicopters and close contacts.
+     * Missile to use on a contact, or null if no loaded rack fits. The S-400 and Patriot keep their
+     * big rounds (48N6, PAC-2) for far, fast targets and spend the short ones (9M96, PAC-3) on
+     * drones, helicopters, missiles and close contacts.
      */
     public static SamMissile choose(SamSystem system, int[] ready, Kind kind, double range, double altitude) {
+        if (kind == Kind.MISSILE && !system.engagesMissiles()) return null;
+        double shortReach = system.racks.stream().mapToDouble(rack -> rack.missile().shortReach()).max().orElse(0);
+        boolean wantsShort = kind != Kind.JET || range <= shortReach;
         SamMissile fallback = null;
         for (int i = 0; i < system.racks.size(); i++) {
             SamMissile missile = system.racks.get(i).missile();
             if (i >= ready.length || ready[i] <= 0 || !engageable(system, missile, range, altitude)) continue;
-            boolean cheap = missile == SamMissile.M9M96;
-            boolean wantsCheap = kind != Kind.JET || range <= 160;
-            if (cheap == wantsCheap) return missile;
+            if ((missile.shortReach() > 0) == wantsShort) return missile;
             if (fallback == null) fallback = missile;
         }
         return fallback;

@@ -12,7 +12,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -22,7 +21,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.registries.ForgeRegistries;
 
 /**
  * A SAM complex: SBW vehicle (seats, health, wreck, driving, inventory) plus its own radar and
@@ -64,6 +62,9 @@ public final class SamSiteEntity extends VehicleEntity {
     private final Map<Integer, Track> tracks = new HashMap<>();
     private final List<SamMissileEntity> inFlight = new ArrayList<>();
     private int designated = -1;
+    private long designatedAt;
+    /** An unanswered crew designation lapses after this long, so AUTO resumes. */
+    private static final int DESIGNATION_TICKS = 200;
     private long lastLaunch = Long.MIN_VALUE / 2;
     private int launches, kills;
 
@@ -121,7 +122,12 @@ public final class SamSiteEntity extends VehicleEntity {
         if (!supplied) supply();
         if (owner == null) claimByRider();
         inFlight.removeIf(missile -> !missile.isAlive());
+        // Our missiles in loaded but not ticking terrain (far from players) are stepped from here.
+        for (SamMissileEntity missile : List.copyOf(inFlight))
+            if (!level.isPositionEntityTicking(missile.blockPosition())) missile.tick();
         if (isWreck() || getHealth() <= 0) return;
+        // A designation lapses when the crew leaves or after a while unanswered.
+        if (designated >= 0 && (crew().isEmpty() || level.getGameTime() - designatedAt > DESIGNATION_TICKS)) designated = -1;
         deploy();
         reload();
         if ((tickCount + getId()) % SCAN_INTERVAL == 0) {
@@ -137,6 +143,19 @@ public final class SamSiteEntity extends VehicleEntity {
         supplied = true;
         setEnergy(getMaxEnergy());
         for (int i = 0; i < system.racks.size(); i++) setReady(i, system.racks.get(i).capacity());
+    }
+
+    /**
+     * Stocked from an older launcher's magazine instead of the factory fill: the first rack takes
+     * up to its capacity, the rest is returned for the hold. Fuel is still topped up.
+     */
+    public int restock(int rounds) {
+        supplied = true;
+        setEnergy(getMaxEnergy());
+        int capacity = system.racks.get(0).capacity(), loaded = Math.max(0, Math.min(capacity, rounds));
+        setReady(0, loaded);
+        for (int i = 1; i < system.racks.size(); i++) setReady(i, 0);
+        return Math.max(0, rounds - loaded);
     }
 
     private void claimByRider() {
@@ -160,7 +179,7 @@ public final class SamSiteEntity extends VehicleEntity {
         for (int rack = 0; rack < system.racks.size(); rack++) {
             var spec = system.racks.get(rack);
             if (ready(rack) >= spec.capacity()) { reload[rack] = 0; continue; }
-            Item ammo = ForgeRegistries.ITEMS.getValue(new ResourceLocation(spec.ammo().item));
+            Item ammo = spec.ammo().resolve();
             int slot = ammo == null ? -1 : findItem(ammo);
             if (slot < 0) { reload[rack] = 0; continue; }
             if (++reload[rack] >= spec.reloadTicks()) {
@@ -187,7 +206,7 @@ public final class SamSiteEntity extends VehicleEntity {
         long now = level.getGameTime();
         double reach = system.detectRange;
         for (Entity contact : AirPicture.contacts(level)) {
-            if (contact.getRootVehicle() == getRootVehicle() || contact.distanceToSqr(radar) > reach * reach) continue;
+            if (contact.getRootVehicle() == getRootVehicle() || contact.distanceToSqr(radar) > reach * reach || downed(contact)) continue;
             var kind = AirPicture.cachedKind(level, contact);
             if (kind == null) continue;
             Vec3 at = contact.getBoundingBox().getCenter();
@@ -236,15 +255,22 @@ public final class SamSiteEntity extends VehicleEntity {
         return true;
     }
 
+    /** A shot-down aircraft keeps falling as a live wreck; it is no longer a target. */
+    private static boolean downed(Entity contact) {
+        return contact instanceof VehicleEntity vehicle && (vehicle.isWreck() || vehicle.getHealth() <= 0);
+    }
+
     // ------------------------------------------------------------------ fire control
 
     private void engage(ServerLevel level) {
         if (tracks.isEmpty() || !deployed() || inFlight.size() >= system.channels
                 || level.getGameTime() - lastLaunch < system.launchInterval) return;
         if (!system.firesOnMove && getDeltaMovement().horizontalDistanceSqr() > 0.0025) return;
-        // The crew's designation goes first in either mode; AUTO also picks hostiles on its own.
+        // The crew's designation goes first in either mode, when it can be fired at now; otherwise
+        // (out of the zone, rack empty, already engaged) AUTO keeps picking hostiles on its own.
         Track chosen = designated < 0 ? null : tracks.get(designated);
-        if (chosen != null && engaged(chosen.entity)) return;
+        if (chosen != null && (engaged(chosen.entity) || SamEnvelope.choose(system, readyAll(), chosen.kind, chosen.range, chosen.altitude) == null))
+            chosen = null;
         if (chosen == null && mode() == AUTO) {
             chosen = tracks.values().stream()
                 .filter(t -> t.relation == 0 && t.heldTicks >= system.lockTicks && !engaged(t.entity)
@@ -264,8 +290,10 @@ public final class SamSiteEntity extends VehicleEntity {
         return distance < 1e-3 ? 0 : track.velocity.dot(toSite) / distance;
     }
 
+    /** Missiles allowed in flight at one target: a salvo of two at a missile, one at anything else. */
     private static boolean engaged(Entity target) {
-        return ENGAGED.getOrDefault(target.getUUID(), 0) > 0;
+        int salvo = AirPicture.kind(target) == SamEnvelope.Kind.MISSILE ? 2 : 1;
+        return ENGAGED.getOrDefault(target.getUUID(), 0) >= salvo;
     }
 
     static int engagedCount(Entity target) { return ENGAGED.getOrDefault(target.getUUID(), 0); }
@@ -290,7 +318,7 @@ public final class SamSiteEntity extends VehicleEntity {
         ENGAGED.merge(track.entity.getUUID(), 1, Integer::sum);
         lastLaunch = level.getGameTime();
         launches++;
-        SamNetwork.warn(track.entity, this, type);
+        SamNetwork.warn(track.entity, this, missile);
         return true;
     }
 
@@ -311,11 +339,14 @@ public final class SamSiteEntity extends VehicleEntity {
             .filter(t -> t.relation == 0).max(Comparator.comparingDouble(t -> SamEnvelope.threat(t.kind, t.range, closing(t)))).orElse(null);
         float yaw = aimYaw(), pitch = aimPitch();
         float wantYaw = 0, wantPitch = system == SamSystem.S125 ? 15 : 0;
+        // The Patriot launcher trains toward the target but fires at one fixed elevation, raised on deployment.
+        boolean fixedElevation = system == SamSystem.PATRIOT;
         if (focus != null) {
             Vec3 d = focus.position.subtract(position());
             wantYaw = net.minecraft.util.Mth.wrapDegrees((float) Math.toDegrees(Math.atan2(-d.x, d.z)) - getYRot());
             wantPitch = (float) Math.max(10, Math.min(75, Math.toDegrees(Math.atan2(d.y + 20, d.horizontalDistance()))));
         }
+        if (fixedElevation) wantPitch = SamLayout.PATRIOT_ELEVATION * deployPercent() / 100f;
         float rate = system == SamSystem.PANTSIR ? 12 : 6;
         float nextYaw = yaw + net.minecraft.util.Mth.clamp(net.minecraft.util.Mth.wrapDegrees(wantYaw - yaw), -rate, rate);
         float nextPitch = pitch + net.minecraft.util.Mth.clamp(wantPitch - pitch, -rate / 2, rate / 2);
@@ -353,8 +384,9 @@ public final class SamSiteEntity extends VehicleEntity {
     public void designate(ServerPlayer player, int entityId) {
         if (!crew(player)) return;
         Track track = tracks.get(entityId);
-        if (track == null || track.entity.getRootVehicle() == player.getRootVehicle()) return;
+        if (track == null || track.entity.getRootVehicle() == player.getRootVehicle() || downed(track.entity)) return;
         designated = entityId;
+        designatedAt = level().getGameTime();
     }
 
     Map<Integer, Track> tracks() { return tracks; }

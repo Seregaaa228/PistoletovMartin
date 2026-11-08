@@ -23,6 +23,14 @@ public final class SamLayout {
     public static final double[] PANTSIR_LAUNCHER = {0, 58, 42};
     public static final double PANTSIR_PACK_X = 24, PANTSIR_PACK_Y = 65.2, PANTSIR_MOUTH_Z = 4;
 
+    /** Patriot: train axis, rear elevation hinge, fixed firing elevation, and the four canister muzzles at rest. */
+    public static final double[] PATRIOT_TURRET = {0, 25, 70};
+    public static final double[] PATRIOT_HINGE = {0, 30, 95};
+    public static final float PATRIOT_ELEVATION = 38;
+    /** Canister centres (x, y) at the muzzle face z 1: 0-1 the lower PAC-2 pair, 2-3 the upper PAC-3 pair. */
+    public static final double[][] PATRIOT_CANISTERS = {{8.6, 39.8}, {-8.6, 39.8}, {8.6, 57.0}, {-8.6, 57.0}};
+    public static final double PATRIOT_MUZZLE_Z = 1.0, PAC3_CELL = 3.8;
+
     private SamLayout() { }
 
     /** World point for model coordinates on the hull of {@code site}. */
@@ -48,6 +56,18 @@ public final class SamLayout {
                     : rack == 0 ? (round % 2 == 0 ? 0 : 3) : (round % 2 == 0 ? 1 : 2);
                 double x = PACK_TUBES[Math.floorMod(tube, PACK_TUBES.length)];
                 return hull(site, x, PACK_PIVOT[1] + PACK_LENGTH + 8, PACK_PIVOT[2]);
+            }
+            case PATRIOT -> {
+                // PAC-2: one per lower canister. PAC-3: four cells per upper canister, alternating sides.
+                double[] c = PATRIOT_CANISTERS[rack == 0 ? Math.floorMod(round, 2) : 2 + Math.floorMod(round, 2)];
+                double cx = c[0], cy = c[1];
+                if (rack == 1) {
+                    int cell = Math.floorMod(round / 2, 4);
+                    cx += (cell % 2 == 0 ? 1 : -1) * PAC3_CELL;
+                    cy += (cell < 2 ? 1 : -1) * PAC3_CELL;
+                }
+                double[] p = turretPoint(PATRIOT_TURRET, PATRIOT_HINGE, new double[]{cx, cy, PATRIOT_MUZZLE_Z}, site.aimYaw(), site.aimPitch());
+                return hull(site, p[0], p[1], p[2]).add(dir.scale(0.5));
             }
             default -> {
                 // Even rounds from the left pack, odd from the right; the mouth follows turret yaw and pack elevation.

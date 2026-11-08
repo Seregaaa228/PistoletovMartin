@@ -1,0 +1,8 @@
+{
+  "Models": [
+    {
+      "Model": "frontier_arcade_vehicles:models/bedrock/vehicle/patriot_m901.geo.json",
+      "Texture": "frontier_arcade_vehicles:textures/bedrock/vehicle/patriot_m901.png"
+    }
+  ]
+}
