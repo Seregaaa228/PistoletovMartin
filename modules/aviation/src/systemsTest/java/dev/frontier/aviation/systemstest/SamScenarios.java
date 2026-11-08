@@ -351,7 +351,7 @@ final class SamScenarios {
      * turrets and launchers point at it and how the S-300/S-400 deploy (jacks, rams, canisters).
      */
     static final class Poses implements TesterFix.Scenario {
-        private static final String[] SITES = {"s125_pechora", "s300ps", "s400_triumf", "pantsir_s1"};
+        private static final String[] SITES = {"s125_pechora", "s300ps", "s400_triumf", "pantsir_s1", "patriot_m901"};
         private final ServerPlayer player;
         private final ServerLevel level;
         private final Countries countries;
@@ -385,7 +385,7 @@ final class SamScenarios {
                 targets.add(new Target(level, "t" + i, "frontier_aviation:f16", countries.enemy, c.add(40, 28, 0), Vec3.ZERO, 0));
             }
             for (Target t : targets) t.fly(ticks);
-            double cx = -1227.5, z = 0.5;
+            double cx = -1236.5, z = 0.5;
             if (ticks == 60) TesterFix.requestActions("tp " + (cx + 34) + " " + (g + 6) + " " + (z - 30) + " 50 8", "sleep 1.2", "shot sam-pose-early");
             if (ticks == 200) {
                 // Top-down over each site (north up, east right) and one side view from the south.
@@ -420,6 +420,169 @@ final class SamScenarios {
                 return true;
             }
             return false;
+        }
+
+        @Override public JsonObject result() { return result; }
+    }
+
+    // ============================================================ 5. effects
+    /**
+     * Launch, trail and burst from the side: an S-125 and a Pantsir, each with an enemy jet hovering
+     * north of it; the camera stands to the east looking west across both flight paths and takes a
+     * series of screenshots from the first launch on.
+     */
+    static final class Effects implements TesterFix.Scenario {
+        private final ServerPlayer player;
+        private final ServerLevel level;
+        private final Countries countries;
+        private final List<Entity> sites = new ArrayList<>();
+        private final List<Target> targets = new ArrayList<>();
+        private final MissileWatch watch = new MissileWatch();
+        private final JsonObject result = new JsonObject();
+        private int ticks, shotsAt = -1;
+        private final int g;
+
+        Effects(ServerPlayer player) {
+            this.player = player;
+            this.level = player.serverLevel();
+            if (player.isPassenger()) player.stopRiding();
+            player.setGameMode(GameType.CREATIVE);
+            countries = new Countries(level, player);
+            g = TesterFix.ground(level, 1400, 0);
+            sites.add(site(level, "frontier_arcade_vehicles:s125_pechora", 1400.5, 0.5, 180, player.getUUID()));
+            sites.add(site(level, "frontier_arcade_vehicles:pantsir_s1", 1400.5, 40.5, 180, player.getUUID()));
+            player.teleportTo(level, 1438.5, g + 3, 0.5, 125, -14);
+            result.addProperty("pass", false);
+        }
+
+        @Override public boolean tick() {
+            ticks++;
+            if (ticks == 20) for (Entity s : sites) {
+                Vec3 c = live(level, s).position();
+                targets.add(new Target(level, "t" + targets.size(), "frontier_aviation:f16", countries.enemy,
+                    c.add(0, 45, -110), new Vec3(0.6, 0, 0), 0));
+            }
+            for (Target t : targets) t.fly(ticks);
+            watch.tick(level, targets, ticks);
+            if (watch.firstLaunchTick > 0 && shotsAt < 0) {
+                shotsAt = ticks;
+                TesterFix.requestActions("tp 1438.5 " + (g + 3) + " 0.5 125 -14", "shot sam-fx-0", "sleep 0.25", "shot sam-fx-1",
+                    "sleep 0.3", "shot sam-fx-2", "sleep 0.4", "shot sam-fx-3", "sleep 0.5", "shot sam-fx-4", "sleep 0.8", "shot sam-fx-5");
+            }
+            if (ticks >= 260 || shotsAt > 0 && ticks > shotsAt + 120) {
+                for (Target t : targets) result.add(t.label, t.report());
+                result.add("missiles", watch.report());
+                result.addProperty("pass", watch.total > 0);
+                for (Target t : targets) t.entity.discard();
+                for (Entity s : sites) live(level, s).discard();
+                countries.close();
+                TesterFix.land(player);
+                return true;
+            }
+            return false;
+        }
+
+        @Override public JsonObject result() { return result; }
+    }
+
+    // ============================================================ 6. legacy air defence
+    /**
+     * The older systems brought into this one, through their own classes (reflection: Industry is
+     * not on this fixture's compile classpath):
+     * <ol>
+     *   <li>Industry's S-300, S-400 and Patriot launchers are replaced by our complexes, owner kept;</li>
+     *   <li>the converted S-300 intercepts an enemy Industry ballistic missile passing over it.</li>
+     * </ol>
+     */
+    static final class Legacy implements TesterFix.Scenario {
+        private final ServerPlayer player;
+        private final ServerLevel level;
+        private final Countries countries;
+        private final JsonObject result = new JsonObject();
+        private final List<UUID> launchers = new ArrayList<>();
+        private Entity ballistic;
+        private int ticks, ballisticDue = -1, ballisticGone = -1;
+        private final int g;
+        private UUID converted;
+        private int launchesBefore;
+
+        Legacy(ServerPlayer player) {
+            this.player = player;
+            this.level = player.serverLevel();
+            if (player.isPassenger()) player.stopRiding();
+            player.setGameMode(GameType.CREATIVE);
+            countries = new Countries(level, player);
+            g = TesterFix.ground(level, 2000, 0);
+            player.teleportTo(level, 2010.5, g + 2, -20.5, 0, 0);
+            String[] kinds = {"S300", "S400", "PATRIOT"};
+            for (int i = 0; i < kinds.length; i++) {
+                Entity launcher = TesterFix.create(level, "frontier_industry:combat_launcher");
+                try {
+                    Class<?> kind = Class.forName("dev.frontier.industry.combat.LauncherEntity$Kind", false, launcher.getClass().getClassLoader());
+                    @SuppressWarnings({"unchecked", "rawtypes"}) Object value = Enum.valueOf((Class<Enum>) kind, kinds[i]);
+                    launcher.getClass().getMethod("configure", kind, UUID.class).invoke(launcher, value, player.getUUID());
+                } catch (ReflectiveOperationException failure) { throw new IllegalStateException(failure); }
+                launcher.moveTo(2000.5 + i * 24, g, 0.5, 0, 0);
+                if (!level.addFreshEntity(launcher)) throw new IllegalStateException("industry launcher not added");
+                launchers.add(launcher.getUUID());
+            }
+            result.addProperty("pass", false);
+        }
+
+        @Override public boolean tick() {
+            ticks++;
+            if (ticks == 10) {
+                var conversions = new JsonArray();
+                boolean all = true;
+                for (int i = 0; i < launchers.size(); i++) {
+                    Entity old = level.getEntity(launchers.get(i));
+                    Entity site = null;
+                    for (Entity e : level.getEntities((Entity) null, new net.minecraft.world.phys.AABB(2000 + i * 24 - 3, g - 2, -3, 2000 + i * 24 + 4, g + 4, 4),
+                            e -> String.valueOf(EntityType.getKey(e.getType())).matches("frontier_arcade_vehicles:(s300ps|s400_triumf|patriot_m901)"))) site = e;
+                    var row = new JsonObject();
+                    row.addProperty("oldGone", old == null || !old.isAlive());
+                    row.addProperty("replacement", site == null ? "none" : String.valueOf(EntityType.getKey(site.getType())));
+                    row.addProperty("ownerKept", site != null && player.getUUID().equals(call(site, "ownerId")));
+                    all &= (old == null || !old.isAlive()) && site != null && player.getUUID().equals(call(site, "ownerId"));
+                    if (i == 0 && site != null) converted = site.getUUID();
+                    conversions.add(row);
+                }
+                result.add("conversions", conversions);
+                result.addProperty("conversionsPass", all);
+            }
+            // The S-300 needs ~5 s to raise its canisters; then an enemy ballistic missile comes in.
+            if (ticks == 130 && converted != null) {
+                Entity site = level.getEntity(converted);
+                ballistic = TesterFix.create(level, "frontier_industry:combat_ballistic_missile");
+                // From 150 blocks out, over the site, to 150 blocks past it (all within simulation distance).
+                Vec3 target = site.position().add(180, 0, 30), origin = site.position().add(-180, 6, 30);
+                launchesBefore = (Integer) call(site, "launches");
+                ballistic.moveTo(origin.x, origin.y, origin.z, 0, 0);
+                call(ballistic, "configure", new Class<?>[]{UUID.class, UUID.class, Vec3.class, Vec3.class}, countries.enemy, UUID.randomUUID(), origin, target);
+                if (!level.addFreshEntity(ballistic)) throw new IllegalStateException("ballistic missile not added");
+                ballisticDue = ticks + (Integer) call(ballistic, "flightDuration");
+                result.addProperty("ballisticFlightTicks", ballisticDue - ticks);
+            }
+            if (ballistic != null && ballisticGone < 0 && !ballistic.isAlive()) {
+                ballisticGone = ticks;
+                result.addProperty("ballisticRemovedAt", ticks);
+                result.addProperty("ballisticIntercepted", ticks < ballisticDue - 2);
+                Entity site = level.getEntity(converted);
+                if (site != null) result.addProperty("s300LaunchesAtBallistic", (Integer) call(site, "launches") - launchesBefore);
+            }
+            if (ticks >= 260) return finish();
+            return false;
+        }
+
+        private boolean finish() {
+            result.addProperty("ticks", ticks);
+            boolean ballisticOk = result.has("ballisticIntercepted") && result.get("ballisticIntercepted").getAsBoolean();
+            result.addProperty("pass", result.has("conversionsPass") && result.get("conversionsPass").getAsBoolean() && ballisticOk);
+            for (Entity e : level.getEntities((Entity) null, new net.minecraft.world.phys.AABB(1990, g - 4, -10, 2070, g + 10, 10),
+                    e -> String.valueOf(EntityType.getKey(e.getType())).matches("frontier_arcade_vehicles:(s300ps|s400_triumf|patriot_m901)"))) e.discard();
+            countries.close();
+            TesterFix.land(player);
+            return true;
         }
 
         @Override public JsonObject result() { return result; }
@@ -483,7 +646,7 @@ final class SamScenarios {
             if (ticks == BASELINE) {
                 result.add("baselineTraffic", PacketBytes.summary(BASELINE / 20.0));
                 PacketBytes.stop();
-                String[] kinds = {"s125_pechora", "s300ps", "s400_triumf", "pantsir_s1", "s125_pechora", "pantsir_s1"};
+                String[] kinds = {"s125_pechora", "s300ps", "s400_triumf", "pantsir_s1", "patriot_m901", "pantsir_s1"};
                 for (int i = 0; i < kinds.length; i++) {
                     double a = i * Math.PI * 2 / kinds.length;
                     sites.add(site(level, "frontier_arcade_vehicles:" + kinds[i], centre.x + Math.cos(a) * 60, centre.z + Math.sin(a) * 60,

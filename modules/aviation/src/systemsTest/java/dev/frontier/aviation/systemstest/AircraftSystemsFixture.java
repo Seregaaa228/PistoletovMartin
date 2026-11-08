@@ -339,6 +339,8 @@ public final class AircraftSystemsFixture {
         testerFix(command, "sam_drones", 700, SamScenarios.Drones::new);
         testerFix(command, "sam_load", 1700, SamScenarios.Load::new);
         testerFix(command, "sam_pose", 460, SamScenarios.Poses::new);
+        testerFix(command, "sam_fx", 300, SamScenarios.Effects::new);
+        testerFix(command, "sam_legacy", 760, SamScenarios.Legacy::new);
         event.getDispatcher().register(command);
     }
 
