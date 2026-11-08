@@ -62,17 +62,29 @@ public final class LegacyLaunchers {
         Object stock = call(old, "ammunition");
         site.moveTo(old.getX(), old.getY(), old.getZ(), old.getYRot(), 0);
         if (owner instanceof UUID id) site.setOwner(id);
-        call(old, "releaseOperator");
-        old.discard();
-        // A launcher that has fired keeps exactly its stock (first rack, the rest to the hold); one
+        // A launcher that has fired keeps exactly its stock (racks first, the rest to the hold); one
         // just placed from Industry's deployer (never fired, empty) arrives loaded like any new site.
         Object fired = call(old, "shotsFired");
         int rounds = stock instanceof Integer n ? n : 0;
         int spare = rounds == 0 && Integer.valueOf(0).equals(fired) ? 0 : site.restock(rounds);
         if (!level.addFreshEntity(site)) return;
-        var items = site.getItems();
+        call(old, "releaseOperator");
+        old.discard();
         var item = site.system().racks.get(0).ammo().resolve();
-        if (spare > 0 && !items.isEmpty() && item != null) items.set(0, new ItemStack(item, Math.min(spare, item.getMaxStackSize())));
+        if (spare <= 0 || item == null) return;
+        // Into the hold in whole stacks; what does not fit is dropped beside the site.
+        var items = site.getItems();
+        for (int slot = 0; slot < items.size() && spare > 0; slot++) {
+            if (!items.get(slot).isEmpty()) continue;
+            int count = Math.min(spare, item.getMaxStackSize());
+            items.set(slot, new ItemStack(item, count));
+            spare -= count;
+        }
+        while (spare > 0) {
+            int count = Math.min(spare, item.getMaxStackSize());
+            site.spawnAtLocation(new ItemStack(item, count));
+            spare -= count;
+        }
     }
 
     private static Object call(Object target, String name) {

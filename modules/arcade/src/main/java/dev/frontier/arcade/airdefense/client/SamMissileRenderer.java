@@ -85,8 +85,11 @@ public final class SamMissileRenderer extends EntityRenderer<SamMissileEntity> {
     }
 
     /** Per-round appearance: size, paint, band position (fraction from the tail), fin spans in radii. */
-    private record Look(double length, double radius, int body, int nose, int bandColor, double band, int finColor,
+    record Look(double length, double radius, int body, int nose, int bandColor, double band, int finColor,
                         double fin, double wing, double canard) {
+        /** Centre to nozzle, blocks: where the smoke trail starts. */
+        static double tail(SamMissile type) { return of(type).length / 2; }
+
         static Look of(SamMissile type) {
             return switch (type) {
                 case V601 -> new Look(6.0, 0.22, 0xC8CAC4, 0x3C403C, 0xF2F2EE, 0.72, 0xB4B6B0, 4.2, 3.4, 1.8);

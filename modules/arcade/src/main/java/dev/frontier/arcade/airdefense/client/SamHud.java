@@ -40,6 +40,8 @@ public final class SamHud {
     private static final Matrix4f VIEW = new Matrix4f(), PROJECTION = new Matrix4f();
     private static boolean matrices;
     private static int hovered = -1;
+    /** Game tick the pick was last made: with the HUD hidden (F1) it is not redrawn and goes stale. */
+    private static long hoveredAt = Long.MIN_VALUE;
     private static long lastSweep;
 
     private SamHud() { }
@@ -71,7 +73,7 @@ public final class SamHud {
         if (site == null || mc.screen != null || event.getAction() != GLFW.GLFW_PRESS
                 || !ModKeyMappings.FIRE.matchesMouse(event.getButton())) return;
         event.setCanceled(true);
-        if (hovered >= 0) {
+        if (hovered >= 0 && mc.level != null && mc.level.getGameTime() - hoveredAt <= 1) {
             SamNetwork.command(site.getId(), SamNetwork.Command.DESIGNATE, hovered);
             SamSounds.ui(SamSounds.id("superbwarfare", "missile_locked"), 0.7f, 1.0f);
         }
@@ -116,6 +118,7 @@ public final class SamHud {
         }
         hovered = pick;
         long now = mc.level.getGameTime();
+        hoveredAt = now;
         if (site.mode() == SamSiteEntity.AUTO && now % 80 == 0 && now != lastSweep) {
             lastSweep = now;
             SamSounds.ui(SamSounds.id("superbwarfare", "radar_search_idle"), 0.25f, 1.0f);

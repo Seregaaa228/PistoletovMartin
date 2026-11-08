@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCENARIOS = ('aim0', 'aim1', 'aim2', 'aim3', 'destruction', 'npc', 'air_to_air', 'ground_homing', 'moving_ground_homing', 'gesture', 'gear', 'gear_su25', 'gear_j10', 'seed_wreck', 'restart_wreck', 'visual_loadout', 'tablet', 'tablet_f16', 'kab_envelope', 'deploy', 'creative_tab', 'trace_su25', 'trace_f16', 'trace_j10', 'maneuver_su25', 'maneuver_f16', 'maneuver_j10', 'cannon_range', 'cannon_range_unloaded', 'fire_fps', 'observer_roll', 'cockpit_views', 'net_flight',
              'tf_cannon_f16', 'tf_cannon_su25', 'tf_cannon_j10', 'tf_kab', 'tf_kab_1500', 'tf_midair', 'tf_fpv', 'tf_seek', 'tf_worker',
              'aam_f16_jet', 'aam_f16_light_heli', 'aam_j10_jet', 'aam_j10_light_drone', 'aam_su25_light_jet',
-             'sam_iff', 'sam_drones', 'sam_load', 'sam_pose', 'sam_fx', 'sam_legacy')
+             'sam_iff', 'sam_iff_enemies', 'sam_drones', 'sam_load', 'sam_pose', 'sam_fx', 'sam_legacy')
 # Su-25 tablet panel controls (GlideBombTabletPanel layout) for this runner's 1280x720
 # window at GUI scale 2. DeepStrike draws its tablet in a virtual space scaled by
 # UiViewport.scale() = min(1.2 / 2, 640 / 1000, 360 / 600) = 0.6, i.e. 1067x600; MC Pilot

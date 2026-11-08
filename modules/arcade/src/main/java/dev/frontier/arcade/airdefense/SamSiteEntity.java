@@ -2,6 +2,7 @@ package dev.frontier.arcade.airdefense;
 
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity;
 import java.util.ArrayList;
+import net.minecraft.world.phys.AABB;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -62,6 +63,8 @@ public final class SamSiteEntity extends VehicleEntity {
     private final Map<Integer, Track> tracks = new HashMap<>();
     private final List<SamMissileEntity> inFlight = new ArrayList<>();
     private int designated = -1;
+    /** Ticks of raising done; -1 until derived from the synced percentage (after loading). */
+    private int deployTick = -1;
     private long designatedAt;
     /** An unanswered crew designation lapses after this long, so AUTO resumes. */
     private static final int DESIGNATION_TICKS = 200;
@@ -72,7 +75,12 @@ public final class SamSiteEntity extends VehicleEntity {
         super(type, level);
         this.system = AirDefense.system(type);
         this.reload = new int[system.racks.size()];
-        noCulling = true;
+    }
+
+    /** The raised pack and the launcher stand well above the hull's box. */
+    @Override
+    public AABB getBoundingBoxForCulling() {
+        return getBoundingBox().inflate(4, 0, 4).expandTowards(0, 8, 0);
     }
 
     public SamSystem system() { return system; }
@@ -122,9 +130,6 @@ public final class SamSiteEntity extends VehicleEntity {
         if (!supplied) supply();
         if (owner == null) claimByRider();
         inFlight.removeIf(missile -> !missile.isAlive());
-        // Our missiles in loaded but not ticking terrain (far from players) are stepped from here.
-        for (SamMissileEntity missile : List.copyOf(inFlight))
-            if (!level.isPositionEntityTicking(missile.blockPosition())) missile.tick();
         if (isWreck() || getHealth() <= 0) return;
         // A designation lapses when the crew leaves or after a while unanswered.
         if (designated >= 0 && (crew().isEmpty() || level.getGameTime() - designatedAt > DESIGNATION_TICKS)) designated = -1;
@@ -146,16 +151,19 @@ public final class SamSiteEntity extends VehicleEntity {
     }
 
     /**
-     * Stocked from an older launcher's magazine instead of the factory fill: the first rack takes
-     * up to its capacity, the rest is returned for the hold. Fuel is still topped up.
+     * Stocked from an older launcher's magazine instead of the factory fill: the racks take up to
+     * their capacity in order, the rest is returned for the hold. Fuel is still topped up.
      */
     public int restock(int rounds) {
         supplied = true;
         setEnergy(getMaxEnergy());
-        int capacity = system.racks.get(0).capacity(), loaded = Math.max(0, Math.min(capacity, rounds));
-        setReady(0, loaded);
-        for (int i = 1; i < system.racks.size(); i++) setReady(i, 0);
-        return Math.max(0, rounds - loaded);
+        int left = Math.max(0, rounds);
+        for (int i = 0; i < system.racks.size(); i++) {
+            int loaded = Math.min(system.racks.get(i).capacity(), left);
+            setReady(i, loaded);
+            left -= loaded;
+        }
+        return left;
     }
 
     private void claimByRider() {
@@ -170,8 +178,10 @@ public final class SamSiteEntity extends VehicleEntity {
             return;
         }
         boolean moving = getDeltaMovement().horizontalDistanceSqr() > 0.0025;
-        int step = Math.max(1, 100 / system.deployTicks);
-        int next = moving ? Math.max(0, percent - step * 3) : Math.min(100, percent + step);
+        // Counted in ticks so each system takes its own time; packing up is three times faster.
+        if (deployTick < 0) deployTick = percent * system.deployTicks / 100;
+        deployTick = moving ? Math.max(0, deployTick - 3) : Math.min(system.deployTicks, deployTick + 1);
+        int next = deployTick * 100 / system.deployTicks;
         if (next != percent) entityData.set(DEPLOY, (byte) next);
     }
 
@@ -222,7 +232,8 @@ public final class SamSiteEntity extends VehicleEntity {
             track.range = range;
             track.altitude = altitude;
             track.seen = now;
-            track.relation = SamIff.hostile(level, owner, contact) ? (byte) 0 : SamIff.friendly(level, owner, contact) ? (byte) 2 : (byte) 1;
+            // 0: AUTO engages it (by the server setting), 2: a friend, 1: a neutral AUTO leaves alone.
+            track.relation = SamIff.autoTarget(level, owner, contact) ? (byte) 0 : SamIff.friendly(level, owner, contact) ? (byte) 2 : (byte) 1;
         }
         // A track not refreshed this scan is lost (out of range, masked, gone).
         tracks.values().removeIf(track -> track.seen != now || !track.entity.isAlive());
@@ -274,6 +285,7 @@ public final class SamSiteEntity extends VehicleEntity {
         if (chosen == null && mode() == AUTO) {
             chosen = tracks.values().stream()
                 .filter(t -> t.relation == 0 && t.heldTicks >= system.lockTicks && !engaged(t.entity)
+                    && (t.kind != SamEnvelope.Kind.MISSILE || AirDefenseConfig.engageMissiles())
                     && SamEnvelope.choose(system, readyAll(), t.kind, t.range, t.altitude) != null)
                 .max(Comparator.comparingDouble(t -> SamEnvelope.threat(t.kind, t.range, closing(t))))
                 .orElse(null);
@@ -281,7 +293,8 @@ public final class SamSiteEntity extends VehicleEntity {
         if (chosen == null) return;
         SamMissile missile = SamEnvelope.choose(system, readyAll(), chosen.kind, chosen.range, chosen.altitude);
         if (missile == null) return;
-        if (fire(level, chosen, missile) && chosen.entity.getId() == designated) designated = -1;
+        boolean ordered = chosen.entity.getId() == designated;
+        if (fire(level, chosen, missile, !ordered) && ordered) designated = -1;
     }
 
     private double closing(Track track) {
@@ -304,14 +317,15 @@ public final class SamSiteEntity extends VehicleEntity {
         if (target != null) ENGAGED.computeIfPresent(target, (id, count) -> count > 1 ? count - 1 : null);
     }
 
-    private boolean fire(ServerLevel level, Track track, SamMissile type) {
+    /** {@code auto}: fired by the site's own choice, so the missile keeps checking friend or foe in flight. */
+    private boolean fire(ServerLevel level, Track track, SamMissile type, boolean auto) {
         int rack = -1;
         for (int i = 0; i < system.racks.size(); i++) if (system.racks.get(i).missile() == type && ready(i) > 0) { rack = i; break; }
         if (rack < 0) return false;
         int round = system.racks.get(rack).capacity() - ready(rack);
         Vec3 dir = launchDirection(track.position);
         Vec3 from = SamLayout.launchPoint(this, rack, round, dir);
-        var missile = SamMissileEntity.launch(level, this, type, track.entity, from, dir);
+        var missile = SamMissileEntity.launch(level, this, type, track.entity, from, dir, auto);
         if (missile == null || !level.addFreshEntity(missile)) return false;
         setReady(rack, ready(rack) - 1);
         inFlight.add(missile);
@@ -405,6 +419,9 @@ public final class SamSiteEntity extends VehicleEntity {
             setReady(i, i < ready.length ? Math.min(system.racks.get(i).capacity(), Math.max(0, ready[i])) : 0);
         launches = own.getInt("Launches");
         kills = own.getInt("Kills");
+        // A site left raised stays raised over a restart or a chunk reload.
+        entityData.set(DEPLOY, (byte) Math.max(0, Math.min(100, own.getByte("Deploy"))));
+        deployTick = -1;
     }
 
     @Override
@@ -417,6 +434,7 @@ public final class SamSiteEntity extends VehicleEntity {
         own.putIntArray("Ready", readyAll());
         own.putInt("Launches", launches);
         own.putInt("Kills", kills);
+        own.putByte("Deploy", (byte) deployPercent());
         tag.put("FrontierSam", own);
     }
 

@@ -36,6 +36,8 @@ public final class SamSounds {
     private static final double SOUND_SPEED = 17;
     private static final int MAX_LOOPS = 6;
     private static final double LOOP_RANGE = 160, SERVO_RANGE = 48, FLYBY_RANGE = 22;
+    /** The sound engine hears a sound up to volume x 16 blocks (gain itself is capped at 1). */
+    private static final float BLOCKS_PER_VOLUME = 16;
     private static final RandomSource RANDOM = RandomSource.create();
     private record Delayed(long at, ResourceLocation id, Vec3 where, float volume, float pitch) { }
     private static final List<Delayed> DELAYED = new ArrayList<>();
@@ -48,6 +50,11 @@ public final class SamSounds {
     private SamSounds() { }
 
     static ResourceLocation id(String namespace, String path) { return new ResourceLocation(namespace, path); }
+
+    /** A volume loud enough to be heard {@code distance} away (with some margin), at least {@code base}. */
+    static float reach(double distance, float base) {
+        return Math.max(base, (float) (distance / BLOCKS_PER_VOLUME) + 2);
+    }
 
     /** A positional sound that reaches the listener after the time sound takes to travel. */
     static void delayed(ResourceLocation id, Vec3 where, float volume, float pitch) {
@@ -65,7 +72,8 @@ public final class SamSounds {
     /** A new missile on this client: its motor loop, if one is free and it is near enough. */
     static void launched(SamMissileEntity missile) {
         var mc = Minecraft.getInstance();
-        LOOPS.removeIf(AbstractTickableSoundInstance::isStopped);
+        // The engine can drop a loop without telling it (level change, no free channel, muted).
+        LOOPS.removeIf(loop -> loop.isStopped() || !loop.missile.isAlive() || !mc.getSoundManager().isActive(loop) && loop.started);
         if (LOOPS.size() >= MAX_LOOPS || missile.distanceTo(mc.player) > LOOP_RANGE) return;
         SoundEvent event = ForgeRegistries.SOUND_EVENTS.getValue(id("deepstrike", "entity.interceptor.flight_loop"));
         if (event == null) return;
@@ -86,7 +94,7 @@ public final class SamSounds {
     public static void tick(TickEvent.ClientTickEvent event) {
         var mc = Minecraft.getInstance();
         if (event.phase != TickEvent.Phase.END) return;
-        if (mc.level == null || mc.player == null) { DELAYED.clear(); INBOUND.clear(); SamTrails.clear(); return; }
+        if (mc.level == null || mc.player == null) { DELAYED.clear(); INBOUND.clear(); LOOPS.clear(); SamFx.clear(); return; }
         long now = mc.level.getGameTime();
         for (Iterator<Delayed> it = DELAYED.iterator(); it.hasNext(); ) {
             Delayed d = it.next();
@@ -120,7 +128,8 @@ public final class SamSounds {
             var missile = mc.level.getEntity(entry.getKey());
             if (!(missile instanceof SamMissileEntity) || !missile.isAlive()) {
                 // A missile not yet (or no longer) tracked by this client: keep a few seconds of grace.
-                if (missile == null && now - entry.getValue() < 60) continue;
+                // (a long shot may come into tracking range only late in its flight)
+                if (missile == null && now - entry.getValue() < 240) continue;
                 it.remove();
                 continue;
             }
@@ -142,14 +151,18 @@ public final class SamSounds {
 
     /** The motor's roar, following the missile; it fades after burnout and stops when the missile is gone. */
     private static final class MissileLoop extends AbstractTickableSoundInstance {
+        /** Heard out to the loop range. */
+        private static final float LOUD = (float) (LOOP_RANGE / BLOCKS_PER_VOLUME);
         private final SamMissileEntity missile;
+        /** Ticked at least once by the engine: from then on, not active means dropped. */
+        boolean started;
 
         MissileLoop(SamMissileEntity missile, SoundEvent event) {
             super(event, SoundSource.HOSTILE, SoundInstance.createUnseededRandom());
             this.missile = missile;
             this.looping = true;
             this.delay = 0;
-            this.volume = 2.5f;
+            this.volume = LOUD;
             this.pitch = 0.9f + RANDOM.nextFloat() * 0.2f;
             this.x = missile.getX();
             this.y = missile.getY();
@@ -158,11 +171,12 @@ public final class SamSounds {
 
         @Override
         public void tick() {
+            started = true;
             if (!missile.isAlive()) { stop(); return; }
             x = missile.getX();
             y = missile.getY();
             z = missile.getZ();
-            volume = missile.burning() ? 2.5f : Math.max(0, volume - 0.08f);
+            volume = missile.burning() ? LOUD : Math.max(0, volume - 0.3f);
             if (volume <= 0.01f) stop();
         }
     }

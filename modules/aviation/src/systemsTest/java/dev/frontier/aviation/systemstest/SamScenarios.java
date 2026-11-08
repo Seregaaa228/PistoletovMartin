@@ -18,8 +18,10 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.Vec3;
 
@@ -74,6 +76,19 @@ final class SamScenarios {
         }
     }
 
+    /** The server setting, through the arcade config class (not on this fixture's compile classpath). */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    static void setAutoTargets(String mode) {
+        try {
+            Class<?> config = Class.forName("dev.frontier.arcade.airdefense.AirDefenseConfig");
+            Class<?> modes = Class.forName("dev.frontier.arcade.airdefense.AirDefenseConfig$AutoTargets");
+            Object value = config.getField("AUTO_TARGETS").get(null);
+            value.getClass().getMethod("set", Object.class).invoke(value, Enum.valueOf((Class<Enum>) modes, mode));
+        } catch (ReflectiveOperationException failure) {
+            throw new IllegalStateException("air-defence config unavailable", failure);
+        }
+    }
+
     static Entity site(ServerLevel level, String id, double x, double z, float yaw, UUID owner) {
         Entity site = TesterFix.create(level, id);
         int g = TesterFix.ground(level, (int) Math.floor(x), (int) Math.floor(z));
@@ -123,6 +138,7 @@ final class SamScenarios {
         void fly(int tick) {
             if (entity.isRemoved() && entity.level() instanceof ServerLevel level) entity = live(level, entity);
             if (dead()) { if (!killed) { killed = true; killTick = tick; } return; }
+            if (entity.isRemoved()) return; // gone without being shot down: not a kill
             if (turn != 0) {
                 double c = Math.cos(turn), s = Math.sin(turn);
                 velocity = new Vec3(velocity.x * c - velocity.z * s, velocity.y, velocity.x * s + velocity.z * c);
@@ -133,8 +149,11 @@ final class SamScenarios {
             entity.setYRot((float) Math.toDegrees(Math.atan2(-velocity.x, velocity.z)));
         }
 
+        /** Shot down, not merely removed (a drone's signal loss or an unload discards it intact). */
         boolean dead() {
-            return !entity.isAlive() || entity instanceof VehicleEntity vehicle && (vehicle.isWreck() || vehicle.getHealth() <= 0);
+            if (entity instanceof VehicleEntity vehicle) return vehicle.isWreck() || vehicle.getHealth() <= 0;
+            if (entity instanceof LivingEntity living) return living.isDeadOrDying();
+            return entity.getRemovalReason() == Entity.RemovalReason.KILLED;
         }
 
         boolean hurt() { return dead() || TesterFix.health(entity) < maxHealth; }
@@ -192,10 +211,12 @@ final class SamScenarios {
     // ============================================================ 1. friend or foe
     /**
      * An S-300PS in AUTO, owned by the test player of country A, with three jets crossing its zone:
-     * one owned by an enemy of B, one by a friend in A, one by a neutral without a country. Only the
-     * enemy may be engaged. The player rides the site for the HUD screenshots.
+     * one owned by an enemy of B, one by a friend in A, one by a neutral without a country. With the
+     * default setting (all but friends) the enemy and the neutral are engaged; with "enemies only"
+     * just the enemy. The friend never. The player rides the site for the HUD screenshots.
      */
     static final class Iff implements TesterFix.Scenario {
+        private final boolean enemiesOnly;
         private final ServerPlayer player;
         private final ServerLevel level;
         private final Countries countries;
@@ -205,7 +226,9 @@ final class SamScenarios {
         private final JsonObject result = new JsonObject();
         private int ticks, shots;
 
-        Iff(ServerPlayer player) {
+        Iff(ServerPlayer player, boolean enemiesOnly) {
+            this.enemiesOnly = enemiesOnly;
+            setAutoTargets(enemiesOnly ? "ENEMIES_ONLY" : "ALL_BUT_FRIENDS");
             this.player = player;
             this.level = player.serverLevel();
             if (player.isPassenger()) player.stopRiding();
@@ -246,7 +269,8 @@ final class SamScenarios {
             if (shots == 1 && ticks >= watch.firstLaunchTick + 24) { shots++; TesterFix.requestActions("key F5", "sleep 0.4", "shot sam-iff-third", "key F5", "key F5"); }
             if (ticks == 100) TesterFix.requestActions("shot sam-iff-hud");
             boolean enemyDown = !targets.isEmpty() && targets.get(0).dead();
-            if ((enemyDown && ticks > 260) || ticks >= 520) return finish();
+            boolean neutralSettled = enemiesOnly || targets.size() > 2 && targets.get(2).missilesAt > 0;
+            if ((enemyDown && neutralSettled && ticks > 260) || ticks >= 520) return finish();
             return false;
         }
 
@@ -258,8 +282,10 @@ final class SamScenarios {
             result.add("missiles", watch.report());
             result.add("site", siteReport(live(level, site)));
             Target enemy = targets.get(0), friend = targets.get(1), neutral = targets.get(2);
-            boolean pass = enemy.missilesAt > 0 && enemy.hurt() && friend.missilesAt == 0 && !friend.hurt()
-                && neutral.missilesAt == 0 && !neutral.hurt();
+            boolean neutralOk = enemiesOnly ? neutral.missilesAt == 0 && !neutral.hurt() : neutral.missilesAt > 0;
+            boolean pass = enemy.missilesAt > 0 && enemy.hurt() && friend.missilesAt == 0 && !friend.hurt() && neutralOk;
+            result.addProperty("autoTargets", enemiesOnly ? "ENEMIES_ONLY" : "ALL_BUT_FRIENDS");
+            setAutoTargets("ALL_BUT_FRIENDS");
             result.addProperty("pass", pass);
             player.stopRiding();
             for (Target t : targets) t.entity.discard();
@@ -404,15 +430,38 @@ final class SamScenarios {
             }
             if (ticks >= 380) {
                 var poses = new JsonArray();
-                for (Entity s : sites) {
-                    Entity site = live(level, s);
+                boolean all = targets.size() == sites.size();
+                for (int i = 0; i < sites.size(); i++) {
+                    Entity site = live(level, sites.get(i));
                     var row = siteReport(site);
-                    row.addProperty("aimYaw", (Float) call(site, "aimYaw"));
-                    row.addProperty("aimPitch", (Float) call(site, "aimPitch"));
+                    float yaw = (Float) call(site, "aimYaw"), pitch = (Float) call(site, "aimPitch");
+                    row.addProperty("aimYaw", yaw);
+                    row.addProperty("aimPitch", pitch);
+                    // Vertical packs (S-300, S-400) launch straight up and do not train toward a target.
+                    boolean vertical = SITES[i].equals("s300ps") || SITES[i].equals("s400_triumf");
+                    row.addProperty("vertical", vertical);
+                    if (!vertical) {
+                        // The sites stand in a row, so a neighbour's jet may be the most threatening
+                        // track: the turret must point at one of the jets. Same convention as the
+                        // site's slew: yaw relative to the hull, Minecraft degrees.
+                        float yawError = 180;
+                        String at = "none";
+                        for (Target t : targets) {
+                            Vec3 d = t.entity.position().subtract(site.position());
+                            float bearing = Mth.wrapDegrees((float) Math.toDegrees(Math.atan2(-d.x, d.z)) - site.getYRot());
+                            float error = Math.abs(Mth.wrapDegrees(yaw - bearing));
+                            if (error < yawError) { yawError = error; at = t.label; }
+                        }
+                        boolean ok = yawError <= 10 && pitch >= 5 && pitch <= 80;
+                        row.addProperty("aimedAt", at);
+                        row.addProperty("yawError", yawError);
+                        row.addProperty("aimOk", ok);
+                        all &= ok;
+                    }
                     poses.add(row);
                 }
                 result.add("sites", poses);
-                result.addProperty("pass", true);
+                result.addProperty("pass", all);
                 for (Target t : targets) t.entity.discard();
                 for (Entity s : sites) live(level, s).discard();
                 countries.close();
@@ -495,6 +544,12 @@ final class SamScenarios {
      * </ol>
      */
     static final class Legacy implements TesterFix.Scenario {
+        private static final String[] KINDS = {"S300", "S400", "PATRIOT"};
+        private static final String[] EXPECTED = {"frontier_arcade_vehicles:s300ps",
+            "frontier_arcade_vehicles:s400_triumf", "frontier_arcade_vehicles:patriot_m901"};
+        /** A SAM missile at the ballistic within this many blocks when it is removed: the burst got it. */
+        private static final double INTERCEPT_DISTANCE = 12;
+        private final Map<Integer, Entity> interceptors = new HashMap<>();
         private final ServerPlayer player;
         private final ServerLevel level;
         private final Countries countries;
@@ -514,12 +569,11 @@ final class SamScenarios {
             countries = new Countries(level, player);
             g = TesterFix.ground(level, 2000, 0);
             player.teleportTo(level, 2010.5, g + 2, -20.5, 0, 0);
-            String[] kinds = {"S300", "S400", "PATRIOT"};
-            for (int i = 0; i < kinds.length; i++) {
+            for (int i = 0; i < KINDS.length; i++) {
                 Entity launcher = TesterFix.create(level, "frontier_industry:combat_launcher");
                 try {
                     Class<?> kind = Class.forName("dev.frontier.industry.combat.LauncherEntity$Kind", false, launcher.getClass().getClassLoader());
-                    @SuppressWarnings({"unchecked", "rawtypes"}) Object value = Enum.valueOf((Class<Enum>) kind, kinds[i]);
+                    @SuppressWarnings({"unchecked", "rawtypes"}) Object value = Enum.valueOf((Class<Enum>) kind, KINDS[i]);
                     launcher.getClass().getMethod("configure", kind, UUID.class).invoke(launcher, value, player.getUUID());
                 } catch (ReflectiveOperationException failure) { throw new IllegalStateException(failure); }
                 launcher.moveTo(2000.5 + i * 24, g, 0.5, 0, 0);
@@ -539,11 +593,14 @@ final class SamScenarios {
                     Entity site = null;
                     for (Entity e : level.getEntities((Entity) null, new net.minecraft.world.phys.AABB(2000 + i * 24 - 3, g - 2, -3, 2000 + i * 24 + 4, g + 4, 4),
                             e -> String.valueOf(EntityType.getKey(e.getType())).matches("frontier_arcade_vehicles:(s300ps|s400_triumf|patriot_m901)"))) site = e;
+                    String replacement = site == null ? "none" : String.valueOf(EntityType.getKey(site.getType()));
                     var row = new JsonObject();
                     row.addProperty("oldGone", old == null || !old.isAlive());
-                    row.addProperty("replacement", site == null ? "none" : String.valueOf(EntityType.getKey(site.getType())));
+                    row.addProperty("replacement", replacement);
+                    row.addProperty("expected", EXPECTED[i]);
                     row.addProperty("ownerKept", site != null && player.getUUID().equals(call(site, "ownerId")));
-                    all &= (old == null || !old.isAlive()) && site != null && player.getUUID().equals(call(site, "ownerId"));
+                    all &= (old == null || !old.isAlive()) && EXPECTED[i].equals(replacement)
+                        && player.getUUID().equals(call(site, "ownerId"));
                     if (i == 0 && site != null) converted = site.getUUID();
                     conversions.add(row);
                 }
@@ -554,8 +611,9 @@ final class SamScenarios {
             if (ticks == 130 && converted != null) {
                 Entity site = level.getEntity(converted);
                 ballistic = TesterFix.create(level, "frontier_industry:combat_ballistic_missile");
-                // From 150 blocks out, over the site, to 150 blocks past it (all within simulation distance).
-                Vec3 target = site.position().add(180, 0, 30), origin = site.position().add(-180, 6, 30);
+                // From 180 blocks out, over the site, to 180 blocks past it (all within simulation distance),
+                // 20 blocks up at both ends, so it ends in the air: early removal is not a hillside.
+                Vec3 target = site.position().add(180, 20, 30), origin = site.position().add(-180, 20, 30);
                 launchesBefore = (Integer) call(site, "launches");
                 ballistic.moveTo(origin.x, origin.y, origin.z, 0, 0);
                 call(ballistic, "configure", new Class<?>[]{UUID.class, UUID.class, Vec3.class, Vec3.class}, countries.enemy, UUID.randomUUID(), origin, target);
@@ -563,12 +621,31 @@ final class SamScenarios {
                 ballisticDue = ticks + (Integer) call(ballistic, "flightDuration");
                 result.addProperty("ballisticFlightTicks", ballisticDue - ticks);
             }
+            if (ballistic != null && ballisticGone < 0) {
+                // Every SAM missile sent at the ballistic, kept after its own removal for its last position.
+                for (Entity e : level.getAllEntities())
+                    if (MISSILE.equals(String.valueOf(EntityType.getKey(e.getType())))
+                            && ballistic.getUUID().equals(call(e, "targetId"))) interceptors.putIfAbsent(e.getId(), e);
+            }
             if (ballistic != null && ballisticGone < 0 && !ballistic.isAlive()) {
                 ballisticGone = ticks;
                 result.addProperty("ballisticRemovedAt", ticks);
-                result.addProperty("ballisticIntercepted", ticks < ballisticDue - 2);
+                double nearest = Double.MAX_VALUE;
+                String by = "none";
+                for (Entity m : interceptors.values()) {
+                    double d = m.position().distanceTo(ballistic.position());
+                    if (d < nearest) { nearest = d; by = String.valueOf(call(m, "siteId")); }
+                }
                 Entity site = level.getEntity(converted);
-                if (site != null) result.addProperty("s300LaunchesAtBallistic", (Integer) call(site, "launches") - launchesBefore);
+                int s300 = site == null ? 0 : (Integer) call(site, "launches") - launchesBefore;
+                result.addProperty("s300LaunchesAtBallistic", s300);
+                result.addProperty("missilesAtBallistic", interceptors.size());
+                result.addProperty("nearestInterceptor", nearest == Double.MAX_VALUE ? -1 : TesterFix.round(nearest));
+                result.addProperty("interceptorFromS300", converted != null && converted.toString().equals(by));
+                // Removed early, in the air, with a SAM missile aimed at it bursting right there (any of
+                // the converted sites may take it: the S-400 and Patriot stand in range as well).
+                result.addProperty("ballisticIntercepted", ticks < ballisticDue - 2 && !interceptors.isEmpty()
+                    && nearest <= INTERCEPT_DISTANCE);
             }
             if (ticks >= 260) return finish();
             return false;

@@ -18,6 +18,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 
 /**
  * An air-to-air missile against a manoeuvring, vulnerable target, fired the way a player does:
@@ -42,7 +43,7 @@ final class AamHitScenario implements TesterFix.Scenario {
     private int ticks, actionSeq = -1, launchTick = -1, hitTick = -1, missileGoneTick = -1;
     private double angle, closest = Double.MAX_VALUE;
     private float targetHealth, planeHealth;
-    private boolean serverFallback;
+    private boolean serverFallback, tabletOpened;
 
     AamHitScenario(ServerPlayer pilot, AircraftProfile shooter, String slot, String targetId, double speed) {
         this.pilot = pilot;
@@ -112,6 +113,7 @@ final class AamHitScenario implements TesterFix.Scenario {
         // Give the client time to see the target, then hold X (SBW seek) and click while locked.
         if (ticks == 60) actionSeq = TesterFix.requestActions("keydown X", "sleep 1.4",
             "shot aam-" + result.get("shooter").getAsString().replace(':', '_') + "-" + slot + "-lock", "click", "sleep 0.4", "keyup X");
+        if (actionSeq > 0 && (launchTick < 0 || ticks - launchTick < 20)) tabletOpened |= tabletOnScreen();
         if (launchTick < 0) {
             missile = findMissile();
             if (missile != null) {
@@ -167,14 +169,25 @@ final class AamHitScenario implements TesterFix.Scenario {
         result.add("targetHurts", TesterFix.hurtsOf(TesterFix.VEHICLE_HURTS, target));
         result.add("shooterHurts", TesterFix.hurtsOf(TesterFix.VEHICLE_HURTS, plane));
         boolean shooterClean = TesterFix.hurtsOf(TesterFix.VEHICLE_HURTS, plane).isEmpty();
-        result.addProperty("pass", error == null && hitTick >= 0 && shooterClean
-            && result.has("missileTargetsShooter") && !result.get("missileTargetsShooter").getAsBoolean());
+        result.addProperty("tabletOpened", tabletOpened);
+        // Only the real client path counts: the server fallback measures guidance, not the gesture.
+        result.addProperty("pass", error == null && hitTick >= 0 && shooterClean && !tabletOpened
+            && flag("clientLaunch") && flag("missileTargetsTarget") && !flag("missileTargetsShooter"));
         TesterFix.recording = false;
         AircraftController.release(pilot, lease);
         TesterFix.land(pilot);
         ((Entity) plane).discard();
         target.discard();
         return true;
+    }
+
+    private boolean flag(String key) { return result.has(key) && result.get(key).getAsBoolean(); }
+
+    /** DeepStrike's tablet shares X with the seek key; on an integrated client, did it open? */
+    private static boolean tabletOnScreen() {
+        if (!FMLEnvironment.dist.isClient()) return false;
+        var screen = net.minecraft.client.Minecraft.getInstance().screen;
+        return screen != null && screen.getClass().getName().equals("dev.sbw.deepstrike.client.Su24mScreen");
     }
 
     @Override public JsonObject result() { return result; }

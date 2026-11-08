@@ -40,7 +40,8 @@ public final class AirDefense {
         default void picture(SamNetwork.Picture picture) { }
         default void burst(SamNetwork.Burst burst) { }
         default void warning(SamNetwork.Warning warning) { }
-        default void launch(SamMissileEntity missile) { }
+        /** A missile new to this client; {@code fresh} when it left the rail just now (else no launch effects). */
+        default void launch(SamMissileEntity missile, boolean fresh) { }
         default void trail(SamMissileEntity missile) { }
     }
 
@@ -50,11 +51,14 @@ public final class AirDefense {
 
     public static void initialize(IEventBus bus) {
         ENTITIES.register(bus);
+        net.minecraftforge.fml.ModLoadingContext.get().registerConfig(net.minecraftforge.fml.config.ModConfig.Type.SERVER,
+            AirDefenseConfig.SPEC, "frontier-air-defense-server.toml");
         SamNetwork.initialize();
         MinecraftForge.EVENT_BUS.addListener((EntityJoinLevelEvent event) -> AirPicture.join(event));
         MinecraftForge.EVENT_BUS.addListener((EntityLeaveLevelEvent event) -> AirPicture.leave(event));
         MinecraftForge.EVENT_BUS.addListener((LevelEvent.Unload event) -> AirPicture.unload(event));
         MinecraftForge.EVENT_BUS.addListener((ServerStoppingEvent event) -> SamSiteEntity.clearEngagements());
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.TickEvent.LevelTickEvent event) -> SamMissileEntity.stepFrozen(event));
         MinecraftForge.EVENT_BUS.addListener((EntityJoinLevelEvent event) -> LegacyLaunchers.join(event));
         MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.TickEvent.ServerTickEvent event) -> LegacyLaunchers.tick(event));
     }
