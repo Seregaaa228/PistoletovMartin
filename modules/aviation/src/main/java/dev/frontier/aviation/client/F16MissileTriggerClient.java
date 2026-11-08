@@ -4,9 +4,13 @@ import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity;
 import com.atsuishio.superbwarfare.init.ModKeyMappings;
 import com.atsuishio.superbwarfare.data.gun.GunData;
 import com.atsuishio.superbwarfare.data.gun.GunProp;
+import com.atsuishio.superbwarfare.data.gun.SeekWeaponInfo;
 import com.atsuishio.superbwarfare.event.ClientEventHandler;
+import dev.frontier.aviation.missile.ManualMissileShots;
 import java.util.UUID;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import dev.frontier.aviation.aircraft.AircraftCatalog;
 import dev.frontier.aviation.weapons.WeaponAimResolver;
 import dev.frontier.aviation.weapons.WeaponAimResult;
@@ -101,7 +105,7 @@ public final class F16MissileTriggerClient {
             int count = Math.min(action == MissileTrigger.Action.SALVO ? 2 : 1, mount.maximumBurst());
             var aim = WeaponAimResolver.resolve(mc.level, mc.player, vehicle.getShootPosForHud(mc.player, 1),
                 vehicle.getShootDirectionForHud(mc.player, 1), WeaponAimResolver.range(mount, gun));
-            UUID tracked = trackedTarget(vehicle, gun, aim.orElse(null));
+            UUID tracked = trackedTarget(mc.player, vehicle, gun, aim.orElse(null));
             // An entity is sent by identity: its interpolated client position
             // lags a fast jet by several blocks, which a point claim cannot survive.
             if (tracked != null) FlightNetwork.fireMissilesAt(snapshot, count, tracked);
@@ -111,24 +115,37 @@ public final class F16MissileTriggerClient {
     }
 
     /**
-     * SBW's own seeker lock first; for an air-to-air seeker, else the contact the seeker is
-     * already tracking in its cone (SBW picks it every tick, closest to the sight, never our own
-     * aircraft), so a missile homes without pixel-exact aim; else an entity under the reticle.
-     * Never for block-only seekers. The server re-checks the cone and line of sight.
+     * For an air-to-air seeker: SBW's own seeker lock (X) first; else the contact the seeker is
+     * already tracking in its cone (SBW picks it every tick, closest to the sight), so a missile
+     * homes without pixel-exact aim; else an entity under the reticle. Without a lock neither may
+     * be a flare or a friend: SBW swaps the nearest contact for a flare in the sight, and human
+     * seeking has no IFF. Other seekers take only the entity under the reticle (a lock left over
+     * from an AAM is not theirs); block-only seekers none. The server re-checks cone and sight.
      */
-    private static UUID trackedTarget(VehicleEntity vehicle, GunData gun, WeaponAimResult aim) {
+    private static UUID trackedTarget(Player player, VehicleEntity vehicle, GunData gun, WeaponAimResult aim) {
         var seek = gun.get(GunProp.SEEK_WEAPON_INFO);
         if (seek.getOnlyLockBlock()) return null;
+        UUID under = aim == null || aim.kind() != WeaponAimResult.Kind.ENTITY ? null : aim.entity().orElse(null);
+        if (!seek.getOnlyLockEntity()) return under;
         Entity locked = ClientEventHandler.lockingEntityVehicle;
         if (usable(vehicle, locked)) return locked.getUUID();
         Entity candidate = ClientEventHandler.nearestEntityVehicle;
-        if (seek.getOnlyLockEntity() && usable(vehicle, candidate)) return candidate.getUUID();
-        return aim == null || aim.kind() != WeaponAimResult.Kind.ENTITY ? null : aim.entity().orElse(null);
+        if (unlocked(player, vehicle, seek, candidate)) return candidate.getUUID();
+        if (under == null) return null;
+        for (Entity entity : ((ClientLevel) vehicle.level()).entitiesForRendering())
+            if (under.equals(entity.getUUID())) return unlocked(player, vehicle, seek, entity) ? under : null;
+        return null;
     }
 
     private static boolean usable(VehicleEntity vehicle, Entity target) {
         return target != null && target.isAlive() && !target.isRemoved() && target.level() == vehicle.level()
             && target.getRootVehicle() != vehicle.getRootVehicle();
+    }
+
+    /** A contact a plain click may engage without a lock: a real air target, never a friend. */
+    private static boolean unlocked(Player player, VehicleEntity vehicle, SeekWeaponInfo seek, Entity target) {
+        return usable(vehicle, target) && ManualMissileShots.airTarget(target, seek)
+            && !ManualMissileShots.friendly(player, target);
     }
 
     /**

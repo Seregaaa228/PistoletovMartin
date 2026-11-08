@@ -143,12 +143,17 @@ public abstract class F16MissileFire extends VehicleEntity implements F16Missile
             ? WeaponAimResolver.resolve(level(), pilot, from, ray, range)
             : WeaponAimResolver.validateProposal(level(), pilot, from, ray, claimed, range, sector);
         if (trackedEntity != null) {
-            if (gun.get(GunProp.SEEK_WEAPON_INFO).getOnlyLockBlock() || !(level() instanceof ServerLevel serverLevel)) return false;
+            var seek = gun.get(GunProp.SEEK_WEAPON_INFO);
+            if (seek.getOnlyLockBlock() || !(level() instanceof ServerLevel serverLevel)) return false;
             var victim = serverLevel.getEntity(trackedEntity);
             if (victim == null || !victim.isAlive() || victim.getRootVehicle() == getRootVehicle()) return false;
+            // The client names the contact: an air-to-air seeker still only takes what SBW's would.
+            if (seek.getOnlyLockEntity() && !ManualMissileShots.airTarget(victim, seek)) return false;
             Vec3 point = victim.getBoundingBox().getCenter();
+            // The camera-apex cone is only an alternative within twice the sector from the aircraft.
             if (!WeaponAimResolver.canResolvePoint(from, point, ray, range, sector)
-                    && !aviation$inSeekerCone(pilot, from, point, ray, range, sector)) return false;
+                    && !(WeaponAimResolver.canResolvePoint(from, point, ray, range, Math.min(180, sector * 2))
+                        && aviation$inSeekerCone(pilot, from, point, ray, range, sector))) return false;
             aim = WeaponAimResolver.resolve(level(), pilot, from, point.subtract(from), Math.min(range, from.distanceTo(point) + 1));
             if (aim.isEmpty() || !aim.get().entity().filter(trackedEntity::equals).isPresent()) return false;
         }

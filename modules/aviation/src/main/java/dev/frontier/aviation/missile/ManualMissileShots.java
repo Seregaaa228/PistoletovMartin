@@ -21,7 +21,12 @@ import java.util.WeakHashMap;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import dev.sbw.deepstrike.vehicle.Su24mEntity;
+import com.atsuishio.superbwarfare.data.gun.SeekWeaponInfo;
+import com.atsuishio.superbwarfare.init.ModTags;
+import com.atsuishio.superbwarfare.tools.SeekTool;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.TickEvent;
@@ -48,6 +53,22 @@ public final class ManualMissileShots {
     private static final Map<VehicleEntity, ArrayDeque<Ticket>> PENDING = new WeakHashMap<>();
     private static final ThreadLocal<ArrayDeque<Frame>> FRAMES = ThreadLocal.withInitial(ArrayDeque::new);
     private ManualMissileShots() {}
+
+    /**
+     * SBW's cheap air-to-air seeker filters (alive, lockable type, not blacklisted, not a decoy,
+     * not a rider, at least the seeker's minimum size), and never a player on foot.
+     */
+    public static boolean airTarget(Entity target, SeekWeaponInfo seek) {
+        return target != null && SeekTool.BASIC_FILTER.test(target)
+            && !target.getType().is(ModTags.EntityTypes.DECOY) && !(target instanceof Player)
+            && target.getVehicle() == null && target.getBoundingBox().getSize() >= seek.getMinTargetSize();
+    }
+
+    /** The shooter's own aircraft, a team-mate or an ally (vanilla teams and SBW's IFF). */
+    public static boolean friendly(Entity shooter, Entity target) {
+        return target.getRootVehicle() == shooter.getRootVehicle() || shooter.isAlliedTo(target)
+            || SeekTool.IS_FRIENDLY.test(shooter, target);
+    }
 
     /** Visual kind (StoreStations, 2..5) a native missile gun shows on its station, or 0. */
     private static int kind(String gun) {
