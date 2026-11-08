@@ -16,6 +16,9 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -42,6 +45,11 @@ public final class SamSiteEntity extends VehicleEntity {
     private static final EntityDataAccessor<Float> AIM_PITCH = SynchedEntityData.defineId(SamSiteEntity.class, EntityDataSerializers.FLOAT);
     /** Missiles in flight per target UUID, across every site: two sites do not shoot the same target at once. */
     private static final Map<UUID, Integer> ENGAGED = new HashMap<>();
+    /** Industry's low-IR targets (glide bombs), with the same constants as its CombatRules. */
+    private static final TagKey<EntityType<?>> LOW_IR_TARGETS = TagKey.create(Registries.ENTITY_TYPE,
+        new ResourceLocation("frontier_industry", "combat_low_ir_targets"));
+    private static final double LOW_IR_RANGE_FACTOR = 0.5;
+    private static final float LOW_IR_DETECTION_CHANCE = 0.15F;
 
     /** One radar track. */
     static final class Track {
@@ -222,6 +230,11 @@ public final class SamSiteEntity extends VehicleEntity {
             Vec3 at = contact.getBoundingBox().getCenter();
             double range = at.distanceTo(radar), altitude = altitude(level, at);
             if (!SamEnvelope.visible(system, kind, range, altitude) || !lineOfSight(level, radar, at)) continue;
+            boolean lowIr = contact.getType().is(LOW_IR_TARGETS);
+            // A glide bomb has no motor and no plume to cue on: the pack's low-IR rule (Industry's
+            // CombatRules) lets a site glimpse one only inside half its range, on some scans, and
+            // a track not refreshed is lost, so it is practically never held long enough to lock.
+            if (lowIr && (range > reach * LOW_IR_RANGE_FACTOR || random.nextFloat() >= LOW_IR_DETECTION_CHANCE)) continue;
             Track track = tracks.computeIfAbsent(contact.getId(), id -> new Track(contact, kind));
             if (track.seen > 0 && track.position != null) {
                 long dt = Math.max(1, now - track.seen);
@@ -233,7 +246,9 @@ public final class SamSiteEntity extends VehicleEntity {
             track.altitude = altitude;
             track.seen = now;
             // 0: AUTO engages it (by the server setting), 2: a friend, 1: a neutral AUTO leaves alone.
-            track.relation = SamIff.autoTarget(level, owner, contact) ? (byte) 0 : SamIff.friendly(level, owner, contact) ? (byte) 2 : (byte) 1;
+            // AUTO never fires at a low-IR contact by itself; the crew may still try at a glimpse.
+            track.relation = SamIff.friendly(level, owner, contact) ? (byte) 2
+                : !lowIr && SamIff.autoTarget(level, owner, contact) ? (byte) 0 : (byte) 1;
         }
         // A track not refreshed this scan is lost (out of range, masked, gone).
         tracks.values().removeIf(track -> track.seen != now || !track.entity.isAlive());

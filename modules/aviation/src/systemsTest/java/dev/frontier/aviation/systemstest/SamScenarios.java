@@ -370,6 +370,77 @@ final class SamScenarios {
         @Override public JsonObject result() { return result; }
     }
 
+    // ============================================================ 3b. glide bomb
+    /**
+     * A Pantsir, an S-400 and a Patriot in AUTO; an enemy KAB-500 glides straight over them while an
+     * enemy F-16 crosses nearby. The bomb has no motor (Industry's low-IR tag): no site may fire at it
+     * by itself. The jet proves the sites are awake and do engage.
+     */
+    static final class Kab implements TesterFix.Scenario {
+        private final ServerPlayer player;
+        private final ServerLevel level;
+        private final Countries countries;
+        private final List<Entity> sites = new ArrayList<>();
+        private final List<Target> targets = new ArrayList<>();
+        private final MissileWatch watch = new MissileWatch();
+        private final JsonObject result = new JsonObject();
+        private int ticks;
+
+        Kab(ServerPlayer player) {
+            this.player = player;
+            this.level = player.serverLevel();
+            if (player.isPassenger()) player.stopRiding();
+            player.setGameMode(GameType.CREATIVE);
+            countries = new Countries(level, player);
+            int g = TesterFix.ground(level, 900, -600);
+            player.teleportTo(level, 900.5, g + 30, -660.5, 0, 10);
+            sites.add(site(level, "frontier_arcade_vehicles:pantsir_s1", 900.5, -600.5, 0, player.getUUID()));
+            sites.add(site(level, "frontier_arcade_vehicles:s400_triumf", 940.5, -560.5, 0, player.getUUID()));
+            sites.add(site(level, "frontier_arcade_vehicles:patriot_m901", 860.5, -560.5, 0, player.getUUID()));
+            result.addProperty("pass", false);
+        }
+
+        @Override public boolean tick() {
+            ticks++;
+            if (ticks == 120) {
+                int g = TesterFix.ground(level, 900, -600);
+                Vec3 c = sites.get(0).position();
+                targets.add(new Target(level, "kab", "frontier_aviation:kab_500", countries.enemy,
+                    new Vec3(c.x + 20, g + 45, c.z + 240), new Vec3(0, -0.05, -2.0), 0));
+                targets.add(new Target(level, "jet", "frontier_aviation:f16", countries.enemy,
+                    new Vec3(c.x + 260, g + 60, c.z + 140), new Vec3(-2.5, 0, -0.4), 0));
+                TesterFix.requestActions("sleep 5", "shot sam-kab");
+            }
+            for (Target t : targets) t.fly(ticks);
+            watch.tick(level, targets, ticks);
+            if (ticks >= 380) return finish();
+            return false;
+        }
+
+        private boolean finish() {
+            result.addProperty("ticks", ticks);
+            var list = new JsonObject();
+            for (Target t : targets) list.add(t.label, t.report());
+            result.add("targets", list);
+            result.add("missiles", watch.report());
+            var siteList = new JsonArray();
+            for (Entity s : sites) siteList.add(siteReport(live(level, s)));
+            result.add("sites", siteList);
+            boolean kabSpared = targets.size() == 2 && targets.get(0).missilesAt == 0;
+            boolean jetEngaged = targets.size() == 2 && targets.get(1).missilesAt > 0;
+            result.addProperty("kabSpared", kabSpared);
+            result.addProperty("jetEngaged", jetEngaged);
+            result.addProperty("pass", kabSpared && jetEngaged);
+            for (Target t : targets) t.entity.discard();
+            for (Entity s : sites) live(level, s).discard();
+            countries.close();
+            TesterFix.land(player);
+            return true;
+        }
+
+        @Override public JsonObject result() { return result; }
+    }
+
     // ============================================================ 4. poses
     /**
      * The four sites in a row facing south, each in MANUAL (aims, does not fire) with an enemy jet

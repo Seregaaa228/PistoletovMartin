@@ -337,6 +337,7 @@ public final class AircraftSystemsFixture {
         // Air-defence sites (arcade): friend or foe, drones, and a load measurement.
         testerFix(command, "sam_iff", 700, p -> new SamScenarios.Iff(p, false));
         testerFix(command, "sam_iff_enemies", 700, p -> new SamScenarios.Iff(p, true));
+        testerFix(command, "sam_kab", 500, SamScenarios.Kab::new);
         testerFix(command, "sam_drones", 700, SamScenarios.Drones::new);
         testerFix(command, "sam_load", 1700, SamScenarios.Load::new);
         testerFix(command, "sam_pose", 460, SamScenarios.Poses::new);
